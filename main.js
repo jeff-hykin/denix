@@ -724,6 +724,16 @@ const nixNodeToJs = (node)=>{
             //     <: text=":" />
             //     <integer_expression text="10" />
             // </function_expression>
+    } else if (node.type == "let_expression") {
+        // <let_expression>
+        //     <let text="let" />
+        //     <binding_set>
+        //     </binding_set>
+        //     <in text="in" />
+        //     <></>
+        // </let_expression>
+        
+        // FIXME
     } else if (node.type == "with_expression") {
         // <with_expression>
         //     <with text="with" />
@@ -739,6 +749,8 @@ const nixNodeToJs = (node)=>{
         //         <] text="]" />
         //     </list_expression>
         // </with_expression>
+
+        // FIXME
     } else {
         throw Error(`This is a bug with convertToJs(), it means this node was unexpected/unhandled and couldn't be converted: type=${JSON.stringify(node.type)}, ${JSON.stringify(node.text)}`)
     }
