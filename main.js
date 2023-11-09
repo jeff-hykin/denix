@@ -594,7 +594,7 @@ export const convertToJs = (code)=>{
     const tree = parse(code)
     const rootNode = tree.rootNode
     let output = ""
-    for (const node of rootNode.children[0]) {
+    for (const node of rootNode.children) {
         output += nixNodeToJs(node)
     }
     return nixJsRuntime.toString().replace(`/*###I'll BE REPLACED###*/`, output)
