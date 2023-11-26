@@ -189,6 +189,15 @@ export class InterpolatedString extends Interpolater {
 export class Path extends Interpolater {
 }
 
+// 
+// arg checking tools
+// 
+const requireInt = (value)=>{
+    if (typeof value!='bigint') {
+        throw new NixError(`error: value is a ${builtins.typeOf(value)} while an integer was expected`)
+    }
+    return value
+}
 const builtins = {
     // constants
         "null": null,
@@ -275,9 +284,9 @@ const builtins = {
     // 
     // bitwise
     // 
-        "bitAnd": ()=>{/*FIXME*/},
-        "bitOr": ()=>{/*FIXME*/},
-        "bitXor": ()=>{/*FIXME*/},
+        "bitAnd": (value1)=>(value2)=>requireInt(value1)&requireInt(value2),
+        "bitOr": (value1)=>(value2)=>requireInt(value1)|requireInt(value2),
+        "bitXor": (value1)=>(value2)=>requireInt(value1)^requireInt(value2),
     
     // to-value functions
         "toString": (value)=>{
