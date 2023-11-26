@@ -585,8 +585,12 @@ const nixJsRuntime = ()=>{
             true: builtins.true,
             false: builtins.false,
             null: builtins.null,
+            
+            // https://nixos.org/manual/nix/stable/language/builtins.html
+            derivation: builtins.derivation,
             import: builtins.import,
-            // FIXME: there are some other default-global names
+            abort: builtins.abort,
+            throw: builtins.throw,
         },
     }
     runtime.scopeStack.push(runtime.rootScope)
