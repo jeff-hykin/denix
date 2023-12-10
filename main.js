@@ -424,8 +424,21 @@ const builtins = {
         "match": ()=>{/*FIXME*/},
         "split": ()=>{/*FIXME*/},
         "splitVersion": ()=>{/*FIXME*/},
-        "stringLength": ()=>{/*FIXME*/},
-        "substring": ()=>{/*FIXME*/},
+        "stringLength": (s)=>{
+            if (typeof s == 'string') {
+                return s.length
+            } else if (s instanceof InterpolatedString) {
+                return s.toString().length
+            }
+        },
+        "substring": (start)=>(len)=>(s)=>{
+            if (typeof s == 'string') {
+                return s.slice(start,start+len)
+            } else if (s instanceof InterpolatedString) {
+                // be lazy for InterpolatedStrings
+                return new InterpolatedString([""], [()=>s.toString().slice(start,start+len)])
+            }
+        },
     
     // 
     // list helpers
