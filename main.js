@@ -10,6 +10,8 @@ import { nixFileToXml, parse } from "./tools/parsing.js"
 import { StackManager } from "./tools/analysis.js"
 import { toFloat } from "./tools/generic.js"
 
+import { prexRawMatch } from "https://deno.land/x/prex@0.0.0.1/main.js"
+
 // Design explanation (converting nix to JavaScript)
     // 1. First there is a top-level wrapper function: nixJsRuntime()
     //    It creates `builtins`, `runtime`, and `operators`
@@ -195,6 +197,24 @@ export class Path extends Interpolater {
 const requireInt = (value)=>{
     if (typeof value!='bigint') {
         throw new NixError(`error: value is a ${builtins.typeOf(value)} while an integer was expected`)
+    }
+    return value
+}
+const requireAttrSet = (value)=>{
+    if (!builtins.isAttrs(value)) {
+        throw new NixError(`error: value is a ${builtins.typeOf(value)} while a set was expected`)
+    }
+    return value
+}
+const requireString = (value)=>{
+    if (!builtins.isString(value)) {
+        throw new NixError(`error: value is a ${builtins.typeOf(value)} while a string was expected`)
+    }
+    return value
+}
+const requireList = (value)=>{
+    if (!builtins.isList(value)) {
+        throw new NixError(`error: value is a ${builtins.typeOf(value)} while a list was expected`)
     }
     return value
 }
@@ -421,7 +441,18 @@ const builtins = {
     // 
         "concatStringsSep": ()=>{/*FIXME*/},
         "replaceStrings": ()=>{/*FIXME*/},
-        "match": ()=>{/*FIXME*/},
+        "match": (regex)=>(str)=>{
+            // builtins.match "ab" "abc" => null.
+            // builtins.match "abc" "abc" => [ ].
+            // builtins.match "a(b)(c)" "abc" => [ "b" "c" ].
+            // builtins.match "[[:space:]]+([[:upper:]]+)[[:space:]]+" "  FOO   " => [ "FOO" ]. 
+            const output = prexRawMatch(regex, str)
+            if (output.length==0){
+                return null
+            } else {
+                return output.slice(1,)
+            }
+        },
         "split": ()=>{/*FIXME*/},
         "splitVersion": ()=>{/*FIXME*/},
         "stringLength": (s)=>{
@@ -472,11 +503,22 @@ const builtins = {
     // 
     // attr helpers
     // 
-        "hasAttr": ()=>{/*FIXME*/},
-        "getAttr": ()=>{/*FIXME*/},
+        "hasAttr": (attr)=>(attrSet)=>Object.getOwnPropertyNames(requireAttrSet(attrSet)).includes(requireString(attr)),
+        "getAttr": (attr)=>(attrSet)=>{
+            if (!Object.getOwnPropertyNames(requireAttrSet(attrSet)).includes(requireString(attr))) {
+                throw new NixError(`error: attribute ${nixRepr(attr)} missing`)
+            }
+            return attrSet[attr]
+        },
         "attrNames": (value)=>Object.getOwnPropertyNames(value).sorted(), // FIXME make sure JS's alphabetical sort is the same as nix's alphabetical sort
         "attrValues": (value)=>builtins.attrNames(value).map(each=>value[each]),
-        "catAttrs": ()=>{/*FIXME*/},
+        "catAttrs": (attr)=>(list)=>{
+            requireString(attr)
+            for (const each of requireList(list)) {
+                const propertyNames = Object.getOwnPropertyNames(requireAttrSet(each))
+                propertyNames.includes(attr)
+            }
+        },
         "concatMap": ()=>{/*FIXME*/},
         "zipAttrsWith": ()=>{/*FIXME*/},
         "intersectAttrs": ()=>{/*FIXME*/},
