@@ -770,6 +770,14 @@ const nixNodeToJs = (node)=>{
             //     <: text=":" />
             //     <integer_expression text="10" />
             // </function_expression>
+        // simple function
+        const children = valueBasedChildren(node)
+        const isSimple = children[0]?.type == "identifier"
+        if (isSimple) {
+            const argName = children[0].text
+            const body = children.slice(-1)[0]
+            return `((arg)=>{ const nixScope = {...runtime.scopeStack.slice(-1)[0], ${JSON.stringify(argName)}: arg, }; runtime.scopeStack.push(nixScope); try { return ${nixNodeToJs(body)}; } finally { runtime.scopeStack.pop(); } })`
+        }
         // more complicated function:
             // <function_expression>
             //     <formals>
