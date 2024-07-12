@@ -463,7 +463,7 @@ const builtins = {
     // hashers
     // 
         "hashFile": ()=>{/*FIXME*/},
-        "hashString": ()=>{/*FIXME*/},
+        "hashString": (hashFuncName)=>(stringContent)=>{/*FIXME*/}, // example "sha256" "hello"
     
     // evaluation control
         "break": (value)=>value, // NOTE: we just ignore the debugging aspect
