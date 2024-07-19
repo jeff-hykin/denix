@@ -718,33 +718,32 @@ builtins.builtins = builtins
 Object.freeze(builtins)
 
 const operators = {
-    negative: (value)=>{/*FIXME*/},
-    membershipCheck: (value)=>{/*FIXME*/},
-    listConcat: (value)=>{/*FIXME*/},
-    add: (value, other)=>{},
+    negative: (value)=>{/*FIXME*/},                     // -a
+    listConcat: (value)=>{/*FIXME*/},                   // a ++ b
+    add: (value, other)=>{},                            // a + b
         // number + number : Addition
         // string + string : String concatenation
         // path + path     : Path concatenation
         // path + string   : Path and string concatenation
         // string + path   : String and path concatenation
-    subtract: (value, other)=>{},
-    divide: (value)=>{/*FIXME*/},
-    multiply: (value)=>{/*FIXME*/},
-    negate: (value)=>{/*FIXME*/},
-    merge: (value)=>{/*FIXME*/},
-    equal: (value, other)=>{ 
+    subtract: (value, other)=>{},                       // a - b
+    divide: (value)=>{/*FIXME*/},                       // a / b
+    multiply: (value)=>{/*FIXME*/},                     // *a
+    negate: (value)=>{/*FIXME*/},                       // !a
+    merge: (value)=>{/*FIXME*/},                        // a // b
+    equal: (value, other)=>{                            // a == b
         // NOTE: [] == [] is true in nix
         /*FIXME*/
     },
-    notEqual: (value)=>{/*FIXME*/},
-    greaterThan: (value, other)=>{/*FIXME*/},
-    greaterThanOrEqual: (value, other)=>{/*FIXME*/},
-    lessThan: (value, other)=>{/*FIXME*/},
-    lessThanOrEqual: (value, other)=>{/*FIXME*/},
-    and: (value)=>{/*FIXME*/},
-    or: (value)=>{/*FIXME*/},
-    implication: (value)=>{/*FIXME*/},
-    hasAttr: (value)=>{/*FIXME*/},
+    notEqual: (value)=>{/*FIXME*/},                     // a != b
+    greaterThan: (value, other)=>{/*FIXME*/},           // a > b
+    greaterThanOrEqual: (value, other)=>{/*FIXME*/},    // a >= b
+    lessThan: (value, other)=>{/*FIXME*/},              // a < b
+    lessThanOrEqual: (value, other)=>{/*FIXME*/},       // a <= b
+    and: (value)=>{/*FIXME*/},                          // a && b
+    or: (value)=>{/*FIXME*/},                           // a || b
+    implication: (value)=>{/*FIXME*/},                  // a -> b
+    hasAttr: (value)=>{/*FIXME*/},                      // a ? b
 }
 const createRuntime = ()=>{
     const rootScope = {
@@ -842,7 +841,7 @@ const nixNodeToJs = (node)=>{
                 "||": "or",
                 "->": "implication",
                 "//": "merge",
-                "++": "concatLists",
+                "++": "listConcat",
                 "?": "hasAttr",
                 // I think thats all of them
             })[operator]
