@@ -527,8 +527,7 @@ const builtins = {
     // 
     // hashers
     // 
-        "hashFile": ()=>{/*FIXME*/},
-        "hashString": (hashFuncName)=>(stringContent)=>{
+        "hashString": (hashFuncName)=>(stringContent)=>{ // example (builtins.hashString "sha256" "hello") => "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
             if (hashFuncName == "sha256") {
                 return sha256Hex(stringContent)
             } else if (hashFuncName == "md5") {
@@ -540,7 +539,10 @@ const builtins = {
             } else {
                 throw new NixError(`error: unknown hash algorithm ${nixRepr(hashFuncName)}`)
             }
-        }, // example (builtins.hashString "sha256" "hello") => "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
+        },
+        "hashFile": (hashFuncName)=>(path)=>{ // only hashes the file contents
+            return builtins.hashString(hashFuncName)(FileSystem.sync.readBytes(path))
+        },
     
     // evaluation control
         "break": (value)=>value, // NOTE: we just ignore the debugging aspect
