@@ -10,6 +10,7 @@ import { nixFileToXml, parse } from "./tools/parsing.js"
 import { StackManager } from "./tools/analysis.js"
 import { toFloat } from "./tools/generic.js"
 import { sha256Hex, md5Hex, sha1Hex, sha512Hex } from "./tools/hashing.js"
+import { jsonParseWithBigInt } from "./tools/json_parse.js"
 
 import { prexRawMatch } from "https://deno.land/x/prex@0.0.0.1/main.js"
 
@@ -430,9 +431,12 @@ const builtins = {
     // 
     // value generators
     // 
-        "genList": ()=>{/*FIXME*/},
-        "fromJSON": ()=>{/*FIXME*/}, // NOTE: this is going to need to be parsed MANUALLY because "1" becomes an int while "1.0" becomes a normal number
-        "fromTOML": ()=>{/*FIXME*/},
+        "fromJSON": jsonParseWithBigInt, // can't be JSON.parse because plain int values need to become BigInts
+        "fromTOML": ()=>{
+            // needs to parse plain ints (no scientific or decimal) to BigInts
+            /*FIXME*/
+            throw new NotImplemented(`Sorry :( I don't support fromTOML yet'`)
+        },
 
     // 
     // string helpers
@@ -497,6 +501,7 @@ const builtins = {
         "map": ()=>{/*FIXME*/},
         "partition": ()=>{/*FIXME*/},
         "sort": ()=>{/*FIXME*/},
+        "genList": (func)=>(index)=>{/*FIXME*/}, // builtins.genList (x: x * x) 5 => [ 0 1 4 9 16 ]
     
     // 
     // attr helpers
