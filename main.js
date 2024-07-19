@@ -8,7 +8,7 @@ import { deepCopy, deepCopySymbol, allKeyDescriptions, deepSortObject, shallowSo
 import { escapeRegexMatch } from "https://deno.land/x/good@1.7.1.1/flattened/escape_regex_match.js"
 
 
-import { nixFileToXml, parse } from "./tools/parsing.js"
+import { nixFileToXml, parse, xmlStylePreview } from "./tools/parsing.js"
 import { StackManager } from "./tools/analysis.js"
 import { toFloat } from "./tools/generic.js"
 import { sha256Hex, md5Hex, sha1Hex, sha512Hex } from "./tools/hashing.js"
@@ -721,29 +721,32 @@ const operators = {
     negative: (value)=>{/*FIXME*/},
     membershipCheck: (value)=>{/*FIXME*/},
     listConcat: (value)=>{/*FIXME*/},
-    plus: (value)=>{/*FIXME*/},
+    add: (value, other)=>{},
         // number + number : Addition
         // string + string : String concatenation
         // path + path     : Path concatenation
         // path + string   : Path and string concatenation
         // string + path   : String and path concatenation
-    minus: (value)=>{/*FIXME*/},
+    subtract: (value, other)=>{},
     divide: (value)=>{/*FIXME*/},
     multiply: (value)=>{/*FIXME*/},
     negate: (value)=>{/*FIXME*/},
     merge: (value)=>{/*FIXME*/},
-    lessThan: (value)=>{/*FIXME*/},
-    lessThanOrEqual: (value)=>{/*FIXME*/},
-    greaterThan: (value)=>{/*FIXME*/},
-    greaterThanOrEqual: (value)=>{/*FIXME*/},
-    equality: (value)=>(other)=>{ 
+    equal: (value, other)=>{ 
         // NOTE: [] == [] is true in nix
         /*FIXME*/
     },
-    inequality: (value)=>{/*FIXME*/},
+    notEqual: (value)=>{/*FIXME*/},
+    greaterThan: (value, other)=>{/*FIXME*/},
+    greaterThanOrEqual: (value, other)=>{/*FIXME*/},
+    lessThan: (value, other)=>{/*FIXME*/},
+    lessThanOrEqual: (value, other)=>{/*FIXME*/},
     and: (value)=>{/*FIXME*/},
     or: (value)=>{/*FIXME*/},
     implication: (value)=>{/*FIXME*/},
+    bitAnd: (value1, value2)=>requireInt(value1)&requireInt(value2),
+    bitOr: (value1, value2)=>requireInt(value1)|requireInt(value2),
+    bitXor: (value1, value2)=>requireInt(value1)^requireInt(value2),
 }
 
 // this function will not be called directly, rather this is the outermost wrapper around every nix-runtime
@@ -807,6 +810,40 @@ const nixNodeToJs = (node)=>{
         // FIXME: check hex/oct/scientific formats
         return `${node.text}n` // convert to BigInt
     } else if (node.type == "float_expression") {
+        return node.text
+    } else if (node.type == "binary_expression") {
+        const children = valueBasedChildren(node)
+        // operators of floats stay as-is
+        if (children[0]?.type == "float_expression" && children[2]?.type == "float_expression") {
+            return node.text
+        // TODO: add more cases of literals getting direct conversion
+        } else {
+            const operator = children[1].text
+            const operatorName = ({
+                "+": "add",
+                "-": "subtract",
+                "*": "multiply",
+                "/": "divide",
+                "==": "equal",
+                "!=": "notEqual",
+                "<": "lessThan",
+                "<=": "lessThanOrEqual",
+                ">": "greaterThan",
+                ">=": "greaterThanOrEqual",
+                "&&": "and",
+                "||": "or",
+                "->": "implication",
+                "&": "bitAnd",
+                "|": "bitOr",
+                "^": "bitXor",
+                // I think thats all of them
+            })[operator]
+            if (!operatorName) {
+                throw new NotImplemented(`error: operator ${operator} is not supported yet`)
+            }
+            return `operators.${operatorName}(${children[0].text}, ${children[2].text})`
+        }
+        console.debug(`xmlStylePreview(node) is:`,xmlStylePreview(node))
         return node.text
     } else if (node.type == "string_expression") {
         // FIXME: different escapes
@@ -1003,3 +1040,5 @@ const nixRepr = (value)=>{
     // FIXME: should use single quotes instead of double, and probably some other things
     return JSON.stringify(value)
 }
+
+console.log(convertToJs(`10.0 + -10`))
