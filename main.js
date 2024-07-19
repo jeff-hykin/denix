@@ -238,6 +238,9 @@ const builtins = {
         "builtins": undefined,
         "langVersion": 6,
         "nixVersion": "2.18.1",
+        // impure
+        "currentSystem": `${Deno.build.arch}-${Deno.build.os}`, // for sure works on mac and linux, but probably not anything more exotic
+        "currentTime": BigInt(Math.round((new Date().getTime())/1000)), // time program started (not dynamic in nix, even in the repl)
     
     // 
     // checker functions
@@ -643,45 +646,6 @@ const builtins = {
             return builtins.hashString(hashFuncName)(FileSystem.sync.readBytes(path))
         },
     
-    // evaluation control
-        "break": (value)=>value, // NOTE: we just ignore the debugging aspect
-        "trace": ()=>{/*FIXME*/},
-        "traceVerbose": ()=>{/*FIXME*/},
-        "tryEval": ()=>{/*FIXME*/},
-        "seq": ()=>{/*FIXME*/},
-        "deepSeq": ()=>{/*FIXME*/},
-        "abort": (value)=>{ throw new NixError(`error: evaluation aborted with the following error message: ${nixRepr(value)}`) },
-        "throw": ()=>{/*FIXME*/},
-    
-    // file system
-        "toFile": ()=>{/*FIXME*/},
-        "path": ()=>{/*FIXME*/},
-            // kinda complicated:
-            // https://nix-community.github.io/docnix/reference/builtins/builtins-path/
-        "pathExists": ()=>{/*FIXME*/},
-        "readDir": ()=>{/*FIXME*/},
-            // NOTE: fails with input of "./." (not absolute path) works with input of ./. (path literal)
-            // output { ".git" = "directory"; "main.js" = "regular"; scratch_work = "directory"; tests = "directory"; tools = "directory"; }
-        "readFile": (value)=>Deno.readTextFileSync(value.toString()),
-        "readFileType": ()=>{/*FIXME*/},
-        "baseNameOf": (value)=>FileSystem.basename(value), // FIXME: look up behavior on derivation inputs, and add type checking
-        "dirOf": (value)=>FileSystem.dirname(value), // FIXME: look up behavior on derivation inputs, and add type checking
-        "findFile": (list)=>(string)=>{/*FIXME*/},
-            // https://nix-community.github.io/docnix/reference/builtins/builtins-findfile/
-            // list[0] == { path = "/Users/jeffhykin/.nix-defexpr/channels"; prefix = ""; }
-    
-    // host machine
-        "currentSystem": ()=>{/*FIXME*/},
-        "currentTime": ()=>{/*FIXME*/},
-        "getEnv": (string)=>Deno.env.get(string.toString()), // FIXME: validate argument is string
-
-    // context (these are going to be a pain)
-        "addErrorContext": ()=>{/*FIXME*/},
-        "appendContext": ()=>{/*FIXME*/},
-        "getContext": ()=>{/*FIXME*/},
-        "hasContext": ()=>{/*FIXME*/},
-        "unsafeDiscardStringContext": ()=>{/*FIXME*/},
-    
     // fetchers
         "fetchurl": ()=>{/*FIXME*/},
         "fetchTarball": ()=>{/*FIXME*/},
@@ -694,6 +658,36 @@ const builtins = {
         "scopedImport": ()=>{/*FIXME*/},
         "functionArgs": ()=>{/*FIXME*/},
     
+    // evaluation control
+        "break": (value)=>value, // NOTE: we just ignore the debugging aspect
+        "trace": ()=>{/*FIXME*/},
+        "traceVerbose": ()=>{/*FIXME*/},
+        "tryEval": ()=>{/*FIXME*/},
+        "seq": ()=>{/*FIXME*/},
+        "deepSeq": ()=>{/*FIXME*/},
+        "abort": (value)=>{ throw new NixError(`error: evaluation aborted with the following error message: ${nixRepr(value)}`) },
+        "throw": ()=>{/*FIXME*/},
+    
+    // file system
+        "getEnv": (string)=>Deno.env.get(requireString(string)),
+        "readFile": (value)=>Deno.readTextFileSync(value.toString()),
+        "baseNameOf": (value)=>FileSystem.basename(value), // FIXME: look up behavior on derivation inputs, and add type checking
+        "dirOf": (value)=>FileSystem.dirname(value), // FIXME: look up behavior on derivation inputs, and add type checking
+        "pathExists": (path)=>FileSystem.sync.info(path).exists,
+        "toFile": ()=>{/*FIXME*/},
+        "readFileType": ()=>{/*FIXME*/},
+        "path": ()=>{/*FIXME*/},
+            // kinda complicated:
+            // https://nix-community.github.io/docnix/reference/builtins/builtins-path/
+        
+        "readDir": ()=>{/*FIXME*/},
+            // NOTE: fails with input of "./." (not absolute path) works with input of ./. (path literal)
+            // output { ".git" = "directory"; "main.js" = "regular"; scratch_work = "directory"; tests = "directory"; tools = "directory"; }
+        
+        "findFile": (list)=>(string)=>{/*FIXME*/},
+            // https://nix-community.github.io/docnix/reference/builtins/builtins-findfile/
+            // list[0] == { path = "/Users/jeffhykin/.nix-defexpr/channels"; prefix = ""; }
+    
     // nix-y derivation-y stuff
         "nixPath": ()=>{/*FIXME*/},
         "storeDir": ()=>{/*FIXME*/},
@@ -705,7 +699,14 @@ const builtins = {
         "getFlake": ()=>{/*FIXME*/},
         "parseFlakeRef": ()=>{/*FIXME*/},
         "placeholder": ()=>{/*FIXME*/},
-        
+    
+    // context (these are going to be a pain)
+        "addErrorContext": ()=>{/*FIXME*/},
+        "appendContext": ()=>{/*FIXME*/},
+        "getContext": ()=>{/*FIXME*/},
+        "hasContext": ()=>{/*FIXME*/},
+        "unsafeDiscardStringContext": ()=>{/*FIXME*/},
+    
     // complicated to explain functionality 
         "filterSource": ()=>{/*FIXME*/},
         "flakeRefToString": ()=>{/*FIXME*/},
