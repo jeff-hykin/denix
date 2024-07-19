@@ -13,6 +13,7 @@ import { StackManager } from "./tools/analysis.js"
 import { toFloat } from "./tools/generic.js"
 import { sha256Hex, md5Hex, sha1Hex, sha512Hex } from "./tools/hashing.js"
 import { jsonParseWithBigInt } from "./tools/json_parse.js"
+import { lazyMap } from "./tools/lazy_array.js"
 
 import { prexRawMatch } from "https://deno.land/x/prex@0.0.0.1/main.js"
 
@@ -502,6 +503,7 @@ const builtins = {
         // (builtins.splitVersion "1.1.3.a4a.4.43aa$()$I"  ) == [ "1" "1" "3" "a" "4" "a" "4" "43" "aa$()$I" ]
         // (builtins.splitVersion "1.1.3.a4a.4.43aa$()$Ia" ) == [ "1" "1" "3" "a" "4" "a" "4" "43" "aa$()$Ia" ]
         // (builtins.splitVersion "1.1.3.a4a.4.43aa$()$Ia4") == [ "1" "1" "3" "a" "4" "a" "4" "43" "aa$()$Ia" "4" ]
+        // (builtins.splitVersion "1.1.3.a4a.4.+43aa$()$@@@@@(#*@!$^(@!*$%^/-><*(I|a4") == [ "1" "1" "3" "a" "4" "a" "4" "+" "43" "aa$()$@@@@@(#*@!$^(@!*$%^/" "><*(I|a" "4" ]
         // TODO: there may be edgecases I'm missing for splitVersion
         "splitVersion": (s)=>(   s.length == 0   ?    []    :     s.toString().split(/\.|(?<=\d)(?=\D)|(?<=\D)(?=\d)/g)   ),
         "stringLength": (s)=>{
@@ -542,11 +544,35 @@ const builtins = {
             return list[index]
         },
         "foldl'": ()=>{/*FIXME*/},
-        "head": ()=>{/*FIXME*/},
-        "tail": ()=>{/*FIXME*/},
+        "head": (list)=>[list[0]],
+        "tail": (list)=>list.slice(1),
         "groupBy": ()=>{/*FIXME*/},
-        "map": ()=>{/*FIXME*/},
-        "partition": ()=>{/*FIXME*/},
+        "map": (f)=>(list)=>lazyMap(list, f), // its lazy but behaves like a real array (proxy object)
+        // (builtins.partition (x: x > 10) [1 23 9 3 42]) == { right = [ 23 42 ]; wrong = [ 1 9 3 ]; }
+        "partition": (pred)=>(list)=>{
+            let computed = false
+            const right = []
+            const wrong = []
+            const compute = ()=>{
+                for (const each of list) {
+                    if (pred(each)) {
+                        right.push(each)
+                    } else {
+                        wrong.push(each)
+                    }
+                }
+            }
+            return {
+                get right() {
+                    !computed && compute()
+                    return right
+                },
+                get wrong() {
+                    !computed && compute()
+                    return wrong
+                },
+            }
+        },
         "sort": ()=>{/*FIXME*/},
         "genList": (func)=>(index)=>{/*FIXME*/}, // builtins.genList (x: x * x) 5 => [ 0 1 4 9 16 ]
     
@@ -688,7 +714,10 @@ const operators = {
     lessThanOrEqual: (value)=>{/*FIXME*/},
     greaterThan: (value)=>{/*FIXME*/},
     greaterThanOrEqual: (value)=>{/*FIXME*/},
-    equality: (value)=>{/*FIXME*/},
+    equality: (value)=>(other)=>{ 
+        // NOTE: [] == [] is true in nix
+        /*FIXME*/
+    },
     inequality: (value)=>{/*FIXME*/},
     and: (value)=>{/*FIXME*/},
     or: (value)=>{/*FIXME*/},
