@@ -543,10 +543,8 @@ const builtins = {
             }
             return list[index]
         },
-        "foldl'": ()=>{/*FIXME*/},
         "head": (list)=>[list[0]],
         "tail": (list)=>list.slice(1),
-        "groupBy": ()=>{/*FIXME*/},
         "map": (f)=>(list)=>lazyMap(list, f), // its lazy but behaves like a real array (proxy object)
         // (builtins.partition (x: x > 10) [1 23 9 3 42]) == { right = [ 23 42 ]; wrong = [ 1 9 3 ]; }
         "partition": (pred)=>(list)=>{
@@ -573,8 +571,21 @@ const builtins = {
                 },
             }
         },
+        // builtins.genList (x: x * x) 5 => [ 0 1 4 9 16 ]
+        "genList": (func)=>(index)=>{
+            let output = []
+            if (index < 0) {
+                throw new NixError(`error: genList index ${index} cannot be negative`)
+            }
+            while (index > 0) {
+                output.push(func(index))
+                index--
+            }
+            return output
+        },
         "sort": ()=>{/*FIXME*/},
-        "genList": (func)=>(index)=>{/*FIXME*/}, // builtins.genList (x: x * x) 5 => [ 0 1 4 9 16 ]
+        "foldl'": ()=>{/*FIXME*/},
+        "groupBy": ()=>{/*FIXME*/},
     
     // 
     // attr helpers
