@@ -9,6 +9,7 @@ import { deepCopy, deepCopySymbol, allKeyDescriptions, deepSortObject, shallowSo
 import { nixFileToXml, parse } from "./tools/parsing.js"
 import { StackManager } from "./tools/analysis.js"
 import { toFloat } from "./tools/generic.js"
+import { sha256Hex, md5Hex, sha1Hex, sha512Hex } from "./tools/hashing.js"
 
 import { prexRawMatch } from "https://deno.land/x/prex@0.0.0.1/main.js"
 
@@ -402,7 +403,6 @@ const builtins = {
                     throw Error(`Called builtins.toJSON, which only works with valid nix values, but instead got type ${typeof value}, with a value of: ${safeToString(value)} `)
             }
         },
-        "toXML": ()=>{/*FIXME*/},
         "toPath": (value)=>{
             // NOTE: nix has deprecated this, which is good cause its stupid
             // it returns a string not a path
@@ -425,6 +425,7 @@ const builtins = {
             // yup all that work for nuthin
             return value
         },
+        "toXML": ()=>{/*FIXME*/},
     
     // 
     // value generators
@@ -527,7 +528,19 @@ const builtins = {
     // hashers
     // 
         "hashFile": ()=>{/*FIXME*/},
-        "hashString": (hashFuncName)=>(stringContent)=>{/*FIXME*/}, // example "sha256" "hello"
+        "hashString": (hashFuncName)=>(stringContent)=>{
+            if (hashFuncName == "sha256") {
+                return sha256Hex(stringContent)
+            } else if (hashFuncName == "md5") {
+                return md5Hex(stringContent)
+            } else if (hashFuncName == "sha1") {
+                return sha1Hex(stringContent)
+            } else if (hashFuncName == "sha512") {
+                return sha512Hex(stringContent)
+            } else {
+                throw new NixError(`error: unknown hash algorithm ${nixRepr(hashFuncName)}`)
+            }
+        }, // example (builtins.hashString "sha256" "hello") => "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
     
     // evaluation control
         "break": (value)=>value, // NOTE: we just ignore the debugging aspect
