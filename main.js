@@ -571,15 +571,15 @@ const builtins = {
                 },
             }
         },
+        // builtins.genList (x: x * x) 0 => [ ]
         // builtins.genList (x: x * x) 5 => [ 0 1 4 9 16 ]
         "genList": (func)=>(index)=>{
-            let output = []
             if (index < 0) {
                 throw new NixError(`error: genList index ${index} cannot be negative`)
             }
+            let output = [...new Array(index)]
             while (index > 0) {
-                output.push(func(index))
-                index--
+                output[--index] = func(index)
             }
             return output
         },
