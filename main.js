@@ -5,6 +5,8 @@ import { Console, black, white, red, green, blue, yellow, cyan, magenta, lightBl
 import { zip, enumerate, count, permute, combinations, wrapAroundGet } from "https://deno.land/x/good@1.5.1.0/array.js"
 import { toString as safeToString } from "https://deno.land/x/good@1.5.1.0/string.js"
 import { deepCopy, deepCopySymbol, allKeyDescriptions, deepSortObject, shallowSortObject, isGeneratorType,isAsyncIterable, isSyncIterable, isTechnicallyIterable, isSyncIterableObjectOrContainer, allKeys } from "https://deno.land/x/good@1.5.1.0/value.js"
+import { escapeRegexMatch } from "https://deno.land/x/good@1.7.1.1/flattened/escape_regex_match.js"
+
 
 import { nixFileToXml, parse } from "./tools/parsing.js"
 import { StackManager } from "./tools/analysis.js"
@@ -450,7 +452,26 @@ const builtins = {
                 each=>requireString(each),each.toString()
             ).join(separator.toString())
         },
-        "replaceStrings": ()=>{/*FIXME*/},
+        // (builtins.replaceStrings ["oo" "a"] ["a" "i"] "foobar") == "fabir"
+        "replaceStrings": (from)=>(to)=>(str)=>{
+            requireString(str)
+            requireList(from)
+            requireList(to)
+            if (from.length != to.length) {
+                throw new NixError(`error: 'from' and 'to' arguments passed to builtins.replaceStrings have different lengths`)
+            }
+            const pattern = new RegExp(
+                from.map(each=>escapeRegexMatch(each.toString())).join("|"),
+                "g"
+            )
+            return str.replace(
+                pattern,
+                // TODO: note there is slightly different behavior here 
+                // if the replacement is not a string, this converts it to a string (for some things)
+                // nix lazily throws an error if the replacement is not a string
+                stringMatch=>to[from.indexOf(stringMatch)].toString()
+            )
+        },
         "match": (regex)=>(str)=>{
             // builtins.match "ab" "abc" => null.
             // builtins.match "abc" "abc" => [ ].
