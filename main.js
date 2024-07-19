@@ -777,8 +777,8 @@ const nixNodeToJs = (node)=>{
             const argName = children[0].text
             const body = children.slice(-1)[0]
             return `((arg)=>{ const nixScope = {...runtime.scopeStack.slice(-1)[0], ${JSON.stringify(argName)}: arg, }; runtime.scopeStack.push(nixScope); try { return ${nixNodeToJs(body)}; } finally { runtime.scopeStack.pop(); } })`
-        }
         // more complicated function:
+        } else {
             // <function_expression>
             //     <formals>
             //         <{ text="{" />
@@ -800,6 +800,46 @@ const nixNodeToJs = (node)=>{
             //     <: text=":" />
             //     <integer_expression text="10" />
             // </function_expression>
+            if (children[0].type != "formals") {
+                throw Error(`When handling a function, it didn't seem to be a simple function, but also didn't have <formals>. Not sure what happened:\n${node.text}`)
+            }
+            const formals = children[0].children.filter(each=>each.type=="formal")
+            const formalsWithDefaults = formals.filter(each=>each.children.length==1)
+
+            const defaults = formalsWithDefaults.map(each=>{
+                const children = valueBasedChildren(each.children)
+                const argName = children[0].text
+                const defaultValue = nixNodeToJs(children[2])
+                return `${JSON.stringify(argName)}: ${defaultValue},`
+            }).join("")
+            
+            let allArgsString = ""
+            if (children.some(each=>each.type=="@")) {
+                
+            }
+            return `
+                (function(arg){
+                    const nixScope = {
+                        // inherit parent scope
+                        ...runtime.scopeStack.slice(-1)[0],
+                        // inherit default arguments
+                        ${defaults}
+                        // inherit arguments
+                        ...arg,
+                        // all-args arg
+                        // "arguments": arg, //<<<intentionally does not contain default values
+                        ${allArgsString}
+                    }
+                    runtime.scopeStack.push(nixScope)
+                    try {
+                        return nixScope["namedArg1"]["something"]
+                    } finally {
+                        runtime.scopeStack.pop()
+                    }
+                })
+            `
+
+        }
     } else if (node.type == "let_expression") {
         // <let_expression>
         //     <let text="let" />
