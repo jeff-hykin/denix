@@ -477,7 +477,7 @@ const builtins = {
             // builtins.match "abc" "abc" => [ ].
             // builtins.match "a(b)(c)" "abc" => [ "b" "c" ].
             // builtins.match "[[:space:]]+([[:upper:]]+)[[:space:]]+" "  FOO   " => [ "FOO" ]. 
-            const output = prexRawMatch(regex, str)
+            const output = prexRawMatch(regex.toString(), str.toString())
             if (output.length==0){
                 return null
             } else {
@@ -493,7 +493,17 @@ const builtins = {
             // FIXME
             throw new NotImplemented(`Sorry :( I don't support builtins.split yet'`)
         },
-        "splitVersion": ()=>{/*FIXME*/},
+        // (builtins.splitVersion ""                       ) == [ ]
+        // (builtins.splitVersion "1.1.3.4.4.43.a.a"       ) == [ "1" "1" "3" "4" "4" "43" "a" "a" ]
+        // (builtins.splitVersion "1.1.3.4.4.43.aa"        ) == [ "1" "1" "3" "4" "4" "43" "aa" ]
+        // (builtins.splitVersion "1.1.3.4.4.43aa"         ) == [ "1" "1" "3" "4" "4" "43" "aa" ]
+        // (builtins.splitVersion "1.1.3.4a.4.43aa"        ) == [ "1" "1" "3" "4" "a" "4" "43" "aa" ]
+        // (builtins.splitVersion "1.1.3.a4a.4.43aa"       ) == [ "1" "1" "3" "a" "4" "a" "4" "43" "aa" ]
+        // (builtins.splitVersion "1.1.3.a4a.4.43aa$()$I"  ) == [ "1" "1" "3" "a" "4" "a" "4" "43" "aa$()$I" ]
+        // (builtins.splitVersion "1.1.3.a4a.4.43aa$()$Ia" ) == [ "1" "1" "3" "a" "4" "a" "4" "43" "aa$()$Ia" ]
+        // (builtins.splitVersion "1.1.3.a4a.4.43aa$()$Ia4") == [ "1" "1" "3" "a" "4" "a" "4" "43" "aa$()$Ia" "4" ]
+        // TODO: there may be edgecases I'm missing for splitVersion
+        "splitVersion": (s)=>(   s.length == 0   ?    []    :     s.toString().split(/\.|(?<=\d)(?=\D)|(?<=\D)(?=\d)/g)   ),
         "stringLength": (s)=>{
             if (typeof s == 'string') {
                 return s.length
