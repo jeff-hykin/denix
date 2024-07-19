@@ -48,7 +48,10 @@ import { prexRawMatch } from "https://deno.land/x/prex@0.0.0.1/main.js"
     //    Here's some specifics on how those are handled
     //    - operators (nix`1.0 + 1.0`) get mapped to named version of the operation `operators.add(1.0, 1.0)`
     //    - function calls are just mapped as is (nix`func1 null` => js`func1(null)`)
-    //    - function defintions require a bit more work:
+        //    Here's some specifics on how those are handled
+    //    - operators (nix`1.0 + 1.0`) get mapped to named version of the operation `operators.add(1.0, 1.0)`
+    //    - function calls are just mapped as is (nix`func1 null` => js`func1(null)`)
+    //    - function defintions require a bit more work, see the examples outside of this explanation 
     //    - rec and attrSets 
     //       - theres a few edgecases in here:
     //           - nix`inherit x;`
@@ -56,15 +59,9 @@ import { prexRawMatch } from "https://deno.land/x/prex@0.0.0.1/main.js"
     //           - nix`x.a.b.c = 10;` (stacked binding)
     //           - dynamic attrs nix`${x} = true;` and some lovely extra edgecases: https://discourse.nixos.org/t/attribute-interpolation-breaks-referential-transparency/30070
     //       - There are two kinds of attributes:
-    //         
-    //       - we create 3 lists; constantAttrs, getterAttrs
-    //       - things like nix`"cuda_${version}" = 10;` get put in the getterAttrs
-    //       - if there are any nix`inherit` in the attrSet, they're added to the getterAttrs list
-    //       - if the attribute is interpolated, add it to the dynamic list
-    //       - otherwise
-    //       - for each binding, if the expression node is tagged as constant, add the name to the constant list
-    //       - if the expression node is not tagged as a constant, turn in into a getter
-    //       - at the end of the attrSet node, create a JS scope, create a nixScope object that inherits from the parent scope. Then assign all the constant bindings as attributes in the nixScope. Then define getters on the nixScope for all the getter attributes. Then, if there are dynamic attributes, do a try-catch on them, and add them as getters.
+    //         constant attributes and getters
+    //         it's more efficient to have normal attributes
+    //         but it's easier to make everything a getter since they're lazy (AKA always match expected nix behavior)
     // 8. There are some special/magical edgecases
     //    - string interpolation is very not-fun because of nix
     //    - builtins.unsafeGetAttrPos gets the file path where an attribute is defined
@@ -530,7 +527,7 @@ const builtins = {
     // hashers
     // 
         "hashFile": ()=>{/*FIXME*/},
-        "hashString": ()=>{/*FIXME*/},
+        "hashString": (hashFuncName)=>(stringContent)=>{/*FIXME*/}, // example "sha256" "hello"
     
     // evaluation control
         "break": (value)=>value, // NOTE: we just ignore the debugging aspect
