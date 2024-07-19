@@ -17,6 +17,16 @@ import { lazyMap } from "./tools/lazy_array.js"
 
 import { prexRawMatch } from "https://deno.land/x/prex@0.0.0.1/main.js"
 
+// hard parts right now:
+    // builtins.fetchGit
+    // builtins.sort
+    // operators.equality
+    // builtins.fromTOML
+    // fetchMercurial
+    // string escape rules
+    // path escape rules
+
+
 // Design explanation (converting nix to JavaScript)
     // 1. First there is a top-level wrapper function: nixJsRuntime()
     //    It creates `builtins`, `runtime`, and `operators`
@@ -663,7 +673,7 @@ const builtins = {
     // host machine
         "currentSystem": ()=>{/*FIXME*/},
         "currentTime": ()=>{/*FIXME*/},
-        "getEnv": (string)=>Deno.env.get(string), // FIXME: validate argument is string
+        "getEnv": (string)=>Deno.env.get(string.toString()), // FIXME: validate argument is string
 
     // context (these are going to be a pain)
         "addErrorContext": ()=>{/*FIXME*/},
