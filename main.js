@@ -744,29 +744,30 @@ const operators = {
     and: (value)=>{/*FIXME*/},
     or: (value)=>{/*FIXME*/},
     implication: (value)=>{/*FIXME*/},
-    bitAnd: (value1, value2)=>requireInt(value1)&requireInt(value2),
-    bitOr: (value1, value2)=>requireInt(value1)|requireInt(value2),
-    bitXor: (value1, value2)=>requireInt(value1)^requireInt(value2),
+    hasAttr: (value)=>{/*FIXME*/},
+}
+const createRuntime = ()=>{
+    const rootScope = {
+        builtins,
+        true: builtins.true,
+        false: builtins.false,
+        null: builtins.null,
+        
+        // https://nixos.org/manual/nix/stable/language/builtins.html
+        derivation: builtins.derivation,
+        import: builtins.import,
+        abort: builtins.abort,
+        throw: builtins.throw,
+    }
+    return {
+        scopeStack: [rootScope],
+        rootScope: rootScope,
+    }
 }
 
 // this function will not be called directly, rather this is the outermost wrapper around every nix-runtime
 const nixJsRuntime = ()=>{
-    const runtime = {
-        scopeStack: [],
-        rootScope: {
-            builtins,
-            true: builtins.true,
-            false: builtins.false,
-            null: builtins.null,
-            
-            // https://nixos.org/manual/nix/stable/language/builtins.html
-            derivation: builtins.derivation,
-            import: builtins.import,
-            abort: builtins.abort,
-            throw: builtins.throw,
-        },
-    }
-    runtime.scopeStack.push(runtime.rootScope)
+    const runtime = createRuntime()
 
     /*###I'll BE REPLACED###*/
 }
@@ -811,6 +812,13 @@ const nixNodeToJs = (node)=>{
         return `${node.text}n` // convert to BigInt
     } else if (node.type == "float_expression") {
         return node.text
+    } else if (node.type == "parenthesized_expression") {
+        // FUTURE: there could be an optimization here where if the result is atomic (ex: operators.add(1,2)) then we can skip the parentheses
+        return `(${nixNodeToJs(valueBasedChildren(node)[1])})`
+    } else if (node.type == "unary_expression") {
+        // for minus (float, int, or variable) its fine to leave as-is
+        // for "not" also fine
+        return node.text
     } else if (node.type == "binary_expression") {
         const children = valueBasedChildren(node)
         // operators of floats stay as-is
@@ -833,15 +841,15 @@ const nixNodeToJs = (node)=>{
                 "&&": "and",
                 "||": "or",
                 "->": "implication",
-                "&": "bitAnd",
-                "|": "bitOr",
-                "^": "bitXor",
+                "//": "merge",
+                "++": "concatLists",
+                "?": "hasAttr",
                 // I think thats all of them
             })[operator]
             if (!operatorName) {
                 throw new NotImplemented(`error: operator ${operator} is not supported yet`)
             }
-            return `operators.${operatorName}(${children[0].text}, ${children[2].text})`
+            return `operators.${operatorName}(${nixNodeToJs(children[0])}, ${nixNodeToJs(children[2])})`
         }
         console.debug(`xmlStylePreview(node) is:`,xmlStylePreview(node))
         return node.text
@@ -1041,4 +1049,4 @@ const nixRepr = (value)=>{
     return JSON.stringify(value)
 }
 
-console.log(convertToJs(`10.0 + -10`))
+console.log(convertToJs(`10.0 + (-10 * 11)`))
