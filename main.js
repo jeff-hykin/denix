@@ -819,13 +819,6 @@ const createRuntime = ()=>{
     }
 }
 
-// this function will not be called directly, rather this is the outermost wrapper around every nix-runtime
-const nixJsRuntime = ()=>{
-    const runtime = createRuntime()
-
-    /*###I'll BE REPLACED###*/
-}
-
 // 
 //
 // The Main function! nix comes in js comes out
@@ -838,7 +831,11 @@ export const convertToJs = (code)=>{
     for (const node of rootNode.children) {
         output += nixNodeToJs(node)
     }
-    return nixJsRuntime.toString().replace(`/*###I'll BE REPLACED###*/`, output)
+    // optimization, could be made less hacky
+    if (!output.includes("runtime")) {
+        return output
+    }
+    return `const runtime = createRuntime()\n${output}`
 }
 
 const nixNodeToJs = (node)=>{
