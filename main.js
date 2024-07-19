@@ -484,7 +484,15 @@ const builtins = {
                 return output.slice(1,)
             }
         },
-        "split": ()=>{/*FIXME*/},
+        "split": (regex)=>(str)=>{
+            // (builtins.split "(a)b" "abc")             == [ "" [ "a" ] "c" ]
+            // (builtins.split "([ac])" "abc")           == [ "" [ "a" ] "b" [ "c" ] "" ]
+            // (builtins.split "(a)|(c)" "abc")          == [ "" [ "a" null ] "b" [ null "c" ] "" ]
+            // (builtins.split "([[:upper:]]+)" " FOO ") == [ " " [ "FOO" ] " " ]
+            
+            // FIXME
+            throw new NotImplemented(`Sorry :( I don't support builtins.split yet'`)
+        },
         "splitVersion": ()=>{/*FIXME*/},
         "stringLength": (s)=>{
             if (typeof s == 'string') {
