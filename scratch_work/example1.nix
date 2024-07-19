@@ -1,5 +1,8 @@
 # blah start comment
 /* other kinda comment */
+{
+    a ? 10,
+}:
 let 
     thingy = { x=50;};
     permittedInsecurePackages = [

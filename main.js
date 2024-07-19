@@ -375,7 +375,7 @@ const builtins = {
                     } else if (value instanceof InterpolatedString) {
                         return value.toString()
                     } else if (value instanceof Array) {
-                        return `[${value.map(each=>builtins.toJSON(each)).join(",")}]`
+                        return `[${value.map(builtins.toJSON).join(",")}]`
                     } else if (Object.getPrototypeOf({}) == Object.getPrototypeOf(value)) {
                         const keys = Object.getOwnPropertyNames(value)
                         const entries = []

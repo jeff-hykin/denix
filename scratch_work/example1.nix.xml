@@ -1,313 +1,328 @@
 <source_code>
     <comment text="# blah start comment" />
     <comment text="/* other kinda comment */" />
-    <let_expression>
-        <let text="let" />
-        <binding_set>
-            <binding>
-                <attrpath>
-                    <identifier text="thingy" />
-                </attrpath>
-                <= text="=" />
-                <attrset_expression>
-                    <{ text="{" />
-                    <binding_set>
-                        <binding>
-                            <attrpath>
-                                <identifier text="x" />
-                            </attrpath>
-                            <= text="=" />
-                            <integer_expression text="50" />
-                            <; text=";" />
-                        </binding>
-                    </binding_set>
-                    <} text="}" />
-                </attrset_expression>
-                <; text=";" />
-            </binding>
-            <binding>
-                <attrpath>
-                    <identifier text="permittedInsecurePackages" />
-                </attrpath>
-                <= text="=" />
-                <list_expression>
-                    <[ text="[" />
-                    <string_expression>
-                        <" text="\"" />
-                        <string_fragment text="linux-4.13.16" />
-                        <" text="\"" />
-                    </string_expression>
-                    <string_expression>
-                        <" text="\"" />
-                        <string_fragment text="openssl-1.0.2u" />
-                        <" text="\"" />
-                    </string_expression>
-                    <] text="]" />
-                </list_expression>
-                <; text=";" />
-            </binding>
-        </binding_set>
-        <in text="in" />
-        <attrset_expression>
+    <function_expression>
+        <formals>
             <{ text="{" />
+            <formal>
+                <identifier text="a" />
+                <? text="?" />
+                <integer_expression text="10" />
+            </formal>
+            <ERROR>
+                <, text="," />
+            </ERROR>
+            <} text="}" />
+        </formals>
+        <: text=":" />
+        <let_expression>
+            <let text="let" />
             <binding_set>
                 <binding>
                     <attrpath>
-                        <identifier text="__id_static" />
-                    </attrpath>
-                    <= text="=" />
-                    <string_expression>
-                        <" text="\"" />
-                        <string_fragment text="0.9965333620239523" />
-                        <" text="\"" />
-                    </string_expression>
-                    <; text=";" />
-                </binding>
-                <binding>
-                    <attrpath>
-                        <identifier text="__id_dynamic" />
-                    </attrpath>
-                    <= text="=" />
-                    <apply_expression>
-                        <apply_expression>
-                            <select_expression>
-                                <variable_expression>
-                                    <identifier text="builtins" />
-                                </variable_expression>
-                                <. text="." />
-                                <attrpath>
-                                    <identifier text="hashFile" />
-                                </attrpath>
-                            </select_expression>
-                            <string_expression>
-                                <" text="\"" />
-                                <string_fragment text="sha256" />
-                                <" text="\"" />
-                            </string_expression>
-                        </apply_expression>
-                        <path_expression>
-                            <path_fragment text="/Users/jeffhykin/repos/snowball/random.ignore" />
-                        </path_expression>
-                    </apply_expression>
-                    <; text=";" />
-                </binding>
-                <binding>
-                    <attrpath>
-                        <identifier text="a" />
-                        <. text="." />
-                        <identifier text="b" />
-                    </attrpath>
-                    <= text="=" />
-                    <binary_expression>
-                        <parenthesized_expression>
-                            <( text="(" />
-                            <binary_expression>
-                                <integer_expression text="200" />
-                                <+ text="+" />
-                                <binary_expression>
-                                    <integer_expression text="100" />
-                                    </ text="/" />
-                                    <integer_expression text="100" />
-                                </binary_expression>
-                            </binary_expression>
-                            <) text=")" />
-                        </parenthesized_expression>
-                        <- text="-" />
-                        <integer_expression text="55" />
-                    </binary_expression>
-                    <; text=";" />
-                </binding>
-                <inherit>
-                    <inherit text="inherit" />
-                    <inherited_attrs>
                         <identifier text="thingy" />
-                    </inherited_attrs>
-                    <; text=";" />
-                </inherit>
-                <inherit_from>
-                    <inherit text="inherit" />
-                    <( text="(" />
-                    <variable_expression>
-                        <identifier text="thingy" />
-                    </variable_expression>
-                    <) text=")" />
-                    <inherited_attrs>
-                        <identifier text="x" />
-                    </inherited_attrs>
-                    <; text=";" />
-                </inherit_from>
-                <binding>
-                    <attrpath>
-                        <identifier text="c" />
                     </attrpath>
                     <= text="=" />
-                    <function_expression>
-                        <formals>
-                            <{ text="{" />
-                            <} text="}" />
-                        </formals>
-                        <@ text="@" />
-                        <identifier text="thing" />
-                        <: text=":" />
-                        <if_expression>
-                            <if text="if" />
-                            <select_expression>
-                                <variable_expression>
-                                    <identifier text="a" />
-                                </variable_expression>
-                                <. text="." />
+                    <attrset_expression>
+                        <{ text="{" />
+                        <binding_set>
+                            <binding>
                                 <attrpath>
-                                    <identifier text="a" />
+                                    <identifier text="x" />
                                 </attrpath>
-                            </select_expression>
-                            <then text="then" />
-                            <variable_expression>
-                                <identifier text="b" />
-                            </variable_expression>
-                            <else text="else" />
-                            <variable_expression>
-                                <identifier text="c" />
-                            </variable_expression>
-                        </if_expression>
-                    </function_expression>
+                                <= text="=" />
+                                <integer_expression text="50" />
+                                <; text=";" />
+                            </binding>
+                        </binding_set>
+                        <} text="}" />
+                    </attrset_expression>
                     <; text=";" />
                 </binding>
                 <binding>
                     <attrpath>
+                        <identifier text="permittedInsecurePackages" />
+                    </attrpath>
+                    <= text="=" />
+                    <list_expression>
+                        <[ text="[" />
                         <string_expression>
                             <" text="\"" />
-                            <interpolation>
-                                <${ text="${" />
-                                <indented_string_expression>
-                                    <'' text="''" />
-                                    <string_fragment text="something" />
-                                    <'' text="''" />
-                                </indented_string_expression>
-                                <} text="}" />
-                            </interpolation>
+                            <string_fragment text="linux-4.13.16" />
                             <" text="\"" />
                         </string_expression>
-                    </attrpath>
-                    <= text="=" />
-                    <integer_expression text="777" />
-                    <; text=";" />
-                </binding>
-                <binding>
-                    <attrpath>
-                        <identifier text="thing88" />
-                    </attrpath>
-                    <= text="=" />
-                    <with_expression>
-                        <with text="with" />
-                        <variable_expression>
-                            <identifier text="thingy" />
-                        </variable_expression>
-                        <; text=";" />
-                        <list_expression>
-                            <[ text="[" />
-                            <variable_expression>
-                                <identifier text="x" />
-                            </variable_expression>
-                            <] text="]" />
-                        </list_expression>
-                    </with_expression>
-                    <; text=";" />
-                </binding>
-                <binding>
-                    <attrpath>
-                        <identifier text="allowUnfree" />
-                    </attrpath>
-                    <= text="=" />
-                    <variable_expression>
-                        <identifier text="true" />
-                    </variable_expression>
-                    <; text=";" />
-                </binding>
-                <binding>
-                    <attrpath>
-                        <identifier text="thing2" />
-                    </attrpath>
-                    <= text="=" />
-                    <float_expression text="99.2" />
-                    <; text=";" />
-                </binding>
-                <binding>
-                    <attrpath>
-                        <identifier text="thing3" />
-                    </attrpath>
-                    <= text="=" />
-                    <variable_expression>
-                        <identifier text="null" />
-                    </variable_expression>
-                    <; text=";" />
-                </binding>
-                <binding>
-                    <attrpath>
-                        <identifier text="nixpkgs" />
-                        <. text="." />
-                        <identifier text="config" />
-                        <. text="." />
-                        <identifier text="permittedInsecurePackages" />
-                    </attrpath>
-                    <= text="=" />
-                    <variable_expression>
-                        <identifier text="permittedInsecurePackages" />
-                    </variable_expression>
-                    <; text=";" />
-                </binding>
-                <binding>
-                    <attrpath>
-                        <identifier text="permittedInsecurePackages" />
-                    </attrpath>
-                    <= text="=" />
-                    <variable_expression>
-                        <identifier text="permittedInsecurePackages" />
-                    </variable_expression>
-                    <; text=";" />
-                </binding>
-                <binding>
-                    <attrpath>
-                        <identifier text="function" />
-                    </attrpath>
-                    <= text="=" />
-                    <function_expression>
-                        <identifier text="a" />
-                        <: text=":" />
-                        <integer_expression text="10" />
-                    </function_expression>
-                    <; text=";" />
-                </binding>
-                <binding>
-                    <attrpath>
-                        <identifier text="function2" />
-                    </attrpath>
-                    <= text="=" />
-                    <function_expression>
-                        <formals>
-                            <{ text="{" />
-                            <formal>
-                                <identifier text="a" />
-                            </formal>
-                            <, text="," />
-                            <formal>
-                                <identifier text="b" />
-                            </formal>
-                            <, text="," />
-                            <formal>
-                                <identifier text="c" />
-                            </formal>
-                            <} text="}" />
-                        </formals>
-                        <@ text="@" />
-                        <identifier text="thing" />
-                        <: text=":" />
-                        <integer_expression text="10" />
-                    </function_expression>
+                        <string_expression>
+                            <" text="\"" />
+                            <string_fragment text="openssl-1.0.2u" />
+                            <" text="\"" />
+                        </string_expression>
+                        <] text="]" />
+                    </list_expression>
                     <; text=";" />
                 </binding>
             </binding_set>
-            <} text="}" />
-        </attrset_expression>
-    </let_expression>
+            <in text="in" />
+            <attrset_expression>
+                <{ text="{" />
+                <binding_set>
+                    <binding>
+                        <attrpath>
+                            <identifier text="__id_static" />
+                        </attrpath>
+                        <= text="=" />
+                        <string_expression>
+                            <" text="\"" />
+                            <string_fragment text="0.9965333620239523" />
+                            <" text="\"" />
+                        </string_expression>
+                        <; text=";" />
+                    </binding>
+                    <binding>
+                        <attrpath>
+                            <identifier text="__id_dynamic" />
+                        </attrpath>
+                        <= text="=" />
+                        <apply_expression>
+                            <apply_expression>
+                                <select_expression>
+                                    <variable_expression>
+                                        <identifier text="builtins" />
+                                    </variable_expression>
+                                    <. text="." />
+                                    <attrpath>
+                                        <identifier text="hashFile" />
+                                    </attrpath>
+                                </select_expression>
+                                <string_expression>
+                                    <" text="\"" />
+                                    <string_fragment text="sha256" />
+                                    <" text="\"" />
+                                </string_expression>
+                            </apply_expression>
+                            <path_expression>
+                                <path_fragment text="/Users/jeffhykin/repos/snowball/random.ignore" />
+                            </path_expression>
+                        </apply_expression>
+                        <; text=";" />
+                    </binding>
+                    <binding>
+                        <attrpath>
+                            <identifier text="a" />
+                            <. text="." />
+                            <identifier text="b" />
+                        </attrpath>
+                        <= text="=" />
+                        <binary_expression>
+                            <parenthesized_expression>
+                                <( text="(" />
+                                <binary_expression>
+                                    <integer_expression text="200" />
+                                    <+ text="+" />
+                                    <binary_expression>
+                                        <integer_expression text="100" />
+                                        </ text="/" />
+                                        <integer_expression text="100" />
+                                    </binary_expression>
+                                </binary_expression>
+                                <) text=")" />
+                            </parenthesized_expression>
+                            <- text="-" />
+                            <integer_expression text="55" />
+                        </binary_expression>
+                        <; text=";" />
+                    </binding>
+                    <inherit>
+                        <inherit text="inherit" />
+                        <inherited_attrs>
+                            <identifier text="thingy" />
+                        </inherited_attrs>
+                        <; text=";" />
+                    </inherit>
+                    <inherit_from>
+                        <inherit text="inherit" />
+                        <( text="(" />
+                        <variable_expression>
+                            <identifier text="thingy" />
+                        </variable_expression>
+                        <) text=")" />
+                        <inherited_attrs>
+                            <identifier text="x" />
+                        </inherited_attrs>
+                        <; text=";" />
+                    </inherit_from>
+                    <binding>
+                        <attrpath>
+                            <identifier text="c" />
+                        </attrpath>
+                        <= text="=" />
+                        <function_expression>
+                            <formals>
+                                <{ text="{" />
+                                <} text="}" />
+                            </formals>
+                            <@ text="@" />
+                            <identifier text="thing" />
+                            <: text=":" />
+                            <if_expression>
+                                <if text="if" />
+                                <select_expression>
+                                    <variable_expression>
+                                        <identifier text="a" />
+                                    </variable_expression>
+                                    <. text="." />
+                                    <attrpath>
+                                        <identifier text="a" />
+                                    </attrpath>
+                                </select_expression>
+                                <then text="then" />
+                                <variable_expression>
+                                    <identifier text="b" />
+                                </variable_expression>
+                                <else text="else" />
+                                <variable_expression>
+                                    <identifier text="c" />
+                                </variable_expression>
+                            </if_expression>
+                        </function_expression>
+                        <; text=";" />
+                    </binding>
+                    <binding>
+                        <attrpath>
+                            <string_expression>
+                                <" text="\"" />
+                                <interpolation>
+                                    <${ text="${" />
+                                    <indented_string_expression>
+                                        <'' text="''" />
+                                        <string_fragment text="something" />
+                                        <'' text="''" />
+                                    </indented_string_expression>
+                                    <} text="}" />
+                                </interpolation>
+                                <" text="\"" />
+                            </string_expression>
+                        </attrpath>
+                        <= text="=" />
+                        <integer_expression text="777" />
+                        <; text=";" />
+                    </binding>
+                    <binding>
+                        <attrpath>
+                            <identifier text="thing88" />
+                        </attrpath>
+                        <= text="=" />
+                        <with_expression>
+                            <with text="with" />
+                            <variable_expression>
+                                <identifier text="thingy" />
+                            </variable_expression>
+                            <; text=";" />
+                            <list_expression>
+                                <[ text="[" />
+                                <variable_expression>
+                                    <identifier text="x" />
+                                </variable_expression>
+                                <] text="]" />
+                            </list_expression>
+                        </with_expression>
+                        <; text=";" />
+                    </binding>
+                    <binding>
+                        <attrpath>
+                            <identifier text="allowUnfree" />
+                        </attrpath>
+                        <= text="=" />
+                        <variable_expression>
+                            <identifier text="true" />
+                        </variable_expression>
+                        <; text=";" />
+                    </binding>
+                    <binding>
+                        <attrpath>
+                            <identifier text="thing2" />
+                        </attrpath>
+                        <= text="=" />
+                        <float_expression text="99.2" />
+                        <; text=";" />
+                    </binding>
+                    <binding>
+                        <attrpath>
+                            <identifier text="thing3" />
+                        </attrpath>
+                        <= text="=" />
+                        <variable_expression>
+                            <identifier text="null" />
+                        </variable_expression>
+                        <; text=";" />
+                    </binding>
+                    <binding>
+                        <attrpath>
+                            <identifier text="nixpkgs" />
+                            <. text="." />
+                            <identifier text="config" />
+                            <. text="." />
+                            <identifier text="permittedInsecurePackages" />
+                        </attrpath>
+                        <= text="=" />
+                        <variable_expression>
+                            <identifier text="permittedInsecurePackages" />
+                        </variable_expression>
+                        <; text=";" />
+                    </binding>
+                    <binding>
+                        <attrpath>
+                            <identifier text="permittedInsecurePackages" />
+                        </attrpath>
+                        <= text="=" />
+                        <variable_expression>
+                            <identifier text="permittedInsecurePackages" />
+                        </variable_expression>
+                        <; text=";" />
+                    </binding>
+                    <binding>
+                        <attrpath>
+                            <identifier text="function" />
+                        </attrpath>
+                        <= text="=" />
+                        <function_expression>
+                            <identifier text="a" />
+                            <: text=":" />
+                            <integer_expression text="10" />
+                        </function_expression>
+                        <; text=";" />
+                    </binding>
+                    <binding>
+                        <attrpath>
+                            <identifier text="function2" />
+                        </attrpath>
+                        <= text="=" />
+                        <function_expression>
+                            <formals>
+                                <{ text="{" />
+                                <formal>
+                                    <identifier text="a" />
+                                </formal>
+                                <, text="," />
+                                <formal>
+                                    <identifier text="b" />
+                                </formal>
+                                <, text="," />
+                                <formal>
+                                    <identifier text="c" />
+                                </formal>
+                                <} text="}" />
+                            </formals>
+                            <@ text="@" />
+                            <identifier text="thing" />
+                            <: text=":" />
+                            <integer_expression text="10" />
+                        </function_expression>
+                        <; text=";" />
+                    </binding>
+                </binding_set>
+                <} text="}" />
+            </attrset_expression>
+        </let_expression>
+    </function_expression>
     <comment text="# blah" />
 </source_code>
