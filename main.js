@@ -25,6 +25,7 @@ import { prexRawMatch } from "https://deno.land/x/prex@0.0.0.1/main.js"
     // fetchMercurial
     // string escape rules
     // path escape rules
+    // create the value-to-env-var function for derivations
 
 
 // Design explanation (converting nix to JavaScript)
@@ -692,7 +693,61 @@ const builtins = {
         "nixPath": ()=>{/*FIXME*/},
         "storeDir": ()=>{/*FIXME*/},
         "storePath": ()=>{/*FIXME*/},
-        "derivation": ()=>{/*FIXME*/},
+        "derivation": ({name, system, builder, args, outputs, meta})=>{
+            // https://nix.dev/manual/nix/2.18/language/derivations.html
+
+            // name: must be a string
+            // builder: a derivation or local file path
+            // args: optional list of strings (command-line arguments for the builder)
+            // outputs: an optional list of strings, default ["out"]
+                // each of these becomes an environment variable containing a temp path to a folder
+            
+            // let returnValue = {
+            //     all         
+            //     drvAttrs    
+            //     name        
+            //     outPath     
+            //     system
+            //     builder     
+            //     drvPath     
+            //     out         
+            //     outputName  
+            //     type
+            // }
+            
+            // Every attribute is passed as an environment variable to the builder.
+                // Strings and numbers are just passed verbatim.
+                // true becomes "1"
+                // false and null become ""
+                // A path (e.g., ../foo/sources.tar) causes the referenced file to be copied to the store; its location in the store is put in the environment variable. The idea is that all sources should reside in the Nix store, since all inputs to a derivation should reside in the Nix store.
+                // A derivation, 1. gets built 2. its output path becomes the environment variable
+                // lists are concatenated with spaces
+            // args: a list of strings
+                // Each string is a command-line argument to the builder.
+
+            // https://nixos.org/manual/nix/stable/language/derivations.html
+            // FIXME
+            // {
+            //     "/nix/store/z3hhlxbckx4g3n9sw91nnvlkjvyw754p-myname.drv": {
+            //         outputs: {
+            //             out: {
+            //                 path: "/nix/store/40s0qmrfb45vlh6610rk29ym318dswdr-myname",
+            //             },
+            //         },
+            //         inputSrcs: [],
+            //         inputDrvs: {},
+            //         platform: "mysystem",
+            //         builder: "mybuilder",
+            //         args: [],
+            //         env: {
+            //             builder: "mybuilder",
+            //             name: "myname",
+            //             out: "/nix/store/40s0qmrfb45vlh6610rk29ym318dswdr-myname",
+            //             system,
+            //         },
+            //     },
+            // }
+        },
         "derivationStrict": ()=>{/*FIXME*/},
         "parseDrvName": ()=>{/*FIXME*/},
         "compareVersions": ()=>{/*FIXME*/},
