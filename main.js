@@ -441,7 +441,15 @@ const builtins = {
     // 
     // string helpers
     // 
-        "concatStringsSep": ()=>{/*FIXME*/},
+        // (concatStringsSep "/" ["usr" "local" "bin"]) == "usr/local/bin".
+        "concatStringsSep": (separator)=>(list)=>{
+            requireString(separator)
+            assertIsList(list)
+            // .toString is to handle interpolated strings
+            return list.map(
+                each=>requireString(each),each.toString()
+            ).join(separator.toString())
+        },
         "replaceStrings": ()=>{/*FIXME*/},
         "match": (regex)=>(str)=>{
             // builtins.match "ab" "abc" => null.
