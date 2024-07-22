@@ -597,10 +597,10 @@ const builtins = {
             }
             return output
         },
-        "sort": ()=>{/*FIXME*/},
         // builtins.foldl' (x: y: x + y) "a" ["b" "c" "d"]  => "abcd"
         // builtins.foldl' (x: y: x + y) 0 [1 2 3] => 6
         "foldl'": (op)=>(nul)=>(list)=>list.reduce((acc,each)=>op(acc)(each),nul), // TODO: check more edgecases on this
+        "sort": ()=>{/*FIXME*/},
         "groupBy": ()=>{/*FIXME*/},
     
     // 
@@ -650,11 +650,11 @@ const builtins = {
         },
     
     // fetchers
-        "fetchurl": ()=>{/*FIXME*/},
+        "fetchurl": (url)=>{/*FIXME*/}, // not available in restricted mode
         "fetchTarball": ()=>{/*FIXME*/},
         "fetchGit": ()=>{/*FIXME*/}, // TODO: use git binary from ahgamut/superconfigure
         "fetchMercurial": ()=>{/*FIXME*/},
-        "fetchTree": ()=>{/*FIXME*/},
+        "fetchTree": ()=>{/*FIXME*/}, // experimental
 
     // misc
         "import": ()=>{/*FIXME*/},
@@ -907,6 +907,38 @@ const nixNodeToJs = (node)=>{
         console.debug(`xmlStylePreview(node) is:`,xmlStylePreview(node))
         return node.text
     } else if (node.type == "string_expression") {
+        const children = valueBasedChildren(node)
+        // <string_expression>
+        //     <"\"" text="\"" />
+        //     <string_fragment text="world" />
+        //     <"\"" text="\"" />
+        // </string_expression>
+        const usedDoubleQuotes = (children[0].type == "\"")
+        const hasInterpolation = children.some(each=>each.type=="interpolation")
+        if (!hasInterpolation) {
+            let text = children[1].text
+            if (usedDoubleQuotes) {
+                // guarenteed that double quotes are all escaped here
+                return `"${text.replace(/(\\\\)*\\([bfvux0])/g, "$1$2")}"`
+            } else {
+                // there are no backslash escapes
+                text = text.replace(/\\./g, "\\$&") // \n becomes literally \n (not a newline)
+
+                // we need to translate the valid escape sequences
+                text = text.replace(/(''')*''\$/g, "$1\\$")             // ''$ => the dollar sign, but because its JS we need to escape it so its \$
+                text = text.replace(/(''')*''\\\\([nrt"'])/g, "$1\\$2") // ''\n => a newline, but because its JS we need to escape it so its \n
+                text = text.replace(/(''')*''\\\\([^nrt"'])/g, "$1$2")  // ''\b => the letter b
+                text = text.replace(/'''/g, "''")                       // ''' => two single quotes
+
+                // we need to add a backslash to backticks
+                text = text.replace(/`/g, "\\`")
+                
+                return `\`${text}\``
+            }
+        }
+        
+
+        throw new NotImplemented(`Sorry :( I don't support these string expressions yet'\n${xmlStylePreview(node)}`)
         // FIXME: different escapes
         // FIXME: interpolation
     } else if (node.type == "path_expression") {
@@ -1096,10 +1128,18 @@ const assertIsList = (value)=>{
     }
     return true
 }
+// NOTE: when true its always correct, but when false it may still be a basic literal (for purposes of string interpolation)
+const isDefinitelyBasicLiteral = (node)=>{
+    if (!node.children?.length) {
+        if (node.type == "integer_expression" || node.type == "float_expression" || [ "true", "false", "null" ].includes(node.text)) {
+            return true
+        }
+    }
+}
 
 const nixRepr = (value)=>{
     // FIXME: should use single quotes instead of double, and probably some other things
     return JSON.stringify(value)
 }
 
-console.log(convertToJs(`10.0 + (-10 * 11)`))
+console.log(convertToJs(`"hello" + "world"`))
