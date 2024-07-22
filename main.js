@@ -598,7 +598,9 @@ const builtins = {
             return output
         },
         "sort": ()=>{/*FIXME*/},
-        "foldl'": ()=>{/*FIXME*/},
+        // builtins.foldl' (x: y: x + y) "a" ["b" "c" "d"]  => "abcd"
+        // builtins.foldl' (x: y: x + y) 0 [1 2 3] => 6
+        "foldl'": (op)=>(nul)=>(list)=>list.reduce((acc,each)=>op(acc)(each),nul), // TODO: check more edgecases on this
         "groupBy": ()=>{/*FIXME*/},
     
     // 
