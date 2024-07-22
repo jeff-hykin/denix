@@ -7,15 +7,16 @@ import { toString as safeToString } from "https://deno.land/x/good@1.5.1.0/strin
 import { deepCopy, deepCopySymbol, allKeyDescriptions, deepSortObject, shallowSortObject, isGeneratorType,isAsyncIterable, isSyncIterable, isTechnicallyIterable, isSyncIterableObjectOrContainer, allKeys } from "https://deno.land/x/good@1.5.1.0/value.js"
 import { escapeRegexMatch } from "https://deno.land/x/good@1.7.1.1/flattened/escape_regex_match.js"
 
-
-import { nixFileToXml, parse, xmlStylePreview } from "./tools/parsing.js"
-import { StackManager } from "./tools/analysis.js"
-import { toFloat } from "./tools/generic.js"
-import { sha256Hex, md5Hex, sha1Hex, sha512Hex } from "./tools/hashing.js"
-import { jsonParseWithBigInt } from "./tools/json_parse.js"
-import { lazyMap } from "./tools/lazy_array.js"
-
+//  tools
+import { StackManager } from "../tools/analysis.js"
+import { toFloat } from "../tools/generic.js"
+import { sha256Hex, md5Hex, sha1Hex, sha512Hex } from "../tools/hashing.js"
+import { jsonParseWithBigInt } from "../tools/json_parse.js"
+import { lazyMap } from "../tools/lazy_array.js"
 import { prexRawMatch } from "https://deno.land/x/prex@0.0.0.1/main.js"
+
+// core stuff
+import { NixError, NotImplemented } from "./errors.js"
 
 // hard parts right now:
     // builtins.fetchGit
@@ -28,8 +29,7 @@ import { prexRawMatch } from "https://deno.land/x/prex@0.0.0.1/main.js"
 // 
 // classes
 // 
-    export class NixError extends Error {}
-    export class NotImplemented extends Error {}
+    
 
     export class Interpolater {
         constructor(strings, getters) {
