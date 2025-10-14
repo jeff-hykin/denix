@@ -41,7 +41,7 @@ const parser = await createParser(nix) // path or Uint8Array
 
 import { nixJsonEval, currentSystem } from "https://esm.sh/gh/jeff-hykin/deno_nix_api@57bffb7/tools/basics_impure.js"
 import { attrPathListToNixCode, escapeStringForNix, jsValueToNix } from "https://esm.sh/gh/jeff-hykin/deno_nix_api@57bffb7/tools/basics_pure.js"
-import { setAttr, appendToAttrListLiteral } from "https://esm.sh/gh/jeff-hykin/deno_nix_api@57bffb7/tools/parsing_pure.js"
+import { setAttr, appendToAttrListLiteral, findAndReplaceAll } from "https://esm.sh/gh/jeff-hykin/deno_nix_api@57bffb7/tools/parsing_pure.js"
 
 import storageObject from "https://deno.land/x/storage_object@0.0.2.0/main.js"
 const nixBaseVersion = "25.05"
@@ -58,6 +58,20 @@ export async function getMeta(attrPath) {
 }
 export async function getMaintainer(name) {
     return await nixJsonEval(`(import <nixpkgs> {}).lib.${attrPathListToNixCode(["maintainers", name])}`, { hash: nixBaseVersion })
+}
+
+const addDefaultArgValue = ({nixCode, arg, value, })=>{
+    return findAndReplaceAll({
+        nixCode,
+        pattern: `(formals (formal (identifier) @name) @section)`,
+        nameToReplace: "section",
+        replacement: ({name, section})=>{
+            if (name.text != arg) {
+                return section.text
+            }
+            return `${name.text} ? ${value}`
+        },
+    })
 }
 
 export async function translate(packageAttrName) {
@@ -93,9 +107,10 @@ export async function translate(packageAttrName) {
             delete meta.maintainersPosition
             delete meta.position
             delete meta.name
+            const [name, version] = metaName.split(/(?<=.)-(?=\d+\.)/)
             const staticContent = JSON.stringify({
-                version: metaName.split("-")[1],
-                name: metaName.split("-")[1],
+                version,
+                name,
                 src: {},
                 meta,
             }, null, 4)
@@ -104,6 +119,26 @@ export async function translate(packageAttrName) {
                 nixCode: contents,
                 attrName: "meta",
                 valueAsCode: `staticData.meta`,
+            })
+            contents = addDefaultArgValue({
+                nixCode: contents,
+                arg: "version",
+                value: jsValueToNix(version),
+            })
+            contents = addDefaultArgValue({
+                nixCode: contents,
+                arg: "self",
+                value: "null",
+            })
+            contents = addDefaultArgValue({
+                nixCode: contents,
+                arg: "sha256",
+                value: "null",
+            })
+            contents = addDefaultArgValue({
+                nixCode: contents,
+                arg: "passthruFun",
+                value: "_: {}",
             })
             const flake = `{
                 description = ${escapeStringForNix(meta.description)};
