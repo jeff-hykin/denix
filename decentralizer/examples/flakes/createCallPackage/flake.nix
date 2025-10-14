@@ -5,7 +5,8 @@
         # libSource.url = "github:divnix/nixpkgs.lib";
         # flakeUtils.url = "github:numtide/flake-utils";
         nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.05"; 
-        nixpkgs.url = "github:jeff-hykin/denix/master/?dir=decentralizer/examples/flakes/createCallPackage.nix";
+        # nixpkgs.url = "github:jeff-hykin/denix/master/?dir=decentralizer/examples/flakes/createCallPackage.nix";
+        # nixpkgs.url = "github:jeff-hykin/denix/ab84c27797b4f88673fbaf7a448adb4d326ea245/?dir=decentralizer/examples/flakes/createCallPackage";
         # inputs.some-dep.url = "github:username/repo?dir=path/to/subdir";
         # git@github.com:jeff-hykin/denix.git 
     };
