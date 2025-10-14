@@ -39,9 +39,10 @@ const parser = await createParser(nix) // path or Uint8Array
     // dependencies find existing flakes
     // translate "with" statements
 
-import { nixJsonEval, currentSystem } from "https://esm.sh/gh/jeff-hykin/deno_nix_api@57bffb7/tools/basics_impure.js"
-import { attrPathListToNixCode, escapeStringForNix, jsValueToNix } from "https://esm.sh/gh/jeff-hykin/deno_nix_api@57bffb7/tools/basics_pure.js"
-import { setAttr, appendToAttrListLiteral, findAndReplaceAll } from "https://esm.sh/gh/jeff-hykin/deno_nix_api@57bffb7/tools/parsing_pure.js"
+import { nixJsonEval, currentSystem } from "https://esm.sh/gh/jeff-hykin/deno_nix_api@646fbc9/tools/basics_impure.js"
+import { attrPathListToNixCode, escapeStringForNix, jsValueToNix } from "https://esm.sh/gh/jeff-hykin/deno_nix_api@646fbc9/tools/basics_pure.js"
+// import { setAttr, appendToAttrListLiteral, findAndReplaceAll } from "https://esm.sh/gh/jeff-hykin/deno_nix_api@646fbc9/tools/parsing_pure.js"
+import { setAttr, appendToAttrListLiteral, findAndReplaceAll } from "/Users/jeffhykin/repos/deno_nix_api/tools/parsing_pure.js"
 
 import storageObject from "https://deno.land/x/storage_object@0.0.2.0/main.js"
 const nixBaseVersion = "25.05"
@@ -94,7 +95,7 @@ export async function translate(packageAttrName) {
         // 
         // helpers
         // 
-            const fallbackTranslate = (node)=>"/* FIXME: */" + node.text
+            const fallbackTranslate = (node)=>node.text
 
         // 
         // 
@@ -140,6 +141,7 @@ export async function translate(packageAttrName) {
                 arg: "passthruFun",
                 value: "_: {}",
             })
+            contents = contents.trim()
             const flake = `{
                 description = ${escapeStringForNix(meta.description)};
 

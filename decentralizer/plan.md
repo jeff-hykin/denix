@@ -1,10 +1,13 @@
 ## Package Repo
-- Find default.nix values for packages in nixpkgs
-- Bundle them into a single file
-- Detect/guess their inputs/dependencies
-    - Attempt to use other flakes as inputs rather than nixpkgs
-    - Attempt to pin versions of inputs
-- Create a flake for them
+- DONE: Tool that converts an attribute to a flake
+- DONE: replace meta with data from static.json
+- Get a list of executables for the package (start with darwin, then include linux)
+- Try to automatically get the package source (either local file or tarball or git or github)
+- Have an updater script that writes the static.json file
+- Attempt to use other flakes as inputs rather than nixpkgs
+    - Try swapping lib (delete lib as input)
+    - Match package attr names just from function call
+    - convert to flake input relative path or github
 
 ## Foundation
 - Done: find/make a standalone `lib`
