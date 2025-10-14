@@ -328,15 +328,7 @@
                                                     "$mini/lib/perl5/cross_perl/${version}:$out/lib/perl5/${version}:$out/lib/perl5/${version}/$runtimeArch"
                                             ''; # */
                                 
-                                        meta = with lib; {
-                                            homepage = "https://www.perl.org/";
-                                            description = "Standard implementation of the Perl 5 programming language";
-                                            license = licenses.artistic1;
-                                            maintainers = [ ];
-                                            platforms = platforms.all;
-                                            priority = 6; # in `buildEnv' (including the one inside `perl.withPackages') the library files will have priority over files in `perl`
-                                            mainProgram = "perl";
-                                        };
+                                        meta = staticData.meta;
                                     }
                                     // lib.optionalAttrs crossCompiling rec {
                                         crossVersion = "1.6";
