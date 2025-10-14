@@ -21,7 +21,16 @@ import { translate, getMeta } from "./api.js"
 // await FileSystem.write({path:`${FileSystem.thisFolder}/examples/perl/flake.nix`, data: translated.flake, overwrite: true})
 // await FileSystem.write({path:`${FileSystem.thisFolder}/examples/perl/static.json`, data: translated.staticContent, overwrite: true})
 
-var name = "bash"
+// var name = "bash"
+// var meta = await getMeta(name)
+// var translated = await translate(name)
+// await FileSystem.remove(`${FileSystem.thisFolder}/examples/${name}/`)
+// await FileSystem.copy({from:`${FileSystem.dirname(meta.position.replace(/:\d+$/,""))}`, to:`${FileSystem.thisFolder}/examples/${name}/`, overwrite: true})
+// await FileSystem.write({path:`${FileSystem.thisFolder}/examples/${name}/package.nix.xml`, data: translated.xmlStylePreview, overwrite: true})
+// await FileSystem.write({path:`${FileSystem.thisFolder}/examples/${name}/flake.nix`, data: translated.flake, overwrite: true})
+// await FileSystem.write({path:`${FileSystem.thisFolder}/examples/${name}/static.json`, data: translated.staticContent, overwrite: true})
+
+var name = "coreutils"
 var meta = await getMeta(name)
 var translated = await translate(name)
 await FileSystem.remove(`${FileSystem.thisFolder}/examples/${name}/`)
