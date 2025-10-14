@@ -12,10 +12,10 @@
     
     outputs = { self, static, libSource, flakeUtils, nixpkgs, ... }:
         let
-            staticData = builtins.fromJSON (builtins.readFile static.path);
+            staticData = builtins.fromJSON (builtins.readFile static.outPath);
             lib = libSource.lib;
         in
-            flake-utils.lib.eachSystem staticData.meta.platforms (system:
+            flakeUtils.lib.eachSystem staticData.meta.platforms (system:
                 let
                     pkgs = nixpkgs.legacyPackages.${system};
                 in

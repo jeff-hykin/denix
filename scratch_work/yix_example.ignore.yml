@@ -1,0 +1,188 @@
+Fn:
+    { main }:
+        In:
+            Map:
+                buildInputs: [ system, [Dot], buildInputs ]
+                nativeBuildInputs: []
+                shellHook: |
+                    export PATH="$PATH:$HOME/.cargo/bin"
+                    if [[ "$OSTYPE" == "linux-gnu" ]] 
+                    then
+                        export PATH="$PATH:$HOME/.rustup/toolchains/${rustInfo.channel}-x86_64-unknown-linux-gnu/bin/"
+                    fi
+                # according to: https://nixos.wiki/wiki/Rust
+                # Certain Rust tools won't work without this
+                # This can also be fixed by using oxalica/rust-overlay and specifying the rust-src extension
+                # See https://discourse.nixos.org/t/rust-src-not-found-and-other-misadventures-of-developing-rust-on-nixos/11570/3?u=samuela. for more details.
+                RUST_SRC_PATH:
+                    Interpolate: 
+                        - [ main, [Dot], packages, [Dot], rust, [Dot], packages, [Dot], stable, [Dot], rustPlatform, [Dot], rustLibSrc]
+                RUSTC_VERSION:
+                    Interpolate:
+                        - [rustInfo, [Dot], channel]
+                        - '-'
+                        - [rustInfo, [Dot], date]
+                # https://github.com/rust-lang/rust-bindgen#environment-variables
+                LIBCLANG_PATH:
+                    Call: [main, [Dot], packages, [Dot], lib, [Dot], makeLibraryPath]
+                    With:
+                        - List:
+                            - [main, [Dot], packages, [Dot], llvmPackages_latest, [Dot], libclang, [Dot], lib]
+                
+                # Add libvmi precompiled library to rustc search path
+                RUSTFLAGS: [ system, [Dot], rustLibPaths ]
+                # Add libvmi, glibc, clang, glib headers to bindgen search path
+                BINDGEN_EXTRA_CLANG_ARGS:
+                    Concat:
+                        - [ system, [Dot], normalIncludes ]
+                        - [ system, [Dot], specialIncludes ]
+        Let:
+            import: [main, [Dot], import]
+            fetchTarball: [main, [Dot], fetchTarball]
+            rustInfo:
+                Map:
+                    date: "2022-06-28"
+                    channel: "nightly"
+                    targets:
+                        List:
+                            - "wasm32-unknown-unknown"
+                            - "x86_64-unknown-linux-gnu"
+                            # wasm32-unknown-unknown    # wasm
+                            # aarch64-unknown-linux-gnu # ARM64 Linux (kernel 4.2, glibc 2.17+) 1
+                            # i686-pc-windows-gnu       # 32-bit MinGW (Windows 7+)
+                            # i686-pc-windows-msvc      # 32-bit MSVC (Windows 7+)
+                            # i686-unknown-linux-gnu    # 32-bit Linux (kernel 2.6.32+, glibc 2.11+)
+                            # x86_64-apple-darwin       # 64-bit macOS (10.7+, Lion+)
+                            # x86_64-pc-windows-gnu     # 64-bit MinGW (Windows 7+)
+                            # x86_64-pc-windows-msvc    # 64-bit MSVC (Windows 7+)
+                            # x86_64-unknown-linux-gnu  # 64-bit Linux (kernel 2.6.32+, glibc 2.
+                    mozOverlayImportUrl: "https://github.com/mozilla/nixpkgs-mozilla/archive/7c1e8b1dd6ed0043fb4ee0b12b815256b0b9de6f.tar.gz"
+            
+            mozOverlay:
+                Call: import
+                With:
+                    - Call: fetchTarball
+                      With:
+                          Map: { url: [rustInfo, [Dot], mozOverlayImportUrl] }
+            
+            mainPackagesIncludingRust:
+                Call: import
+                With:
+                    - Call: fetchTarball
+                      With:
+                          Map: { url: "https://github.com/NixOS/nixpkgs/archive/c82b46413401efa740a0b994f52e9903a4f6dcd5.tar.gz" }
+            
+            rustChannel:
+                Call: [mainPackagesIncludingRust, [Dot], rustChannelOf]
+                With:
+                    - Map:
+                        date: [ rustInfo, [Dot], date ]
+                        channel: [ rustInfo, [Dot], channel ]
+            rust:
+                Call: [rustChannel, [Dot], rust]
+                With:
+                    - Map: { targets: [ rustInfo, [Dot], targets ]}
+            
+            linuxOnly:
+                If:
+                    [main, [Dot], stdenv, [Dot], isLinux]
+                Then:
+                    Map:
+                        normalIncludes:
+                            Call: map
+                            With:
+                                - Fn:
+                                    each: [ '-I"', [Join], each, [Join], '/include"' ]
+                                - List:
+                                    - [main, [Dot], packages, [Dot], libvmi]
+                                    - [main, [Dot], packages, [Dot], glibc, [Dot], dev]
+                        specialIncludes:
+                            List:
+                                - Interpolate:
+                                    - '-I"'
+                                    - [main, [Dot], packages, [Dot], llvmPackages_latest, [Dot], libclang, [Dot], lib]
+                                    - '/lib/clang/'
+                                    - [main, [Dot], packages, [Dot], llvmPackages_latest, [Dot], libclang, [Dot], version]
+                                    - '/include"'
+                                - Interpolate:
+                                    - '-I"'
+                                    - [main, [Dot], packages, [Dot], glib, [Dot], dev]
+                                    - '/include/glib-2.0"'
+                                - Interpolate:
+                                    - '-I'
+                                    - [main, [Dot], packages, [Dot], glib, [Dot], out]
+                                    - '/lib/glib-2.0/include/'
+                        rustLibPaths:
+                            - [builtins, [Dot], map]
+                            - Fn: 
+                                each: [ '-L', [Join], each, [Join], '/lib"' ]
+                            - List:
+                                - [main, [Dot], packages, [Dot], libvmi] 
+                        buildInputs:
+                            List:
+                                - rust
+                                - [main, [Dot], packages, [Dot], rustup]
+                                - [main, [Dot], packages, [Dot], llvmPackages_latest, [Dot], llvm]
+                                - [main, [Dot], packages, [Dot], llvmPackages_latest, [Dot], bintools]
+                                - [main, [Dot], packages, [Dot], llvmPackages_latest, [Dot], lld]
+                                - [main, [Dot], packages, [Dot], zlib, [Dot], out]
+                                - [main, [Dot], packages, [Dot], xorriso]
+                                - [main, [Dot], packages, [Dot], grub2]
+                                - [main, [Dot], packages, [Dot], qemu]
+                                - [main, [Dot], packages, [Dot], python3]
+                Else:
+                    Map: {}
+            macOnly:
+                If:
+                    [main, [Dot], stdenv, [Dot], isDarwin]
+                Then:
+                    Map:
+                        normalIncludes:
+                            Call: map
+                            With:
+                                - Fn:
+                                    each: [ '-I"', [Join], each, [Join], '/include"' ]
+                                - List:
+                                    - []
+                        specialIncludes:
+                            List:
+                                - Interpolate:
+                                    - '-I"'
+                                    - [main, [Dot], packages, [Dot], llvmPackages_latest, [Dot], libclang, [Dot], lib]
+                                    - '/lib/clang/'
+                                    - [main, [Dot], packages, [Dot], llvmPackages_latest, [Dot], libclang, [Dot], version]
+                                    - '/include"'
+                                - Interpolate:
+                                    - '-I"'
+                                    - [main, [Dot], packages, [Dot], glib, [Dot], dev]
+                                    - '/include/glib-2.0"'
+                                - Interpolate:
+                                    - '-I'
+                                    - [main, [Dot], packages, [Dot], glib, [Dot], out]
+                                    - '/lib/glib-2.0/include/'
+                        rustLibPaths:
+                            Call: map
+                            With:
+                                - Fn: 
+                                    each: [ '-L', [Join], each, [Join], '/lib"' ]
+                                - List:
+                                    - []
+                        buildInputs:
+                            List:
+                                - [main, [Dot], darwin, [Dot], apple_sdk, [Dot], frameworks, [Dot], Security]
+                                - [main, [Dot], packages, [Dot], libiconv]
+                                - rust
+                                - [main, [Dot], packages, [Dot], rustup]
+                                - [main, [Dot], packages, [Dot], llvmPackages_latest, [Dot], llvm]
+                                - [main, [Dot], packages, [Dot], llvmPackages_latest, [Dot], bintools]
+                                - [main, [Dot], packages, [Dot], llvmPackages_latest, [Dot], lld]
+                                - [main, [Dot], packages, [Dot], zlib, [Dot], out]
+                                - [main, [Dot], packages, [Dot], xorriso]
+                                - [main, [Dot], packages, [Dot], qemu]
+                                - [main, [Dot], packages, [Dot], python3]
+                Else:
+                    Map: {}
+            
+            system: [ linuxOnly, [Merge], macOnly ]
+        
+        

@@ -1,0 +1,84 @@
+- types:
+    - null
+    - true
+    - false
+    - 123
+    - !path ./path_literal
+    - "string"
+    - Map: { key: value }
+    # - {{ key: value }} # also a map (map with complex key that is a map)
+    - List: [ value, value ]
+    # - {[ value, value ]} # also a list (map with only one key, a complex key that is a list with no operator)
+    - Fn: { x: (function expression) }
+    - Fn: { {x}: (function expression) }
+
+- Constructs:
+    - operators:
+        - addition:
+            [ a, [Plus], b ]
+        - subtraction:
+            [ a, [Minus], b ]
+        - division:
+            [ a, [Div], b ]
+        - multiplication:
+            [ 100, [Times], 2 ]
+        - negation:
+            [ [Not], a ]
+        - list concatonation:
+            Concat:
+                - list1
+                - list2
+        - etc
+    - let in:
+        Let:
+            x: 1
+            y: 2
+            z: 3
+        In:
+            (expression)
+    - function call:
+        [ f, [ 100 ] ]
+        [ f, [CallWith], 100 ]
+    - attribute access:
+        [ x, [Dot], y, [Dot], z ] # x.y.z
+        [ z, [From], y, [From], x ] # x.y.z
+    - assignment:
+        a: 10
+        [ b, [From], a]: 10
+    - if else then:
+        If:
+            [ x, [LessThan], 10 ]
+        Then:
+            100
+        Else:
+            200
+    - string interpolation:
+        - Interpolate:
+            - "hello "
+            - x
+    - attribute assignment interpolation: TODO
+    - singlequotes as part of a var name: TODO
+
+- Intentionally Not supported:
+    - with
+    - inherit
+    - rec
+    - the @ of a function definition
+
+
+- examples:
+    - Let:
+        pkgs: import: "https://github.com/NixOS/nixpkgs/archive/472fc059560306eeea6834d5923930f1c3968724.tar.gz"
+      In:
+        Map: {
+            deno:
+                {Map: {
+                    from: [[pkgs], deno],
+                    bin: deno,
+                    asBuildInput: true,
+                }},
+        }
+        
+            
+        
+        

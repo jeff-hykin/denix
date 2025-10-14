@@ -1,0 +1,592 @@
+<source_code>
+    <function_expression>
+        <formals>
+            <"{" text="{" />
+            <whitespace text="\n    " />
+            <formal>
+                <identifier text="lib" />
+            </formal>
+            <"," text="," />
+            <whitespace text="\n    " />
+            <formal>
+                <identifier text="fetchFromGitHub" />
+            </formal>
+            <"," text="," />
+            <whitespace text="\n    " />
+            <formal>
+                <identifier text="makeWrapper" />
+            </formal>
+            <"," text="," />
+            <whitespace text="\n    " />
+            <formal>
+                <identifier text="nix-update-script" />
+            </formal>
+            <"," text="," />
+            <whitespace text="\n    " />
+            <formal>
+                <identifier text="perl" />
+            </formal>
+            <"," text="," />
+            <whitespace text="\n    " />
+            <formal>
+                <identifier text="stdenv" />
+            </formal>
+            <"," text="," />
+            <whitespace text="\n    " />
+            <formal>
+                <identifier text="testers" />
+            </formal>
+            <"," text="," />
+            <formal>
+                <identifier text="" />
+            </formal>
+            <whitespace text="\n" />
+            <"}" text="}" />
+        </formals>
+        <":" text=":" />
+        <whitespace text="\n\n" />
+        <apply_expression>
+            <select_expression>
+                <variable_expression>
+                    <identifier text="stdenv" />
+                </variable_expression>
+                <"." text="." />
+                <attrpath>
+                    <identifier text="mkDerivation" />
+                </attrpath>
+            </select_expression>
+            <whitespace text=" " />
+            <parenthesized_expression>
+                <"(" text="(" />
+                <function_expression>
+                    <identifier text="finalAttrs" />
+                    <":" text=":" />
+                    <whitespace text=" " />
+                    <attrset_expression>
+                        <"{" text="{" />
+                        <whitespace text="\n    " />
+                        <binding_set>
+                            <binding>
+                                <attrpath>
+                                    <identifier text="pname" />
+                                </attrpath>
+                                <whitespace text=" " />
+                                <"=" text="=" />
+                                <whitespace text=" " />
+                                <string_expression>
+                                    <"\"" text="\"" />
+                                    <string_fragment text="cowsay" />
+                                    <"\"" text="\"" />
+                                </string_expression>
+                                <";" text=";" />
+                            </binding>
+                            <whitespace text="\n    " />
+                            <binding>
+                                <attrpath>
+                                    <identifier text="version" />
+                                </attrpath>
+                                <whitespace text=" " />
+                                <"=" text="=" />
+                                <whitespace text=" " />
+                                <string_expression>
+                                    <"\"" text="\"" />
+                                    <string_fragment text="3.8.4" />
+                                    <"\"" text="\"" />
+                                </string_expression>
+                                <";" text=";" />
+                            </binding>
+                            <whitespace text="\n\n    " />
+                            <binding>
+                                <attrpath>
+                                    <identifier text="outputs" />
+                                </attrpath>
+                                <whitespace text=" " />
+                                <"=" text="=" />
+                                <whitespace text=" " />
+                                <list_expression>
+                                    <"[" text="[" />
+                                    <whitespace text="\n        " />
+                                    <string_expression>
+                                        <"\"" text="\"" />
+                                        <string_fragment text="out" />
+                                        <"\"" text="\"" />
+                                    </string_expression>
+                                    <whitespace text="\n        " />
+                                    <string_expression>
+                                        <"\"" text="\"" />
+                                        <string_fragment text="man" />
+                                        <"\"" text="\"" />
+                                    </string_expression>
+                                    <whitespace text="\n    " />
+                                    <"]" text="]" />
+                                </list_expression>
+                                <";" text=";" />
+                            </binding>
+                            <whitespace text="\n\n    " />
+                            <binding>
+                                <attrpath>
+                                    <identifier text="src" />
+                                </attrpath>
+                                <whitespace text=" " />
+                                <"=" text="=" />
+                                <whitespace text=" " />
+                                <apply_expression>
+                                    <variable_expression>
+                                        <identifier text="fetchFromGitHub" />
+                                    </variable_expression>
+                                    <whitespace text=" " />
+                                    <attrset_expression>
+                                        <"{" text="{" />
+                                        <whitespace text="\n        " />
+                                        <binding_set>
+                                            <binding>
+                                                <attrpath>
+                                                    <identifier text="owner" />
+                                                </attrpath>
+                                                <whitespace text=" " />
+                                                <"=" text="=" />
+                                                <whitespace text=" " />
+                                                <string_expression>
+                                                    <"\"" text="\"" />
+                                                    <string_fragment text="cowsay-org" />
+                                                    <"\"" text="\"" />
+                                                </string_expression>
+                                                <";" text=";" />
+                                            </binding>
+                                            <whitespace text="\n        " />
+                                            <binding>
+                                                <attrpath>
+                                                    <identifier text="repo" />
+                                                </attrpath>
+                                                <whitespace text=" " />
+                                                <"=" text="=" />
+                                                <whitespace text=" " />
+                                                <string_expression>
+                                                    <"\"" text="\"" />
+                                                    <string_fragment text="cowsay" />
+                                                    <"\"" text="\"" />
+                                                </string_expression>
+                                                <";" text=";" />
+                                            </binding>
+                                            <whitespace text="\n        " />
+                                            <binding>
+                                                <attrpath>
+                                                    <identifier text="rev" />
+                                                </attrpath>
+                                                <whitespace text=" " />
+                                                <"=" text="=" />
+                                                <whitespace text=" " />
+                                                <string_expression>
+                                                    <"\"" text="\"" />
+                                                    <string_fragment text="v" />
+                                                    <interpolation>
+                                                        <"${" text="${" />
+                                                        <select_expression>
+                                                            <variable_expression>
+                                                                <identifier text="finalAttrs" />
+                                                            </variable_expression>
+                                                            <"." text="." />
+                                                            <attrpath>
+                                                                <identifier text="version" />
+                                                            </attrpath>
+                                                        </select_expression>
+                                                        <"}" text="}" />
+                                                    </interpolation>
+                                                    <"\"" text="\"" />
+                                                </string_expression>
+                                                <";" text=";" />
+                                            </binding>
+                                            <whitespace text="\n        " />
+                                            <binding>
+                                                <attrpath>
+                                                    <identifier text="hash" />
+                                                </attrpath>
+                                                <whitespace text=" " />
+                                                <"=" text="=" />
+                                                <whitespace text=" " />
+                                                <string_expression>
+                                                    <"\"" text="\"" />
+                                                    <string_fragment text="sha256-m3Rndw0rnTBLhs15KqokzIOWuYl6aoPqEu2MHWpXRCs=" />
+                                                    <"\"" text="\"" />
+                                                </string_expression>
+                                                <";" text=";" />
+                                            </binding>
+                                        </binding_set>
+                                        <whitespace text="\n    " />
+                                        <"}" text="}" />
+                                    </attrset_expression>
+                                </apply_expression>
+                                <";" text=";" />
+                            </binding>
+                            <whitespace text="\n\n    " />
+                            <binding>
+                                <attrpath>
+                                    <identifier text="nativeBuildInputs" />
+                                </attrpath>
+                                <whitespace text=" " />
+                                <"=" text="=" />
+                                <whitespace text=" " />
+                                <list_expression>
+                                    <"[" text="[" />
+                                    <whitespace text=" " />
+                                    <variable_expression>
+                                        <identifier text="makeWrapper" />
+                                    </variable_expression>
+                                    <whitespace text=" " />
+                                    <"]" text="]" />
+                                </list_expression>
+                                <";" text=";" />
+                            </binding>
+                            <whitespace text="\n\n    " />
+                            <binding>
+                                <attrpath>
+                                    <identifier text="buildInputs" />
+                                </attrpath>
+                                <whitespace text=" " />
+                                <"=" text="=" />
+                                <whitespace text=" " />
+                                <list_expression>
+                                    <"[" text="[" />
+                                    <whitespace text=" " />
+                                    <variable_expression>
+                                        <identifier text="perl" />
+                                    </variable_expression>
+                                    <whitespace text=" " />
+                                    <"]" text="]" />
+                                </list_expression>
+                                <";" text=";" />
+                            </binding>
+                            <whitespace text="\n\n    " />
+                            <binding>
+                                <attrpath>
+                                    <identifier text="makeFlags" />
+                                </attrpath>
+                                <whitespace text=" " />
+                                <"=" text="=" />
+                                <whitespace text=" " />
+                                <list_expression>
+                                    <"[" text="[" />
+                                    <whitespace text=" " />
+                                    <string_expression>
+                                        <"\"" text="\"" />
+                                        <string_fragment text="prefix=" />
+                                        <interpolation>
+                                            <"${" text="${" />
+                                            <apply_expression>
+                                                <variable_expression>
+                                                    <identifier text="placeholder" />
+                                                </variable_expression>
+                                                <whitespace text=" " />
+                                                <string_expression>
+                                                    <"\"" text="\"" />
+                                                    <string_fragment text="out" />
+                                                    <"\"" text="\"" />
+                                                </string_expression>
+                                            </apply_expression>
+                                            <"}" text="}" />
+                                        </interpolation>
+                                        <"\"" text="\"" />
+                                    </string_expression>
+                                    <whitespace text=" " />
+                                    <"]" text="]" />
+                                </list_expression>
+                                <";" text=";" />
+                            </binding>
+                            <whitespace text="\n\n    " />
+                            <binding>
+                                <attrpath>
+                                    <identifier text="postInstall" />
+                                </attrpath>
+                                <whitespace text=" " />
+                                <"=" text="=" />
+                                <whitespace text=" " />
+                                <indented_string_expression>
+                                    <"''" text="''" />
+                                    <string_fragment text="\n        wrapProgram $out/bin/cowsay \\\n            --suffix COWPATH : $out/share/cowsay/cows\n    " />
+                                    <"''" text="''" />
+                                </indented_string_expression>
+                                <";" text=";" />
+                            </binding>
+                            <whitespace text="\n\n    " />
+                            <binding>
+                                <attrpath>
+                                    <identifier text="passthru" />
+                                </attrpath>
+                                <whitespace text=" " />
+                                <"=" text="=" />
+                                <whitespace text=" " />
+                                <attrset_expression>
+                                    <"{" text="{" />
+                                    <whitespace text="\n        " />
+                                    <binding_set>
+                                        <binding>
+                                            <attrpath>
+                                                <identifier text="updateScript" />
+                                            </attrpath>
+                                            <whitespace text=" " />
+                                            <"=" text="=" />
+                                            <whitespace text=" " />
+                                            <apply_expression>
+                                                <variable_expression>
+                                                    <identifier text="nix-update-script" />
+                                                </variable_expression>
+                                                <whitespace text=" " />
+                                                <attrset_expression>
+                                                    <"{" text="{" />
+                                                    <whitespace text=" " />
+                                                    <"}" text="}" />
+                                                </attrset_expression>
+                                            </apply_expression>
+                                            <";" text=";" />
+                                        </binding>
+                                        <whitespace text="\n        " />
+                                        <binding>
+                                            <attrpath>
+                                                <identifier text="tests" />
+                                                <"." text="." />
+                                                <identifier text="version" />
+                                            </attrpath>
+                                            <whitespace text=" " />
+                                            <"=" text="=" />
+                                            <whitespace text=" " />
+                                            <apply_expression>
+                                                <select_expression>
+                                                    <variable_expression>
+                                                        <identifier text="testers" />
+                                                    </variable_expression>
+                                                    <"." text="." />
+                                                    <attrpath>
+                                                        <identifier text="testVersion" />
+                                                    </attrpath>
+                                                </select_expression>
+                                                <whitespace text=" " />
+                                                <attrset_expression>
+                                                    <"{" text="{" />
+                                                    <whitespace text="\n            " />
+                                                    <binding_set>
+                                                        <binding>
+                                                            <attrpath>
+                                                                <identifier text="package" />
+                                                            </attrpath>
+                                                            <whitespace text=" " />
+                                                            <"=" text="=" />
+                                                            <whitespace text=" " />
+                                                            <select_expression>
+                                                                <variable_expression>
+                                                                    <identifier text="finalAttrs" />
+                                                                </variable_expression>
+                                                                <"." text="." />
+                                                                <attrpath>
+                                                                    <identifier text="finalPackage" />
+                                                                </attrpath>
+                                                            </select_expression>
+                                                            <";" text=";" />
+                                                        </binding>
+                                                        <whitespace text="\n            " />
+                                                        <binding>
+                                                            <attrpath>
+                                                                <identifier text="command" />
+                                                            </attrpath>
+                                                            <whitespace text=" " />
+                                                            <"=" text="=" />
+                                                            <whitespace text=" " />
+                                                            <string_expression>
+                                                                <"\"" text="\"" />
+                                                                <string_fragment text="cowsay --version" />
+                                                                <"\"" text="\"" />
+                                                            </string_expression>
+                                                            <";" text=";" />
+                                                        </binding>
+                                                    </binding_set>
+                                                    <whitespace text="\n        " />
+                                                    <"}" text="}" />
+                                                </attrset_expression>
+                                            </apply_expression>
+                                            <";" text=";" />
+                                        </binding>
+                                    </binding_set>
+                                    <whitespace text="\n    " />
+                                    <"}" text="}" />
+                                </attrset_expression>
+                                <";" text=";" />
+                            </binding>
+                            <whitespace text="\n\n    " />
+                            <binding>
+                                <attrpath>
+                                    <identifier text="meta" />
+                                </attrpath>
+                                <whitespace text=" " />
+                                <"=" text="=" />
+                                <whitespace text=" " />
+                                <with_expression>
+                                    <with text="with" />
+                                    <whitespace text=" " />
+                                    <variable_expression>
+                                        <identifier text="lib" />
+                                    </variable_expression>
+                                    <";" text=";" />
+                                    <whitespace text=" " />
+                                    <attrset_expression>
+                                        <"{" text="{" />
+                                        <whitespace text="\n        " />
+                                        <binding_set>
+                                            <binding>
+                                                <attrpath>
+                                                    <identifier text="description" />
+                                                </attrpath>
+                                                <whitespace text=" " />
+                                                <"=" text="=" />
+                                                <whitespace text=" " />
+                                                <string_expression>
+                                                    <"\"" text="\"" />
+                                                    <string_fragment text="Program which generates ASCII pictures of a cow with a message" />
+                                                    <"\"" text="\"" />
+                                                </string_expression>
+                                                <";" text=";" />
+                                            </binding>
+                                            <whitespace text="\n        " />
+                                            <binding>
+                                                <attrpath>
+                                                    <identifier text="homepage" />
+                                                </attrpath>
+                                                <whitespace text=" " />
+                                                <"=" text="=" />
+                                                <whitespace text=" " />
+                                                <string_expression>
+                                                    <"\"" text="\"" />
+                                                    <string_fragment text="https://cowsay.diamonds" />
+                                                    <"\"" text="\"" />
+                                                </string_expression>
+                                                <";" text=";" />
+                                            </binding>
+                                            <whitespace text="\n        " />
+                                            <binding>
+                                                <attrpath>
+                                                    <identifier text="changelog" />
+                                                </attrpath>
+                                                <whitespace text=" " />
+                                                <"=" text="=" />
+                                                <whitespace text=" " />
+                                                <string_expression>
+                                                    <"\"" text="\"" />
+                                                    <string_fragment text="https://github.com/cowsay-org/cowsay/releases/tag/v" />
+                                                    <interpolation>
+                                                        <"${" text="${" />
+                                                        <select_expression>
+                                                            <variable_expression>
+                                                                <identifier text="finalAttrs" />
+                                                            </variable_expression>
+                                                            <"." text="." />
+                                                            <attrpath>
+                                                                <identifier text="version" />
+                                                            </attrpath>
+                                                        </select_expression>
+                                                        <"}" text="}" />
+                                                    </interpolation>
+                                                    <"\"" text="\"" />
+                                                </string_expression>
+                                                <";" text=";" />
+                                            </binding>
+                                            <whitespace text="\n        " />
+                                            <binding>
+                                                <attrpath>
+                                                    <identifier text="license" />
+                                                </attrpath>
+                                                <whitespace text=" " />
+                                                <"=" text="=" />
+                                                <whitespace text=" " />
+                                                <select_expression>
+                                                    <variable_expression>
+                                                        <identifier text="licenses" />
+                                                    </variable_expression>
+                                                    <"." text="." />
+                                                    <attrpath>
+                                                        <identifier text="gpl3Only" />
+                                                    </attrpath>
+                                                </select_expression>
+                                                <";" text=";" />
+                                            </binding>
+                                            <whitespace text="\n        " />
+                                            <binding>
+                                                <attrpath>
+                                                    <identifier text="platforms" />
+                                                </attrpath>
+                                                <whitespace text=" " />
+                                                <"=" text="=" />
+                                                <whitespace text=" " />
+                                                <select_expression>
+                                                    <variable_expression>
+                                                        <identifier text="platforms" />
+                                                    </variable_expression>
+                                                    <"." text="." />
+                                                    <attrpath>
+                                                        <identifier text="all" />
+                                                    </attrpath>
+                                                </select_expression>
+                                                <";" text=";" />
+                                            </binding>
+                                            <whitespace text="\n        " />
+                                            <binding>
+                                                <attrpath>
+                                                    <identifier text="maintainers" />
+                                                </attrpath>
+                                                <whitespace text=" " />
+                                                <"=" text="=" />
+                                                <whitespace text=" " />
+                                                <with_expression>
+                                                    <with text="with" />
+                                                    <whitespace text=" " />
+                                                    <variable_expression>
+                                                        <identifier text="maintainers" />
+                                                    </variable_expression>
+                                                    <";" text=";" />
+                                                    <whitespace text=" " />
+                                                    <list_expression>
+                                                        <"[" text="[" />
+                                                        <whitespace text="\n            " />
+                                                        <variable_expression>
+                                                            <identifier text="rob" />
+                                                        </variable_expression>
+                                                        <whitespace text="\n            " />
+                                                        <variable_expression>
+                                                            <identifier text="anthonyroussel" />
+                                                        </variable_expression>
+                                                        <whitespace text="\n        " />
+                                                        <"]" text="]" />
+                                                    </list_expression>
+                                                </with_expression>
+                                                <";" text=";" />
+                                            </binding>
+                                            <whitespace text="\n        " />
+                                            <binding>
+                                                <attrpath>
+                                                    <identifier text="mainProgram" />
+                                                </attrpath>
+                                                <whitespace text=" " />
+                                                <"=" text="=" />
+                                                <whitespace text=" " />
+                                                <string_expression>
+                                                    <"\"" text="\"" />
+                                                    <string_fragment text="cowsay" />
+                                                    <"\"" text="\"" />
+                                                </string_expression>
+                                                <";" text=";" />
+                                            </binding>
+                                        </binding_set>
+                                        <whitespace text="\n    " />
+                                        <"}" text="}" />
+                                    </attrset_expression>
+                                </with_expression>
+                                <";" text=";" />
+                            </binding>
+                        </binding_set>
+                        <whitespace text="\n" />
+                        <"}" text="}" />
+                    </attrset_expression>
+                </function_expression>
+                <")" text=")" />
+            </parenthesized_expression>
+        </apply_expression>
+    </function_expression>
+    <whitespace text="\n" />
+</source_code>

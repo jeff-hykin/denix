@@ -1,0 +1,66 @@
+- if it cant be compiled client side, its not reproducible and not part of the toolchain
+- build builder, subset of JS code that:
+    can:
+        - use static imports (the code will be bundle-checked)
+        - create a "real" world object
+            - use fetch
+            - do all normal file system ops
+            - each fetch/read will copy the file for loading later
+            - use a shimmed deterministic version of Math.random
+            - process/argv, env, etc
+            - console log
+            - stdout.write
+        - create fake worlds
+        - use special denix imports
+            - map a world to them (defaults to "real")
+            - import a wasi executable
+        - create a wasi runtime
+            - attach a world to it
+            - run executables in it
+        - use workers
+        - eval (maybe, depends on sandboxing)
+        - pseudo execute a bash script (simulation of a shell)
+            - attach a world to it
+            - attach wasi executables to it
+                - xcc as cc
+                - could pseudo support curl/wget
+                - could pseudo support git
+                - could pseudo support zip
+                - could pseudo support make
+                - could pseudo support sed, grep
+    can't:
+        - see the host OS
+        - run child processes
+        - dynamic import
+        - use sockets or open ports
+        - use local storage
+
+- a complete publish:
+    - generates a yaml file
+    - the sandboxed code as a string
+    - hardcodes all inputs:
+        - user preferences (either hardcoded or none)
+        - static imports mapping
+        - fetch file mapping
+        - file system file mapping
+    - hardcodes all outputs:
+        - each path, hash, size, metadata (permissions, encoding, etc)
+    - can link to a partial publish
+- a partial publish:
+    - generates a yaml file
+    - the sandboxed code as a string
+    - lists all input flexibility (must be enumerable, not open-ended)
+    - lists all corrisponding output consequences
+    - other info (TODO, not nailed down yet):
+        - input restrictions/guides for fetch, file system mappings, static imports
+        - id for this tool
+        - can this be a substitute input for someone else's tool?
+        - what output attributes does it offer and under what conditions?
+        - what attributes does it not offer
+        - what input combinations have been tested
+        - how much ram is likely to be needed
+
+
+- todo:
+    - consider how the output of a lib, like ffmpeg, which (intentionally) needs a dynamic libc, but also must be embedded into some other tool
+    
