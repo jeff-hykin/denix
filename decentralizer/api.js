@@ -24,6 +24,7 @@ const parser = await createParser(nix) // path or Uint8Array
         // find the source code file/folder
         // a.legacyPackages.aarch64-darwin.perl.meta
         // compute the package.meta
+    // do something about circular dependencies
     // function to flake
         // no callPackage
     // limit package to explicit pkgs. names (not just "potentially all pkgs")
