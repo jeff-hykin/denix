@@ -4,6 +4,23 @@
 
 **Before executing what is below, filter out any achievements. Only keep remaining/unsolved tasks in this document. Add detail to each task if needed.**
 
+---
+
+## ⚡ QUICK START - What to Do Right Now
+
+**The runtime is 95% complete!** Only 1 small task remains before moving to the next phase:
+
+### Your Next Task (1-2 hours):
+1. **Implement fetchTree type='path'** (see Task 1 below, line ~107)
+2. **Run tests**: `deno test --allow-all main/tests/builtins_fetchtree_test.js`
+3. **Then STOP and choose**: Option A (optional builtins) or Option B (translator improvements)
+
+**After that task**, you have two paths:
+- **Option A** (16-22 days): Implement optional builtins (fetchMercurial, fetchClosure, getFlake)
+- **Option B** (2-3 days, RECOMMENDED): Move to translator edge case testing
+
+See the "DECISION POINT" section (line ~455) for detailed guidance on choosing your path.
+
 ## 🚨 CRITICAL WORK ORDER - READ THIS FIRST
 
 **DO NOT work on nix-lib tests until the code translator is fully implemented.**
@@ -39,11 +56,38 @@
 
 **Work on items in THIS ORDER ONLY:**
 
-1. **FIRST**: Implement remaining runtime builtins (see below)
-2. **SECOND**: Fix translator edge cases (see "AFTER RUNTIME IS COMPLETE" section)
-3. **THIRD**: Test against nixpkgs.lib files (see Phase 2)
+1. **IMMEDIATE PRIORITY** (1-2 hours): Implement fetchTree type='path' (Task 1 below)
+2. **DECISION POINT**: Choose Option A (optional builtins, 16-22 days) OR Option B (translator phase, 2-3 days)
+3. **RECOMMENDED PATH**: Option B → Translator edge cases → nixpkgs.lib testing
+
+**Detailed work order:**
+- **Step 1**: fetchTree type='path' implementation (HIGHEST PRIORITY, 1-2 hours)
+- **Step 2** (Option A): fetchMercurial → fetchClosure → getFlake → fetchTree indirect (LOW PRIORITY, 16-22 days total)
+- **Step 2** (Option B, RECOMMENDED): Translator edge case verification (2-3 days, see Phase 1 below)
+- **Step 3**: Expand nixpkgs.lib test coverage from 10 → 20+ files (4-6 days, see Phase 2 below)
+- **Step 4**: Translator optimization and real-world integration (5-8 days, OPTIONAL)
 
 **DO NOT skip ahead. DO NOT work on later phases until earlier phases are complete.**
+
+---
+
+# Current Status Summary
+
+**Runtime (main/runtime.js):**
+- ✅ 62/65 builtins implemented (95% complete)
+- ❌ 3 optional builtins: fetchMercurial, fetchClosure, getFlake
+- ⚠️ fetchTree partial: 3 edge cases remain (path, mercurial, indirect)
+- 🎯 **Next step**: Implement fetchTree type='path' (1-2 hours)
+
+**Translator (main.js):**
+- ✅ 87/87 tests passing (100%)
+- ✅ All core language features working
+- ⚠️ Some edge cases may not be covered yet (see Phase 1 below)
+- 🎯 **After runtime**: Test edge cases (2-3 days)
+
+**nixpkgs.lib Coverage:**
+- ✅ 10/41 lib files tested (24%)
+- 🎯 **Goal**: Test 20+ high-value files (4-6 days)
 
 ---
 
@@ -446,7 +490,15 @@ The next phase focuses on **translator improvements** and **testing against real
 
 ## Phase 1: Translator Edge Cases (2-3 days)
 
-The translator (main.js) has 87 passing tests but may have edge cases not yet covered. Review and implement:
+The translator (main.js) has 87 passing tests but may have edge cases not yet covered. This phase focuses on **verification and testing** rather than new features.
+
+**Approach for this phase:**
+1. Create comprehensive test cases for each edge case
+2. Run tests to see if they pass or fail
+3. Only fix if tests reveal actual bugs
+4. Document any limitations discovered
+
+Review and implement:
 
 ### 1.1: Advanced Pattern Matching (1 day)
 ```javascript
@@ -454,12 +506,21 @@ The translator (main.js) has 87 passing tests but may have edge cases not yet co
 // Pattern 1: Nested destructuring with defaults
 { a ? 1, b ? { c ? 3 }: {} }: { ... }
 
-// Pattern 2: @ patterns with nested sets
+// Pattern 2: @ patterns with nested sets (BASIC @ TESTED, need nested)
 args@{ x, y, z }: { ... }
+args@{ a, b@{ c, d } }: { ... }  // Nested @ pattern
 
 // Pattern 3: Ellipsis with bind pattern
 args@{ a, b, ... }: { ... }
+
+// Pattern 4: Mix of all features
+args@{ a ? 1, b ? { c ? 2, d ? 3 }@inner: { c = 4, d = 5 }, ... }: { ... }
 ```
+
+**Current status:**
+- Basic @ syntax tested (main/tests/translator_test.js line ~40)
+- Simple default values tested
+- Need to verify complex nesting and combinations
 
 **Files to check/modify**:
 - main.js lines 350-450 (function parameter parsing)
@@ -487,12 +548,18 @@ args@{ a, b, ... }: { ... }
 ../relative/path
 /absolute/path
 ~/home/path
-<nixpkgs>  // Angle bracket paths (search path)
+<nixpkgs>  // Angle bracket paths (search path) - PARTIALLY IMPLEMENTED
 ```
 
+**Known issue (line 149 in main.js):**
+- `<nixpkgs>` should translate to `builtins.findFile(builtins.nixPath, "nixpkgs")`
+- Currently phase4_standalone_test.js has basic tests for search paths
+- Need comprehensive tests for all angle bracket path patterns
+
 **Files to check/modify**:
-- main.js path_expression handler
-- Create test: main/tests/translator_paths_test.js
+- main.js path_expression handler (search for "path_expression")
+- main.js line 149 (Design TODO comment)
+- Expand tests in main/tests/translator_paths_test.js or phase4_standalone_test.js
 
 ### 1.4: Operator Precedence (1 day)
 ```javascript
@@ -507,9 +574,60 @@ a.b or c.d or e    // Should be (a.b or c.d) or e
 - main.js operator handling
 - Add tests to main/tests/translator_test.js
 
+### 1.5: Additional Language Features to Verify (0.5 days)
+```javascript
+// TODO: Verify these work correctly
+
+// Multi-line strings (indented strings)
+''
+  Line 1
+  Line 2
+''
+
+// String antiquotation edge cases
+"${1 + 2}"  // Number to string
+"${null}"   // Null to string
+"${false}"  // Bool to string
+
+// List concatenation operator
+[1 2] ++ [3 4]
+
+// Attrset merge operator
+{ a = 1; } // { b = 2; }
+
+// Attrset update operator (//=)
+let x = { a = 1; }; in x // { a = 2; b = 3; }
+
+// Implication operator (->)
+true -> false  // Should be: !true || false
+
+// URI literals
+http://example.com
+https://example.com/path
+
+// Inherit expressions in various contexts
+let a = 1; in { inherit a; }
+{ inherit (x) y z; }
+let inherit (x) y z; in y
+```
+
+**Files to check/modify**:
+- main.js string handling (indented strings)
+- main.js operator implementations
+- Add tests to main/tests/translator_test.js
+
 ## Phase 2: nixpkgs.lib Test Coverage (4-6 days)
 
-Test translator + runtime against real nixpkgs.lib files. Currently 15/32 lib files tested (47%).
+Test translator + runtime against real nixpkgs.lib files. Currently 10 lib files tested out of 41 total files (24%).
+
+**Files tested so far:**
+- ascii-table.nix, strings.nix, minfeatures.nix, source-types.nix, versions.nix
+- kernel.nix, flakes.nix, flake-version-info.nix, licenses.nix, fetchers.nix
+- systems/flake-systems.nix, systems/supported.nix
+
+**Remaining files (31 untested):**
+- Main lib: asserts.nix, attrsets.nix, cli.nix, customisation.nix, debug.nix, default.nix, deprecated.nix, derivations.nix, filesystem.nix, fixed-points.nix, flake.nix, generators.nix, gvariant.nix, lists.nix, meta.nix, modules.nix, options.nix, sources.nix, strings-with-deps.nix, trivial.nix, types.nix, zip-int-bits.nix (22 files)
+- Systems: architectures.nix, default.nix, doubles.nix, examples.nix, inspect.nix, parse.nix, platforms.nix (7 files)
 
 ### 2.1: Test High-Value Library Files (3 days)
 
@@ -693,6 +811,78 @@ grep "throw new NotImplemented" main/runtime.js
 # See all test files
 ls -1 main/tests/*.js | wc -l
 ```
+
+---
+
+## Additional Testing Needs
+
+Beyond the main phases above, these areas may need additional testing:
+
+### Runtime Builtin Edge Cases (1-2 days)
+```javascript
+// TODO: Test edge cases for implemented builtins
+
+// builtins.match - complex regex patterns
+builtins.match "^([a-z]+)-([0-9]+)$" "foo-123"
+builtins.match "(?P<name>...)" "..."  // Named groups
+
+// builtins.split - edge cases
+builtins.split "(a)" ""        // Empty string
+builtins.split "" "abc"        // Empty pattern
+builtins.split "()" "abc"      // Empty capture group
+
+// builtins.replaceStrings - multiple replacements
+builtins.replaceStrings ["a" "b"] ["x" "y"] "aabbaa"
+
+// builtins.toJSON - complex nested structures
+builtins.toJSON { a = [ 1 2 { b = "c"; } ]; }
+
+// builtins.fromJSON - invalid JSON handling
+builtins.fromJSON "invalid json"
+
+// builtins.hashString - all hash types
+builtins.hashString "md5" "test"
+builtins.hashString "sha1" "test"
+builtins.hashString "sha256" "test"
+builtins.hashString "sha512" "test"
+
+// builtins.compareVersions - complex version strings
+builtins.compareVersions "1.2.3-pre" "1.2.3"
+builtins.compareVersions "1.2.3.4" "1.2.3"
+```
+
+**Files to check**:
+- main/runtime.js (all builtin implementations)
+- Create main/tests/builtins_edge_cases_test.js
+
+### Import System Edge Cases (0.5 days)
+```javascript
+// TODO: Test these import patterns
+
+// Circular imports with different entry points
+// File A imports B, B imports A
+// Entry 1: import A
+// Entry 2: import B
+// Should both work without errors
+
+// Import caching across scopes
+builtins.scopedImport { x = 1; } ./file.nix
+builtins.scopedImport { x = 2; } ./file.nix
+// Should these return same or different results?
+
+// Import with relative paths from different locations
+// File /a/b.nix imports ./c.nix
+// File /d/e.nix imports ../a/c.nix
+// Should resolve to same file and use cache
+
+// JSON import with invalid JSON
+builtins.import ./invalid.json  // Should throw clear error
+```
+
+**Files to check**:
+- main/import_loader.js
+- main/import_cache.js
+- Add tests to main/tests/import_integration_test.js
 
 ---
 
