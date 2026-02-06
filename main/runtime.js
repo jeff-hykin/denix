@@ -526,11 +526,14 @@ import { loadAndEvaluateSync } from "./import_loader.js"
                 }
             },
             "substring": (start)=>(len)=>(s)=>{
+                // Convert BigInt to number for slice
+                const startNum = typeof start === 'bigint' ? Number(start) : start
+                const lenNum = typeof len === 'bigint' ? Number(len) : len
                 if (typeof s == 'string') {
-                    return s.slice(start,start+len)
+                    return s.slice(startNum, startNum + lenNum)
                 } else if (s instanceof InterpolatedString) {
                     // be lazy for InterpolatedStrings
-                    return new InterpolatedString([""], [()=>s.toString().slice(start,start+len)])
+                    return new InterpolatedString([""], [()=>s.toString().slice(startNum, startNum + lenNum)])
                 }
             },
         
@@ -1479,6 +1482,23 @@ import { loadAndEvaluateSync } from "./import_loader.js"
                 current = current[attrStr]
             }
             return true
+        },
+        selectOrDefault: (attrset, attrPath, defaultValue)=>{
+            // Select a nested attribute with a default value if it doesn't exist
+            // e.g., selectOrDefault({a: {b: 1}}, ["a", "b"], "default") => 1
+            // e.g., selectOrDefault({a: {}}, ["a", "b"], "default") => "default"
+            let current = attrset
+            for (const attr of attrPath) {
+                if (typeof current !== "object" || current === null || Array.isArray(current)) {
+                    return defaultValue
+                }
+                const attrStr = requireString(attr).toString()
+                if (!current.hasOwnProperty(attrStr)) {
+                    return defaultValue
+                }
+                current = current[attrStr]
+            }
+            return current
         },
     }
     

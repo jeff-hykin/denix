@@ -476,6 +476,8 @@ const nixNodeToJs = (node)=>{
         //         <. text="." />
         //         <identifier text="c" />
         //     </attrpath>
+        //     [<or text="or" />]  # optional default value
+        //     [<expression>]       # optional default expression
         // </select_expression>
         const children = valueBasedChildren(node)
         const base = nixNodeToJs(children[0])
@@ -485,6 +487,11 @@ const nixNodeToJs = (node)=>{
         if (!attrpath) {
             throw Error(`select_expression has no attrpath: ${node.text}`)
         }
+
+        // Check if there's an "or" default value
+        const orIndex = children.findIndex(child => child.type === "or")
+        const hasDefault = orIndex !== -1
+        const defaultValue = hasDefault ? children[orIndex + 1] : null
 
         // Build the path as a series of property accesses
         const pathParts = valueBasedChildren(attrpath).filter(each => each.type !== ".")
@@ -499,6 +506,21 @@ const nixNodeToJs = (node)=>{
                 throw Error(`Unexpected attrpath element type: ${part.type}`)
             }
         }
+
+        // If there's a default value, wrap in nullish coalescing logic
+        if (hasDefault) {
+            const defaultJs = nixNodeToJs(defaultValue)
+            // Use a helper function to handle the "or" operator
+            // The helper checks if the path exists and returns the value or default
+            return `operators.selectOrDefault(${base}, [${pathParts.map(p => {
+                if (p.type === "identifier") {
+                    return JSON.stringify(p.text)
+                } else if (p.type === "string_expression") {
+                    return nixNodeToJs(p)
+                }
+            }).join(", ")}], ${defaultJs})`
+        }
+
         return result
     } else if (node.type == "variable_expression") {
         // <variable_expression>

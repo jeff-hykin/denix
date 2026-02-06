@@ -656,6 +656,108 @@ Deno.test("nixpkgs.lib file loading", async (t) => {
         console.log("✅ flakes.nix loaded successfully (re-exports builtins)")
     })
 
+    await t.step("load flake-version-info.nix (lib overlay for version info)", () => {
+        // flake-version-info.nix is a curried function: self: finalLib: prevLib: { ... }
+        // It extends lib.trivial with version information from flake metadata
+        const filePath = join(nixpkgsLibPath, "flake-version-info.nix")
+        const nixCode = Deno.readTextFileSync(filePath)
+
+        // Translate to JS
+        let jsCode = convertToJs(nixCode, { relativePath: filePath })
+
+        // Create runtime
+        const runtime = createRuntime()
+
+        // Remove import statements
+        if (jsCode.includes('import { createRuntime }')) {
+            jsCode = jsCode.replace(/import \{ createRuntime \}.*\n/, '')
+            jsCode = jsCode.replace(/const runtime = createRuntime\(\)\n/, '')
+        }
+
+        // Remove multi-line comments
+        jsCode = jsCode.replace(/\/\*\*[\s\S]*?\*\//g, '')
+        jsCode = jsCode.trim()
+
+        // Create evaluation scope
+        const nixScope = {
+            builtins: runtime.runtime.builtins,
+            ...runtime.runtime.builtins
+        }
+
+        // Evaluate
+        const evalFunc = new Function(
+            'runtime',
+            'operators',
+            'builtins',
+            'nixScope',
+            'InterpolatedString',
+            'Path',
+            `return (${jsCode})`
+        )
+
+        const overlayFactory = evalFunc(
+            { scopeStack: [nixScope] },
+            runtime.runtime.operators,
+            runtime.runtime.builtins,
+            nixScope,
+            runtime.runtime.InterpolatedString,
+            runtime.runtime.Path
+        )
+
+        // Create mock flake self object
+        const mockFlakeSelf = {
+            lastModifiedDate: "20260205123456",
+            shortRev: "abc1234",
+            rev: "abc1234567890abcdef1234567890abcdef123456"
+        }
+
+        // Create mock prevLib with trivial section
+        const mockPrevLib = {
+            trivial: {
+                version: "1.0.0"
+            }
+        }
+
+        // Create mock finalLib with substring
+        const mockFinalLib = {
+            substring: runtime.runtime.builtins.substring
+        }
+
+        // Call the curried function: self(finalLib)(prevLib)
+        const overlay = overlayFactory(mockFlakeSelf)(mockFinalLib)(mockPrevLib)
+
+        // Verify structure
+        assertExists(overlay)
+        assertEquals(typeof overlay, "object")
+        assertExists(overlay.trivial, "overlay should have trivial")
+
+        // Check versionSuffix format: ".YYYYMMDD.shortRev"
+        assertExists(overlay.trivial.versionSuffix)
+        // versionSuffix is an InterpolatedString, convert to string
+        const versionSuffix = overlay.trivial.versionSuffix.toString()
+        assertEquals(typeof versionSuffix, "string")
+        assertEquals(versionSuffix, ".20260205.abc1234")
+
+        // Check revisionWithDefault
+        assertExists(overlay.trivial.revisionWithDefault)
+        assertEquals(typeof overlay.trivial.revisionWithDefault, "function")
+        assertEquals(
+            overlay.trivial.revisionWithDefault("fallback"),
+            "abc1234567890abcdef1234567890abcdef123456"
+        )
+
+        // Test with missing rev (should use default)
+        const mockFlakeSelfNoRev = {
+            lastModifiedDate: "19700101000000",
+            shortRev: "dirty"
+        }
+        const overlay2 = overlayFactory(mockFlakeSelfNoRev)(mockFinalLib)(mockPrevLib)
+        assertEquals(overlay2.trivial.versionSuffix.toString(), ".19700101.dirty")
+        assertEquals(overlay2.trivial.revisionWithDefault("my-default"), "my-default")
+
+        console.log("✅ flake-version-info.nix loaded successfully (lib overlay)")
+    })
+
     // Note: zip-int-bits.nix is skipped because it uses complex closures with asserts
     // that reference builtins at call-time, which requires more sophisticated scope
     // management than our current test harness provides. The translator works correctly,
