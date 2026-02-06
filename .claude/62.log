@@ -1,0 +1,55 @@
+Excellent! The prompt.md has been properly updated with all the enforcement rules. Let me create a summary of what was done:
+
+## Summary
+
+I've successfully updated the `prompt.md` file to enforce the coaching rules you specified:
+
+### ✅ Changes Made:
+
+1. **Added Mission Statement at the top** (lines 3-15):
+   - Emphasizes focusing ONLY on what's NOT implemented
+   - NEVER report achievements or completed work
+   - Absolute rules section with clear ❌ and ✅ indicators
+   - Always base implementations on official Nix documentation at https://noogle.dev
+
+2. **Enhanced Work Priority Rules** (lines 17-26):
+   - Clear ordering: Runtime first → Translator second → Nix-lib tests third
+   - Explicitly states to ONLY work on network fetchers and store functions
+
+3. **Strengthened Documentation Requirements** (lines 28-43):
+   - Mandatory requirement to read https://noogle.dev before ANY implementation
+   - Must study ALL examples and parameters
+   - Must match official Nix 2.18 behavior exactly
+   - Never guess - always verify against documentation
+
+4. **Removed ALL checkboxes** (✅):
+   - Converted checkbox lists to plain lists
+   - Changed "[ ]" to descriptive text without checkboxes
+   - Prevents achievement reporting
+
+5. **Enhanced npm module guidance** (lines 53-73):
+   - Clarified that npm modules ARE allowed via esm.sh
+   - Provided clear examples
+   - Emphasized testing imports first
+
+6. **Added stronger documentation reminders** throughout:
+   - Multiple references to https://noogle.dev
+   - Warnings before each implementation section
+   - "DO NOT PROCEED WITHOUT READING" statements
+
+7. **Final enforcement section** (lines 786-799):
+   - Absolute requirements checklist
+   - Reminder about no blockers
+   - Never report achievements
+   - Always read noogle.dev documentation
+
+The prompt.md now strongly enforces:
+- ✅ Focus on remaining work ONLY
+- ✅ Read https://noogle.dev documentation before ANY implementation
+- ✅ Work priority: Runtime → Translator → Nix-lib tests
+- ✅ No achievement reporting
+- ✅ npm modules allowed via esm.sh
+- ❌ No completion checkboxes
+- ❌ No "we implemented X" statements
+
+The bot should now stay on track and follow these rules consistently!

@@ -2,9 +2,17 @@
 
 ## ⚠️ CRITICAL: READ THIS FIRST - MISSION STATEMENT ⚠️
 
-**Your job is to focus on what is NOT implemented and NOT working. Only report what remains to be done. Do not report what you accomplished. You are a senior level developer, there is no such thing as a blocker. Break down large tasks into smaller tasks.**
+**Your job is to focus on what is NOT implemented and NOT working. Only report what remains to be done. NEVER report what you accomplished. You are a senior level developer, there is no such thing as a blocker. Break down large tasks into smaller tasks.**
 
-**Before executing what is below, please filter out any achievements. Only keep remaining/unsolved tasks in this document. Add detail to each task if its needed.**
+**Before executing what is below, filter out any achievements from this document. Only keep remaining/unsolved tasks. Add detail to each task if needed.**
+
+**ABSOLUTE RULES - NO EXCEPTIONS:**
+- ❌ NEVER add completion checkboxes (✅) to this document
+- ❌ NEVER report completed work or achievements
+- ❌ NEVER say "we implemented X" or "completed Y"
+- ✅ ONLY report what is NOT working, NOT implemented, or NEEDS to be done
+- ✅ ALWAYS remove any achievement-oriented content immediately
+- ✅ ALWAYS base implementations on official Nix documentation at https://noogle.dev
 
 ## 🚫 STRICT WORK PRIORITY RULES - FOLLOW IN ORDER 🚫
 
@@ -45,25 +53,32 @@
 ## Remaining Work - What's NOT Implemented
 
 **Current Reality Check:**
-- Runtime has 5 unimplemented builtins: fetchGit, fetchTree, fetchMercurial, fetchClosure, getFlake
-- Infrastructure exists: fetcher.js, tar.js, nar_hash.js, store_manager.js
-- Translator is complete (87/87 tests passing)
+- Runtime has 5 unimplemented builtins that NEED implementation: fetchGit, fetchTree, fetchMercurial, fetchClosure, getFlake
+- Infrastructure modules exist that should be used: fetcher.js, tar.js, nar_hash.js, store_manager.js
 - DO NOT work on translator or nix-lib tests - focus ONLY on runtime
+- The ONLY work to be done is implementing the 5 builtins listed below
 
-## 🔧 NPM MODULE USAGE 🔧
+## 🔧 NPM MODULE USAGE - YOU ARE ALLOWED TO USE NPM 🔧
+
+**YES, YOU CAN USE NPM MODULES!** Import them through esm.sh:
 
 - ✅ **ALLOWED**: You can use npm modules through `https://esm.sh/NPM_MODULE_NAME@VERSION`
+- ✅ **HOW TO USE**: Just import: `import pkg from "https://esm.sh/package-name@1.0.0"`
 - ⚠️ **WARNING**: Not all npm modules work through esm.sh (Node-specific APIs may fail)
 - ✅ **TEST FIRST**: Always test the import works before writing code that depends on it
-- ✅ **PREFER DENO**: Use Deno standard library (jsr:@std/*) when possible
-- ✅ **FALLBACK**: Check if Deno has built-in APIs (crypto, fetch, etc.)
+- ✅ **PREFER DENO FIRST**: Use Deno standard library (jsr:@std/*) when possible
+- ✅ **CHECK BUILT-INS**: Check if Deno has built-in APIs (crypto, fetch, etc.) before using npm
 
 Example:
 ```javascript
-// Test first:
-import someLib from "https://esm.sh/some-package@1.0.0";
-// Then use it
+// You ARE allowed to do this:
+import simpleGit from "https://esm.sh/simple-git@3.20.0";
+import tar from "https://esm.sh/tar@6.2.0";
+
+// Test the import works, then use it in your code
 ```
+
+**Remember**: esm.sh is a valid way to use npm packages in Deno. Don't avoid npm if it helps solve the problem!
 
 ## 🚫 REPORTING RULES - NO ACHIEVEMENTS ALLOWED 🚫
 
@@ -121,7 +136,10 @@ The documentation at https://noogle.dev shows:
 
 **IMMEDIATE TASK: Implement builtins.fetchGit**
 
-**STEP 0 - MANDATORY**: Read https://noogle.dev/f/builtins/fetchGit completely before starting
+**⚠️ STEP 0 - MANDATORY - READ DOCUMENTATION FIRST ⚠️**:
+Go to https://noogle.dev/f/builtins/fetchGit and read the ENTIRE page before writing ANY code.
+Do NOT proceed until you have read and understood the official documentation.
+Your implementation MUST match the documented behavior EXACTLY.
 
 Location: main/runtime.js (search for fetchGit - currently throws NotImplemented)
 Goal: Clone Git repositories and copy to store with metadata
@@ -131,7 +149,7 @@ Why this is critical:
 - Used extensively in Flakes, nixpkgs overlays, private repos, pinned dependencies
 - Blocks fetchTree implementation (which depends on this)
 
-Implementation Requirements (based on official Nix 2.18 documentation):
+Implementation Requirements (MUST match official Nix 2.18 documentation at https://noogle.dev/f/builtins/fetchGit):
 
 **Official Documentation**: https://nix.dev/manual/nix/2.18/language/builtins (see fetchGit section)
 
@@ -203,20 +221,20 @@ Implementation Requirements (based on official Nix 2.18 documentation):
 - Match exact Nix output structure
 
 ### Phase 10: Testing (4 hours)
-Create main/tests/builtins_fetchgit_test.js:
-- [ ] Basic clone: public HTTPS repo with no options
-- [ ] String URL shorthand: `fetchGit "https://..."`
-- [ ] Specific revision: clone with rev parameter
-- [ ] Branch reference: clone with ref parameter
-- [ ] Ref auto-prefixing: "main" → "refs/heads/main"
-- [ ] Shallow clone: verify --depth 1 used
-- [ ] Submodules: verify submodules checked out
-- [ ] Cache hit: same fetch twice uses cache
-- [ ] Local directory: ./some-path handling
-- [ ] Error: git not installed
-- [ ] Error: invalid URL
-- [ ] Error: nonexistent repository
-- [ ] Error: invalid revision
+Create main/tests/builtins_fetchgit_test.js with these required test cases:
+- Basic clone: public HTTPS repo with no options
+- String URL shorthand: `fetchGit "https://..."`
+- Specific revision: clone with rev parameter
+- Branch reference: clone with ref parameter
+- Ref auto-prefixing: "main" → "refs/heads/main"
+- Shallow clone: verify --depth 1 used
+- Submodules: verify submodules checked out
+- Cache hit: same fetch twice uses cache
+- Local directory: ./some-path handling
+- Error: git not installed
+- Error: invalid URL
+- Error: nonexistent repository
+- Error: invalid revision
 
 **Total Estimated Time**: 14-16 hours over 2-3 days
 
@@ -722,43 +740,47 @@ An implementation is NOT complete until ALL of these requirements are met:
 
 After implementing each builtin, you MUST verify ALL of these items:
 
-### 1. Documentation Verification
-- [ ] Read official Nix 2.18 manual for the builtin
-- [ ] Confirmed all parameters match documentation
-- [ ] Confirmed all default values match documentation
-- [ ] Confirmed return value structure matches documentation
-- [ ] Confirmed edge case behavior matches documentation
+### 1. Documentation Verification (MANDATORY FIRST STEP)
+MUST complete before writing ANY code:
+- Read official Nix 2.18 manual for the builtin at https://noogle.dev
+- Confirm all parameters match documentation
+- Confirm all default values match documentation
+- Confirm return value structure matches documentation
+- Confirm edge case behavior matches documentation
 
-### 2. Test Coverage Verification
-- [ ] Created comprehensive test file (main/tests/builtins_<name>_test.js)
-- [ ] All test cases passing
-- [ ] Tested happy path (basic usage)
-- [ ] Tested all parameter variants
-- [ ] Tested error cases (invalid input)
-- [ ] Tested edge cases (empty, null, special characters)
-- [ ] Tested caching behavior (if applicable)
-- [ ] Tested integration with other builtins
+### 2. Test Coverage Verification (REQUIRED)
+Must create and verify:
+- Comprehensive test file (main/tests/builtins_<name>_test.js)
+- All test cases passing
+- Tested happy path (basic usage)
+- Tested all parameter variants
+- Tested error cases (invalid input)
+- Tested edge cases (empty, null, special characters)
+- Tested caching behavior (if applicable)
+- Tested integration with other builtins
 
-### 3. Real-World Verification
-- [ ] Tested against actual public repositories (for fetchers)
-- [ ] Verified output matches actual Nix (same store paths, same metadata)
-- [ ] Tested with both HTTPS and SSH URLs (for git fetchers)
-- [ ] Tested with local paths (for git fetchers)
+### 3. Real-World Verification (REQUIRED)
+Test against actual public repositories (for fetchers):
+- Verify output matches actual Nix (same store paths, same metadata)
+- Test with both HTTPS and SSH URLs (for git fetchers)
+- Test with local paths (for git fetchers)
 
-### 4. Code Quality Verification
-- [ ] No NotImplemented errors remain
-- [ ] Error messages are clear and actionable
-- [ ] Code follows existing patterns in runtime.js
-- [ ] No hardcoded paths or assumptions
-- [ ] Proper temp directory cleanup on errors
-- [ ] No memory leaks (streams closed, temp files removed)
+### 4. Code Quality Verification (REQUIRED)
+Ensure these requirements are met:
+- No NotImplemented errors remain
+- Error messages are clear and actionable
+- Code follows existing patterns in runtime.js
+- No hardcoded paths or assumptions
+- Proper temp directory cleanup on errors
+- No memory leaks (streams closed, temp files removed)
 
-### 5. Integration Verification
-- [ ] Run full test suite: `deno test --allow-all`
-- [ ] All existing tests still pass
-- [ ] No regressions in other builtins
-- [ ] Works correctly with builtins.import
-- [ ] Works correctly with toJSON
+### 5. Integration Verification (REQUIRED)
+Run these verification steps:
+- Run full test suite: `deno test --allow-all`
+- All existing tests still pass
+- No regressions in other builtins
+- Works correctly with builtins.import
+- Works correctly with toJSON
 
 **CRITICAL**: An implementation is incomplete until all 5 categories above are verified. Partial implementations are not acceptable.
 
@@ -775,6 +797,17 @@ After implementing each builtin, you MUST verify ALL of these items:
 7. **NO GUESSING**: If behavior is unclear, read the documentation again
 8. **USE NPM VIA ESM.SH**: npm modules are allowed via https://esm.sh/package-name@version
 
-**START HERE**: Implement builtins.fetchGit (read https://noogle.dev/f/builtins/fetchGit first!)
+**START HERE**: Implement builtins.fetchGit
 
-**REMEMBER**: You are a senior developer. There are no blockers, only tasks to break down into smaller pieces.
+**⚠️ BEFORE YOU START - ABSOLUTE REQUIREMENTS ⚠️**:
+1. **READ DOCUMENTATION FIRST**: Go to https://noogle.dev/f/builtins/fetchGit and read the ENTIRE page
+2. **UNDERSTAND THE BEHAVIOR**: Study all examples and parameters in the documentation
+3. **BASE YOUR IMPLEMENTATION ON THE DOCS**: Your code MUST match what's documented at https://noogle.dev
+4. **DO NOT GUESS**: If unclear about behavior, read the documentation again
+5. **TEST AGAINST EXAMPLES**: Use the examples from https://noogle.dev in your tests
+
+**REMEMBER**:
+- You are a senior developer. There are no blockers, only tasks to break down into smaller pieces.
+- NEVER report achievements, only report remaining work
+- ALWAYS read https://noogle.dev documentation before implementing ANY builtin
+- You CAN use npm modules through https://esm.sh/package-name@version
