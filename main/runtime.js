@@ -14,6 +14,7 @@ import { sha256Hex, md5Hex, sha1Hex, sha512Hex } from "../tools/hashing.js"
 import { jsonParseWithBigInt } from "../tools/json_parse.js"
 import { lazyMap } from "../tools/lazy_array.js"
 import { prexRawMatch } from "https://deno.land/x/prex@0.0.0.1/main.js"
+import { parse as tomlParse } from "https://deno.land/std@0.224.0/toml/mod.ts"
 
 // core stuff
 import { NixError, NotImplemented } from "./errors.js"
@@ -358,12 +359,26 @@ import { NixError, NotImplemented } from "./errors.js"
         
         // 
         // value generators
-        // 
+        //
             "fromJSON": jsonParseWithBigInt, // can't be JSON.parse because plain int values need to become BigInts
-            "fromTOML": ()=>{
-                // needs to parse plain ints (no scientific or decimal) to BigInts
-                /*FIXME*/
-                throw new NotImplemented(`Sorry :( I don't support fromTOML yet'`)
+            "fromTOML": (tomlString)=>{
+                const parsed = tomlParse(requireString(tomlString).toString())
+                // recursively convert all integer numbers to BigInts to match Nix behavior
+                const convertIntsToBigInt = (value) => {
+                    if (typeof value === "number" && Number.isInteger(value)) {
+                        return BigInt(value)
+                    } else if (Array.isArray(value)) {
+                        return value.map(convertIntsToBigInt)
+                    } else if (value && typeof value === "object") {
+                        const result = {}
+                        for (const [k, v] of Object.entries(value)) {
+                            result[k] = convertIntsToBigInt(v)
+                        }
+                        return result
+                    }
+                    return value
+                }
+                return convertIntsToBigInt(parsed)
             },
 
         // 

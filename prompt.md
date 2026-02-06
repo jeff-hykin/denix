@@ -16,16 +16,21 @@
 - [x] Research FIXMEs and document in runtime.md
 - [x] Implement Phase 1 (Easy FIXMEs) - 26 functions
 - [x] Create and run tests - all passing
-- [x] Implement Phase 2 (Medium FIXMEs) - 8 functions
+- [x] Implement Phase 2 (Medium FIXMEs) - 12 functions
 - [x] Create and run Phase 2 tests - all passing
-- [ ] Continue with remaining Medium FIXMEs
-- [ ] Implement Phase 3 (Complex FIXMEs)
+- [x] Remove npm dependencies - pure URL imports only
+- [x] Implement fromTOML with @std/toml
+- [ ] Continue with remaining feasible FIXMEs
+- [ ] Implement infrastructure-dependent FIXMEs
 
 ## Current Activity
-✅ **MILESTONE REACHED**: 38 functions implemented (54% complete)
+✅ **MILESTONE REACHED**: 39 functions implemented (55% complete)
 - All Phase 1 (Easy) complete: 26 functions
 - All feasible Phase 2 (Medium) complete: 12 functions
-- 53 tests created, all passing
+- Phase 3 additions: 1 function (fromTOML)
+- 60 tests created, all passing
+- ✅ Removed deno.json, deno.lock, node_modules
+- ✅ Replaced npm:lossless-json with custom BigInt JSON parser
 - See IMPLEMENTATION_SUMMARY.md for full details
 
 ## Next Steps
@@ -61,9 +66,18 @@ Remaining items require major infrastructure:
 **Other:**
 - nixRepr (improved)
 
+### Phase 3 - Additional Features (1 function):
+**Builtins:**
+- fromTOML (with @std/toml, converts ints to BigInt)
+
+**Infrastructure:**
+- Removed npm dependencies (replaced npm:lossless-json)
+- Pure Deno URL imports only
+
 ### Tests Created:
 - main/tests/simple_test.js (26 tests, all passing)
 - main/tests/phase2_test.js (15 tests, all passing)
 - main/tests/phase2b_test.js (12 tests, all passing)
+- main/tests/fromtoml_standalone_test.js (7 tests, all passing)
 
-**Total Implemented: 38 functions** (54% of all FIXMEs)
+**Total Implemented: 39 functions** (55% of all FIXMEs)

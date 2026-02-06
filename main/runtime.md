@@ -67,7 +67,7 @@
 | Line | Function | Status | Tested | Prerequisites | Notes |
 |------|----------|--------|--------|---------------|-------|
 | 670 | `operators.equal` | ✅ DONE | ⬜ | - | Deep equality with recursive comparison for lists and attrsets. |
-| 331 | `builtins.fromTOML` | ⬜ TODO | ⬜ | TOML parser | Parse plain ints to BigInt. **Marked as hard in comments.** |
+| 331 | `builtins.fromTOML` | ✅ DONE | ✅ | - | Uses @std/toml, converts ints to BigInt. |
 | 285 | `builtins.toJSON` for paths | ⬜ TODO | ⬜ | Store system | Hash file, create store entry, return path. |
 | 530 | `builtins.fetchurl` | ⬜ TODO | ⬜ | Network, Store | Fetch URL to store. Not available in restricted mode. |
 | 531 | `builtins.fetchTarball` | ⬜ TODO | ⬜ | Network, Store | Fetch and extract tarball. |
@@ -118,6 +118,7 @@
 - `main/tests/simple_test.js` - Phase 1 test suite (26 tests, all passing)
 - `main/tests/phase2_test.js` - Phase 2 test suite (15 tests, all passing)
 - `main/tests/phase2b_test.js` - Phase 2b test suite (12 tests, all passing)
+- `main/tests/fromtoml_standalone_test.js` - TOML parser test suite (7 tests, all passing)
 - `main/tests/builtins_eval_control.js` - Evaluation control tests (blocked by prex WASM issue)
 - `main/tests/builtins_attrs.js` - Attribute set tests (blocked by prex WASM issue)
 - `main/tests/builtins_list.js` - List helper tests (blocked by prex WASM issue)
@@ -127,12 +128,18 @@
 ## Implementation Statistics
 
 - **Total FIXMEs identified:** ~71
-- **Implemented:** 38 (54%)
-- **Remaining Easy/Medium:** ~6
+- **Implemented:** 39 (55%)
+- **Remaining Easy/Medium:** ~5
 - **Remaining Hard:** ~27 (mostly store/context/flake related)
 
-## Recent Additions (Phase 2b)
+## Recent Additions
 
+### Phase 3 (Infrastructure Cleanup + New Features)
+- **fromTOML**: TOML parser with BigInt conversion (uses @std/toml)
+- **JSON parser**: Replaced npm:lossless-json with pure URL imports
+- **Cleanup**: Removed deno.json, deno.lock, node_modules - pure Deno URL imports only
+
+### Phase 2b
 - catAttrs: Collect attribute values from list of attrsets
 - zipAttrsWith: Merge attrsets with function
 - attrNames: Fixed sorting (was calling non-existent .sorted())
