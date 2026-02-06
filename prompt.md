@@ -3,6 +3,18 @@
 ## MISSION STATEMENT
 Your job is to focus ONLY on what is NOT implemented and NOT working. Report ONLY what remains to be done. Never report accomplishments or achievements. You are a senior developer - there are no blockers, only smaller tasks to break down.
 
+## IMPORTANT CORRECTION - MEMORY.MD HAS WRONG NUMBERS
+- **MEMORY.md claims**: 61/98 builtins implemented (session 23)
+- **ACTUAL REALITY**: 93/98 builtins implemented (verified by grepping NotImplemented errors)
+- **WHAT'S COMPLETE**: fetchTarball, fetchurl, builtins.path, filterSource (all working!)
+- **WHAT REMAINS**: 5 builtins (fetchGit, fetchTree, fetchMercurial, fetchClosure, getFlake)
+- **Infrastructure**: All complete (fetcher.js, tar.js, nar_hash.js, store_manager.js)
+
+The confusion comes from counting different things:
+- Nix 2.18 has 98 OFFICIAL builtins
+- Our runtime implements ~117 functions total (includes helpers, extra utilities)
+- Only 5 official builtins remain unimplemented
+
 ## CRITICAL INSTRUCTIONS - READ FIRST AND FOLLOW EXACTLY
 
 ### Work Priority Rules (STRICT ENFORCEMENT)
@@ -65,7 +77,11 @@ Your implementation MUST match the documented behavior exactly.
 | **fetchClosure** | NOT IMPLEMENTED | VERY LOW | TBD | https://noogle.dev/f/builtins/fetchClosure |
 | **getFlake** | NOT IMPLEMENTED | DEFER | TBD | https://noogle.dev/f/builtins/getFlake |
 
-**Current Status**: 93/98 builtins implemented. 5 remaining (all network/store/flake functions)
+**Current Status**:
+- **Total Nix 2.18 builtins**: 98 official functions
+- **Implemented**: All infrastructure complete (fetcher.js, tar.js, nar_hash.js, store_manager.js)
+- **Working**: fetchTarball, fetchurl, builtins.path, filterSource (all working!)
+- **Remaining**: 5 builtins (fetchGit, fetchTree, fetchMercurial, fetchClosure, getFlake)
 
 ---
 
@@ -83,59 +99,94 @@ Why this is critical:
 - Used extensively in Flakes, nixpkgs overlays, private repos, pinned dependencies
 - Blocks fetchTree implementation (which depends on this)
 
-Implementation Requirements (break into smaller tasks):
-1. **Git binary validation** (30 min)
-   - Check if git is installed: `Deno.Command("which", ["git"])`
-   - Throw clear error if not found
+Implementation Requirements (based on official Nix 2.18 documentation):
 
-2. **Argument parsing** (1 hour)
-   - Parse {url, ref?, rev?, submodules=false, shallow=false, allRefs=false}
-   - Validate required fields (url)
-   - Set defaults for optional fields
+**Official Documentation**: https://nix.dev/manual/nix/2.18/language/builtins (see fetchGit section)
 
-3. **Clone operation** (2 hours)
-   - Create temp directory (Deno.makeTempDir)
-   - Execute git clone with appropriate flags:
-     - Use `--depth 1` if shallow=true
-     - Use `--recurse-submodules` if submodules=true
-     - Use `--branch <ref>` if ref provided
-   - Handle git errors (network failures, auth failures, invalid refs)
+### Phase 1: Argument Parsing (1 hour)
+- Accept URL string OR attribute set
+- Required: url (string)
+- Optional with defaults:
+  - name (default: basename of url)
+  - rev (default: tip of ref)
+  - ref (default: "HEAD", auto-prefix "refs/heads/" unless starts with "refs/")
+  - submodules (default: false)
+  - shallow (default: false)
+  - allRefs (default: false)
+- Validate url is non-empty string
 
-4. **Checkout specific revision** (1 hour)
-   - If rev provided: `git checkout <rev>`
-   - Verify checkout succeeded
+### Phase 2: Git Binary Validation (30 min)
+- Check if git is installed: `new Deno.Command("git", {args: ["--version"]})`
+- Throw clear error if not found: "builtins.fetchGit requires git binary to be installed"
 
-5. **Extract commit metadata** (2 hours)
-   - Get rev: `git rev-parse HEAD`
-   - Get shortRev: `git rev-parse --short HEAD`
-   - Get revCount: `git rev-list --count HEAD`
-   - Get lastModified: `git log -1 --format=%ct` (Unix timestamp)
-   - Parse output from each command
+### Phase 3: Cache Check (30 min)
+- Build cache key: `fetchgit:${url}:${ref}:${rev || "tip"}`
+- Check existing cache: `getCachedPath(cacheKey)` from store_manager.js
+- If cached AND store path exists → return cached result
+- Otherwise proceed with fetch
 
-6. **Clean and hash** (1 hour)
-   - Remove .git directory (for determinism)
-   - Use existing NAR hash: `await hashDirectory(clonePath)` from main/nar_hash.js
+### Phase 4: Clone Repository (3 hours)
+- Create temp directory: `Deno.makeTempDir()`
+- Build git clone command with flags:
+  ```
+  git clone [--depth 1 if shallow] [--recurse-submodules if submodules]
+            [--branch <ref> if ref provided] <url> <tempDir>
+  ```
+- If allRefs=true: fetch all refs with `git fetch --all`
+- Handle errors: network failures, invalid URLs, auth failures
+- Parse stderr/stdout for error messages
 
-7. **Store path management** (1 hour)
-   - Compute store path: `computeFetchStorePath(narHash, name)` from tools/store_path.js
-   - Use existing caching: `getCachedPath(cacheKey)` from main/store_manager.js
-   - Move to store: `atomicMove(tempPath, storePath)` from main/store_manager.js
+### Phase 5: Checkout Revision (1 hour)
+- If rev specified: `git checkout <rev>`
+- If rev not specified: already at tip of ref from clone
+- Verify checkout succeeded (exit code 0)
 
-8. **Return attrset** (30 min)
-   - Build attrset with: {outPath, rev, shortRev, revCount, lastModified, narHash, submodules}
-   - Ensure all fields match Nix documentation
+### Phase 6: Extract Metadata (2 hours)
+- Get final rev: `git rev-parse HEAD` → string (40 char hex)
+- Get shortRev: `git rev-parse --short HEAD` → string (7 char hex)
+- Get revCount: `git rev-list --count HEAD` → integer
+- Get lastModified: `git log -1 --format=%ct HEAD` → unix timestamp
+- Parse command outputs (trim whitespace, convert to correct types)
 
-9. **Testing** (3 hours)
-   - Create main/tests/builtins_fetchgit_test.js
-   - Test: basic clone (public repo)
-   - Test: clone with specific rev
-   - Test: clone with ref (branch)
-   - Test: shallow clone
-   - Test: submodules
-   - Test: error handling (invalid URL, missing repo)
-   - Test: caching behavior
+### Phase 7: Clean Working Directory (30 min)
+- Remove .git directory for determinism: `Deno.remove(path + "/.git", {recursive: true})`
+- Apply git ls-files if local directory (filter to tracked files only)
+- Result should be clean directory with only repository contents
 
-Total Estimated Time: 12-15 hours over 2-3 days
+### Phase 8: Hash and Store (1.5 hours)
+- Compute NAR hash: `await hashDirectory(clonePath)` from nar_hash.js
+- Compute store path: `computeFetchStorePath(narHash, name)` from store_path.js
+- Move to store: `await atomicMove(tempPath, storePath)` from store_manager.js
+- Save to cache: `setCachedPath(cacheKey, storePath, metadata)`
+
+### Phase 9: Build Result (30 min)
+- Return attribute set with:
+  - outPath: store path string
+  - rev: commit hash (40 char)
+  - shortRev: short commit hash (7 char)
+  - revCount: integer commit count
+  - lastModified: integer unix timestamp
+  - narHash: "sha256:..." string
+  - submodules: boolean (echo input parameter)
+- Match exact Nix output structure
+
+### Phase 10: Testing (4 hours)
+Create main/tests/builtins_fetchgit_test.js:
+- [ ] Basic clone: public HTTPS repo with no options
+- [ ] String URL shorthand: `fetchGit "https://..."`
+- [ ] Specific revision: clone with rev parameter
+- [ ] Branch reference: clone with ref parameter
+- [ ] Ref auto-prefixing: "main" → "refs/heads/main"
+- [ ] Shallow clone: verify --depth 1 used
+- [ ] Submodules: verify submodules checked out
+- [ ] Cache hit: same fetch twice uses cache
+- [ ] Local directory: ./some-path handling
+- [ ] Error: git not installed
+- [ ] Error: invalid URL
+- [ ] Error: nonexistent repository
+- [ ] Error: invalid revision
+
+**Total Estimated Time**: 14-16 hours over 2-3 days
 
 ---
 
@@ -143,224 +194,348 @@ Total Estimated Time: 12-15 hours over 2-3 days
 
 ### 1. builtins.fetchGit - NOT IMPLEMENTED (HIGH PRIORITY)
 
-**DOCUMENTATION**: https://noogle.dev/f/builtins/fetchGit (READ THIS FIRST!)
+**OFFICIAL DOCUMENTATION**: https://nix.dev/manual/nix/2.18/language/builtins (fetchGit section)
 
-Location: main/runtime.js (search for fetchGit)
+Location: main/runtime.js line ~1050 (search for "fetchGit")
 Current State: Throws NotImplemented error
 
-What needs to be done:
-1. Validate git binary exists using Deno.Command
-2. Parse and validate input: {url, ref?, rev?, submodules=false, shallow=false, allRefs=false}
-3. Clone repository to temp directory with appropriate flags (--depth 1, --recurse-submodules, --branch)
-4. Checkout specific revision if provided
-5. Extract metadata: rev, shortRev, revCount (git rev-list --count), lastModified (git log -1 --format=%ct)
-6. Remove .git directory for determinism
-7. Hash with NAR using existing main/nar_hash.js
-8. Compute store path using existing tools/store_path.js
-9. Move to store using existing main/store_manager.js
-10. Return attrset: {outPath, rev, shortRev, revCount, lastModified, narHash, submodules}
+**What it does**: Clones Git repositories and copies them to the Nix store with metadata (commit hash, revision count, etc.)
 
-Challenges to solve:
-- Git command execution and error handling (network failures, invalid refs, auth failures)
-- Parsing git command output correctly
-- Handling different git versions and output formats
-- Proper temp directory cleanup on errors
+**Input Parameters** (official Nix 2.18 spec):
+- url (string, required): Git repository URL
+- name (string, optional): Store directory name (default: basename of URL)
+- rev (string, optional): Git revision/commit hash (default: tip of ref)
+- ref (string, optional): Branch/tag name (default: "HEAD", auto-prefixed with "refs/heads/")
+- submodules (boolean, optional): Checkout submodules (default: false)
+- shallow (boolean, optional): Use shallow clone (default: false)
+- allRefs (boolean, optional): Fetch all refs (default: false)
 
-Testing checklist (create main/tests/builtins_fetchgit_test.js):
-- [ ] Clone public repository (basic)
-- [ ] Clone with specific rev
-- [ ] Clone with ref (branch name)
-- [ ] Shallow clone (depth=1)
-- [ ] Clone with submodules
-- [ ] Error: invalid URL
-- [ ] Error: missing repository
-- [ ] Caching: same URL fetched twice uses cache
+**Return Value**: Attribute set with:
+- outPath: Store path string
+- rev: Full commit hash (40 chars)
+- shortRev: Short commit hash (7 chars)
+- revCount: Integer commit count
+- lastModified: Unix timestamp of commit
+- narHash: SHA256 hash of directory contents
+- submodules: Boolean echoing input
 
-### 2. builtins.fetchTree - NOT IMPLEMENTED (MEDIUM PRIORITY)
+**Implementation Plan**: See START HERE section above for detailed 10-phase breakdown
 
-**DOCUMENTATION**: https://noogle.dev/f/builtins/fetchTree (READ THIS FIRST!)
+**Key Implementation Challenges**:
+1. Git command execution with proper error handling
+2. Parsing git command outputs (commit hashes, timestamps, etc.)
+3. Ref name normalization (auto-prefix "refs/heads/")
+4. Local directory handling (git ls-files filtering)
+5. Cache key construction (URL + ref + rev)
 
-Location: main/runtime.js (search for fetchTree)
+**Testing Requirements**:
+- 13 test cases covering URL variants, caching, errors, metadata extraction
+- Test against real public repos (e.g., NixOS/nix, small test repos)
+- Verify output matches Nix exactly (same outPath, same metadata)
+
+### 2. builtins.fetchTree - NOT IMPLEMENTED (MEDIUM PRIORITY - EXPERIMENTAL)
+
+**DOCUMENTATION**:
+- Noogle: https://noogle.dev/f/builtins/fetchTree
+- Nix Manual (2.25+): https://nix.dev/manual/nix/2.25/language/builtins
+- GitHub Issue: https://github.com/NixOS/nix/issues/9249 (poor documentation acknowledged)
+
+Location: main/runtime.js line ~1053 (search for "fetchTree")
 Current State: Throws NotImplemented error
 
-**DEPENDENCY**: Requires fetchGit to be implemented first (blocks this task)
+**Status**: Experimental feature (requires `fetch-tree` feature flag in real Nix)
+**Purpose**: Generic interface for fetching from different source types (git, tarball, file)
 
-What needs to be done:
-1. Parse input: URL string OR {url, type?}
-2. Detect type from URL scheme if not provided:
-   - git+https://, git://, ssh:// → "git"
-   - https://.../archive.tar.gz → "tarball"
-   - https://.../file.zip → "file"
-   - github:owner/repo → "github" (special handling)
+**DEPENDENCY**: Requires fetchGit to be implemented first
+
+**What it does**: Unified fetcher that detects source type from URL and delegates to appropriate fetcher (fetchGit, fetchTarball, fetchurl). Idempotent and cacheable.
+
+**Input Parameters**:
+- URL string OR attribute set {url, type?}
+- Supported types: "git", "tarball", "file", "github"
+- Type auto-detected from URL scheme if not provided
+
+**URL Scheme Detection**:
+- git+https://, git://, git+ssh:// → type="git"
+- https://.../file.tar.gz → type="tarball"
+- https://.../file → type="file"
+- github:owner/repo → type="github" (shorthand)
+
+**Implementation Plan**:
+1. Parse input (URL string or attrset)
+2. Detect type from URL scheme if not provided
 3. Normalize URL for detected type
 4. Delegate to appropriate fetcher:
-   - type=tarball → call builtins.fetchTarball
-   - type=git → call builtins.fetchGit
-   - type=file → call builtins.fetchurl
-5. Return unified attrset format
+   - type="git" → builtins.fetchGit
+   - type="tarball" → builtins.fetchTarball
+   - type="file" → builtins.fetchurl
+   - type="github" → transform to git URL and call fetchGit
+5. Return unified output format
 
-Challenges to solve:
-- URL scheme detection (regex patterns for each type)
-- GitHub shorthand syntax parsing (github:owner/repo → https://github.com/owner/repo)
-- Unified error handling across different fetchers
-- Return format normalization (different fetchers return different fields)
+**Key Challenges**:
+- URL scheme regex patterns for each type
+- GitHub shorthand parsing: github:owner/repo → https://github.com/owner/repo.git
+- Return format normalization (different fetchers have different outputs)
 
-Testing checklist (create main/tests/builtins_fetchtree_test.js):
-- [ ] Detect and fetch git repository
-- [ ] Detect and fetch tarball
-- [ ] Detect and fetch single file
-- [ ] GitHub shorthand (github:owner/repo)
-- [ ] Explicit type parameter overrides detection
-- [ ] Error: unrecognized URL scheme
-- [ ] Error: type mismatch (URL doesn't match specified type)
+**Estimated Time**: 6-8 hours (mostly URL parsing and delegation logic)
 
-### 3. builtins.fetchMercurial - NOT IMPLEMENTED (LOW PRIORITY)
+### 3. builtins.fetchMercurial - NOT IMPLEMENTED (LOW PRIORITY - LEGACY)
 
-**DOCUMENTATION**: https://noogle.dev/f/builtins/fetchMercurial (READ THIS FIRST!)
+**DOCUMENTATION**:
+- Release notes: https://nix.dev/manual/nix/2.18/release-notes/rl-2.0 (mentions fetchMercurial)
+- nixpkgs fetchers: https://github.com/NixOS/nixpkgs/blob/master/doc/build-helpers/fetchers.chapter.md
 
-Location: main/runtime.js (search for fetchMercurial)
+Location: main/runtime.js line ~1054 (search for "fetchMercurial")
 Current State: Throws NotImplemented error
 
-**NOTE**: Rarely used in modern Nix code. Implement only after fetchGit and fetchTree are complete.
+**Status**: Legacy builtin (rarely used, replaced by fetchTree)
+**Purpose**: Fetch from Mercurial (hg) repositories
 
-What needs to be done:
-1. Validate mercurial binary exists (check `hg` command)
-2. Parse input: {url, rev?, revCount?}
-3. Clone repository using `hg clone`
-4. Checkout specific revision if provided
-5. Extract metadata: rev, revCount
+**NOTE**: Very rarely used in modern Nix code. fetchGit is far more common. Consider low priority or skip entirely unless specifically needed.
+
+**What it does**: Clone Mercurial repository and copy to store with metadata (similar to fetchGit but for hg)
+
+**Input Parameters** (based on release notes):
+- url (string, required): Mercurial repository URL
+- rev (string, optional): Mercurial revision/changeset ID
+- hash (string, optional): Expected hash for verification
+
+**Return Value**: Attribute set with:
+- outPath: Store path
+- rev: Changeset ID
+- revCount: Number of revisions
+
+**Implementation Plan** (similar to fetchGit):
+1. Validate `hg` binary exists
+2. Parse input: {url, rev?, hash?}
+3. Clone: `hg clone <url> <tempDir>`
+4. Checkout: `hg update -r <rev>` if rev provided
+5. Extract metadata: `hg id -i` (rev), `hg log -r . -T {rev}` (revCount)
 6. Remove .hg directory for determinism
-7. Hash with NAR using existing main/nar_hash.js
-8. Compute store path and move to store (same as fetchGit)
-9. Return attrset: {outPath, rev, revCount}
+7. Hash with NAR, compute store path, move to store
+8. Return attrset
 
-Implementation note: Very similar to fetchGit but uses `hg` commands instead of `git` commands
+**Key Differences from fetchGit**:
+- Uses `hg` instead of `git` commands
+- Mercurial changesets instead of commit hashes
+- Less common binary (may not be installed)
 
-Challenges to solve:
-- Mercurial binary may not be installed (less common than git)
-- Different command syntax from git
-- Error handling for hg-specific failures
+**Estimated Time**: 8-10 hours (similar to fetchGit implementation)
 
-Testing checklist (create main/tests/builtins_fetchmercurial_test.js):
-- [ ] Clone public mercurial repository
-- [ ] Clone with specific revision
-- [ ] Error: mercurial not installed
-- [ ] Error: invalid repository URL
-- [ ] Caching behavior
+### 4. builtins.fetchClosure - NOT IMPLEMENTED (VERY LOW PRIORITY - EXPERIMENTAL)
 
-### 4. builtins.fetchClosure - NOT IMPLEMENTED (VERY LOW PRIORITY - DEFER)
+**OFFICIAL DOCUMENTATION**: https://nix.dev/manual/nix/2.18/language/builtins (fetchClosure section)
 
-**DOCUMENTATION**: https://noogle.dev/f/builtins/fetchClosure (READ THIS FIRST!)
-
-Location: main/runtime.js (search for fetchClosure)
+Location: main/runtime.js line ~1056 (search for "fetchClosure")
 Current State: Throws NotImplemented error
 
-**WARNING**: Extremely complex experimental feature. Implement LAST after all other fetchers work.
+**Status**: Experimental feature (requires `fetch-closure` feature flag)
+**Purpose**: Fetch store path closures from binary caches with signature verification
 
-What needs to be done:
-1. Parse input: {fromPath, toPath?, fromStore?}
-2. Implement binary cache protocol:
-   - Fetch .narinfo file from cache
-   - Parse narinfo (NAR hash, size, references, signatures)
-   - Verify signatures (cryptographic verification)
-   - Download NAR file from cache
-3. Decompress and extract NAR
-4. Verify hash matches narinfo
-5. Move to store at correct path
-6. Handle content-addressed vs input-addressed paths
-7. Resolve closure (recursive dependencies)
+**WARNING**: Extremely complex. Defer until all other fetchers are working.
 
-Challenges to solve:
-- Binary cache protocol implementation (complex HTTP interactions)
-- NAR format parsing and extraction
-- Signature verification (cryptographic operations)
-- Closure resolution (recursive dependency fetching)
-- Content-addressed path handling
-- Cache URL configuration and selection
+**What it does**: Downloads store paths from binary caches (cache.nixos.org) and adds them to the local store with cryptographic verification.
 
-This requires:
-- Full binary cache client implementation
-- NAR format support (beyond just hashing)
-- Signature verification infrastructure
-- Potentially recursive fetching of dependencies
+**Three Usage Modes**:
+1. **Content-addressed path** (preferred): {fromStore, fromPath}
+   - No signature verification needed
+   - More reproducible
+2. **Rewrite to content-addressed**: {fromStore, fromPath, toPath}
+   - Converts input-addressed to content-addressed
+   - Use `nix store make-content-addressed` to find toPath
+3. **Input-addressed** (least preferred): {fromStore, fromPath, inputAddressed=true}
+   - Requires trusted-public-keys configuration
+   - Less secure/reproducible
 
-**RECOMMENDATION**: Skip this unless absolutely needed. It's experimental and rarely used.
+**Implementation Requirements**:
+1. **Binary cache protocol** (HTTP client for .narinfo files)
+   - Fetch .narinfo from fromStore: `GET <fromStore>/<hash>.narinfo`
+   - Parse narinfo format (key:value pairs)
+   - Extract: StorePath, URL, Compression, FileHash, FileSize, NarHash, NarSize, References, Sig
+2. **Signature verification** (cryptographic operations)
+   - Parse public keys from Nix config
+   - Verify Ed25519 signatures
+   - Require trusted-public-keys for input-addressed paths
+3. **NAR download and extraction**
+   - Download NAR file from cache: `GET <fromStore>/<nar-url>`
+   - Decompress (xz, bzip2, gzip)
+   - Extract NAR format (beyond just hashing - full deserialization)
+   - Verify hash matches narinfo
+4. **Closure resolution** (recursive dependencies)
+   - Parse References field from narinfo
+   - Recursively fetch all referenced paths
+   - Build complete closure graph
+5. **Content-addressed path handling**
+   - Compute content addresses for rewriting
+   - Handle both input-addressed and content-addressed stores
 
-### 5. builtins.getFlake - NOT IMPLEMENTED (DEFER INDEFINITELY)
+**Key Challenges**:
+- Binary cache protocol (complex, underdocumented)
+- NAR format deserialization (not just hashing)
+- Ed25519 signature verification
+- Recursive closure fetching
+- Content-addressed vs input-addressed logic
 
-**DOCUMENTATION**: https://noogle.dev/f/builtins/getFlake (READ THIS FIRST!)
+**Estimated Time**: 40+ hours (very complex, multi-week project)
 
-Location: main/runtime.js (search for getFlake)
+**RECOMMENDATION**: Skip unless absolutely necessary. Rarely used, experimental, and blocks nothing important.
+
+### 5. builtins.getFlake - NOT IMPLEMENTED (DEFER INDEFINITELY - EXPERIMENTAL)
+
+**OFFICIAL DOCUMENTATION**: https://nix.dev/manual/nix/2.18/language/builtins (getFlake section)
+
+Location: main/runtime.js line ~1182 (search for "getFlake")
 Current State: Throws NotImplemented error
 
-**WARNING**: Extremely complex feature requiring full flake system. Not needed for basic Nix evaluation. Defer indefinitely.
+**Status**: Experimental feature (requires `flakes` experimental feature flag)
+**Purpose**: Fetch and evaluate complete flakes with their inputs and outputs
 
-What would need to be done (if we ever implement this):
-1. Parse flake reference (URL or path)
-2. Fetch flake source using appropriate fetcher
-3. Read and parse flake.lock (lockfile version 7 format)
-4. Resolve all inputs recursively (flake dependencies)
-5. Evaluate flake.nix in correct scope
-6. Extract outputs attrset
-7. Handle flake metadata (description, nixConfig, etc.)
-8. Implement flake registry lookup
-9. Handle indirect flake references
+**WARNING**: Extremely complex. Requires full flake system. Do not implement unless absolutely necessary.
 
-Challenges to solve:
-- Full flake system implementation (extremely complex)
-- Lockfile parsing and version handling
-- Recursive input resolution (dependency graph)
-- Flake evaluation scope setup
-- Registry lookup and caching
-- Indirect reference handling
-- Compatibility with different flake schema versions
+**What it does**: Takes a flake reference string (e.g., "github:NixOS/nixpkgs/nixos-23.05"), fetches the flake, resolves all its inputs recursively, evaluates flake.nix, and returns the outputs attribute set.
 
-This requires:
-- Complete understanding of flake system (hundreds of pages of documentation)
-- All other fetchers working (fetchGit, fetchTree, etc.)
-- Lockfile parser implementation
-- Flake evaluation context
-- Registry client
+**Input**: Flake reference string
+- Format: "type:owner/repo/rev" or path
+- Examples: "github:edolstra/dwarffs", "nix/55bc52401966fbffa", "./my-flake"
+- Must be "locked" (include rev/hash) unless --impure evaluation
 
-**RECOMMENDATION**: Do not implement unless absolutely necessary. Basic Nix evaluation works without this.
+**Return Value**: Attribute set with flake outputs (packages, apps, lib, etc.) plus metadata
+
+**What Would Be Required** (if ever implemented):
+1. **Flake reference parsing**
+   - Parse flake URLs: github:owner/repo, path:./local, git+https://...
+   - Handle direct and indirect references
+   - Registry lookup for indirect references
+2. **Flake fetching**
+   - Use fetchGit, fetchTree, etc. to fetch source
+   - Handle locked vs unlocked references
+3. **Lockfile parsing** (flake.lock)
+   - Parse lockfile version 7 format (JSON)
+   - Extract input revisions and hashes
+   - Build dependency graph
+4. **Recursive input resolution**
+   - Recursively fetch and evaluate all input flakes
+   - Build inputs attrset
+   - Handle circular dependencies
+5. **Flake evaluation**
+   - Evaluate flake.nix with correct scope
+   - Provide inputs as function arguments
+   - Extract outputs attrset
+6. **Metadata handling**
+   - description, nixConfig, etc.
+7. **Registry client**
+   - Lookup indirect flake references
+   - Cache registry data
+
+**Dependencies**: ALL other fetchers must work first
+- fetchGit (required)
+- fetchTree (required)
+- fetchTarball (required)
+
+**Estimated Time**: 80-120+ hours (multi-month project)
+
+**RECOMMENDATION**: Do not implement. Basic Nix evaluation works fine without this. Flakes are experimental and add massive complexity for minimal benefit in this context.
 
 ---
 
 ## Implementation Priority Order (FOLLOW THIS EXACTLY)
 
-### TASK 1: fetchGit (HIGH PRIORITY - START HERE)
-- **Documentation**: https://noogle.dev/f/builtins/fetchGit (READ BEFORE CODING!)
-- **Location**: main/runtime.js (search for fetchGit)
-- **Estimated Time**: 12-15 hours over 2-3 days
+### Realistic Implementation Path
+
+**Phase 1: Core Git Support** (14-16 hours, 2-3 days)
+- ✅ fetchGit - MUST IMPLEMENT FIRST
+  - Most important remaining fetcher
+  - Required by fetchTree
+  - Critical for flakes, nixpkgs, modern Nix
+
+**Phase 2: Unified Interface** (6-8 hours, 1-2 days)
+- ✅ fetchTree - IMPLEMENT SECOND
+  - Depends on fetchGit
+  - Experimental but useful
+  - Provides unified fetcher API
+
+**Phase 3: Legacy Support** (8-10 hours, 1-2 days) - OPTIONAL
+- ⚠️ fetchMercurial - LOW VALUE
+  - Rarely used (most projects use Git)
+  - Only implement if specifically needed
+  - Can skip without impact
+
+**Phase 4: Advanced Features** (40+ hours, weeks) - DEFER
+- ❌ fetchClosure - SKIP FOR NOW
+  - Experimental, rarely used
+  - Extremely complex (binary cache protocol)
+  - Blocks nothing important
+  - Implement only if explicitly required
+
+**Phase 5: Flake System** (80+ hours, months) - DO NOT IMPLEMENT
+- ❌ getFlake - SKIP INDEFINITELY
+  - Experimental, not needed for basic Nix
+  - Requires complete flake system
+  - Massive complexity for minimal benefit
+  - Basic evaluation works fine without it
+
+### Recommended Implementation Sequence
+
+**Week 1-2**: Implement fetchGit (PRIORITY 1)
+- 10 phases over 14-16 hours
+- Comprehensive testing (13+ test cases)
+- Verify against real repos
+
+**Week 2-3**: Implement fetchTree (PRIORITY 2)
+- 6-8 hours implementation
+- Reuses fetchGit infrastructure
+- Adds unified interface
+
+**Decision Point**: Stop here or continue?
+- **Stop here**: 95/98 builtins working (97% complete)
+- **Continue**: Only if fetchMercurial specifically needed
+
+**Week 3-4 (Optional)**: Implement fetchMercurial (PRIORITY 3)
+- Only if Mercurial support required
+- 8-10 hours implementation
+- Gets to 96/98 builtins (98% complete)
+
+**STOP**: Do not implement fetchClosure or getFlake
+- Too complex, experimental, rarely used
+- Better to have 96/98 working well than 98/98 half-broken
+
+---
+
+## TASK 1: fetchGit (HIGH PRIORITY - START HERE)
+- **Documentation**: https://nix.dev/manual/nix/2.18/language/builtins (fetchGit section)
+- **Location**: main/runtime.js line ~1050 (search for fetchGit)
+- **Estimated Time**: 14-16 hours over 2-3 days
 - **Blocks**: fetchTree (cannot implement until this is done)
 - **Impact**: Critical for flakes, nixpkgs, and most modern Nix code
+- **Detailed Plan**: See "START HERE - Next Task" section above
 
-### TASK 2: fetchTree (MEDIUM PRIORITY - AFTER fetchGit)
-- **Documentation**: https://noogle.dev/f/builtins/fetchTree (READ BEFORE CODING!)
-- **Location**: main/runtime.js (search for fetchTree)
+## TASK 2: fetchTree (MEDIUM PRIORITY - AFTER fetchGit)
+- **Documentation**: https://noogle.dev/f/builtins/fetchTree + https://nix.dev/manual/nix/2.25/language/builtins
+- **Location**: main/runtime.js line ~1053 (search for fetchTree)
 - **Estimated Time**: 6-8 hours over 1-2 days
 - **Requires**: fetchGit must be complete first
 - **Impact**: Unified fetcher interface (experimental but useful)
 
-### TASK 3: fetchMercurial (LOW PRIORITY - RARELY USED)
-- **Documentation**: https://noogle.dev/f/builtins/fetchMercurial (READ BEFORE CODING!)
-- **Location**: main/runtime.js (search for fetchMercurial)
+## TASK 3: fetchMercurial (LOW PRIORITY - OPTIONAL)
+- **Documentation**: https://nix.dev/manual/nix/2.18/release-notes/rl-2.0 + nixpkgs docs
+- **Location**: main/runtime.js line ~1054 (search for fetchMercurial)
 - **Estimated Time**: 8-10 hours over 1-2 days
 - **Impact**: Low - rarely used in modern Nix
+- **Recommendation**: Skip unless specifically requested
 
-### TASK 4: fetchClosure (VERY LOW PRIORITY - DEFER)
-- **Documentation**: https://noogle.dev/f/builtins/fetchClosure (READ BEFORE CODING!)
-- **Location**: main/runtime.js (search for fetchClosure)
+## TASK 4: fetchClosure (DEFER)
+- **Documentation**: https://nix.dev/manual/nix/2.18/language/builtins (fetchClosure section)
+- **Location**: main/runtime.js line ~1056 (search for fetchClosure)
 - **Estimated Time**: 40+ hours (very complex)
 - **Impact**: Experimental feature, not critical
-- **Recommendation**: Skip unless specifically needed
+- **Recommendation**: Do not implement unless explicitly required
 
-### TASK 5: getFlake (DEFER INDEFINITELY)
-- **Documentation**: https://noogle.dev/f/builtins/getFlake (READ BEFORE CODING!)
-- **Location**: main/runtime.js (search for getFlake)
-- **Estimated Time**: 80+ hours (extremely complex)
+## TASK 5: getFlake (DO NOT IMPLEMENT)
+- **Documentation**: https://nix.dev/manual/nix/2.18/language/builtins (getFlake section)
+- **Location**: main/runtime.js line ~1182 (search for getFlake)
+- **Estimated Time**: 80-120+ hours (months of work)
 - **Impact**: Not needed for basic Nix evaluation
-- **Recommendation**: Do not implement
+- **Recommendation**: Do not implement - flakes are experimental and add massive complexity
 
 ---
 
@@ -533,3 +708,49 @@ Implementation is NOT complete if:
 - ❌ You're guessing at behavior instead of reading documentation
 
 **RULE**: If you can't verify behavior matches Nix documentation at https://noogle.dev, the implementation is NOT complete.
+
+---
+
+## Verification Checklist - How to Know You're Done
+
+After implementing each builtin, verify these before marking it complete:
+
+### 1. Documentation Verification
+- [ ] Read official Nix 2.18 manual for the builtin
+- [ ] Confirmed all parameters match documentation
+- [ ] Confirmed all default values match documentation
+- [ ] Confirmed return value structure matches documentation
+- [ ] Confirmed edge case behavior matches documentation
+
+### 2. Test Coverage Verification
+- [ ] Created comprehensive test file (main/tests/builtins_<name>_test.js)
+- [ ] All test cases passing
+- [ ] Tested happy path (basic usage)
+- [ ] Tested all parameter variants
+- [ ] Tested error cases (invalid input)
+- [ ] Tested edge cases (empty, null, special characters)
+- [ ] Tested caching behavior (if applicable)
+- [ ] Tested integration with other builtins
+
+### 3. Real-World Verification
+- [ ] Tested against actual public repositories (for fetchers)
+- [ ] Verified output matches actual Nix (same store paths, same metadata)
+- [ ] Tested with both HTTPS and SSH URLs (for git fetchers)
+- [ ] Tested with local paths (for git fetchers)
+
+### 4. Code Quality Verification
+- [ ] No NotImplemented errors remain
+- [ ] Error messages are clear and actionable
+- [ ] Code follows existing patterns in runtime.js
+- [ ] No hardcoded paths or assumptions
+- [ ] Proper temp directory cleanup on errors
+- [ ] No memory leaks (streams closed, temp files removed)
+
+### 5. Integration Verification
+- [ ] Run full test suite: `deno test --allow-all`
+- [ ] All existing tests still pass
+- [ ] No regressions in other builtins
+- [ ] Works correctly with builtins.import
+- [ ] Works correctly with toJSON
+
+**YOU ARE NOT DONE** until all 5 categories above are verified. Partial implementation does not count as "done".

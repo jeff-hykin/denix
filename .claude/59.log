@@ -1,0 +1,70 @@
+Excellent! The prompt.md is now 756 lines (was 645 lines) with comprehensive implementation details. Now let me create a quick summary document showing the current accurate status:
+
+## Summary
+
+I've thoroughly reviewed and updated **prompt.md** with accurate implementation details for the remaining work. Here's what I found and corrected:
+
+### Critical Correction - Wrong Numbers in MEMORY.md
+
+**MEMORY.md incorrectly claims**: 61/98 builtins implemented  
+**Actual reality**: **93/98 builtins implemented** (verified by checking runtime.js)
+
+The confusion came from:
+- **Infrastructure is COMPLETE**: fetcher.js, tar.js, nar_hash.js, store_manager.js all exist and work
+- **Already working**: fetchTarball, fetchurl, builtins.path, filterSource (4 major fetchers)
+- **Only 5 functions throw NotImplemented**: fetchGit, fetchTree, fetchMercurial, fetchClosure, getFlake
+
+### What Remains to Implement
+
+**5 builtins remain unimplemented** (in priority order):
+
+1. **fetchGit** (HIGH PRIORITY) - 14-16 hours
+   - Most important remaining builtin
+   - Required for flakes, modern nixpkgs
+   - Blocks fetchTree
+   - Full documentation from Nix 2.18 manual added to prompt.md
+
+2. **fetchTree** (MEDIUM PRIORITY) - 6-8 hours  
+   - Experimental unified fetcher
+   - Depends on fetchGit
+   - Delegates to fetchGit/fetchTarball/fetchurl
+
+3. **fetchMercurial** (LOW PRIORITY) - 8-10 hours
+   - Rarely used (legacy Mercurial support)
+   - Optional - can skip without impact
+
+4. **fetchClosure** (DEFER) - 40+ hours
+   - Experimental binary cache feature
+   - Extremely complex
+   - Recommend skipping unless explicitly needed
+
+5. **getFlake** (DO NOT IMPLEMENT) - 80+ hours
+   - Requires complete flake system
+   - Experimental, massive complexity
+   - Not needed for basic Nix evaluation
+
+### Updated prompt.md (645→756 lines)
+
+Added comprehensive details for each builtin:
+- ✅ Official Nix 2.18 documentation links
+- ✅ Exact parameter specifications
+- ✅ Return value structures  
+- ✅ 10-phase implementation plan for fetchGit
+- ✅ Testing requirements (13+ test cases)
+- ✅ Verification checklist (5 categories)
+- ✅ Realistic implementation timeline
+- ✅ Clear recommendations (implement 2, skip 3)
+
+### Recommended Path Forward
+
+**Week 1-2**: Implement fetchGit → 94/98 complete (96%)  
+**Week 2-3**: Implement fetchTree → 95/98 complete (97%)  
+**Stop there**: Excellent coverage without implementing rarely-used experimental features
+
+The updated prompt.md now contains everything needed to implement the remaining builtins with accurate time estimates and complete technical specifications.
+
+**Sources:**
+- [Nix 2.18 Built-in Functions Manual](https://nix.dev/manual/nix/2.18/language/builtins)
+- [Nix fetchTree documentation](https://noogle.dev/f/builtins/fetchTree)
+- [Nix Experimental Features](https://nix.dev/manual/nix/2.26/development/experimental-features.html)
+- [nixpkgs Fetchers Documentation](https://github.com/NixOS/nixpkgs/blob/master/doc/build-helpers/fetchers.chapter.md)
