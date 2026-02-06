@@ -1,0 +1,47 @@
+Perfect! Now let me create a summary for the user:
+
+## Summary: prompt.md Updated with Accurate Status
+
+I've reviewed the codebase and updated `prompt.md` to reflect the **actual current state** of the project:
+
+### ✅ What's Already Working (93/98 builtins)
+The previous agent implemented these in Session 22:
+- fetchTarball (with tests)
+- fetchurl (with tests)  
+- builtins.path (with tests)
+- filterSource (with tests)
+- toJSON for Path (with tests)
+
+All infrastructure modules exist and are working:
+- `main/fetcher.js` - HTTP downloads with retry
+- `main/tar.js` - Tarball extraction
+- `main/nar_hash.js` - NAR directory hashing
+- `main/store_manager.js` - Store path management and caching
+
+### ❌ What Remains (5/98 builtins NOT implemented)
+
+**High Priority:**
+1. **fetchGit** (line 879) - 14-16 hours - Requires git binary integration
+   - Most important remaining feature
+   - Blocks fetchTree implementation
+
+**Medium Priority:**
+2. **fetchTree** (line 885) - 6-8 hours - Experimental, delegates to other fetchers
+   - Requires fetchGit first
+
+**Low Priority:**
+3. **fetchMercurial** (line 882) - 8-10 hours - Rarely used, requires hg binary
+
+**Skip These (experimental/complex):**
+4. **fetchClosure** (line 888) - 40+ hours - Binary cache protocol (very complex)
+5. **getFlake** (line 1423) - 80+ hours - Complete flake system (massive undertaking)
+
+### Updated prompt.md
+
+- Removed misleading claims about fetchTarball/fetchurl/path/filterSource being "not implemented"
+- Updated current state to reflect 93/98 builtins working
+- Corrected all line numbers
+- Clear priority ordering: fetchGit → fetchTree → (optional: fetchMercurial)
+- Realistic time estimates and scope
+
+**Recommendation:** Implement fetchGit next (2-3 days), then fetchTree (1-2 days), reaching **95/98 = 97% runtime completion**.

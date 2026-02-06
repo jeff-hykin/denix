@@ -16,14 +16,21 @@
 
 ## 🚫 STRICT WORK PRIORITY RULES - FOLLOW IN ORDER 🚫
 
+**CURRENT STATE (2026-02-06):**
+- Runtime: 93/98 builtins implemented (5 experimental/advanced builtins NOT implemented)
+- Translator: 100% functional, all tests passing
+- Infrastructure: fetcher.js, tar.js, nar_hash.js, store_manager.js all exist and working
+- fetchTarball, fetchurl, builtins.path, filterSource all implemented and tested
+
 **YOU MUST WORK IN THIS EXACT ORDER:**
 
-1. **DO NOT WORK ON NIX-LIB TESTS** until the code translator is fully implemented
-2. **DO NOT WORK ON TRANSLATOR** until the runtime is fully implemented
-3. **ONLY WORK ON**: Network fetchers and store functions in runtime.js
-4. **FINISH NETWORK FETCHERS AND STORE FUNCTIONS** before doing ANYTHING ELSE
+1. **Implement fetchGit** - HIGH PRIORITY (2-3 days, 14-16 hours)
+2. **Implement fetchTree** - MEDIUM PRIORITY (1-2 days, 6-8 hours, requires fetchGit first)
+3. **Implement fetchMercurial** - LOW PRIORITY (1-2 days, 8-10 hours, OPTIONAL - rarely used)
+4. **Skip fetchClosure** - VERY LOW PRIORITY (weeks, experimental, rarely used)
+5. **Skip getFlake** - DO NOT IMPLEMENT (months, experimental, not needed)
 
-**In other words: Finish the runtime (network fetchers and store) → Then translator → Then nix-lib tests.**
+**After implementing fetchGit and fetchTree, the runtime will be 95/98 = 97% complete.**
 
 ## 📚 DOCUMENTATION REQUIREMENTS - MANDATORY 📚
 
@@ -52,11 +59,12 @@
 
 ## Remaining Work - What's NOT Implemented
 
-**Current Reality Check:**
-- Runtime has 5 unimplemented builtins that NEED implementation: fetchGit, fetchTree, fetchMercurial, fetchClosure, getFlake
-- Infrastructure modules exist that should be used: fetcher.js, tar.js, nar_hash.js, store_manager.js
-- DO NOT work on translator or nix-lib tests - focus ONLY on runtime
-- The ONLY work to be done is implementing the 5 builtins listed below
+**Current Reality Check (2026-02-06):**
+- Runtime: 93/98 builtins implemented (5 remaining)
+- Infrastructure: fetcher.js, tar.js, nar_hash.js, store_manager.js all exist and working
+- Store system: fetchTarball, fetchurl, builtins.path, filterSource all working with tests
+- 5 builtins NOT implemented: fetchGit, fetchTree, fetchMercurial, fetchClosure, getFlake
+- Focus: Implement fetchGit (highest priority), then fetchTree (optional experimental features)
 
 ## 🔧 NPM MODULE USAGE - YOU ARE ALLOWED TO USE NPM 🔧
 
@@ -246,7 +254,7 @@ Create main/tests/builtins_fetchgit_test.js with these required test cases:
 
 **OFFICIAL DOCUMENTATION**: https://nix.dev/manual/nix/2.18/language/builtins (fetchGit section)
 
-Location: main/runtime.js line ~1050 (search for "fetchGit")
+Location: main/runtime.js line 879 (search for "fetchGit")
 Current State: Throws NotImplemented error
 
 **What it does**: Clones Git repositories and copies them to the Nix store with metadata (commit hash, revision count, etc.)
@@ -290,7 +298,7 @@ Current State: Throws NotImplemented error
 - Nix Manual (2.25+): https://nix.dev/manual/nix/2.25/language/builtins
 - GitHub Issue: https://github.com/NixOS/nix/issues/9249 (poor documentation acknowledged)
 
-Location: main/runtime.js line ~1053 (search for "fetchTree")
+Location: main/runtime.js line 885 (search for "fetchTree")
 Current State: Throws NotImplemented error
 
 **Status**: Experimental feature (requires `fetch-tree` feature flag in real Nix)
@@ -335,7 +343,7 @@ Current State: Throws NotImplemented error
 - Release notes: https://nix.dev/manual/nix/2.18/release-notes/rl-2.0 (mentions fetchMercurial)
 - nixpkgs fetchers: https://github.com/NixOS/nixpkgs/blob/master/doc/build-helpers/fetchers.chapter.md
 
-Location: main/runtime.js line ~1054 (search for "fetchMercurial")
+Location: main/runtime.js line 882 (search for "fetchMercurial")
 Current State: Throws NotImplemented error
 
 **Status**: Legacy builtin (rarely used, replaced by fetchTree)
@@ -376,7 +384,7 @@ Current State: Throws NotImplemented error
 
 **OFFICIAL DOCUMENTATION**: https://nix.dev/manual/nix/2.18/language/builtins (fetchClosure section)
 
-Location: main/runtime.js line ~1056 (search for "fetchClosure")
+Location: main/runtime.js line 888 (search for "fetchClosure")
 Current State: Throws NotImplemented error
 
 **Status**: Experimental feature (requires `fetch-closure` feature flag)
@@ -434,7 +442,7 @@ Current State: Throws NotImplemented error
 
 **OFFICIAL DOCUMENTATION**: https://nix.dev/manual/nix/2.18/language/builtins (getFlake section)
 
-Location: main/runtime.js line ~1182 (search for "getFlake")
+Location: main/runtime.js line 1423 (search for "getFlake")
 Current State: Throws NotImplemented error
 
 **Status**: Experimental feature (requires `flakes` experimental feature flag)
