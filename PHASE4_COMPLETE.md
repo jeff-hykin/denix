@@ -1,7 +1,7 @@
-# Phase 4 Implementation - Complete ✅
+# Phase 4 & 5 Implementation - Complete ✅
 
 ## Summary
-Successfully implemented 13 additional Nix builtins and operators, bringing total completion to **73% (52/71 functions)**.
+Successfully implemented 18 additional Nix builtins and operators across Phase 4 and Phase 5, bringing total completion to **80% (57/71 functions)**.
 
 ## What Was Implemented
 
@@ -74,6 +74,13 @@ Created `main/tests/phase3_standalone_test.js` with 14 tests covering:
 
 All tests pass ✓
 
+### Phase 5 - Store & Flake Functions (5 functions)
+- ✅ `builtins.toFile` - Computes correct store paths using text method
+- ✅ `builtins.findFile` - Search NIX_PATH with prefix support
+- ✅ `builtins.derivationStrict` - Wrapper around derivation (identical in modern Nix)
+- ✅ `builtins.parseFlakeRef` - Parse flake reference strings
+- ✅ `builtins.flakeRefToString` - Convert flake ref attrsets to strings
+
 ## Statistics
 
 ### Before Phase 4
@@ -84,15 +91,18 @@ All tests pass ✓
 - 52/71 functions (73%)
 - 74+ tests passing
 
+### After Phase 5
+- 57/71 functions (80%)
+- 113+ tests passing
+
 ### Remaining Work
-- 16 FIXMEs (mostly infrastructure-dependent)
+- 10 FIXMEs (all infrastructure-dependent) + 1 enhancement
 - Categories:
   - 5 network fetchers (fetchurl, fetchTarball, fetchGit, fetchMercurial, fetchTree)
   - 2 import functions (import, scopedImport)
-  - 3 flake functions (getFlake, parseFlakeRef, flakeRefToString)
-  - 3 store functions (toFile, path, filterSource)
-  - 2 other (findFile, derivationStrict)
-  - 1 path in toJSON (requires store)
+  - 2 store functions (path, filterSource)
+  - 1 flake function (getFlake - requires fetch + evaluation)
+  - 1 enhancement: path in toJSON (requires store)
 
 ## Documentation Updates
 
@@ -114,13 +124,16 @@ These simplified implementations are sufficient for many use cases and can be en
 ### Test Infrastructure
 Full integration tests are blocked by prex WASM initialization issue. Created standalone tests as workaround.
 
+### Additional Tests (Phase 5)
+Created `main/tests/phase4_standalone_test.js` (7 tests) and `main/tests/flake_standalone_test.js` (20 tests).
+
 ## Next Steps
 
-For future work, remaining functions require:
-1. **Full Nix Store**: toFile, path, filterSource, derivationStrict
-2. **Network Layer**: All fetch* functions
-3. **Parser/Evaluator**: import, scopedImport
-4. **Flakes System**: getFlake, parseFlakeRef, flakeRefToString
-5. **Search Implementation**: findFile with NIX_PATH handling
+For future work, remaining functions require major infrastructure:
+1. **Network Layer**: All 5 fetch* functions
+2. **Parser/Evaluator**: import, scopedImport (requires full Nix parser)
+3. **Full Nix Store**: path, filterSource (requires store implementation)
+4. **Flakes System**: getFlake (requires fetch + lock + evaluation)
+5. **Enhancement**: toJSON for paths (requires store)
 
-All low-hanging fruit has been implemented! 🎉
+All feasible functions have been implemented! 🎉 The remaining 10 functions all require building major infrastructure systems.

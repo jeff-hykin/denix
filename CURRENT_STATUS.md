@@ -63,30 +63,30 @@ The `builtins.derivation` function is complete with correct store path computati
 
 ## What's Not Working (Yet)
 
-### Remaining Functions (14 functions)
+### Remaining Functions (10 functions)
 
 These require significant infrastructure that's beyond the current scope:
 
-1. **Network Fetchers** (5 functions)
-   - `fetchurl` - requires HTTP client + store
+1. **Network Fetchers** (5 functions) - **INFRASTRUCTURE REQUIRED**
+   - `fetchurl` - requires HTTP client + store integration
    - `fetchTarball` - requires HTTP + tar extraction + store
-   - `fetchGit` - requires git binary + store
-   - `fetchMercurial` - requires hg binary + store
-   - `fetchTree` - experimental feature
+   - `fetchGit` - requires git binary integration + store
+   - `fetchMercurial` - requires hg binary integration + store
+   - `fetchTree` - experimental feature requiring general fetch system
 
-2. **Import/Eval System** (2 functions)
-   - `import` - requires Nix parser + evaluator
-   - `scopedImport` - requires import + scope management
+2. **Import/Eval System** (2 functions) - **INFRASTRUCTURE REQUIRED**
+   - `import` - requires full Nix language parser + evaluator
+   - `scopedImport` - requires import implementation + scope management
 
-3. **Store Operations** (2 functions)
+3. **Store Operations** (2 functions) - **INFRASTRUCTURE REQUIRED**
    - `path` - requires full store implementation with filtering
-   - `filterSource` - requires store + file filtering
+   - `filterSource` - requires store + predicate-based file filtering
 
-4. **Flakes** (1 function)
-   - `getFlake` - requires fetch + flake system + evaluation
+4. **Flakes** (1 function) - **INFRASTRUCTURE REQUIRED**
+   - `getFlake` - requires fetch + flake lock system + evaluation
 
-5. **Enhancements** (1 item)
-   - `toJSON` for paths - requires store implementation
+### Enhancements (1 item)
+   - `toJSON` for paths - requires full store implementation to hash and copy files
 
 ## Test Infrastructure
 

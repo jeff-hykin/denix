@@ -22,25 +22,28 @@
 - [x] Implement fromTOML with @std/toml
 - [x] Implement Phase 4 (Operators + Context + Store) - 13 functions
 - [x] Create and run Phase 4 tests - all passing
-- [ ] Implement infrastructure-dependent FIXMEs (fetchers, import, etc.)
+- [x] Implement Phase 5 (Store + Flakes) - 5 functions
+- [x] Create and run Phase 5 tests - all passing
+- [ ] Implement infrastructure-dependent FIXMEs (fetchers, import, etc.) - BLOCKED
 
-## Current Activity
+## Current Status
 ✅ **MILESTONE REACHED**: 57 functions implemented (80% complete)
 - All Phase 1 (Easy) complete: 26 functions
-- All feasible Phase 2 (Medium) complete: 14 functions (added operators.add, operators.subtract)
-- Phase 3 additions: 1 function (fromTOML)
-- Phase 4 additions: 11 functions (functionArgs, genericClosure, 5 context functions, 4 store functions)
-- Phase 5 additions: 5 functions (toFile, findFile, derivationStrict, parseFlakeRef, flakeRefToString)
-- 101+ tests created, all passing
-- ✅ Removed deno.json, deno.lock, node_modules
+- All Phase 2 (Medium) complete: 14 functions
+- Phase 3 (Infrastructure): 1 function (fromTOML)
+- Phase 4 (Operators + Context + Store): 11 functions
+- Phase 5 (Store + Flakes): 5 functions (toFile, findFile, derivationStrict, parseFlakeRef, flakeRefToString)
+- 113+ tests created, all passing
+- ✅ Removed npm dependencies - pure URL imports only
 - ✅ Replaced npm:lossless-json with custom BigInt JSON parser
+- ✅ Derivation implementation complete with correct store paths
 
 ## Next Steps
-Remaining items require major infrastructure:
+**All feasible functions have been implemented!** Remaining 14 functions require major infrastructure:
 - Store system (2 functions: path, filterSource)
 - Import/eval system (2 functions: import, scopedImport)
 - Network fetchers (5 functions: fetchurl, fetchTarball, fetchGit, fetchMercurial, fetchTree)
-- Flakes (1 function: getFlake - requires fetch)
+- Flakes (1 function: getFlake - requires fetch + evaluation)
 - toJSON for paths (requires full store implementation)
 
 ## Completed Implementations

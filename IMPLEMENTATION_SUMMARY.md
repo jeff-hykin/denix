@@ -18,8 +18,8 @@ This document summarizes the implementation work on `/Users/jeffhykin/repos/deni
 ### Implementation Statistics
 
 - **Total FIXMEs identified:** 71
-- **Successfully implemented:** 52 (73%)
-- **Tests created:** 5 test files with 74+ tests
+- **Successfully implemented:** 57 (80%)
+- **Tests created:** 8+ standalone test files with 113+ tests
 - **All tests passing:** ✓
 
 ### Implemented Functions by Category
@@ -90,14 +90,23 @@ This document summarizes the implementation work on `/Users/jeffhykin/repos/deni
 
 4. **`main/tests/fromtoml_standalone_test.js`** (7 tests)
    - TOML parsing with BigInt conversion
-   - Standalone tests
 
 5. **`main/tests/phase3_standalone_test.js`** (14 tests)
    - Operators: add, subtract
    - functionArgs, genericClosure
    - Context functions (simplified)
    - Store functions
-   - Standalone tests (works around prex WASM issue)
+
+6. **`main/tests/derivation/standalone_test.js`** (12 tests)
+   - Derivation function with correct store path computation
+   - Multi-output support
+
+7. **`main/tests/phase4_standalone_test.js`** (7 tests)
+   - toFile, findFile, derivationStrict
+
+8. **`main/tests/flake_standalone_test.js`** (20 tests)
+   - parseFlakeRef, flakeRefToString
+   - Round-trip conversion
 
 ### Test Results
 ```
@@ -106,23 +115,19 @@ This document summarizes the implementation work on `/Users/jeffhykin/repos/deni
 ✓ main/tests/phase2b_test.js             - 12/12 tests passing
 ✓ main/tests/fromtoml_standalone_test.js -  7/7  tests passing
 ✓ main/tests/phase3_standalone_test.js   - 14/14 tests passing
+✓ main/tests/derivation/standalone_test.js - 12/12 tests passing
+✓ main/tests/phase4_standalone_test.js   -  7/7  tests passing
+✓ main/tests/flake_standalone_test.js    - 20/20 tests passing
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-  Total: 74/74 tests passing (100%)
+  Total: 113/113 tests passing (100%)
 ```
 
 ## Remaining Work
 
 ### Easy/Medium Complexity (0 items)
-All feasible functions without major infrastructure have been implemented!
+✅ **All feasible functions without major infrastructure have been implemented!**
 
-### Hard/Infrastructure Required (~19 items)
-
-#### Nix Store System Required (4 items)
-- `builtins.toFile` - Write file to store
-- `builtins.path` - Copy path to store with options
-- `builtins.filterSource` - Filtered copy to store
-- `builtins.derivationStrict` - Strict version of derivation
-- Path handling in `builtins.toJSON` (requires full store)
+### Hard/Infrastructure Required (10 items)
 
 #### Network/Fetching Required (5 items)
 - `builtins.fetchurl`, `builtins.fetchTarball`
@@ -133,12 +138,15 @@ All feasible functions without major infrastructure have been implemented!
 - `builtins.import` - Parse and evaluate .nix files
 - `builtins.scopedImport` - Import with custom scope
 
-#### Flakes System Required (3 items)
-- `builtins.getFlake`, `builtins.parseFlakeRef`
-- `builtins.flakeRefToString`
+#### Nix Store System Required (2 items)
+- `builtins.path` - Copy path to store with options
+- `builtins.filterSource` - Filtered copy to store
 
-#### Complex Algorithms (1 item)
-- `builtins.findFile` - NIX_PATH search with prefixes
+#### Flakes System Required (1 item)
+- `builtins.getFlake` - Requires fetch + lock + evaluation
+
+### Enhancements (1 item)
+- Path handling in `builtins.toJSON` (requires full store)
 
 ## Key Challenges Overcome
 
@@ -162,7 +170,7 @@ All feasible functions without major infrastructure have been implemented!
 
 ## Files Modified
 
-- `/Users/jeffhykin/repos/denix/main/runtime.js` - 52 function implementations
+- `/Users/jeffhykin/repos/denix/main/runtime.js` - 57 function implementations
 - `/Users/jeffhykin/repos/denix/tools/json_parse.js` - Fixed import (npm: specifier)
 - `/Users/jeffhykin/repos/denix/prompt.md` - Updated progress tracking
 - `/Users/jeffhykin/repos/denix/main/runtime.md` - Updated FIXME status
@@ -176,6 +184,10 @@ All feasible functions without major infrastructure have been implemented!
 - `/Users/jeffhykin/repos/denix/main/tests/phase2b_test.js` - Phase 2b tests
 - `/Users/jeffhykin/repos/denix/main/tests/fromtoml_standalone_test.js` - TOML tests
 - `/Users/jeffhykin/repos/denix/main/tests/phase3_standalone_test.js` - Phase 3 tests
+- `/Users/jeffhykin/repos/denix/main/tests/derivation/standalone_test.js` - Derivation tests
+- `/Users/jeffhykin/repos/denix/main/tests/phase4_standalone_test.js` - Phase 4 tests
+- `/Users/jeffhykin/repos/denix/main/tests/flake_standalone_test.js` - Flake tests
+- `/Users/jeffhykin/repos/denix/tools/store_path.js` - Store path computation
 - `/Users/jeffhykin/repos/denix/IMPLEMENTATION_SUMMARY.md` - This file
 
 ## Recommendations for Future Work
@@ -206,7 +218,7 @@ String context tracking would enable:
 
 ## Conclusion
 
-Successfully implemented 73% of identified FIXMEs (52 out of 71 functions), completing all functions that don't require major infrastructure. All implementations are tested and working. The remaining 19 functions primarily require building supporting systems:
+Successfully implemented 80% of identified FIXMEs (57 out of 71 functions), completing all functions that don't require major infrastructure. All implementations are tested and working. The remaining 10 functions (plus 1 enhancement) require building supporting systems:
 - Full Nix store implementation (4 functions)
 - Network fetchers (5 functions)
 - Parser/evaluator for imports (2 functions)
