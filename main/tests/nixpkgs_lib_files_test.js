@@ -589,6 +589,73 @@ Deno.test("nixpkgs.lib file loading", async (t) => {
         console.log("✅ kernel.nix configuration helpers work correctly")
     })
 
+    await t.step("load flakes.nix (simple re-export of builtins)", () => {
+        // flakes.nix is a very simple file that just re-exports flake-related builtins
+        const filePath = join(nixpkgsLibPath, "flakes.nix")
+        const nixCode = Deno.readTextFileSync(filePath)
+
+        // Translate to JS
+        let jsCode = convertToJs(nixCode, { relativePath: filePath })
+
+        // Create runtime
+        const runtime = createRuntime()
+
+        // Remove import statements
+        if (jsCode.includes('import { createRuntime }')) {
+            jsCode = jsCode.replace(/import \{ createRuntime \}.*\n/, '')
+            jsCode = jsCode.replace(/const runtime = createRuntime\(\)\n/, '')
+        }
+
+        // Remove multi-line comments
+        jsCode = jsCode.replace(/\/\*\*[\s\S]*?\*\//g, '')
+        jsCode = jsCode.trim()
+
+        // Create evaluation scope
+        const nixScope = {
+            builtins: runtime.runtime.builtins,
+            ...runtime.runtime.builtins
+        }
+
+        // Evaluate
+        const evalFunc = new Function(
+            'runtime',
+            'operators',
+            'builtins',
+            'nixScope',
+            'InterpolatedString',
+            'Path',
+            `return (${jsCode})`
+        )
+
+        const moduleFactory = evalFunc(
+            { scopeStack: [nixScope] },
+            runtime.runtime.operators,
+            runtime.runtime.builtins,
+            nixScope,
+            runtime.runtime.InterpolatedString,
+            runtime.runtime.Path
+        )
+
+        // Call with { lib } argument
+        const flakes = moduleFactory({ lib: {} })
+
+        // Verify structure - should re-export builtins.parseFlakeRef and builtins.flakeRefToString
+        assertExists(flakes)
+        assertEquals(typeof flakes, "object")
+
+        // Check that it has the expected functions
+        assertExists(flakes.parseFlakeRef, "flakes should have parseFlakeRef")
+        assertExists(flakes.flakeRefToString, "flakes should have flakeRefToString")
+        assertEquals(typeof flakes.parseFlakeRef, "function")
+        assertEquals(typeof flakes.flakeRefToString, "function")
+
+        // Verify they're actually the builtins functions
+        assertEquals(flakes.parseFlakeRef, runtime.runtime.builtins.parseFlakeRef)
+        assertEquals(flakes.flakeRefToString, runtime.runtime.builtins.flakeRefToString)
+
+        console.log("✅ flakes.nix loaded successfully (re-exports builtins)")
+    })
+
     // Note: zip-int-bits.nix is skipped because it uses complex closures with asserts
     // that reference builtins at call-time, which requires more sophisticated scope
     // management than our current test harness provides. The translator works correctly,
