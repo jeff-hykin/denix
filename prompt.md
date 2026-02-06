@@ -4,21 +4,10 @@ Your job is to focus on what is NOT implemented and NOT working. Only report wha
 
 ## CRITICAL: Documentation Out of Sync
 
-**MEMORY.md is incorrect** (as of 2026-02-06):
-- Claims 15 lib files tested → Actually 11 files tested
-- Lists phantom files (systems/parse, inspect, default, doubles) → These are NOT tested
-- Missing accurate count (says "19 remaining" → actually 21 remaining of 32 core files)
-
-**This prompt.md has been corrected** to reflect actual state:
-- 11 files actually tested (ascii-table, strings, minfeatures, source-types, versions, kernel, flakes, flake-version-info, systems/flake-systems, systems/supported, fetchers)
-- 21 files need testing (out of 32 core lib files)
-- 34% test coverage, targeting 62%+ (20 files) before moving to Priority 2
 
 **System is NOT blocked**:
-- Translator: 87/87 tests passing, production ready
-- Runtime: 61/98 Nix 2.18 builtins working, 170+ tests passing
-- Import system: Fully functional
-- Only 10 builtins blocked (network fetchers + store operations)
+- Runtime: 37/98 Nix 2.18 builtins not working
+- Need to start working on store functions and fetchers
 - Most lib files should work immediately, just need testing
 
 ## Current Tasks Overview
@@ -32,12 +21,12 @@ Your job is to focus on what is NOT implemented and NOT working. Only report wha
 ## 1. nixpkgs.lib Testing (Priority 1 - NEXT PRIORITY)
 
 **Time**: 1 week
-**Current**: 12/32 core lib files tested (37.5%)
-**Remaining**: 20 files need testing
+**Current**: 11/32 core lib files tested (34%)
+**Remaining**: 21 files need testing
 
 **Note**: Most files are UNTESTED, not BROKEN. The translator is production-ready (87/87 tests passing), we just need to validate it against more real-world nixpkgs code.
 
-### Files Already Tested (12 files)
+### Files Already Tested (11 files)
 - ascii-table.nix (attribute set of ASCII character codes)
 - strings.nix (string manipulation, imports ascii-table.nix)
 - minfeatures.nix (Nix version feature detection)
@@ -48,17 +37,16 @@ Your job is to focus on what is NOT implemented and NOT working. Only report wha
 - flake-version-info.nix (lib overlay with version metadata)
 - systems/flake-systems.nix (list of 10 supported platforms)
 - systems/supported.nix (platform tiers: tier1, tier2, tier3, hydra)
-- licenses.nix (289 license definitions) ← NEW! ✅
 - fetchers.nix (hash normalization utilities - commented out, too complex)
 
-### Files Needing Tests (20 files)
+### Files Needing Tests (21 files)
 
 **Easy wins** (standalone files, minimal dependencies, sorted by simplicity):
 
-1. [x] ~~**licenses.nix**~~ - ✅ DONE! 289 licenses loaded successfully
-   - Successfully tests lib.mapAttrs and lib.optionalAttrs
-   - Validates pattern-matched function defaults with closure capture
-   - Validates InterpolatedString in attrset values
+1. [ ] **licenses.nix** - ~200 license definitions (HIGHEST PRIORITY - pure data!)
+   - Just a giant attribute set of license metadata
+   - Test: Import and spot-check 5-10 common licenses (mit, gpl3, bsd3, apache20, mpl20)
+   - Expected: Each license has spdxId, fullName, url, free (boolean)
 
 2. [ ] **systems/parse.nix** - platform string parser (x86_64-linux → structured data)
    - Parses platform strings into {cpu, vendor, kernel, abi}
@@ -680,23 +668,4 @@ When implementing the above tasks, watch out for these common mistakes:
 
 ## Suggested First Steps (Right Now)
 
-**HIGHEST PRIORITY**: Test 3-5 more nixpkgs.lib files (1-2 days)
-
-Start with these in order:
-1. [x] ~~**licenses.nix**~~ - ✅ DONE! (289 licenses)
-2. **systems/parse.nix** (1-2 hours) - Large parser, tests complex attribute sets
-3. **systems/inspect.nix** (30 min) - Simple predicates, depends on parse.nix
-4. **systems/doubles.nix** (15 min) - Just a list
-5. **systems/default.nix** (30 min) - Re-exports, validates import system
-
-**Goal**: Get from 12 → 16 files tested (50%) in one focused session
-
-**Why this matters**:
-- Validates translator handles real-world nixpkgs code
-- Builds confidence in import system
-- Uncovers edge cases early
-- Each passing test de-risks the entire project
-
-**Then consider**:
-- Test meta.nix, debug.nix (another 1-2 hours)
-- OR move to store path research (Priority 2)
+**HIGHEST PRIORITY**: get `fetchTarball` working in any form.
