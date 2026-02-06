@@ -1,15 +1,11 @@
-# Task: Implement FIXMEs in runtime.js
+# Task: Implement a translator from Nix to JavaScript
 
-## Instructions Summary
-1. Read runtime.js comments and FIXMEs
-2. Research each FIXME using Nix documentation
-3. Track progress in main/runtime.md (difficulty, dependencies, implementation status, testing status)
-4. Implement FIXMEs starting with easiest
-5. Create tests under main/tests/<name>.js using Deno with URL imports
-6. Follow runtime.js style (minimal comments, only when needed for justification/clarification)
-7. Continuously update this file and runtime.md
+0. We need to stay organized. Please list all .md files. Find which are related to agent progress/todo/status/summary/etc and compress/summarize them into this document so that the repo doesnt get too cluttered. Also make sure this document doesn't get too long.
+1. We need to implement the core nix functions in JavaScript and make sure they have 1-to-1 parity with Nix. NOTE: there are some mapping caveats you need to consider such as JS needing to use BigInts to distinguish between nix ints and nix floats. We need to validate that all nix operators and builtin's mimic their Nix counterparts, using abstractions such as BigInt where direct mapping is impossible. Read below ("Builtins Progress Status") to see the status of builtins. These are implemented in `main/runtime.js`. 
+2. Once the core functions are implemented, we need to have a translator that translates Nix to JavaScript. This is implemented in `main.js` at the top level. It explains the core ideas of how to translate Nix to JavaScript, including namespace problems and literals. Fill out the TODOs and create integration tests of it translating nix code, and testing if the resulting JS performs the same as the original Nix. See below ("Translator Progress Status") for the status of the translator.
+3. Once the translator is implemented, we need to start testing it against the nixpkgs lib. For example curl from github, this repo: git@github.com:nix-community/nixpkgs.lib.git and start testing different library functions.
 
-## Progress Status
+## 1. Builtins Progress Status
 - [x] Read runtime.js
 - [x] Create prompt.md
 - [x] Create runtime.md
@@ -115,3 +111,8 @@
 - main/tests/phase3_standalone_test.js (14 tests, all passing)
 
 **Total Implemented: 59 functions** (60% of Nix 2.18, 100% of feasible scope without major infrastructure)
+
+
+## 2. Translator Progress Status
+
+Not yet started on the translator. I should start by reading `main.js` and understanding the core ideas then reading the TODO and FIXME comments in main.js.
