@@ -1,0 +1,33 @@
+Perfect! I've updated the prompt.md file to enforce the rules you specified. Here's what I changed:
+
+## Summary of Changes:
+
+1. **Kept the rules at the top** - The instructions about focusing only on remaining work are still prominently placed
+
+2. **Added critical reminders**:
+   - Always consult Nix documentation at https://noogle.dev/f/builtins/<function_name> before implementing
+   - NPM modules are allowed but ONLY through https://esm.sh/NPM_MODULE_NAME (with warning that it doesn't always work)
+
+3. **Removed all checkmarks and achievements**:
+   - Changed "✅ IMPLEMENTED" to "NOT IMPLEMENTED" 
+   - Removed the entire "RECENT COMPLETION: fetchTarball is DONE!" section with all its checkmarks
+   - Removed checkmark emojis from infrastructure section
+   - Changed "✅ EXISTS & TESTED" to "already exists"
+   - Cleaned up completion criteria section
+
+4. **Added documentation links**:
+   - Added noogle.dev documentation links to the status table
+   - Added "READ FIRST" documentation links to each builtin section
+   - Added documentation links to priority order summary
+   - Emphasized consulting documentation in multiple places
+
+5. **Focused on remaining work only**:
+   - Changed "Quick Status Overview" to "Remaining Work Status"
+   - Simplified status table to focus on what's NOT done
+   - Removed progress reporting language
+
+The prompt now clearly focuses the agent on:
+- What remains to be done (9 builtins)
+- Consulting Nix documentation first
+- Using esm.sh for npm modules
+- Not working on translator or lib tests until runtime is complete

@@ -12,44 +12,26 @@ INSTRUCTIONS:
 - **DO NOT WORK ON NIX-LIB TESTS** until runtime is complete
 - **DO NOT WORK ON TRANSLATOR** - it is already complete and working
 - **ONLY FOCUS ON**: Implementing the remaining runtime builtins and features
+- **ALWAYS CONSULT NIX DOCUMENTATION**: Before implementing any builtin, read the official Nix documentation at https://noogle.dev/f/builtins/<function_name> to understand the exact behavior and semantics
+- **NPM MODULES**: You are allowed to use npm modules, but ONLY through https://esm.sh/NPM_MODULE_NAME URLs (note: esm.sh doesn't always work with all modules, so test first)
 
 ---
 
-## Quick Status Overview
+## Remaining Work Status
 
-| Builtin | Status | Priority | Estimated Time |
-|---------|--------|----------|----------------|
-| **fetchTarball** | ✅ IMPLEMENTED | N/A | Complete |
-| **toJSON (Path)** | ❌ NOT IMPLEMENTED | IMMEDIATE | 30 minutes |
-| **fetchurl** | ❌ NOT IMPLEMENTED | HIGH | 1-2 days |
-| **path** | ❌ NOT IMPLEMENTED | HIGH | 1-2 days |
-| **filterSource** | ❌ NOT IMPLEMENTED | MEDIUM | 1 day |
-| **fetchGit** | ❌ NOT IMPLEMENTED | MEDIUM | 1-2 weeks |
-| **fetchTree** | ❌ NOT IMPLEMENTED | LOW | 1 week |
-| **fetchMercurial** | ❌ NOT IMPLEMENTED | LOW | 1 week |
-| **fetchClosure** | ❌ NOT IMPLEMENTED | VERY LOW | TBD |
-| **getFlake** | ❌ NOT IMPLEMENTED | DEFER | TBD |
+| Builtin | Status | Priority | Estimated Time | Documentation |
+|---------|--------|----------|----------------|---------------|
+| **toJSON (Path)** | NOT IMPLEMENTED | IMMEDIATE | 30 minutes | https://noogle.dev/f/builtins/toJSON |
+| **fetchurl** | NOT IMPLEMENTED | HIGH | 1-2 days | https://noogle.dev/f/builtins/fetchurl |
+| **path** | NOT IMPLEMENTED | HIGH | 1-2 days | https://noogle.dev/f/builtins/path |
+| **filterSource** | NOT IMPLEMENTED | MEDIUM | 1 day | https://noogle.dev/f/builtins/filterSource |
+| **fetchGit** | NOT IMPLEMENTED | MEDIUM | 1-2 weeks | https://noogle.dev/f/builtins/fetchGit |
+| **fetchTree** | NOT IMPLEMENTED | LOW | 1 week | https://noogle.dev/f/builtins/fetchTree |
+| **fetchMercurial** | NOT IMPLEMENTED | LOW | 1 week | https://noogle.dev/f/builtins/fetchMercurial |
+| **fetchClosure** | NOT IMPLEMENTED | VERY LOW | TBD | https://noogle.dev/f/builtins/fetchClosure |
+| **getFlake** | NOT IMPLEMENTED | DEFER | TBD | https://noogle.dev/f/builtins/getFlake |
 
-**Total Progress: 62/98 builtins implemented (63%)**
-- ✅ 62 builtins working (including fetchTarball ✅)
-- ❌ 9 builtins remaining (8 network/store + 1 toJSON fix)
-- 🎯 Next: toJSON (30 min) → fetchurl (1-2 days) → path (1-2 days)
-
-**Note**: README.md and MEMORY.md still show 61/98 but fetchTarball was recently implemented, so it's actually 62/98.
-
----
-
-## ✅ RECENT COMPLETION: fetchTarball is DONE!
-**builtins.fetchTarball** was successfully implemented in recent sessions:
-- Downloads tarballs from HTTP/HTTPS ✅
-- Extracts to store with NAR hashing ✅
-- Supports SHA256 verification ✅
-- Implements caching ✅
-- Returns Path object ✅
-- Tests passing (6/6) ✅
-- Infrastructure modules created: fetcher.js, tar.js, nar_hash.js, store_manager.js ✅
-
-This means we can now move forward with fetchurl and path implementations!
+**9 builtins remaining to implement** (8 network/store + 1 toJSON fix)
 
 ---
 
@@ -57,21 +39,26 @@ This means we can now move forward with fetchurl and path implementations!
 
 **Implement: toJSON support for Path objects (QUICK WIN - 30 minutes)**
 
+**READ FIRST**: https://noogle.dev/f/builtins/toJSON
+
 Location: main/runtime.js:344
 Current: Throws NotImplemented error when toJSON receives a Path
 Goal: Convert Path to string and return JSON
 
 Steps:
-1. Open main/runtime.js
-2. Find line 344 (inside toJSON function)
-3. Replace the NotImplemented throw with:
+1. Read documentation: https://noogle.dev/f/builtins/toJSON
+2. Understand how Nix handles Path objects in toJSON
+3. Open main/runtime.js
+4. Find line 344 (inside toJSON function)
+5. Replace the NotImplemented throw with:
    ```javascript
    if (value instanceof Path) {
        return JSON.stringify(value.toString())
    }
    ```
-4. Create test file: main/tests/builtins_tojson_path_test.js
-5. Test that builtins.toJSON(builtins.fetchTarball("...")) works
+6. Create test file: main/tests/builtins_tojson_path_test.js
+7. Test that builtins.toJSON(builtins.fetchTarball("...")) works
+8. Verify behavior matches Nix 2.18 documentation
 
 Why this first: It's trivial (5 minutes of code) and unblocks testing other fetchers.
 
@@ -82,6 +69,9 @@ Why this first: It's trivial (5 minutes of code) and unblocks testing other fetc
 ## What is NOT Implemented (9 items total)
 
 ### 1. builtins.fetchurl (NEXT PRIORITY - 1-2 days)
+
+**READ FIRST**: https://noogle.dev/f/builtins/fetchurl
+
 Location: runtime.js:748
 Status: NOT IMPLEMENTED (throws NotImplemented error)
 Requirements:
@@ -114,6 +104,9 @@ Test requirements:
 - Invalid URL throws error
 
 ### 2. builtins.path (1-2 days)
+
+**READ FIRST**: https://noogle.dev/f/builtins/path
+
 Location: runtime.js:995
 Status: NOT IMPLEMENTED (throws NotImplemented error)
 Requirements:
@@ -147,6 +140,9 @@ Test requirements:
 - Custom name parameter
 
 ### 3. builtins.filterSource (1 day)
+
+**READ FIRST**: https://noogle.dev/f/builtins/filterSource
+
 Location: runtime.js:1351
 Status: NOT IMPLEMENTED (throws NotImplemented error)
 Requirements:
@@ -188,6 +184,9 @@ Test requirements:
 - String contains /nix/store path
 
 ### 5. builtins.fetchGit (COMPLEX - 1-2 weeks)
+
+**READ FIRST**: https://noogle.dev/f/builtins/fetchGit
+
 Location: runtime.js:820
 Status: NOT IMPLEMENTED (throws NotImplemented error)
 Requirements:
@@ -230,6 +229,9 @@ Test requirements:
 - Error handling for invalid URL
 
 ### 6. builtins.fetchTree (EXPERIMENTAL - 1 week)
+
+**READ FIRST**: https://noogle.dev/f/builtins/fetchTree
+
 Location: runtime.js:826
 Status: NOT IMPLEMENTED (throws NotImplemented error)
 Requirements:
@@ -256,6 +258,9 @@ This requires all other fetchers to be implemented first.
 LOW PRIORITY - experimental Nix feature.
 
 ### 7. builtins.fetchMercurial (LOW PRIORITY)
+
+**READ FIRST**: https://noogle.dev/f/builtins/fetchMercurial
+
 Location: runtime.js:823
 Status: NOT IMPLEMENTED (throws NotImplemented error)
 Requirements:
@@ -273,6 +278,9 @@ Requires Mercurial binary installed.
 LOW PRIORITY - rarely used in modern Nix code.
 
 ### 8. builtins.fetchClosure (VERY LOW PRIORITY - DON'T IMPLEMENT YET)
+
+**READ FIRST**: https://noogle.dev/f/builtins/fetchClosure
+
 Location: runtime.js:829
 Status: NOT IMPLEMENTED (throws NotImplemented error)
 Requirements:
@@ -287,6 +295,9 @@ Requires full binary cache support (narinfo parsing, NAR downloading, signature 
 Should be LAST priority after all other fetchers work.
 
 ### 9. builtins.getFlake (DEFER - NOT CRITICAL)
+
+**READ FIRST**: https://noogle.dev/f/builtins/getFlake
+
 Location: runtime.js:1240
 Status: NOT IMPLEMENTED (throws NotImplemented error)
 Requirements:
@@ -304,24 +315,24 @@ DEFER until all basic fetchers work.
 
 ---
 
-## Summary: What to Implement (Priority Order)
+## Implementation Priority Order
 
-**QUICK WIN (Do First - 1 hour total):**
-1. builtins.toJSON for Path (runtime.js:344) - 1 hour
+**IMMEDIATE (Do First - 1 hour total):**
+1. builtins.toJSON for Path (runtime.js:344) - 30 minutes - https://noogle.dev/f/builtins/toJSON
 
 **HIGH PRIORITY (Core fetchers - 3-5 days):**
-2. builtins.fetchurl (runtime.js:748) - 1-2 days
-3. builtins.path (runtime.js:995) - 1-2 days
-4. builtins.filterSource (runtime.js:1351) - 1 day (depends on #3)
+2. builtins.fetchurl (runtime.js:748) - 1-2 days - https://noogle.dev/f/builtins/fetchurl
+3. builtins.path (runtime.js:995) - 1-2 days - https://noogle.dev/f/builtins/path
+4. builtins.filterSource (runtime.js:1351) - 1 day (depends on #3) - https://noogle.dev/f/builtins/filterSource
 
 **MEDIUM PRIORITY (Git integration - 1-2 weeks):**
-5. builtins.fetchGit (runtime.js:820) - 1-2 weeks
+5. builtins.fetchGit (runtime.js:820) - 1-2 weeks - https://noogle.dev/f/builtins/fetchGit
 
 **LOW PRIORITY (Advanced/Experimental):**
-6. builtins.fetchTree (runtime.js:826) - depends on #2,#3,#5
-7. builtins.fetchMercurial (runtime.js:823) - rarely used
-8. builtins.fetchClosure (runtime.js:829) - very complex
-9. builtins.getFlake (runtime.js:1240) - defer indefinitely
+6. builtins.fetchTree (runtime.js:826) - depends on #2,#3,#5 - https://noogle.dev/f/builtins/fetchTree
+7. builtins.fetchMercurial (runtime.js:823) - rarely used - https://noogle.dev/f/builtins/fetchMercurial
+8. builtins.fetchClosure (runtime.js:829) - very complex - https://noogle.dev/f/builtins/fetchClosure
+9. builtins.getFlake (runtime.js:1240) - defer indefinitely - https://noogle.dev/f/builtins/getFlake
 
 ---
 
@@ -346,34 +357,38 @@ Use tools/store_path.js which already implements this.
 - Cache file: `~/.cache/denix/cache.json` maps keys to store paths
 - Check sequence: store exists? → cache hit? → download
 
-### Available Infrastructure (Reuse These - All Working!)
-- `main/fetcher.js` - HTTP download with retry - ✅ EXISTS & TESTED
+### Available Infrastructure (Reuse These!)
+- `main/fetcher.js` - HTTP download with retry (already exists)
   - `downloadWithRetry(url, destPath)` - async download with 3 retries
   - `validateSha256(filePath, expectedHash)` - verify SHA256
   - `extractNameFromUrl(url)` - extract filename from URL
-- `main/tar.js` - Tarball extraction - ✅ EXISTS & TESTED
+- `main/tar.js` - Tarball extraction (already exists)
   - `extractTarball(tarPath, destDir)` - extract .tar.gz to directory
-- `main/nar_hash.js` - NAR hashing - ✅ EXISTS & TESTED
+- `main/nar_hash.js` - NAR hashing (already exists)
   - `hashDirectory(dirPath)` - compute NAR hash of directory
-- `main/store_manager.js` - Store management - ✅ EXISTS & TESTED
+- `main/store_manager.js` - Store management (already exists)
   - `getCachedPath(cacheKey)` - check if URL cached
   - `setCachedPath(cacheKey, storePath)` - save to cache
   - `atomicMove(srcPath, destPath)` - atomic move to store
   - `exists(path)` - check if path exists
   - `ensureStoreDirectory()` - create store dir if needed
-- `tools/store_path.js` - Store path computation - ✅ EXISTS & TESTED
+- `tools/store_path.js` - Store path computation (already exists)
   - `computeFetchStorePath(narHash, name)` - compute store path from hash
-- `tools/hashing.js` - SHA256 and other hashes - ✅ EXISTS & TESTED
+- `tools/hashing.js` - SHA256 and other hashes (already exists)
   - `sha256Hex(data)`, `sha256(data)` - SHA256 hashing
 - External dependencies:
-  - `jsr:@std/tar@0.1.10` - Deno standard library ✅
-  - `DecompressionStream` - Web API for gzip ✅
+  - `jsr:@std/tar@0.1.10` - Deno standard library (for tarball extraction)
+  - `DecompressionStream` - Web API for gzip (built into Deno)
+  - npm modules can be used via `https://esm.sh/NPM_MODULE_NAME` (test first, not all modules work)
 
 ---
 
 ## Implementation Notes
 
 ### For builtins.fetchurl (AFTER toJSON is done)
+
+**READ DOCUMENTATION FIRST**: https://noogle.dev/f/builtins/fetchurl
+
 **This should be nearly identical to fetchTarball, but simpler!**
 
 Copy the pattern from fetchTarball (lines 750-818), but:
@@ -449,6 +464,9 @@ See main/store_manager.js for getCachedPath(), setCachedPath(), atomicMove(), ex
 See tools/store_path.js for computeFetchStorePath().
 
 ### For builtins.path
+
+**READ DOCUMENTATION FIRST**: https://noogle.dev/f/builtins/path
+
 **Pattern: Copy local files to store with optional filtering**
 
 This is similar to fetchTarball, but source is local filesystem instead of network.
@@ -660,15 +678,16 @@ deno test --allow-all --watch
 - Integration with related builtins should be tested
 
 ### When to Mark Implementation Complete
-✅ Implementation is complete when:
+Implementation is complete when:
 1. All test cases pass
 2. No NotImplemented errors thrown
-3. Behavior matches Nix 2.18 documentation
+3. Behavior matches Nix 2.18 documentation (verify at https://noogle.dev)
 4. Edge cases handled correctly
 5. Error messages are clear and helpful
 
-❌ Implementation is NOT complete if:
+Implementation is NOT complete if:
 - Tests are skipped or commented out
 - Known bugs exist
 - Error handling is missing
-- Documentation promises features not yet working
+- Behavior doesn't match official Nix documentation
+- You haven't read the documentation at https://noogle.dev first
