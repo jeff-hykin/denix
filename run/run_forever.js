@@ -26,7 +26,7 @@ while (true) {
             2. Understand the current state (mostly runtime.js and tests)
             3. Understand the directory structure 
             
-            If you can't find a reason for a file or a directory in this project, then try to find a reason. If is a duplicate or a bad reason, then remove the file or directory. Your number one goal is to make a simple/small and clean codebase without compromising on functionality or quality of validation (e.g. fewer tests can be okay if they are better tests). 
+            Scan the dirs of the project. If you can't find a reason for a file or a directory in this project, then try to find a reason. If the reason is bad (like a directory is a duplicate with a different name), then remove that file or directory and fix code that depended on it. Your number one goal is to make a simple/small and clean codebase without compromising on functionality or quality of validation (e.g. fewer tests can be okay if they are better tests). 
             There should be a simple testing system that tests js behavior against nix behavior. There should be a way to run all tests, run groups of tests, or a run test on a specific aspect (like all tests for "derivation")
             Because you are the architect you need to refocus priorities in the prompt.md. For example, if "derivation" in runtime.js is not fully implemented or not fully tested, you need to edit the prompt.md file to reflect that priority.
             Your top priority is SIMPLICITY. Do not over-engineer the codebase.
