@@ -57,11 +57,10 @@ console.log("Testing builtins.tryEval with success...")
     assertEquals(result.value, 42, "tryEval should return the value on success")
 }
 
-console.log("Testing builtins.tryEval with throw...")
-{
-    const result = builtins.tryEval((() => { throw new NixError("test") })())
-    assertEquals(result.success, false, "tryEval should catch NixError")
-    assertEquals(result.value, false, "tryEval should return false on error")
-}
+// Note: In Nix, tryEval works with lazy evaluation to catch errors.
+// In JavaScript, errors are eager, so tryEval can only catch errors that
+// occur during property access (getters) or toString(), not during
+// immediate evaluation. See main/tests/builtins/tryEval/001_basic.js for
+// proper tests that work with lazy getters.
 
 console.log("✓ All evaluation control tests passed")

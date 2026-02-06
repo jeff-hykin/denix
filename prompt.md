@@ -5,7 +5,6 @@
 **Status**: ✅ **TRANSLATOR FULLY FUNCTIONAL** - All critical bugs fixed, 87 tests passing!
 
 **Core files to read**: prompt.md (this file), README.md, STATUS.md, TRANSLATOR_STATUS.md
-**Archived**: CURRENT_STATUS.md, IMPLEMENTATION_COMPLETE.md, SESSION_*.md files moved to archive/
 1. We need to implement the core nix functions in JavaScript and make sure they have 1-to-1 parity with Nix. NOTE: there are some mapping caveats you need to consider such as JS needing to use BigInts to distinguish between nix ints and nix floats. We need to validate that all nix operators and builtin's mimic their Nix counterparts, using abstractions such as BigInt where direct mapping is impossible. Read below ("Builtins Progress Status") to see the status of builtins. These are implemented in `main/runtime.js`. 
 2. Once the core functions are implemented, we need to have a translator that translates Nix to JavaScript. This is implemented in `main.js` at the top level. It explains the core ideas of how to translate Nix to JavaScript, including namespace problems and literals. Fill out the TODOs and create integration tests of it translating nix code, and testing if the resulting JS performs the same as the original Nix. See below ("Translator Progress Status") for the status of the translator.
 3. Once the translator is implemented, we need to start testing it against the nixpkgs lib. For example curl from github, this repo: git@github.com:nix-community/nixpkgs.lib.git and start testing different library functions.
