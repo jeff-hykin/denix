@@ -13,7 +13,7 @@ const results = {
     suites: []
 }
 
-console.log("=" system".repeat(80))
+console.log("=".repeat(80))
 console.log("DENIX TEST SUITE - Running All Tests")
 console.log("=".repeat(80))
 console.log()
