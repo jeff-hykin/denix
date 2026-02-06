@@ -764,7 +764,57 @@ import { NixError, NotImplemented } from "./errors.js"
                 throw new NixError(`error: cannot coerce ${builtins.typeOf(value)} to a string`)
             },
             "pathExists": (path)=>FileSystem.sync.info(path).exists,
-            "toFile": ()=>{/*FIXME*/},
+            "toFile": (name)=>(content)=>{
+                // In real Nix, this writes content to /nix/store/<hash>-<name>
+                // For now, we'll compute the correct store path but not actually write it
+                const nameStr = requireString(name).toString()
+                const contentStr = requireString(content).toString()
+
+                // Validate name (no slashes allowed)
+                if (nameStr.includes("/")) {
+                    throw new NixError(`error: 'toFile' name cannot contain '/'`)
+                }
+
+                // Compute store path using text method (similar to .drv files)
+                // Fingerprint: "text:sha256:<content-hash>:/nix/store:<name>"
+                const contentHash = sha256Hex(contentStr)
+                const fingerprint = `text:sha256:${contentHash}:/nix/store:${nameStr}`
+                const fingerprintHash = sha256Hex(fingerprint)
+
+                // Convert to bytes and XOR-fold to 20 bytes
+                const hashBytes = new Uint8Array(32)
+                for (let i = 0; i < 32; i++) {
+                    hashBytes[i] = parseInt(fingerprintHash.slice(i * 2, i * 2 + 2), 16)
+                }
+                const compressed = new Uint8Array(20)
+                for (let i = 0; i < 32; i++) {
+                    compressed[i % 20] ^= hashBytes[i]
+                }
+
+                // Reverse bytes for Nix base-32 encoding
+                const reversed = new Uint8Array(compressed.length)
+                for (let i = 0; i < compressed.length; i++) {
+                    reversed[i] = compressed[compressed.length - 1 - i]
+                }
+
+                // Nix base-32 alphabet
+                const alphabet = "0123456789abcdfghijklmnpqrsvwxyz"
+                let hash32 = ""
+                let bits = 0n
+                for (const byte of reversed) {
+                    bits = (bits << 8n) | BigInt(byte)
+                }
+                while (bits > 0n) {
+                    hash32 = alphabet[Number(bits % 32n)] + hash32
+                    bits = bits / 32n
+                }
+                hash32 = hash32.padStart(32, "0")
+
+                const storePath = `/nix/store/${hash32}-${nameStr}`
+
+                // Return path (note: file not actually written in this implementation)
+                return storePath
+            },
             "readFileType": (p)=>{
                 const absolutePath = FileSystem.makeAbsolutePath(p.toString())
                 try {
@@ -798,9 +848,40 @@ import { NixError, NotImplemented } from "./errors.js"
                 return result
             },
             
-            "findFile": (list)=>(string)=>{/*FIXME*/},
+            "findFile": (searchPath)=>(lookup)=>{
                 // https://nix-community.github.io/docnix/reference/builtins/builtins-findfile/
-                // list[0] == { path = "/Users/jeffhykin/.nix-defexpr/channels"; prefix = ""; }
+                // searchPath is a list like [{ path = "/some/path"; prefix = ""; }]
+                // lookup is a string like "nixpkgs" or "nixpkgs/pkgs"
+                requireList(searchPath)
+                const lookupStr = requireString(lookup).toString()
+
+                for (const entry of searchPath) {
+                    requireAttrSet(entry)
+                    const prefix = requireString(entry.prefix || "").toString()
+                    const path = requireString(entry.path).toString()
+
+                    // Check if lookup starts with this prefix
+                    if (prefix) {
+                        if (lookupStr === prefix || lookupStr.startsWith(prefix + "/")) {
+                            // Remove prefix from lookup and check in path
+                            const suffix = lookupStr.slice(prefix.length).replace(/^\//, "")
+                            const fullPath = suffix ? FileSystem.join(path, suffix) : path
+
+                            if (FileSystem.sync.info(fullPath).exists) {
+                                return new Path([""], [()=>FileSystem.makeAbsolutePath(fullPath)])
+                            }
+                        }
+                    } else {
+                        // No prefix, just check directly
+                        const fullPath = FileSystem.join(path, lookupStr)
+                        if (FileSystem.sync.info(fullPath).exists) {
+                            return new Path([""], [()=>FileSystem.makeAbsolutePath(fullPath)])
+                        }
+                    }
+                }
+
+                throw new NixError(`error: file '${lookupStr}' was not found in the Nix search path`)
+            },
         
         // nix-y derivation-y stuff
             "nixPath": ()=>{
@@ -924,9 +1005,9 @@ import { NixError, NotImplemented } from "./errors.js"
                 drvStructure.outputs = outputNames.map(o => [o, outputPaths[o], "", ""])
                 drvStructure.env = env
 
-                // Now compute drvPath from the complete serialization
+                // Now compute drvPath from the complete serialization (with filled paths!)
                 const drvSerializedFinal = serializeDerivation(drvStructure)
-                const drvPath = computeDrvPath(drvSerializedForHash, name, storeDir)
+                const drvPath = computeDrvPath(drvSerializedFinal, name, storeDir)
 
                 // Build the return value
                 const derivation = {
@@ -958,7 +1039,11 @@ import { NixError, NotImplemented } from "./errors.js"
 
                 return derivation
             },
-            "derivationStrict": ()=>{/*FIXME*/},
+            "derivationStrict": (attrs)=>{
+                // derivationStrict is identical to derivation in modern Nix
+                // The "strict" version was historical - both now strictly evaluate all attributes before building
+                return builtins.derivation(attrs)
+            },
             "parseDrvName": (s)=>{
                 const str = requireString(s).toString()
                 const match = str.match(/^(.*?)-([^-]*(?:-[^a-zA-Z].*)?)$/)

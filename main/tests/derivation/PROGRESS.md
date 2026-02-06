@@ -1,12 +1,13 @@
 # Derivation Implementation Progress
 
-## Completed
+## ✅ COMPLETED - Hash Computation Fixed!
 
 ### Infrastructure ✅
 - [x] Created test harness (`test_harness.js`) for comparing Nix and JS outputs
 - [x] Created basic test suite (`001_basic_tests.js`) with 10 tests
 - [x] Implemented implementation plan (`IMPLEMENTATION_PLAN.md`)
 - [x] Created store path utilities (`tools/store_path.js`)
+- [x] Created standalone test suite (`standalone_test.js`) - 12/12 tests passing
 
 ### Implementation ✅
 - [x] Basic derivation function structure
@@ -29,77 +30,112 @@
   - [x] drvAttrs (original attributes)
   - [x] toString/toPrimitive coercion to outPath
 
-## In Progress
-
-### Store Path Computation 🚧
-Current issue: Hash algorithm doesn't exactly match Nix
+### Store Path Computation ✅ FIXED!
+**All algorithms now match Nix exactly!**
 
 **What's implemented:**
-- Basic ATerm serialization format
-- SHA-256 hashing
-- Nix base-32 encoding
-- Output path computation from derivation hash
+- ✅ Correct ATerm serialization format
+- ✅ SHA-256 hashing
+- ✅ XOR-folding compression (32 bytes → 20 bytes)
+- ✅ Nix base-32 encoding with reverse byte order
+- ✅ Output path computation: `output:<output-name>:sha256:<drv-hash>:/nix/store:<name>`
+- ✅ Drv path computation using text method: `text:sha256:<content-hash>:/nix/store:<name>.drv`
 
-**What needs fixing:**
-- Hash mismatch indicates subtle differences in:
-  - Serialization format (whitespace, ordering, escaping?)
-  - Hash input string format
-  - Base-32 encoding implementation
-
-**Next steps:**
-1. Study Nix source code for exact serialization format
-2. Verify base-32 encoding matches Nix's algorithm
-3. Debug hash computation step-by-step
-4. Compare intermediate values with Nix
-
-## Blocked
-
-### Testing 🚫
-Cannot run full integration tests due to prex WASM initialization issue in runtime.js.
-
-**Workarounds:**
-- Create standalone test files without full runtime import
-- Test individual components (store_path.js works standalone)
-- Test derivation logic separately from main runtime
+**Key fixes:**
+1. Added XOR-folding compression (modulo 20 bytes)
+2. Fixed base-32 encoding to use reverse byte order (Nix quirk)
+3. Discovered text method format for .drv paths from Nix source
+4. Fixed derivation.js to use filled .drv content for drvPath (not empty)
 
 ## Test Results
 
-### Store Path Tests
+### Store Path Tests ✅
 ```
-Current output:  /nix/store/0lxj84jlr98czpd0xrmvbz1q5cnh5hpq-test.drv
-Expected output: /nix/store/y1s2fiq89v2h9vkb38w508ir20dwv6v2-test.drv
-Status: ❌ MISMATCH
-```
-
-```
-Current output:  /nix/store/4pz4z9gg8i89pvjkh98bhp7y3sl4fpzb-test
-Expected output: /nix/store/d62izaahds46siwr2b7k7q3gan6vw4p0-test
-Status: ❌ MISMATCH
+Output:  /nix/store/d62izaahds46siwr2b7k7q3gan6vw4p0-test
+Expected: /nix/store/d62izaahds46siwr2b7k7q3gan6vw4p0-test
+Status: ✅ MATCH
 ```
 
-### Basic Tests
-Status: Not yet run (blocked by prex issue and hash mismatch)
+```
+Output:  /nix/store/y1s2fiq89v2h9vkb38w508ir20dwv6v2-test.drv
+Expected: /nix/store/y1s2fiq89v2h9vkb38w508ir20dwv6v2-test.drv
+Status: ✅ MATCH
+```
 
-## Next Actions
+### Standalone Tests ✅
+```
+Testing Derivation Store Path Computation
 
-1. **Priority 1: Fix hash computation**
-   - Research exact Nix serialization format
-   - Implement bit-exact base-32 encoding
-   - Verify against known test cases
+✓ Basic derivation - outPath
+✓ Basic derivation - drvPath
+✓ Derivation with args - outPath computed
+✓ Derivation with args - drvPath computed
+✓ Derivation with args - outPath ends with name
+✓ Derivation with args - drvPath ends with .drv
+✓ Multiple outputs - out and dev are different
+✓ Multiple outputs - both have store paths
+✓ Serialization starts with Derive
+✓ Serialization contains outputs
+✓ Serialization contains args
+✓ Serialization contains env
 
-2. **Priority 2: Create standalone tests**
-   - Work around prex issue with standalone derivation tests
-   - Test each component independently
+Total: 12/12 tests passing
+```
 
-3. **Priority 3: Incremental testing**
-   - Start with tests that don't require exact hash matching
-   - Test structure and attribute handling
-   - Test environment variable conversion
-   - Add hash-dependent tests later
+## Remaining Work
 
-## Resources
+### Testing 🔄
+The test harness (`test_harness.js`) can't run due to prex WASM initialization issue in runtime.js.
+
+**Workarounds implemented:**
+- ✅ Created standalone test suite without runtime import
+- ✅ Tested store path computation independently
+- ⬜ Full integration tests pending resolution of prex issue
+
+### Future Enhancements
+- [ ] Support for input derivations (dependencies)
+- [ ] Support for input sources (files)
+- [ ] Support for fixed-output derivations (FODs)
+- [ ] Support for content-addressed derivations
+- [ ] Full .drv file writing to disk
+
+## Key Insights Discovered
+
+### 1. Two-Phase Hash Computation
+The .drv and output paths have a circular dependency resolved by:
+1. Serialize derivation with empty output paths
+2. Hash to compute output paths
+3. Fill in output paths
+4. Hash filled version to compute .drv path
+
+### 2. Text Content-Addressing Method
+.drv files use the "text" method with fingerprint format:
+```
+"text:sha256:<content-hash>:/nix/store:<name>.drv"
+```
+
+### 3. Output Path Fingerprint Format
+Output paths use fingerprint format:
+```
+"output:<output-name>:sha256:<drv-hash>:/nix/store:<name>"
+```
+
+### 4. XOR-Folding Compression
+Nix compresses 32-byte SHA-256 hashes to 20 bytes by XOR-folding:
+```javascript
+for (let i = 0; i < 32; i++) {
+    compressed[i % 20] ^= hashBytes[i]
+}
+```
+
+### 5. Reverse Byte Order in Base-32
+Nix's base-32 encoding reverses bytes before encoding (undocumented quirk).
+
+## Resources Used
 
 - [Nix Derivations Manual](https://nix.dev/manual/nix/2.18/language/derivations.html)
 - [Store Path Specification](https://nix.dev/manual/nix/2.22/protocols/store-path)
-- [Nix Source: derivations.cc](https://github.com/NixOS/nix/blob/master/src/libstore/derivations.cc)
-- [Nix Source: store-api.cc](https://github.com/NixOS/nix/blob/master/src/libstore/store-api.cc)
+- [Nix Source: store-api.cc](https://github.com/NixOS/nix/blob/master/src/libstore/store-api.cc) - makeTextPath implementation
+- [Nix By Hand (Max Bernstein)](https://bernsteinbear.com/blog/nix-by-hand/) - XOR-folding and reverse byte order
+- [Nix Pills: Store Paths](https://nixos.org/guides/nix-pills/18-nix-store-paths) - Output path algorithm
+- [NixOS Discourse: Hash Calculation](https://discourse.nixos.org/t/how-to-calculate-hash-of-derivation-for-store-path-drv/5300) - Circular dependency resolution

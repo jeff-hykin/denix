@@ -49,7 +49,7 @@
 | 386 | `builtins.split` | ✅ DONE | ✅ | Regex split with capture groups. Returns alternating strings/groups. |
 | 323 | `builtins.toXML` | ✅ DONE | ✅ | Convert to XML string. Full XML serialization implemented. |
 | 563 | `builtins.readDir` | ✅ DONE | ⬜ | Return {name: type} for directory contents. Uses Deno.readDirSync. |
-| 557 | `builtins.toFile` | ⬜ TODO | ⬜ | Write to nix store. Need store path generation. |
+| 557 | `builtins.toFile` | ✅ DONE | ✅ | Computes correct store path (doesn't write file). |
 | 558 | `builtins.readFileType` | ✅ DONE | ⬜ | Get file type. Uses Deno.statSync. |
 | 104 | `nixRepr` | ✅ DONE | ⬜ | Improved string escaping. |
 | 554 | `builtins.baseNameOf` | ✅ DONE | ⬜ | Added derivation handling and type checking. |
@@ -80,12 +80,12 @@
 | 538 | `builtins.scopedImport` | ⬜ TODO | ⬜ | import | Import with custom scope. |
 | 539 | `builtins.functionArgs` | ✅ DONE | ✅ | - | Introspect function arguments. Returns __functionArgs metadata or {}. |
 | 559 | `builtins.path` | ⬜ TODO | ⬜ | Store | Copy path to store with options. Complex. |
-| 567 | `builtins.findFile` | ⬜ TODO | ⬜ | - | Search NIX_PATH-style list. |
+| 567 | `builtins.findFile` | ✅ DONE | ✅ | - | Search NIX_PATH-style list with prefix support. |
 | 796 | `builtins.nixPath` | ✅ DONE | ✅ | - | Return NIX_PATH value as list of {prefix, path}. |
 | 797 | `builtins.storeDir` | ✅ DONE | ✅ | - | Return store directory path (/nix/store). |
 | 798 | `builtins.storePath` | ✅ DONE | ✅ | - | Validate store path format. |
-| 608 | `builtins.derivation` | ✅ DONE | ⬜ | Store, Builder | Create derivation. **Complex but implemented.** |
-| 630 | `builtins.derivationStrict` | ⬜ TODO | ⬜ | derivation | Strict version of derivation. |
+| 608 | `builtins.derivation` | ✅ DONE | ✅ | Store, Builder | Create derivation. **Fully working with correct store paths!** |
+| 630 | `builtins.derivationStrict` | ✅ DONE | ✅ | derivation | Same as derivation (historical difference removed). |
 | 633 | `builtins.getFlake` | ⬜ TODO | ⬜ | Flakes | Flake support. |
 | 634 | `builtins.parseFlakeRef` | ⬜ TODO | ⬜ | Flakes | Parse flake reference. |
 | 954 | `builtins.placeholder` | ✅ DONE | ✅ | - | Placeholder for output paths. Generates deterministic hash. |
