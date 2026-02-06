@@ -3,7 +3,6 @@ import { createParser } from "https://deno.land/x/deno_tree_sitter@1.0.1.0/main/
 import nixTreeSitter from "https://esm.sh/gh/jeff-hykin/common_tree_sitter_languages@c37fc96/main/nix.js"
 import { FileSystem } from "https://deno.land/x/quickr@0.6.51/main/file_system.js"
 
-export { xmlStylePreview }
 export const parser = await createParser(nixTreeSitter) // argument is path or Uint8Array
 export const parse = (...args) => parser.parse(...args)
 
@@ -26,6 +25,8 @@ export const treetoAstString = (tree) => {
     }
     return outputs.join("\n")
 }
+
+export const xmlStylePreview = treetoAstString
 
 export const nixFileToXml = async (path, outputPath=null)=>{
     return await FileSystem.write({

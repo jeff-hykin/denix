@@ -174,15 +174,21 @@ const nixNodeToJs = (node)=>{
         } else {
             return node.text
         }
+    } else if (node.type == "whitespace") {
+        // Skip whitespace nodes
+        return ""
     } else if (node.type == "identifier") {
         if (node.text == "null") {
             // NULL can't be reassigned so direct translation is fine
             return "null"
+        } else if (node.text == "true" || node.text == "false") {
+            // Booleans can technically be shadowed in Nix, but for now treat them as literals
+            // TODO: This should check if they're shadowed in the current scope
+            return node.text
         } else {
-            // true,false, and builtins are all identifiers
-            // and... they can all be overriden with local variable names...
-            // so we can't treat them special
-            
+            // builtins and other identifiers
+            // They can all be overriden with local variable names...
+
             // NOTE: not all identifiers (ex: attrSet keys are identifiers) will be changed to nixScope["name"]
             // but the ones that wont be converted will be skipped
             return `nixScope[${JSON.stringify(node.text)}]`
@@ -308,8 +314,63 @@ const nixNodeToJs = (node)=>{
             ).map(nixNodeToJs).join(",")
         }]`
     } else if (node.type == "select_expression") {
-        // FIXME
-    } else if (node.type == "attrset_expression") { // attrset
+        // <select_expression>
+        //     <variable_expression>
+        //         <identifier text="a" />
+        //     </variable_expression>
+        //     <. text="." />
+        //     <attrpath>
+        //         <identifier text="b" />
+        //         <. text="." />
+        //         <identifier text="c" />
+        //     </attrpath>
+        // </select_expression>
+        const children = valueBasedChildren(node)
+        const base = nixNodeToJs(children[0])
+
+        // Get the attribute path (everything after the first dot)
+        const attrpath = children.find(child => child.type === "attrpath")
+        if (!attrpath) {
+            throw Error(`select_expression has no attrpath: ${node.text}`)
+        }
+
+        // Build the path as a series of property accesses
+        const pathParts = valueBasedChildren(attrpath).filter(each => each.type !== ".")
+        let result = base
+        for (const part of pathParts) {
+            if (part.type === "identifier") {
+                result = `${result}[${JSON.stringify(part.text)}]`
+            } else if (part.type === "string_expression") {
+                // Dynamic attribute access like a."${b}"
+                result = `${result}[${nixNodeToJs(part)}]`
+            } else {
+                throw Error(`Unexpected attrpath element type: ${part.type}`)
+            }
+        }
+        return result
+    } else if (node.type == "variable_expression") {
+        // <variable_expression>
+        //     <identifier text="a" />
+        // </variable_expression>
+        const children = valueBasedChildren(node)
+        return nixNodeToJs(children[0])
+    } else if (node.type == "has_attr_expression") {
+        // This is the `a ? b` syntax for checking if attribute exists
+        // Already handled by binary_expression as the "?" operator
+        const children = valueBasedChildren(node)
+        const obj = nixNodeToJs(children[0])
+        const attrpath = children.find(child => child.type === "attrpath")
+        if (!attrpath) {
+            throw Error(`has_attr_expression has no attrpath: ${node.text}`)
+        }
+        const pathParts = valueBasedChildren(attrpath).filter(each => each.type !== ".")
+        // For simple case like `a ? b`, generate operators.hasAttr(a, "b")
+        if (pathParts.length === 1 && pathParts[0].type === "identifier") {
+            return `operators.hasAttr(${obj}, ${JSON.stringify(pathParts[0].text)})`
+        }
+        // For complex paths like `a ? b.c.d`, we need to check nested
+        throw new NotImplemented(`Complex has_attr_expression with nested paths not yet supported: ${node.text}`)
+    } else if (node.type == "attrset_expression" || node.type == "rec_attrset_expression") {
         // node = <attrset_expression>
         //     <{ text="{" />
         //     <binding_set>
@@ -322,19 +383,141 @@ const nixNodeToJs = (node)=>{
         //                 {some kind of expression}
         //             <; text=";" />
         //         </binding>
-        //         <binding>
-        //             <attrpath>
-        //                 {<string_expression> or <identifier> or [<identifier> <./></identifier> ...]}
-        //             </attrpath>
-        //             <= text="=" />
-        //                 {some kind of expression}
-        //             <; text=";" />
-        //         </binding>
         //     </binding_set>
         //     <{ text="}" />
         // </attrset_expression>
-        
-        // FIXME
+
+        const isRec = node.type === "rec_attrset_expression"
+        const children = valueBasedChildren(node)
+        const bindingSet = children.find(each => each.type === "binding_set")
+
+        if (!bindingSet) {
+            // Empty attrset
+            return "{}"
+        }
+
+        const bindings = valueBasedChildren(bindingSet).filter(each =>
+            each.type === "binding" || each.type === "inherit" || each.type === "inherit_from"
+        )
+
+        // For rec, we need a scope with getters; for non-rec, we can use a plain object
+        if (isRec) {
+            // Similar to let expression, but returns the scope itself
+            let code = `(function(){\n`
+            code += `    const nixScope = {};\n`
+
+            // Process bindings similar to let
+            const bindingsByBase = {}
+            const simpleBindings = []
+
+            for (const binding of bindings) {
+                if (binding.type === "binding") {
+                    const bindingChildren = valueBasedChildren(binding)
+                    const attrpath = bindingChildren.find(each => each.type === "attrpath")
+                    const value = bindingChildren[bindingChildren.findIndex(each => each.text === "=") + 1]
+
+                    const pathParts = valueBasedChildren(attrpath).filter(each => each.type !== ".")
+
+                    if (pathParts.length === 1 && pathParts[0].type === "identifier") {
+                        simpleBindings.push({
+                            name: pathParts[0].text,
+                            value: value,
+                            isConstant: isConstantExpression(value)
+                        })
+                    } else {
+                        const baseName = pathParts[0].text
+                        if (!bindingsByBase[baseName]) {
+                            bindingsByBase[baseName] = []
+                        }
+                        bindingsByBase[baseName].push({
+                            path: pathParts.slice(1),
+                            value: value
+                        })
+                    }
+                } else if (binding.type === "inherit") {
+                    const inheritedAttrs = valueBasedChildren(binding).find(each => each.type === "inherited_attrs")
+                    if (inheritedAttrs) {
+                        const identifiers = valueBasedChildren(inheritedAttrs).filter(each => each.type === "identifier")
+                        for (const id of identifiers) {
+                            simpleBindings.push({
+                                name: id.text,
+                                value: id,
+                                isConstant: false
+                            })
+                        }
+                    }
+                }
+            }
+
+            // Create base objects for nested bindings
+            for (const [baseName, _] of Object.entries(bindingsByBase)) {
+                code += `    nixScope[${JSON.stringify(baseName)}] = {};\n`
+            }
+
+            // Add simple constant bindings
+            for (const {name, value, isConstant} of simpleBindings.filter(b => b.isConstant)) {
+                code += `    nixScope[${JSON.stringify(name)}] = ${nixNodeToJs(value)};\n`
+            }
+
+            // Add nested bindings
+            for (const [baseName, nestedBindings] of Object.entries(bindingsByBase)) {
+                for (const {path, value} of nestedBindings) {
+                    let accessor = `nixScope[${JSON.stringify(baseName)}]`
+                    for (let i = 0; i < path.length - 1; i++) {
+                        accessor += `[${JSON.stringify(path[i].text)}]`
+                    }
+                    const lastKey = path[path.length - 1].text
+                    code += `    ${accessor}[${JSON.stringify(lastKey)}] = ${nixNodeToJs(value)};\n`
+                }
+            }
+
+            // For rec, we need to push the scope so lazy bindings can reference other attributes
+            code += `    runtime.scopeStack.push(nixScope);\n`
+            code += `    try {\n`
+
+            // Add lazy bindings
+            for (const {name, value, isConstant} of simpleBindings.filter(b => !b.isConstant)) {
+                code += `        Object.defineProperty(nixScope, ${JSON.stringify(name)}, {get(){return ${nixNodeToJs(value)};}});\n`
+            }
+
+            code += `        return nixScope;\n`
+            code += `    } finally {\n`
+            code += `        runtime.scopeStack.pop();\n`
+            code += `    }\n`
+            code += `})()`
+
+            return code
+        } else {
+            // Non-rec attrset - just a plain object literal
+            const properties = []
+
+            for (const binding of bindings) {
+                if (binding.type === "binding") {
+                    const bindingChildren = valueBasedChildren(binding)
+                    const attrpath = bindingChildren.find(each => each.type === "attrpath")
+                    const value = bindingChildren[bindingChildren.findIndex(each => each.text === "=") + 1]
+
+                    const pathParts = valueBasedChildren(attrpath).filter(each => each.type !== ".")
+
+                    if (pathParts.length === 1 && pathParts[0].type === "identifier") {
+                        const key = pathParts[0].text
+                        properties.push(`${JSON.stringify(key)}: ${nixNodeToJs(value)}`)
+                    } else {
+                        throw new NotImplemented(`Nested attribute paths in non-rec attrsets not yet supported`)
+                    }
+                } else if (binding.type === "inherit") {
+                    const inheritedAttrs = valueBasedChildren(binding).find(each => each.type === "inherited_attrs")
+                    if (inheritedAttrs) {
+                        const identifiers = valueBasedChildren(inheritedAttrs).filter(each => each.type === "identifier")
+                        for (const id of identifiers) {
+                            properties.push(`${JSON.stringify(id.text)}: ${nixNodeToJs(id)}`)
+                        }
+                    }
+                }
+            }
+
+            return `{${properties.join(", ")}}`
+        }
     } else if (node.type == "function_expression") {
         // simple function:
             // <function_expression>
@@ -420,8 +603,107 @@ const nixNodeToJs = (node)=>{
         //     <in text="in" />
         //     <></>
         // </let_expression>
-        
-        // FIXME
+
+        const children = valueBasedChildren(node)
+        const bindingSet = children.find(each => each.type === "binding_set")
+        const bodyIndex = children.findIndex(each => each.type === "in") + 1
+        const body = children[bodyIndex]
+
+        if (!bindingSet || !body) {
+            throw Error(`let_expression missing binding_set or body: ${node.text}`)
+        }
+
+        // Process bindings
+        const bindings = valueBasedChildren(bindingSet).filter(each =>
+            each.type === "binding" || each.type === "inherit" || each.type === "inherit_from"
+        )
+
+        // Group bindings by base attribute name to handle nested paths
+        const bindingsByBase = {}
+        const simpleBindings = []
+
+        for (const binding of bindings) {
+            if (binding.type === "binding") {
+                const bindingChildren = valueBasedChildren(binding)
+                const attrpath = bindingChildren.find(each => each.type === "attrpath")
+                const value = bindingChildren[bindingChildren.findIndex(each => each.text === "=") + 1]
+
+                const pathParts = valueBasedChildren(attrpath).filter(each => each.type !== ".")
+
+                if (pathParts.length === 1 && pathParts[0].type === "identifier") {
+                    // Simple binding: x = value
+                    simpleBindings.push({
+                        name: pathParts[0].text,
+                        value: value,
+                        isConstant: isConstantExpression(value)
+                    })
+                } else {
+                    // Nested binding: a.b.c = value
+                    const baseName = pathParts[0].text
+                    if (!bindingsByBase[baseName]) {
+                        bindingsByBase[baseName] = []
+                    }
+                    bindingsByBase[baseName].push({
+                        path: pathParts.slice(1),
+                        value: value
+                    })
+                }
+            } else if (binding.type === "inherit") {
+                // inherit x y z; means x = x; y = y; z = z;
+                const identifiers = valueBasedChildren(binding).filter(each => each.type === "identifier")
+                for (const id of identifiers) {
+                    simpleBindings.push({
+                        name: id.text,
+                        value: id,
+                        isConstant: false
+                    })
+                }
+            } else if (binding.type === "inherit_from") {
+                // inherit (expr) x y z; means x = expr.x; y = expr.y; etc.
+                throw new NotImplemented(`inherit (expr) syntax not yet supported`)
+            }
+        }
+
+        // Generate JavaScript code
+        let code = `(function(){\n`
+        code += `    const nixScope = {...runtime.scopeStack.slice(-1)[0]};\n`
+        code += `    runtime.scopeStack.push(nixScope);\n`
+        code += `    try {\n`
+
+        // Create base objects for nested bindings
+        for (const [baseName, _] of Object.entries(bindingsByBase)) {
+            code += `        nixScope[${JSON.stringify(baseName)}] = {};\n`
+        }
+
+        // Add simple constant bindings
+        for (const {name, value, isConstant} of simpleBindings.filter(b => b.isConstant)) {
+            code += `        nixScope[${JSON.stringify(name)}] = ${nixNodeToJs(value)};\n`
+        }
+
+        // Add nested bindings
+        for (const [baseName, nestedBindings] of Object.entries(bindingsByBase)) {
+            for (const {path, value} of nestedBindings) {
+                let accessor = `nixScope[${JSON.stringify(baseName)}]`
+                for (let i = 0; i < path.length - 1; i++) {
+                    accessor += `[${JSON.stringify(path[i].text)}]`
+                }
+                const lastKey = path[path.length - 1].text
+                code += `        ${accessor}[${JSON.stringify(lastKey)}] = ${nixNodeToJs(value)};\n`
+            }
+        }
+
+        // Add lazy bindings (those that reference other variables)
+        for (const {name, value, isConstant} of simpleBindings.filter(b => !b.isConstant)) {
+            code += `        Object.defineProperty(nixScope, ${JSON.stringify(name)}, {get(){return ${nixNodeToJs(value)};}});\n`
+        }
+
+        code += `        return ${nixNodeToJs(body)};\n`
+        code += `    } finally {\n`
+        code += `        runtime.scopeStack.pop();\n`
+        code += `    }\n`
+        code += `})()`
+
+        return code
     } else if (node.type == "with_expression") {
         // <with_expression>
         //     <with text="with" />
@@ -438,20 +720,86 @@ const nixNodeToJs = (node)=>{
         //     </list_expression>
         // </with_expression>
 
-        // FIXME
+        const children = valueBasedChildren(node)
+        const withIndex = children.findIndex(each => each.type === "with")
+        const semiIndex = children.findIndex(each => each.text === ";")
+
+        const attrsetExpr = children[withIndex + 1]
+        const bodyExpr = children[semiIndex + 1]
+
+        if (!attrsetExpr || !bodyExpr) {
+            throw Error(`with_expression missing attrset or body: ${node.text}`)
+        }
+
+        // Generate code that merges the attrset into the scope
+        // Evaluate the attrset expression with the current scope, then create new scope
+        let code = `((_withAttrs)=>{\n`
+        code += `    const nixScope = {...runtime.scopeStack.slice(-1)[0], ..._withAttrs};\n`
+        code += `    runtime.scopeStack.push(nixScope);\n`
+        code += `    try {\n`
+        code += `        return ${nixNodeToJs(bodyExpr)};\n`
+        code += `    } finally {\n`
+        code += `        runtime.scopeStack.pop();\n`
+        code += `    }\n`
+        code += `})(${nixNodeToJs(attrsetExpr)})`
+
+        return code
     } else {
         throw Error(`This is a bug with convertToJs(), it means this node was unexpected/unhandled and couldn't be converted: type=${JSON.stringify(node.type)}, ${JSON.stringify(node.text)}`)
     }
 }
 
 
-// 
+//
 // internal-only helpers
-// 
+//
 const valueBasedChildren = (node)=>node.children.filter(each=>each.type!="comment"&&each.typeId>=0)
 const nixRepr = (value)=>{
     // FIXME: should use single quotes instead of double, and probably some other things
     return JSON.stringify(value)
+}
+
+// Check if an expression is constant (doesn't reference variables)
+const isConstantExpression = (node) => {
+    if (!node) return true
+
+    const constantTypes = [
+        "integer_expression",
+        "float_expression",
+        "string_expression",
+        "path_expression"
+    ]
+
+    if (constantTypes.includes(node.type)) {
+        // String/path interpolation would make it non-constant, but we'll simplify for now
+        return true
+    }
+
+    if (node.type === "list_expression") {
+        return valueBasedChildren(node).filter(each => each.type !== "[" && each.type !== "]")
+            .every(isConstantExpression)
+    }
+
+    if (node.type === "attrset_expression") {
+        // Non-rec attrsets with constant values are constant
+        const bindingSet = valueBasedChildren(node).find(each => each.type === "binding_set")
+        if (!bindingSet) return true // empty attrset
+
+        const bindings = valueBasedChildren(bindingSet).filter(each => each.type === "binding")
+        return bindings.every(binding => {
+            const bindingChildren = valueBasedChildren(binding)
+            const value = bindingChildren[bindingChildren.findIndex(each => each.text === "=") + 1]
+            return isConstantExpression(value)
+        })
+    }
+
+    if (node.type === "rec_attrset_expression") {
+        // Rec attrsets are never constant because they can reference themselves
+        return false
+    }
+
+    // Identifiers and any expression involving them are non-constant
+    return false
 }
 
 console.log(convertToJs(`"hello" + "world"`))

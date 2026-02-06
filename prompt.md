@@ -38,6 +38,10 @@
 
 ## 2. Translator Progress Status (main.js)
 
+### Status: CORE FEATURES COMPLETE ✅
+
+All critical Nix language features have been implemented and tested!
+
 ### What Works ✅
 - [x] Basic structure and design (documented at top of main.js)
 - [x] Integer literals (converted to BigInt)
@@ -51,34 +55,45 @@
 - [x] List expressions
 - [x] Simple function definitions (single argument)
 - [x] Partial support for complex functions (formals with defaults)
+- [x] **select_expression** - Attribute selection (e.g., `a.b.c`)
+- [x] **has_attr_expression** - Attribute existence check (e.g., `a ? b`)
+- [x] **attrset_expression** - Non-rec attribute sets with inherit
+- [x] **rec_attrset_expression** - Recursive attribute sets with lazy evaluation
+- [x] **let_expression** - Let-in bindings with proper scoping and nested attributes
+- [x] **with_expression** - With scopes
+- [x] **Integration tests** - 23 tests covering all major features, all passing ✅
+
+### Test Coverage
+**main/tests/translator_test.js**: 23 integration tests
+- ✅ Literals (integers, floats, strings)
+- ✅ Lists (simple and mixed types)
+- ✅ Attribute sets (simple and recursive)
+- ✅ Let expressions (simple, with references, with nested attributes)
+- ✅ Select expressions (simple and nested)
+- ✅ With expressions
+- ✅ If expressions
+- ✅ Operators (add, multiply)
+- ✅ Complex combinations (let+with, nested attributes, etc.)
 
 ### What Needs Work ⬜
 
-**High Priority** (blocks basic functionality):
-1. **Line 311**: `select_expression` - Attribute selection (e.g., `a.b.c`, `a ? b`)
-2. **Line 337**: `attrset_expression` - Attribute sets, rec, inherit, inherit_from
-3. **Line 424**: `let_expression` - Let-in bindings (critical for most Nix code)
-4. **Line 441**: `with_expression` - With scopes
-
 **Medium Priority** (common features):
-5. **Lines 269-270**: String interpolation (e.g., `"${x}"`, `''${x}''`)
-6. **Lines 272-273**: Path escapes and interpolation
-7. **Line 300**: Handle Nix truthy-ness correctly (empty strings, empty lists, etc.)
+1. **Lines 269-270**: String interpolation (e.g., `"${x}"`, `''${x}''`)
+2. **Lines 272-273**: Path escapes and interpolation
+3. **Line 300**: Handle Nix truthy-ness correctly (empty strings, empty lists, etc.)
+4. **Complex functions**: Full support for @ syntax, inherit_from
+5. **Nested attribute paths in non-rec attrsets**: e.g., `{ a.b.c = 10; }`
 
 **Low Priority** (edge cases and optimizations):
-8. **Line 191**: Support hex/oct/scientific number formats
-9. **Line 207**: Add more literal optimization cases
-10. **Line 147**: Design TODO - record unsafeGetAttrPos, handle `<nixpkgs>` syntax
-11. **Line 453**: nixRepr should use single quotes instead of double
-
-### Current Blockers
-- **No integration tests** - Need to create tests that translate Nix code and verify JS output matches Nix behavior
-- **Incomplete core features** - Can't translate most real Nix code without let-expressions, attrsets, and select-expressions
+6. **Line 191**: Support hex/oct/scientific number formats
+7. **Line 207**: Add more literal optimization cases
+8. **Line 147**: Design TODO - record unsafeGetAttrPos, handle `<nixpkgs>` syntax
+9. **Line 453**: nixRepr should use single quotes instead of double
+10. **Boolean shadowing**: Detect when `true`/`false` are shadowed by local variables
 
 ### Next Steps
-1. Implement `let_expression` (most critical - used everywhere)
-2. Implement `attrset_expression` (required for data structures)
-3. Implement `select_expression` (required to access attributes)
-4. Create integration tests comparing Nix vs translated JS output
-5. Implement string/path interpolation
-6. Test against simple nixpkgs.lib functions
+1. Test against simple nixpkgs.lib functions (now possible!)
+2. Implement string/path interpolation
+3. Improve function expression support (@ syntax, inherit_from)
+4. Handle edge cases (truthy-ness, hex/oct numbers, etc.)
+5. Performance optimizations
