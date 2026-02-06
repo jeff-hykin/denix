@@ -919,6 +919,188 @@ Deno.test("nixpkgs.lib file loading", async (t) => {
         console.log(`✅ supported.nix loaded successfully (${supported.hydra.length} hydra platforms)`)
     })
 
+    // Note: fetchers.nix test skipped - requires more complex lib context
+    // The file has complex let-in-rec patterns that need all lib functions available
+    // Added interpolation support (obj.${expr}) and fixed rec attrset scoping as part of attempt
+
+    await t.step("test interpolation in attrpath (obj.${expr})", () => {
+        // Test that we can use ${expr} syntax in attribute paths
+        const nixCode = `let h = { name = "foo"; }; obj = { foo = "bar"; }; in obj.\${h.name}`
+
+        let jsCode = convertToJs(nixCode)
+        if (jsCode.includes('import { createRuntime }')) {
+            jsCode = jsCode.replace(/import \{ createRuntime \}.*\n/, '')
+            jsCode = jsCode.replace(/const runtime = createRuntime\(\)\n/, '')
+        }
+
+        const runtime = createRuntime()
+        const nixScope = {
+            builtins: runtime.runtime.builtins,
+            ...runtime.runtime.builtins
+        }
+
+        const evalFunc = new Function(
+            'runtime',
+            'operators',
+            'builtins',
+            'nixScope',
+            'InterpolatedString',
+            'Path',
+            `return (${jsCode})`
+        )
+
+        const result = evalFunc(
+            { scopeStack: [nixScope] },
+            runtime.runtime.operators,
+            runtime.runtime.builtins,
+            nixScope,
+            runtime.runtime.InterpolatedString,
+            runtime.runtime.Path
+        )
+
+        assertEquals(result, "bar")
+        console.log("✅ Interpolation in attrpath works: obj.${expr}")
+    })
+
+    /* Skipped: fetchers.nix - too complex, needs full lib context
+    await t.step("load fetchers.nix (hash normalization utilities)", () => {
+        // fetchers.nix provides utility functions for fetch* operations
+        // It contains proxyImpureEnvVars (list) and normalizeHash/withNormalizedHash (functions)
+        const filePath = join(nixpkgsLibPath, "fetchers.nix")
+        const nixCode = Deno.readTextFileSync(filePath)
+
+        // Translate to JS
+        let jsCode = convertToJs(nixCode, { relativePath: filePath })
+
+        // Debug: check jsCode
+        console.log("jsCode length:", jsCode.length)
+        console.log("jsCode preview:", jsCode.substring(0, 300))
+
+        // Create runtime
+        const runtime = createRuntime()
+
+        // Remove import statements
+        if (jsCode.includes('import { createRuntime }')) {
+            jsCode = jsCode.replace(/import \{ createRuntime \}.*\n/, '')
+            jsCode = jsCode.replace(/const runtime = createRuntime\(\)\n/, '')
+        }
+
+        // Remove multi-line comments
+        jsCode = jsCode.replace(/\/\*\*[\s\S]*?\*\//g, '')
+        jsCode = jsCode.trim()
+
+        // Create evaluation scope
+        const nixScope = {
+            builtins: runtime.runtime.builtins,
+            ...runtime.runtime.builtins
+        }
+
+        // Evaluate
+        const evalFunc = new Function(
+            'runtime',
+            'operators',
+            'builtins',
+            'nixScope',
+            'InterpolatedString',
+            'Path',
+            `return (${jsCode})`
+        )
+
+        const moduleFactory = evalFunc(
+            { scopeStack: [nixScope] },
+            runtime.runtime.operators,
+            runtime.runtime.builtins,
+            nixScope,
+            runtime.runtime.InterpolatedString,
+            runtime.runtime.Path
+        )
+
+        // Create minimal lib context with required functions
+        const minimalLib = {
+            genAttrs: runtime.runtime.builtins.genAttrs,
+            const: x => y => x, // const function: returns first arg, ignores second
+            fakeHash: "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+            fakeSha256: "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+            fakeSha512: "sha512-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+            concatMapStringsSep: runtime.runtime.builtins.concatMapStringsSep,
+            head: runtime.runtime.builtins.head,
+            tail: runtime.runtime.builtins.tail,
+            throwIf: (cond, msg) => val => { if (cond) throw new Error(msg); return val; },
+            attrsets: {
+                attrsToList: (attrs) => Object.entries(attrs).map(([name, value]) => ({ name, value })),
+                intersectAttrs: runtime.runtime.builtins.intersectAttrs,
+                removeAttrs: runtime.runtime.builtins.removeAttrs,
+                optionalAttrs: (cond, attrs) => cond ? attrs : {},
+            },
+            trivial: {
+                functionArgs: runtime.runtime.builtins.functionArgs,
+                setFunctionArgs: (f, args) => { f.functionArgs = args; return f; },
+            }
+        }
+
+        // Call with { lib } argument
+        let fetchers
+        try {
+            fetchers = moduleFactory({ lib: minimalLib })
+        } catch (err) {
+            console.log("Error calling moduleFactory:", err.message)
+            console.log("Stack:", err.stack)
+            throw err
+        }
+
+        // Verify structure
+        assertExists(fetchers)
+        assertEquals(typeof fetchers, "object")
+
+        // Debug: see what's in fetchers
+        console.log("fetchers keys:", Object.keys(fetchers))
+        // Try to access normalizeHash
+        try {
+            const nh = fetchers.normalizeHash
+            console.log("normalizeHash type:", typeof nh)
+        } catch (err) {
+            console.log("Error accessing normalizeHash:", err.message)
+        }
+
+        // Check proxyImpureEnvVars list
+        assertExists(fetchers.proxyImpureEnvVars, "Should have proxyImpureEnvVars")
+        assertEquals(Array.isArray(fetchers.proxyImpureEnvVars), true, "proxyImpureEnvVars should be a list")
+        assertEquals(fetchers.proxyImpureEnvVars.includes("http_proxy"), true)
+        assertEquals(fetchers.proxyImpureEnvVars.includes("https_proxy"), true)
+        assertEquals(fetchers.proxyImpureEnvVars.includes("NIX_SSL_CERT_FILE"), true)
+        assertEquals(fetchers.proxyImpureEnvVars.length >= 10, true, `Expected at least 10 proxy env vars, got ${fetchers.proxyImpureEnvVars.length}`)
+
+        // Check normalizeHash function
+        assertExists(fetchers.normalizeHash, "Should have normalizeHash")
+        assertEquals(typeof fetchers.normalizeHash, "function")
+
+        // Test normalizeHash with hash=""
+        const normalize1 = fetchers.normalizeHash({})
+        const result1 = normalize1({ hash: "", foo: "bar" })
+        assertEquals(result1.foo, "bar")
+        assertEquals(result1.outputHash, minimalLib.fakeHash)
+        assertEquals(result1.outputHashAlgo, null)
+
+        // Test normalizeHash with sha256
+        const normalize2 = fetchers.normalizeHash({})
+        const result2 = normalize2({ sha256: "abc123" })
+        assertEquals(result2.outputHash, "abc123")
+        assertEquals(result2.outputHashAlgo, "sha256")
+
+        // Test normalizeHash with sha512
+        const normalize3 = fetchers.normalizeHash({})
+        const result3 = normalize3({ sha512: "def456" })
+        assertEquals(result3.outputHash, "def456")
+        assertEquals(result3.outputHashAlgo, "sha512")
+
+        // Check withNormalizedHash function
+        assertExists(fetchers.withNormalizedHash, "Should have withNormalizedHash")
+        assertEquals(typeof fetchers.withNormalizedHash, "function")
+
+        console.log(`✅ fetchers.nix loaded successfully (${fetchers.proxyImpureEnvVars.length} proxy env vars)`)
+    })
+    */
+
     // Note: zip-int-bits.nix is skipped because it uses complex closures with asserts
     // that reference builtins at call-time, which requires more sophisticated scope
     // management than our current test harness provides. The translator works correctly,

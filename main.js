@@ -502,6 +502,10 @@ const nixNodeToJs = (node)=>{
             } else if (part.type === "string_expression") {
                 // Dynamic attribute access like a."${b}"
                 result = `${result}[${nixNodeToJs(part)}]`
+            } else if (part.type === "interpolation") {
+                // Dynamic attribute access like a.${b} (without quotes)
+                // The interpolation node contains the expression to evaluate
+                result = `${result}[${nixNodeToJs(part)}]`
             } else {
                 throw Error(`Unexpected attrpath element type: ${part.type}`)
             }
@@ -515,7 +519,7 @@ const nixNodeToJs = (node)=>{
             return `operators.selectOrDefault(${base}, [${pathParts.map(p => {
                 if (p.type === "identifier") {
                     return JSON.stringify(p.text)
-                } else if (p.type === "string_expression") {
+                } else if (p.type === "string_expression" || p.type === "interpolation") {
                     return nixNodeToJs(p)
                 }
             }).join(", ")}], ${defaultJs})`
@@ -639,10 +643,12 @@ const nixNodeToJs = (node)=>{
 
         // For rec, we need a scope with getters; for non-rec, we can use a plain object
         if (isRec) {
-            // Similar to let expression, but returns the scope itself
-            // NOTE: rec sets need parent scope for inherit and function references
+            // Rec attrsets need careful handling:
+            // - Bindings need access to parent scope AND sibling bindings
+            // - But the returned object should only contain the rec attrset's own bindings
+            // Solution: Use Object.create() so parent scope is in prototype, not own properties
             let code = `(function(){\n`
-            code += `    const nixScope = {...runtime.scopeStack.slice(-1)[0]};\n`
+            code += `    const nixScope = Object.create(runtime.scopeStack.slice(-1)[0]);\n`
 
             // Process bindings similar to let
             const bindingsByBase = {}
@@ -1199,6 +1205,21 @@ const nixNodeToJs = (node)=>{
         code += `})(${nixNodeToJs(conditionExpr)})`
 
         return code
+    } else if (node.type === "interpolation") {
+        // <interpolation>
+        //     <${ text="${" />
+        //     <variable_expression>...</variable_expression>
+        //     <} text="}" />
+        // </interpolation>
+        // Used in attrpath like: obj.${expr}
+        const children = valueBasedChildren(node)
+        // children[0] is "${", children[1] is the expression, children[2] is "}"
+        if (children.length >= 2) {
+            const expr = children[1]
+            return nixNodeToJs(expr)
+        } else {
+            throw Error(`interpolation has unexpected structure: ${node.text}`)
+        }
     } else {
         throw Error(`This is a bug with convertToJs(), it means this node was unexpected/unhandled and couldn't be converted: type=${JSON.stringify(node.type)}, ${JSON.stringify(node.text)}`)
     }
@@ -1256,5 +1277,3 @@ const isConstantExpression = (node) => {
     // Identifiers and any expression involving them are non-constant
     return false
 }
-
-console.log(convertToJs(`"hello" + "world"`))
