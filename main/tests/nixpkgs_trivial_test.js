@@ -14,17 +14,23 @@ import { convertToJs } from "../../main.js"
 import { toFloat } from "../../tools/generic.js"
 
 // Minimal builtins for tests (avoiding prex WASM issue)
+// These match the signatures in main/runtime.js (curried)
 const builtins = {
-    "foldl'": (op, nul, list) => list.reduce((acc, each) => op(acc, each), nul),
-    isFunction: (v) => typeof v === "function",
-    div: (a, b) => {
+    "foldl'": (op) => (nul) => (list) => list.reduce((acc, each) => op(acc)(each), nul),
+    isFunction: (v) => v instanceof Function,
+    div: (a) => (b) => {
         if (typeof a === "bigint" && typeof b === "bigint") {
             return a / b
         }
         return BigInt(Math.floor(toFloat(a) / toFloat(b)))
     },
-    substring: (start, len, str) => String(str).substring(start, start + len),
+    substring: (start) => (len) => (str) => {
+        const startNum = typeof start === "bigint" ? Number(start) : start
+        const lenNum = typeof len === "bigint" ? Number(len) : len
+        return String(str).substring(startNum, startNum + lenNum)
+    },
     stringLength: (str) => BigInt(String(str).length),
+    concat: (list1) => (list2) => list1.concat(list2),
 }
 
 const operators = {
@@ -71,9 +77,9 @@ const operators = {
 const evalTranslated = (nixCode) => {
     let jsCode = convertToJs(nixCode)
 
-    // Create runtime context
+    // Create runtime context with builtins in the initial scope
     const runtime = {
-        scopeStack: [{}],
+        scopeStack: [{ builtins, operators }],
     }
 
     // Strip import statement if present

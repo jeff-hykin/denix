@@ -204,9 +204,26 @@ const nixNodeToJs = (node)=>{
         // FUTURE: there could be an optimization here where if the result is atomic (ex: operators.add(1,2)) then we can skip the parentheses
         return `(${nixNodeToJs(valueBasedChildren(node)[1])})`
     } else if (node.type == "unary_expression") {
-        // for minus (float, int, or variable) its fine to leave as-is
-        // for "not" also fine
-        return node.text
+        const children = valueBasedChildren(node)
+        const operator = children[0].text
+        const operand = children[1]
+
+        // For simple literals, we can use them directly
+        if (operand.type === "integer_expression") {
+            // Negative integers need the 'n' suffix for BigInt
+            return `${node.text}n`
+        } else if (operand.type === "float_expression") {
+            return node.text
+        }
+
+        // For other expressions, we need to use operators for proper handling
+        if (operator === "!") {
+            return `operators.negate(${nixNodeToJs(operand)})`
+        } else if (operator === "-") {
+            return `operators.negative(${nixNodeToJs(operand)})`
+        } else {
+            throw new Error(`Unknown unary operator: ${operator}`)
+        }
     } else if (node.type == "binary_expression") {
         const children = valueBasedChildren(node)
         // operators of floats stay as-is
@@ -733,7 +750,10 @@ const nixNodeToJs = (node)=>{
         if (isSimple) {
             const argName = children[0].text
             const body = children.slice(-1)[0]
-            return `((arg)=>{ const nixScope = {...runtime.scopeStack.slice(-1)[0], ${JSON.stringify(argName)}: arg, }; runtime.scopeStack.push(nixScope); try { return ${nixNodeToJs(body)}; } finally { runtime.scopeStack.pop(); } })`
+            // Solution: When a function is created, capture the current scope. When it's called,
+            // use the captured scope as the parent (via prototype chain), not runtime.scopeStack.
+            // Using Object.create() ensures getters from parent scopes are accessible.
+            return `(function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope[${JSON.stringify(argName)}] = arg; runtime.scopeStack.push(nixScope); try { return ${nixNodeToJs(body)}; } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])`
         // more complicated function:
         } else {
             // <function_expression>
