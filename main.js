@@ -563,6 +563,45 @@ const nixNodeToJs = (node)=>{
         //     <{ text="}" />
         // </attrset_expression>
 
+        // Helper function to extract key string from attrpath element
+        const extractKeyString = (pathPart) => {
+            if (pathPart.type === "identifier") {
+                return pathPart.text
+            } else if (pathPart.type === "string_expression") {
+                // Extract the actual string value from string_expression
+                const children = valueBasedChildren(pathPart)
+
+                // Check if it has interpolation - if so, can't be static
+                if (children.some(c => c.type === "interpolation")) {
+                    return null
+                }
+
+                // Build the string from fragments and escape sequences
+                let result = ""
+                for (const child of children) {
+                    if (child.type === "string_fragment") {
+                        result += child.text
+                    } else if (child.type === "escape_sequence") {
+                        // Convert Nix escape sequences to actual characters
+                        const escape = child.text
+                        const escapeMap = {
+                            "\\n": "\n",
+                            "\\r": "\r",
+                            "\\t": "\t",
+                            "\\\\": "\\",
+                            '\\"': '"',
+                        }
+                        result += escapeMap[escape] || escape
+                    }
+                }
+                return result
+            } else {
+                // For interpolated strings or other complex expressions,
+                // we need to evaluate them at runtime
+                return null  // Signals that this needs runtime evaluation
+            }
+        }
+
         const isRec = node.type === "rec_attrset_expression"
         const children = valueBasedChildren(node)
         const bindingSet = children.find(each => each.type === "binding_set")
@@ -594,14 +633,23 @@ const nixNodeToJs = (node)=>{
 
                     const pathParts = valueBasedChildren(attrpath).filter(each => each.type !== ".")
 
-                    if (pathParts.length === 1 && pathParts[0].type === "identifier") {
-                        simpleBindings.push({
-                            name: pathParts[0].text,
-                            value: value,
-                            isConstant: isConstantExpression(value)
-                        })
+                    if (pathParts.length === 1) {
+                        const name = extractKeyString(pathParts[0])
+                        if (name !== null) {
+                            simpleBindings.push({
+                                name: name,
+                                value: value,
+                                isConstant: isConstantExpression(value)
+                            })
+                        } else {
+                            // Dynamic key in rec set - not supported in Nix
+                            throw new NixError(`Dynamic attribute keys are not supported in rec sets`)
+                        }
                     } else {
-                        const baseName = pathParts[0].text
+                        const baseName = extractKeyString(pathParts[0])
+                        if (baseName === null) {
+                            throw new NixError(`Dynamic attribute keys are not supported in rec sets`)
+                        }
                         if (!bindingsByBase[baseName]) {
                             bindingsByBase[baseName] = []
                         }
@@ -622,6 +670,27 @@ const nixNodeToJs = (node)=>{
                             })
                         }
                     }
+                } else if (binding.type === "inherit_from") {
+                    // inherit (expr) x y z; means x = expr.x; y = expr.y; etc.
+                    const bindingChildren = valueBasedChildren(binding)
+                    const sourceExpr = bindingChildren.find(each =>
+                        each.type === "variable_expression" ||
+                        each.type === "select_expression" ||
+                        each.type === "apply_expression"
+                    )
+                    const inheritedAttrs = bindingChildren.find(each => each.type === "inherited_attrs")
+
+                    if (inheritedAttrs && sourceExpr) {
+                        const identifiers = valueBasedChildren(inheritedAttrs).filter(each => each.type === "identifier")
+                        for (const id of identifiers) {
+                            simpleBindings.push({
+                                name: id.text,
+                                // Value is sourceExpr.id (e.g., builtins.parseFlakeRef)
+                                value: { type: "select", source: sourceExpr, attr: id.text },
+                                isConstant: true
+                            })
+                        }
+                    }
                 }
             }
 
@@ -632,7 +701,12 @@ const nixNodeToJs = (node)=>{
 
             // Add simple constant bindings
             for (const {name, value, isConstant} of simpleBindings.filter(b => b.isConstant)) {
-                code += `    nixScope[${JSON.stringify(name)}] = ${nixNodeToJs(value)};\n`
+                if (value.type === "select") {
+                    // Special case for inherit_from
+                    code += `    nixScope[${JSON.stringify(name)}] = ${nixNodeToJs(value.source)}[${JSON.stringify(value.attr)}];\n`
+                } else {
+                    code += `    nixScope[${JSON.stringify(name)}] = ${nixNodeToJs(value)};\n`
+                }
             }
 
             // Add nested bindings
@@ -640,9 +714,16 @@ const nixNodeToJs = (node)=>{
                 for (const {path, value} of nestedBindings) {
                     let accessor = `nixScope[${JSON.stringify(baseName)}]`
                     for (let i = 0; i < path.length - 1; i++) {
-                        accessor += `[${JSON.stringify(path[i].text)}]`
+                        const key = extractKeyString(path[i])
+                        if (key === null) {
+                            throw new NixError(`Dynamic attribute keys are not supported in rec sets`)
+                        }
+                        accessor += `[${JSON.stringify(key)}]`
                     }
-                    const lastKey = path[path.length - 1].text
+                    const lastKey = extractKeyString(path[path.length - 1])
+                    if (lastKey === null) {
+                        throw new NixError(`Dynamic attribute keys are not supported in rec sets`)
+                    }
                     code += `    ${accessor}[${JSON.stringify(lastKey)}] = ${nixNodeToJs(value)};\n`
                 }
             }
@@ -679,9 +760,15 @@ const nixNodeToJs = (node)=>{
 
                     const pathParts = valueBasedChildren(attrpath).filter(each => each.type !== ".")
 
-                    if (pathParts.length === 1 && pathParts[0].type === "identifier") {
-                        const key = pathParts[0].text
-                        simpleBindings.push({ key, value })
+                    if (pathParts.length === 1) {
+                        const key = extractKeyString(pathParts[0])
+                        if (key !== null) {
+                            // Simple static key (identifier or string)
+                            simpleBindings.push({ key, value })
+                        } else {
+                            // Dynamic key (interpolated string or other expression)
+                            nestedBindings.push({ pathParts, value })
+                        }
                     } else {
                         // Nested path like a.b.c
                         nestedBindings.push({ pathParts, value })
@@ -694,45 +781,99 @@ const nixNodeToJs = (node)=>{
                             simpleBindings.push({ key: id.text, value: id })
                         }
                     }
+                } else if (binding.type === "inherit_from") {
+                    // inherit (expr) x y z; means x = expr.x; y = expr.y; etc.
+                    const bindingChildren = valueBasedChildren(binding)
+                    const sourceExpr = bindingChildren.find(each =>
+                        each.type === "variable_expression" ||
+                        each.type === "select_expression" ||
+                        each.type === "apply_expression"
+                    )
+                    const inheritedAttrs = bindingChildren.find(each => each.type === "inherited_attrs")
+
+                    if (inheritedAttrs && sourceExpr) {
+                        const identifiers = valueBasedChildren(inheritedAttrs).filter(each => each.type === "identifier")
+                        for (const id of identifiers) {
+                            simpleBindings.push({
+                                key: id.text,
+                                // Value is sourceExpr.id (e.g., builtins.parseFlakeRef)
+                                value: { type: "select", source: sourceExpr, attr: id.text }
+                            })
+                        }
+                    }
                 }
             }
 
-            // If we only have simple bindings, use object literal syntax
-            if (nestedBindings.length === 0) {
+            // Check if any binding uses inherit_from (needs scope context)
+            const hasInheritFrom = simpleBindings.some(b => b.value.type === "select")
+
+            // If we only have simple bindings and no inherit_from, use object literal syntax
+            if (nestedBindings.length === 0 && !hasInheritFrom) {
                 const properties = simpleBindings.map(({key, value}) =>
                     `${JSON.stringify(key)}: ${nixNodeToJs(value)}`
                 )
-                return `{${properties.join(", ")}}`
+                return `({${properties.join(", ")}})`
             }
 
             // Otherwise, build object imperatively
+            // If we have inherit_from, we need scope context
             let code = `(function(){\n`
+            if (hasInheritFrom) {
+                code += `    const nixScope = {...runtime.scopeStack.slice(-1)[0]};\n`
+                code += `    runtime.scopeStack.push(nixScope);\n`
+                code += `    try {\n`
+            }
             code += `    const obj = {};\n`
 
             // Add simple bindings
             for (const {key, value} of simpleBindings) {
-                code += `    obj[${JSON.stringify(key)}] = ${nixNodeToJs(value)};\n`
+                if (value.type === "select") {
+                    // Special case for inherit_from
+                    const indentPrefix = hasInheritFrom ? "    " : ""
+                    code += `    ${indentPrefix}obj[${JSON.stringify(key)}] = ${nixNodeToJs(value.source)}[${JSON.stringify(value.attr)}];\n`
+                } else {
+                    const indentPrefix = hasInheritFrom ? "    " : ""
+                    code += `    ${indentPrefix}obj[${JSON.stringify(key)}] = ${nixNodeToJs(value)};\n`
+                }
             }
 
             // Add nested bindings - need to create intermediate objects
             for (const {pathParts, value} of nestedBindings) {
+                const indentPrefix = hasInheritFrom ? "    " : ""
                 // Build the accessor chain, creating intermediate objects as needed
                 let accessor = 'obj'
                 for (let i = 0; i < pathParts.length - 1; i++) {
                     const part = pathParts[i]
-                    const key = part.type === "identifier" ? part.text : nixNodeToJs(part)
-                    accessor += `[${JSON.stringify(key)}]`
+                    const key = extractKeyString(part)
+                    if (key !== null) {
+                        // Static key
+                        accessor += `[${JSON.stringify(key)}]`
+                    } else {
+                        // Dynamic key - needs runtime evaluation
+                        accessor += `[${nixNodeToJs(part)}]`
+                    }
                     // Ensure intermediate object exists
-                    code += `    if (${accessor} === undefined) ${accessor} = {};\n`
+                    code += `    ${indentPrefix}if (${accessor} === undefined) ${accessor} = {};\n`
                 }
 
                 // Set the final value
                 const lastPart = pathParts[pathParts.length - 1]
-                const lastKey = lastPart.type === "identifier" ? lastPart.text : nixNodeToJs(lastPart)
-                code += `    ${accessor}[${JSON.stringify(lastKey)}] = ${nixNodeToJs(value)};\n`
+                const lastKey = extractKeyString(lastPart)
+                if (lastKey !== null) {
+                    // Static key
+                    code += `    ${indentPrefix}${accessor}[${JSON.stringify(lastKey)}] = ${nixNodeToJs(value)};\n`
+                } else {
+                    // Dynamic key
+                    code += `    ${indentPrefix}${accessor}[${nixNodeToJs(lastPart)}] = ${nixNodeToJs(value)};\n`
+                }
             }
 
             code += `    return obj;\n`
+            if (hasInheritFrom) {
+                code += `    } finally {\n`
+                code += `        runtime.scopeStack.pop();\n`
+                code += `    }\n`
+            }
             code += `})()`
 
             return code
@@ -895,7 +1036,25 @@ const nixNodeToJs = (node)=>{
                 }
             } else if (binding.type === "inherit_from") {
                 // inherit (expr) x y z; means x = expr.x; y = expr.y; etc.
-                throw new NotImplemented(`inherit (expr) syntax not yet supported`)
+                const bindingChildren = valueBasedChildren(binding)
+                const sourceExpr = bindingChildren.find(each =>
+                    each.type === "variable_expression" ||
+                    each.type === "select_expression" ||
+                    each.type === "apply_expression"
+                )
+                const inheritedAttrs = bindingChildren.find(each => each.type === "inherited_attrs")
+
+                if (inheritedAttrs && sourceExpr) {
+                    const identifiers = valueBasedChildren(inheritedAttrs).filter(each => each.type === "identifier")
+                    for (const id of identifiers) {
+                        simpleBindings.push({
+                            name: id.text,
+                            // Value is sourceExpr.id (e.g., builtins.parseFlakeRef)
+                            value: { type: "select", source: sourceExpr, attr: id.text },
+                            isConstant: true
+                        })
+                    }
+                }
             }
         }
 
@@ -912,7 +1071,12 @@ const nixNodeToJs = (node)=>{
 
         // Add simple constant bindings
         for (const {name, value, isConstant} of simpleBindings.filter(b => b.isConstant)) {
-            code += `        nixScope[${JSON.stringify(name)}] = ${nixNodeToJs(value)};\n`
+            if (value.type === "select") {
+                // Special case for inherit_from: value is { type: "select", source: expr, attr: name }
+                code += `        nixScope[${JSON.stringify(name)}] = ${nixNodeToJs(value.source)}[${JSON.stringify(value.attr)}];\n`
+            } else {
+                code += `        nixScope[${JSON.stringify(name)}] = ${nixNodeToJs(value)};\n`
+            }
         }
 
         // Add nested bindings

@@ -1,0 +1,148 @@
+#!/usr/bin/env deno test --allow-all
+/**
+ * Test suite for complete nixpkgs.lib files with imports
+ *
+ * This test suite validates that the translator + import system can handle
+ * real nixpkgs.lib files, including their dependencies.
+ *
+ * Tests progress from simple (no imports) to complex (multi-file with imports).
+ */
+
+import { convertToJs } from "../../main.js"
+import { createRuntime } from "../runtime.js"
+import { assertEquals, assertExists } from "https://deno.land/std@0.224.0/assert/mod.ts"
+import { resolve, dirname, join } from "https://deno.land/std@0.224.0/path/mod.ts"
+
+const nixpkgsLibPath = resolve(Deno.cwd(), "nixpkgs.lib/lib")
+
+/**
+ * Helper: Load and evaluate a nixpkgs.lib file
+ */
+function loadLibFile(filename, args = {}) {
+    const filePath = join(nixpkgsLibPath, filename)
+    const nixCode = Deno.readTextFileSync(filePath)
+
+    // Translate to JS
+    const jsCode = convertToJs(nixCode, { relativePath: filePath })
+
+    // Create runtime with import support
+    const runtime = createRuntime()
+
+    // Evaluate the translated code
+    // Most lib files are functions that take arguments (like { lib })
+    const moduleValue = eval(jsCode)
+
+    // If it's a function, call it with args
+    if (typeof moduleValue === "function") {
+        return moduleValue(args)
+    }
+
+    return moduleValue
+}
+
+/**
+ * Helper: Create a minimal lib context for testing
+ */
+function createMinimalLibContext() {
+    // Start with an empty lib
+    const lib = {}
+
+    // Add minimal required sections
+    lib.trivial = {}
+
+    return { lib }
+}
+
+Deno.test("nixpkgs.lib file loading", async (t) => {
+    await t.step("load ascii-table.nix (no imports, no dependencies)", () => {
+        const asciiTable = loadLibFile("ascii-table.nix")
+
+        // Verify it's an attribute set
+        assertExists(asciiTable)
+        assertEquals(typeof asciiTable, "object")
+
+        // Check some known values
+        assertEquals(asciiTable[" "], 32n)
+        assertEquals(asciiTable["A"], 65n)
+        assertEquals(asciiTable["a"], 97n)
+        assertEquals(asciiTable["0"], 48n)
+
+        // Check escape sequences
+        assertEquals(asciiTable["\t"], 9n)
+        assertEquals(asciiTable["\n"], 10n)
+        assertEquals(asciiTable["\r"], 13n)
+
+        console.log("✅ ascii-table.nix loaded successfully")
+    })
+
+    await t.step("verify ascii-table structure", () => {
+        const asciiTable = loadLibFile("ascii-table.nix")
+
+        // Should have entries for printable ASCII (32-126)
+        // Plus some control characters
+        const keys = Object.keys(asciiTable)
+
+        // Verify we have a good number of entries (should be ~100)
+        assertEquals(keys.length >= 96, true, `Expected at least 96 ASCII entries, got ${keys.length}`)
+
+        // Verify all values are BigInts (Nix integers)
+        for (const [char, code] of Object.entries(asciiTable)) {
+            assertEquals(typeof code, "bigint", `Character '${char}' should have BigInt code`)
+            assertEquals(code >= 0n, true, `Character '${char}' should have non-negative code`)
+            assertEquals(code <= 127n, true, `Character '${char}' should have ASCII code <= 127`)
+        }
+
+        console.log(`✅ ascii-table has ${keys.length} entries, all valid`)
+    })
+
+    await t.step("test inherit_from syntax (inherit (expr) attrs)", () => {
+        // Test that inherit_from works in let expressions
+        const nixCode = `let inherit (builtins) add sub; in { x = add 10 20; y = sub 30 5; }`
+
+        let jsCode = convertToJs(nixCode)
+        // Strip the import statement
+        if (jsCode.includes('import { createRuntime }')) {
+            jsCode = jsCode.replace(/import \{ createRuntime \}.*\n/, '')
+            jsCode = jsCode.replace(/const runtime = createRuntime\(\)\n/, '')
+        }
+
+        const runtime = createRuntime()
+        const fn = new Function('runtime', `return ${jsCode}`)
+        const result = fn(runtime)
+
+        assertEquals(result.x, 30n)
+        assertEquals(result.y, 25n)
+
+        console.log("✅ inherit_from in let expressions works")
+    })
+
+    await t.step("test inherit_from in attrsets", () => {
+        // Test that inherit_from works in attribute sets
+        const nixCode = `{ inherit (builtins) add sub; }`
+
+        let jsCode = convertToJs(nixCode)
+        // Strip the import statement
+        if (jsCode.includes('import { createRuntime }')) {
+            jsCode = jsCode.replace(/import \{ createRuntime \}.*\n/, '')
+            jsCode = jsCode.replace(/const runtime = createRuntime\(\)\n/, '')
+        }
+
+        const runtime = createRuntime()
+        const fn = new Function('runtime', `return ${jsCode}`)
+        const result = fn(runtime)
+
+        assertExists(result.add)
+        assertExists(result.sub)
+        assertEquals(typeof result.add, "function")
+        assertEquals(typeof result.sub, "function")
+
+        // Test that the functions work
+        assertEquals(result.add(5n)(3n), 8n)
+        assertEquals(result.sub(10n)(4n), 6n)
+
+        console.log("✅ inherit_from in attrsets works")
+    })
+})
+
+console.log("\n🚀 Testing nixpkgs.lib file loading")
+console.log("=" .repeat(60))
