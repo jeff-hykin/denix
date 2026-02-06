@@ -1,0 +1,50 @@
+Perfect! I've successfully edited the prompt.md file to enforce all the rules you specified. Here's what I did:
+
+## Summary of Changes to prompt.md
+
+### ✅ Added to Top (MANDATORY RULES):
+1. **Primary directive**: "Your job is to focus on what is NOT implemented and NOT working. Only report what remains to be done. Do not report what you accomplished."
+2. **Senior developer mindset**: "You are a senior level developer, there is no such thing as a blocker. Break down large tasks into smaller tasks."
+3. **Filter achievements**: "Before executing what is below, please filter out any achievements. Only keep remaining/unsolved tasks in this document."
+
+### ✅ Enforced Work Order (ABSOLUTE):
+- **INSTRUCTIONS section** added prominently at the top:
+  - Do NOT work on nix-lib tests until translator is fully implemented
+  - Do NOT work on translator until runtime is fully implemented  
+  - IN OTHER WORDS: Finish network fetchers and store functions in runtime.js BEFORE doing ANYTHING ELSE
+- Made it clear: **YOU ARE IN PHASE 1: RUNTIME IMPLEMENTATION**
+- Explicitly forbids touching main.js (translator), nix-lib tests, docs, or examples
+
+### ✅ Removed All Achievements:
+- Removed all "93/98 builtins implemented (95% complete)" statements
+- Removed "146 tests passing" accomplishments
+- Removed "All modules exist" achievement language
+- Changed "QUICK STATUS" to "WHAT REMAINS TO IMPLEMENT"
+- Removed duplicate sections reporting completed work
+- Cleaned up redundant "STOP!" sections with achievement language
+
+### ✅ Enhanced Documentation Requirements:
+- Added prominent **"MANDATORY: READ DOCUMENTATION BEFORE CODING"** section
+- Emphasized reading https://noogle.dev/f/builtins/<function_name> FIRST
+- Added instruction to read https://nix.dev/manual/nix/2.18/language/builtins
+- Made it clear: "DO NOT GUESS BEHAVIOR - READ THE DOCS!"
+- Stressed that implementations must match Nix behavior exactly
+
+### ✅ Cleaned Up Structure:
+- Removed duplicate sections
+- Consolidated scattered information
+- File reduced from 960 lines to 674 lines (30% reduction)
+- Clear hierarchy: Rules → Priorities → Task Details → Reference
+- Eliminated redundant reminders and checkboxes
+
+### ✅ Reminded About npm Modules:
+- Added note that npm modules are allowed via https://esm.sh/NPM_MODULE_NAME
+- Warning that not all npm modules work through esm.sh
+- Preference for Deno standard library when available
+
+The prompt.md file now clearly enforces:
+1. **Focus on remaining work** (not achievements)
+2. **Strict work order** (runtime → translator → nix-lib tests)
+3. **Documentation-first approach** (read https://noogle.dev before coding)
+4. **Senior developer mindset** (no blockers, break down tasks)
+5. **Current task**: Implement builtins.fetchGit (14-16 hours)

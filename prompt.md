@@ -1,240 +1,195 @@
-# Remaining Work: Implement fetchGit and optionally fetchTree
+# Remaining Work: Network Fetchers & Store Functions
 
-## 📊 QUICK STATUS
+## 🛑 MANDATORY RULES - READ THIS FIRST 🛑
 
-**Runtime:** 93/98 builtins implemented (95% complete)
-**Tests:** 146 tests passing across 33 test suites
-**Infrastructure:** All modules exist (fetcher.js, tar.js, nar_hash.js, store_manager.js)
+**Your job is to focus on what is NOT implemented and NOT working. Only report what remains to be done. Do not report what you accomplished. You are a senior level developer, there is no such thing as a blocker. Break down large tasks into smaller tasks.**
 
-**WHAT REMAINS:**
-- 5 builtins throw NotImplemented errors
-- 1 is high priority (fetchGit)
-- 1 is medium priority (fetchTree - requires fetchGit first)
-- 3 should be skipped (fetchMercurial, fetchClosure, getFlake)
+**Before executing what is below, please filter out any achievements. Only keep remaining/unsolved tasks in this document. Add detail to each task if its needed.**
 
-**YOUR TASK:** Implement builtins.fetchGit (14-16 hours)
+## 🚫 ABSOLUTE WORK ORDER - NO EXCEPTIONS 🚫
 
----
+**INSTRUCTIONS:**
+1. **DO NOT work on nix-lib tests** until the code translator is fully implemented
+2. **DO NOT work on the translator** until the runtime is fully implemented
+3. **IN OTHER WORDS**: Finish the network fetchers and store functions in runtime.js BEFORE doing ANYTHING ELSE
 
-## 🛑 STOP! READ THIS BEFORE DOING ANYTHING 🛑
-
-**CURRENT STATE: 93/98 builtins implemented (95% complete)**
-
-**REMAINING WORK:**
-- 5 builtins still throw NotImplemented errors
-- All 5 are advanced fetchers or experimental features
-- None are required for basic Nix evaluation
-
-**MANDATORY WORK ORDER - IMPLEMENT IN THIS SEQUENCE:**
-
-1. **fetchGit** (HIGH PRIORITY) - Most important remaining fetcher
-   - Required for: Flakes, git dependencies, nixpkgs development
-   - Estimated: 14-16 hours over 2-3 days
-   - Status: NOT IMPLEMENTED
-
-2. **fetchTree** (MEDIUM PRIORITY) - Experimental unified fetcher
-   - Required for: Generic source fetching (rarely used)
-   - Depends on: fetchGit must be implemented first
-   - Estimated: 6-8 hours over 1-2 days
-   - Status: NOT IMPLEMENTED
-
-3. **fetchMercurial** (LOW PRIORITY) - Legacy Mercurial support
-   - Required for: Mercurial repositories (very rare)
-   - Estimated: 8-10 hours over 1-2 days
-   - Status: NOT IMPLEMENTED
-
-4. **fetchClosure** (DEFER) - Binary cache fetcher
-   - Required for: Binary cache operations (experimental)
-   - Estimated: 40+ hours (very complex)
-   - Status: NOT IMPLEMENTED
-
-5. **getFlake** (DO NOT IMPLEMENT) - Full flake system
-   - Required for: Complete flake evaluation (massive undertaking)
-   - Estimated: 80-120+ hours (months of work)
-   - Status: NOT IMPLEMENTED
-
-**ABSOLUTE RULES FOR THIS DOCUMENT:**
-- ❌ NEVER add checkboxes (✅) showing completed work
-- ❌ NEVER report achievements ("we implemented X")
-- ❌ NEVER say something is "done" or "complete"
-- ✅ ONLY list what is NOT implemented yet
-- ✅ ONLY list what NEEDS to be done
-- ✅ Remove any achievement language immediately
-
-**YOUR CURRENT TASK:**
-Implement fetchGit. This is the only high-priority task remaining.
-
----
-
-## ⚠️ CRITICAL: READ THIS FIRST - MISSION STATEMENT ⚠️
-
-**Your job is to focus on what is NOT implemented and NOT working. Only report what remains to be done. NEVER report what you accomplished. You are a senior level developer, there is no such thing as a blocker. Break down large tasks into smaller tasks.**
-
-**Before executing what is below, filter out any achievements from this document. Only keep remaining/unsolved tasks. Add detail to each task if needed.**
-
-**ABSOLUTE RULES - NO EXCEPTIONS:**
-- ❌ NEVER add completion checkboxes (✅) to this document
-- ❌ NEVER report completed work or achievements
-- ❌ NEVER say "we implemented X" or "completed Y"
-- ✅ ONLY report what is NOT working, NOT implemented, or NEEDS to be done
-- ✅ ALWAYS remove any achievement-oriented content immediately
-- ✅ ALWAYS base implementations on official Nix documentation at https://noogle.dev
-- ✅ YOU ARE A SENIOR DEVELOPER - There is no such thing as a "blocker", only tasks to break down further
-
-## 🚫 WORK PRIORITY ORDER 🚫
-
-**Phase 1: High Priority (Required)**
-1. Implement builtins.fetchGit
-   - Time estimate: 14-16 hours over 2-3 days
-   - Status: NOT IMPLEMENTED
-   - Blocking: fetchTree cannot be implemented until this is done
-   - Location: main/runtime.js line 879
-
-**Phase 2: Medium Priority (Optional)**
-2. Implement builtins.fetchTree
-   - Time estimate: 6-8 hours over 1-2 days
-   - Status: NOT IMPLEMENTED
-   - Requires: fetchGit must be implemented first
-   - Location: main/runtime.js line 885
-   - Note: Experimental feature, not critical for basic Nix
-
-**Phase 3: Low Priority (Skip Unless Requested)**
-3. fetchMercurial - Rarely used legacy Mercurial support (8-10 hours)
-4. fetchClosure - Experimental binary cache feature (40+ hours, very complex)
-5. getFlake - Complete flake system (80-120+ hours, massive undertaking)
-
-**CURRENT BLOCKERS TO RESOLVE (in order):**
-- ❌ fetchGit NOT implemented in runtime.js (BLOCKING everything else)
-- ❌ fetchTree NOT implemented in runtime.js (BLOCKED by fetchGit)
-- ❌ 3 other experimental fetchers NOT implemented (lower priority)
-
-**WHAT THIS MEANS FOR YOU:**
-- Your ONLY job right now is implementing fetchGit
-- Do NOT work on translator features
-- Do NOT work on nix-lib tests
+**RIGHT NOW YOU ARE IN PHASE 1: RUNTIME IMPLEMENTATION**
+- Focus ONLY on implementing missing builtins in main/runtime.js
+- Do NOT touch main.js (translator)
+- Do NOT write nix-lib tests
 - Do NOT work on documentation or examples
-- FOCUS: Implement fetchGit, then fetchTree, then move on
 
-**After implementing fetchGit and fetchTree, the runtime will be 95/98 = 97% complete.**
+## 📊 WHAT REMAINS TO IMPLEMENT
 
-## 📚 DOCUMENTATION REQUIREMENTS - MANDATORY 📚
+**5 builtins throw NotImplemented errors in main/runtime.js:**
+1. **fetchGit** - NOT IMPLEMENTED (HIGH PRIORITY - START HERE)
+2. **fetchTree** - NOT IMPLEMENTED (MEDIUM PRIORITY - requires fetchGit first)
+3. **fetchMercurial** - NOT IMPLEMENTED (LOW PRIORITY - rarely used)
+4. **fetchClosure** - NOT IMPLEMENTED (DEFER - very complex)
+5. **getFlake** - NOT IMPLEMENTED (SKIP - massive undertaking)
 
-**🚨 STOP! BEFORE implementing ANY builtin function, you MUST: 🚨**
+**YOUR IMMEDIATE TASK:** Implement builtins.fetchGit (14-16 hours)
 
-1. **READ NIX DOCUMENTATION FIRST**: Visit https://noogle.dev/f/builtins/<function_name>
-   - Read the entire page carefully
-   - Study ALL examples provided
-   - Note ALL parameters (required and optional)
-   - Note expected return types and structure
-   - Note edge cases and error behavior
-   - **WRITE DOWN what you learned** from the docs before coding
+## 🎯 IMPLEMENTATION PRIORITIES
 
-2. **BASE IMPLEMENTATION ON NIX BEHAVIOR**: Match official Nix 2.18 behavior exactly
-   - Your implementation MUST match what's documented at https://noogle.dev
-   - Test against the examples shown in documentation
-   - Verify parameter names match exactly
-   - Verify return structure matches exactly
-   - Verify error messages match Nix behavior
+**PHASE 1: Runtime Builtins (CURRENT PHASE - DO THIS NOW)**
 
-3. **DO NOT GUESS**: If unclear, read documentation again or search for more examples
-   - Never assume behavior based on your intuition
-   - Never copy from memory or prior experience
-   - Always verify against https://noogle.dev
-   - When in doubt, read the docs again!
-   - Still confused? Read Nix source code: https://github.com/NixOS/nix
+### Task 1: fetchGit (HIGH PRIORITY - START HERE)
+- **Location**: main/runtime.js line 879
+- **Status**: NOT IMPLEMENTED - throws NotImplemented error
+- **Time**: 14-16 hours over 2-3 days
+- **Blocks**: fetchTree cannot be implemented without this
 
-4. **VERIFY YOUR IMPLEMENTATION**: After coding, check against docs again
-   - Does your function signature match the docs?
-   - Do your parameter names match?
-   - Does your return structure match?
-   - Do your error messages match Nix behavior?
-   - Have you tested all examples from the docs?
+### Task 2: fetchTree (MEDIUM PRIORITY - AFTER fetchGit)
+- **Location**: main/runtime.js line 885
+- **Status**: NOT IMPLEMENTED - throws NotImplemented error
+- **Time**: 6-8 hours over 1-2 days
+- **Requires**: fetchGit MUST be complete first
 
-**CRITICAL**: Implementations based on guesswork instead of documentation will be REJECTED and must be REWRITTEN. Read https://noogle.dev/f/builtins/<function_name> FIRST!
+### Task 3: fetchMercurial (LOW PRIORITY - OPTIONAL)
+- **Location**: main/runtime.js line 882
+- **Status**: NOT IMPLEMENTED - throws NotImplemented error
+- **Time**: 8-10 hours
+- **Notes**: Rarely used, can skip
 
-**COMMON MISTAKE**: Starting to code immediately without reading documentation. DON'T DO THIS! Reading docs takes 10 minutes. Rewriting incorrect implementations takes hours.
+### Task 4: fetchClosure (DEFER)
+- **Location**: main/runtime.js line 888
+- **Status**: NOT IMPLEMENTED - throws NotImplemented error
+- **Time**: 40+ hours (very complex)
+- **Notes**: Do not implement unless explicitly required
 
-## Remaining Work Summary
+### Task 5: getFlake (SKIP)
+- **Location**: main/runtime.js line 1423
+- **Status**: NOT IMPLEMENTED - throws NotImplemented error
+- **Time**: 80-120+ hours
+- **Notes**: Experimental, massive scope - do not implement
 
-**Runtime Status: 93/98 builtins implemented**
+**PHASE 2: Translator Features (DO NOT START YET)**
+- Wait until ALL Phase 1 tasks are complete
+- No translator work allowed while runtime has unimplemented builtins
 
-**5 builtins remain unimplemented:**
-1. fetchGit - NOT IMPLEMENTED (required for git dependencies, flakes)
-2. fetchTree - NOT IMPLEMENTED (requires fetchGit first, experimental)
-3. fetchMercurial - NOT IMPLEMENTED (legacy, rarely used)
-4. fetchClosure - NOT IMPLEMENTED (experimental, very complex)
-5. getFlake - NOT IMPLEMENTED (experimental, massive scope)
+**PHASE 3: Nix-lib Tests (DO NOT START YET)**
+- Wait until BOTH Phase 1 AND Phase 2 are complete
+- No nix-lib testing while runtime or translator are incomplete
 
-**Infrastructure Status:**
-- fetcher.js - EXISTS (HTTP downloads with retry)
-- tar.js - EXISTS (tarball extraction)
-- nar_hash.js - EXISTS (directory hashing)
-- store_manager.js - EXISTS (store path management)
+---
 
-**Current Priority:**
-- Implement fetchGit (14-16 hours)
-- All other tasks are lower priority or should be skipped
+## 🚨 CRITICAL RULES - ENFORCE THESE STRICTLY 🚨
 
-## 🔧 NPM MODULE USAGE - YOU ARE ALLOWED TO USE NPM 🔧
+**These rules override everything else in this document:**
 
-**YES, YOU CAN USE NPM MODULES!** Import them through esm.sh:
+1. **NO ACHIEVEMENTS**: Never report what you accomplished. Remove any completed items from this document.
+2. **NO CHECKBOXES**: Never add ✅ marks. Only track what is NOT done.
+3. **NO BLOCKERS**: You are a senior developer. Break down hard tasks into smaller tasks.
+4. **DOCUMENTATION FIRST**: Always read https://noogle.dev/f/builtins/<function_name> BEFORE writing ANY code.
+5. **BASE ON NIX BEHAVIOR**: Implementations must match official Nix 2.18 documentation exactly.
 
-- ✅ **ALLOWED**: You can use npm modules through `https://esm.sh/NPM_MODULE_NAME@VERSION`
-- ✅ **HOW TO USE**: Just import: `import pkg from "https://esm.sh/package-name@1.0.0"`
-- ⚠️ **WARNING**: Not all npm modules work through esm.sh (Node-specific APIs may fail)
-- ✅ **TEST FIRST**: Always test the import works before writing code that depends on it
-- ✅ **PREFER DENO FIRST**: Use Deno standard library (jsr:@std/*) when possible
-- ✅ **CHECK BUILT-INS**: Check if Deno has built-in APIs (crypto, fetch, etc.) before using npm
+## 📚 MANDATORY: READ DOCUMENTATION BEFORE CODING 📚
 
-Example:
+**⚠️ CRITICAL: Before implementing ANY builtin, you MUST:**
+
+1. **Visit documentation**: Go to https://noogle.dev/f/builtins/<function_name>
+2. **Read completely**: Study EVERY example, parameter, return value, and edge case
+3. **Take notes**: Write down what you learned from the documentation
+4. **Verify understanding**: Can you list all parameters and their defaults?
+5. **Check Nix manual**: https://nix.dev/manual/nix/2.18/language/builtins for additional context
+
+**DO NOT GUESS BEHAVIOR - READ THE DOCS!**
+- Guessing wastes hours debugging incorrect implementations
+- Reading docs takes 10 minutes and prevents hours of rework
+- Your implementation MUST match https://noogle.dev documentation exactly
+
+**Example for fetchGit:**
+1. Read: https://noogle.dev/f/builtins/fetchGit
+2. Read: https://nix.dev/manual/nix/2.18/language/builtins (fetchGit section)
+3. Note all parameters: url, name, rev, ref, submodules, shallow, allRefs
+4. Note all defaults: name=basename, ref="HEAD", submodules=false, etc.
+5. Study return structure: {outPath, rev, shortRev, revCount, lastModified, narHash, submodules}
+6. THEN start coding
+
+
+## 🎯 YOUR CURRENT TASK: Implement fetchGit
+
+**START HERE - Do this before anything else:**
+
+### Step 0: Read Documentation (MANDATORY - 15 minutes)
+1. Go to https://noogle.dev/f/builtins/fetchGit
+2. Read the ENTIRE page (every word, every example)
+3. Go to https://nix.dev/manual/nix/2.18/language/builtins
+4. Read the fetchGit section completely
+5. Write down what you learned before coding
+
+**Do NOT proceed to Step 1 until you have read and understood the official documentation.**
+
+### Step 1: Implement Argument Parsing (1 hour)
+- Location: main/runtime.js line 879
+- Accept URL string OR attribute set
+- Parse and validate all parameters (url, name, rev, ref, submodules, shallow, allRefs)
+- Apply default values per Nix documentation
+
+### Step 2: Validate Git Binary (30 minutes)
+- Check if git is installed
+- Throw clear error if not found
+
+### Step 3: Implement Caching (30 minutes)
+- Build cache key from URL + ref + rev
+- Check if already cached
+- Return cached result if exists
+
+### Step 4: Clone Repository (3 hours)
+- Create temp directory
+- Execute git clone with appropriate flags
+- Handle errors (network, auth, invalid URL)
+
+### Step 5: Checkout Revision (1 hour)
+- Checkout specific revision if provided
+- Verify checkout succeeded
+
+### Step 6: Extract Metadata (2 hours)
+- Get rev (git rev-parse HEAD)
+- Get shortRev (git rev-parse --short HEAD)
+- Get revCount (git rev-list --count HEAD)
+- Get lastModified (git log -1 --format=%ct HEAD)
+
+### Step 7: Clean Working Directory (30 minutes)
+- Remove .git directory
+- Result should be clean directory with only repo contents
+
+### Step 8: Hash and Store (1.5 hours)
+- Compute NAR hash using nar_hash.js
+- Compute store path using store_path.js
+- Move to store using store_manager.js
+- Save to cache
+
+### Step 9: Build Result (30 minutes)
+- Return attribute set matching Nix structure
+- Include: outPath, rev, shortRev, revCount, lastModified, narHash, submodules
+
+### Step 10: Write Tests (4 hours)
+- Create main/tests/builtins_fetchgit_test.js
+- Test basic clone, specific revision, branch reference
+- Test caching, errors, edge cases
+- Verify output matches Nix behavior
+
+**Total Time: 14-16 hours over 2-3 days**
+
+## 🔧 NPM MODULE USAGE (ALLOWED)
+
+**You CAN use npm modules through esm.sh:**
+
 ```javascript
-// You ARE allowed to do this:
-import simpleGit from "https://esm.sh/simple-git@3.20.0";
-import tar from "https://esm.sh/tar@6.2.0";
-
-// Test the import works, then use it in your code
+// Import npm modules via esm.sh (this is allowed):
+import pkg from "https://esm.sh/package-name@1.0.0";
 ```
 
-**Remember**: esm.sh is a valid way to use npm packages in Deno. Don't avoid npm if it helps solve the problem!
+**Guidelines:**
+- ⚠️ Test the import first (not all npm modules work through esm.sh)
+- ✅ Prefer Deno standard library (jsr:@std/*) when available
+- ✅ Check Deno built-in APIs (crypto, fetch, etc.) before using npm
+- ⚠️ Node-specific APIs may not work through esm.sh
 
-## 🚫 REPORTING RULES - NO ACHIEVEMENTS ALLOWED 🚫
 
-- ❌ **NEVER** report what you accomplished or completed
-- ❌ **NEVER** include completion checkboxes (✅)
-- ❌ **NEVER** describe past work or achievements
-- ❌ **NEVER** say "we implemented X"
-- ✅ **ONLY** report remaining tasks and what is NOT working
-- ✅ **ONLY** keep unimplemented features in this document
-- ✅ **ALWAYS** add implementation details to each remaining task
-
----
-
-## ⚠️ BEFORE YOU START - MANDATORY CHECKLIST ⚠️
-
-Before implementing ANY builtin function, you MUST complete these steps:
-
-1. **READ THE DOCUMENTATION**: Go to https://noogle.dev/f/builtins/<function_name> and read it completely
-2. **UNDERSTAND THE BEHAVIOR**: Study the examples and expected behavior in the documentation
-3. **CHECK EXISTING INFRASTRUCTURE**: Review what tools already exist (fetcher.js, store_manager.js, nar_hash.js, etc.)
-4. **BREAK DOWN THE TASK**: Split implementation into 1-2 hour chunks
-5. **TEST AS YOU GO**: Write tests before or alongside implementation (TDD recommended)
-
-**NEVER START CODING WITHOUT READING THE DOCUMENTATION FIRST!**
-
-The documentation at https://noogle.dev shows:
-- Exact function signatures
-- All parameters (required and optional)
-- Expected return types
-- Example usage
-- Edge case behavior
-
-**Your implementation MUST match the documented behavior exactly. Read the docs first!**
-
----
-
-## 📊 REMAINING WORK - 5 BUILTINS NOT IMPLEMENTED 📊
-
-**Current Status: 93/98 builtins implemented (95% complete)**
+## 📋 UNIMPLEMENTED BUILTINS (5 total)
 
 | Builtin | Status | Priority | Est. Time | Documentation Link | Blocks |
 |---------|--------|----------|-----------|-------------------|--------|
@@ -244,56 +199,16 @@ The documentation at https://noogle.dev shows:
 | **fetchClosure** | NOT IMPL | ⚪ DEFER | 40+ hrs | https://noogle.dev/f/builtins/fetchClosure | (experimental) |
 | **getFlake** | NOT IMPL | ⚫ SKIP | 80+ hrs | https://noogle.dev/f/builtins/getFlake | (months of work) |
 
-**What remains to be done:**
-- 5 builtins throw NotImplemented errors (listed above)
-- fetchGit is the only high-priority task remaining
-- fetchTree depends on fetchGit being implemented first
-- The other 3 are low-priority or should be skipped entirely
-
 ---
 
-## START HERE - Next Task
+## 🔧 DETAILED IMPLEMENTATION PLAN: fetchGit
 
-**IMMEDIATE TASK: Implement builtins.fetchGit**
+**Location**: main/runtime.js line 879 (search for "fetchGit")
+**Documentation**:
+- https://noogle.dev/f/builtins/fetchGit
+- https://nix.dev/manual/nix/2.18/language/builtins (fetchGit section)
 
-**⚠️ STEP 0 - MANDATORY - READ DOCUMENTATION FIRST ⚠️**:
-
-**BEFORE YOU WRITE A SINGLE LINE OF CODE:**
-1. Go to https://noogle.dev/f/builtins/fetchGit
-2. Read the ENTIRE page carefully (every word, every example)
-3. Write down what you learned about:
-   - Required parameters
-   - Optional parameters and their defaults
-   - Return value structure
-   - Error behavior
-   - Example usage patterns
-4. Go to https://nix.dev/manual/nix/2.18/language/builtins and read the fetchGit section
-5. Compare both sources to ensure you understand completely
-
-**DO NOT PROCEED until you have read and understood the official documentation.**
-
-Your implementation MUST match the documented behavior EXACTLY. Guessing leads to bugs that waste hours fixing later. Reading docs takes 10 minutes and prevents hours of debugging.
-
-**TEST YOUR UNDERSTANDING:**
-Before coding, ask yourself:
-- Can I list all parameters and their defaults?
-- Do I know exactly what the return value looks like?
-- Do I understand how error cases are handled?
-- Have I seen all the examples in the docs?
-
-If you can't answer "yes" to all of these, read the documentation again!
-
-Location: main/runtime.js (search for fetchGit - currently throws NotImplemented)
-Goal: Clone Git repositories and copy to store with metadata
-
-Why this is critical:
-- Most important remaining fetcher
-- Used extensively in Flakes, nixpkgs overlays, private repos, pinned dependencies
-- Blocks fetchTree implementation (which depends on this)
-
-Implementation Requirements (MUST match official Nix 2.18 documentation at https://noogle.dev/f/builtins/fetchGit):
-
-**Official Documentation**: https://nix.dev/manual/nix/2.18/language/builtins (see fetchGit section)
+**⚠️ READ DOCUMENTATION BEFORE CODING (15 minutes required)**
 
 ### Phase 1: Argument Parsing (1 hour)
 - Accept URL string OR attribute set
@@ -630,131 +545,29 @@ Current State: Throws NotImplemented error
 
 ---
 
-## 🎯 IMPLEMENTATION ORDER 🎯
-
-**Priority 1: fetchGit** (14-16 hours) - IMPLEMENT THIS
-- Location: main/runtime.js line 879
-- Documentation: https://noogle.dev/f/builtins/fetchGit
-- Blocks: fetchTree cannot be implemented without this
-- Impact: Required for git dependencies and flakes
-
-**Priority 2: fetchTree** (6-8 hours) - OPTIONAL
-- Location: main/runtime.js line 885
-- Documentation: https://noogle.dev/f/builtins/fetchTree
-- Requires: fetchGit must be implemented first
-- Impact: Experimental unified fetcher (convenience feature)
-
-**Priority 3: Skip These** - Only implement if explicitly requested
-- fetchMercurial: Legacy Mercurial support (rarely used)
-- fetchClosure: Binary cache operations (experimental, complex)
-- getFlake: Complete flake system (months of work, experimental)
-
-**Target State: 94-95/98 builtins (96-97% complete)**
 
 ---
 
-## TASK 1: fetchGit (HIGH PRIORITY - START HERE)
-- **Documentation**: https://nix.dev/manual/nix/2.18/language/builtins (fetchGit section)
-- **Location**: main/runtime.js line ~1050 (search for fetchGit)
-- **Estimated Time**: 14-16 hours over 2-3 days
-- **Blocks**: fetchTree (cannot implement until this is done)
-- **Impact**: Critical for flakes, nixpkgs, and most modern Nix code
-- **Detailed Plan**: See "START HERE - Next Task" section above
+## 📦 Available Infrastructure (Reuse These)
 
-## TASK 2: fetchTree (MEDIUM PRIORITY - AFTER fetchGit)
-- **Documentation**: https://noogle.dev/f/builtins/fetchTree + https://nix.dev/manual/nix/2.25/language/builtins
-- **Location**: main/runtime.js line ~1053 (search for fetchTree)
-- **Estimated Time**: 6-8 hours over 1-2 days
-- **Requires**: fetchGit must be complete first
-- **Impact**: Unified fetcher interface (experimental but useful)
+**Existing modules to use:**
+- `main/fetcher.js` - HTTP downloads with retry logic
+- `main/tar.js` - Tarball extraction
+- `main/nar_hash.js` - Directory NAR hashing
+- `main/store_manager.js` - Store path management and caching
+- `tools/store_path.js` - Store path computation
+- `tools/hashing.js` - SHA256 and other hash functions
 
-## TASK 3: fetchMercurial (LOW PRIORITY - OPTIONAL)
-- **Documentation**: https://nix.dev/manual/nix/2.18/release-notes/rl-2.0 + nixpkgs docs
-- **Location**: main/runtime.js line ~1054 (search for fetchMercurial)
-- **Estimated Time**: 8-10 hours over 1-2 days
-- **Impact**: Low - rarely used in modern Nix
-- **Recommendation**: Skip unless specifically requested
+**Key functions:**
+- `downloadWithRetry(url, destPath)` - Download with 3 retries
+- `extractTarball(tarPath, destDir)` - Extract .tar.gz
+- `hashDirectory(dirPath)` - Compute NAR hash
+- `getCachedPath(cacheKey)` - Check cache
+- `setCachedPath(cacheKey, storePath)` - Save to cache
+- `atomicMove(srcPath, destPath)` - Atomic move to store
+- `computeFetchStorePath(narHash, name)` - Compute store path
 
-## TASK 4: fetchClosure (DEFER)
-- **Documentation**: https://nix.dev/manual/nix/2.18/language/builtins (fetchClosure section)
-- **Location**: main/runtime.js line ~1056 (search for fetchClosure)
-- **Estimated Time**: 40+ hours (very complex)
-- **Impact**: Experimental feature, not critical
-- **Recommendation**: Do not implement unless explicitly required
-
-## TASK 5: getFlake (DO NOT IMPLEMENT)
-- **Documentation**: https://nix.dev/manual/nix/2.18/language/builtins (getFlake section)
-- **Location**: main/runtime.js line ~1182 (search for getFlake)
-- **Estimated Time**: 80-120+ hours (months of work)
-- **Impact**: Not needed for basic Nix evaluation
-- **Recommendation**: Do not implement - flakes are experimental and add massive complexity
-
----
-
-## Technical Reference
-
-### NAR Format (Nix Archive)
-Deterministic archive format for hashing directories:
-1. Sort all entries alphabetically at each level
-2. Serialize recursively: type + name + (executable? size? contents? target?)
-3. SHA256 hash of serialization
-
-### Store Path for Fixed-Output Derivations
-```
-hash_input = "fixed:out:sha256:<nar-hash>:<store-dir>:<name>"
-store_path = <store-dir>/<base32(sha256(hash_input))>-<name>
-```
-
-Use tools/store_path.js which already implements this.
-
-### Caching Strategy
-- Cache key: `${url}:${sha256 || ""}`
-- Cache file: `~/.cache/denix/cache.json` maps keys to store paths
-- Check sequence: store exists? → cache hit? → download
-
-### Available Infrastructure (Reuse These!)
-- `main/fetcher.js` - HTTP download with retry (already exists)
-  - `downloadWithRetry(url, destPath)` - async download with 3 retries
-  - `validateSha256(filePath, expectedHash)` - verify SHA256
-  - `extractNameFromUrl(url)` - extract filename from URL
-- `main/tar.js` - Tarball extraction (already exists)
-  - `extractTarball(tarPath, destDir)` - extract .tar.gz to directory
-- `main/nar_hash.js` - NAR hashing (already exists)
-  - `hashDirectory(dirPath)` - compute NAR hash of directory
-- `main/store_manager.js` - Store management (already exists)
-  - `getCachedPath(cacheKey)` - check if URL cached
-  - `setCachedPath(cacheKey, storePath)` - save to cache
-  - `atomicMove(srcPath, destPath)` - atomic move to store
-  - `exists(path)` - check if path exists
-  - `ensureStoreDirectory()` - create store dir if needed
-- `tools/store_path.js` - Store path computation (already exists)
-  - `computeFetchStorePath(narHash, name)` - compute store path from hash
-- `tools/hashing.js` - SHA256 and other hashes (already exists)
-  - `sha256Hex(data)`, `sha256(data)` - SHA256 hashing
-- External dependencies:
-  - `jsr:@std/tar@0.1.10` - Deno standard library (for tarball extraction)
-  - `DecompressionStream` - Web API for gzip (built into Deno)
-
-### Using NPM Modules (IMPORTANT)
-- ✅ **Allowed**: You CAN use npm modules through https://esm.sh/NPM_MODULE_NAME
-- ⚠️ **Warning**: Not all npm modules work through esm.sh (Node-specific APIs may fail)
-- ✅ **Best Practice**: Always test the module import first before writing code that depends on it
-- ✅ **Prefer**: Deno standard library (jsr:@std/*) when possible over npm modules
-- ✅ **Alternative**: Check if Deno has built-in APIs (like crypto, fetch, etc.)
-
-Example usage:
-```javascript
-// This might work:
-import someLib from "https://esm.sh/some-package@1.0.0";
-
-// But test it first! Try importing it and calling basic functions
-// before committing to using it in your implementation
-```
-
----
-
-
-## Known Edge Cases & Future Considerations
+## 🔍 Known Edge Cases to Handle
 
 ### Hash Format Normalization
 - Nix accepts multiple formats: "sha256:abc...", "sha256-abc...", "abc..."
@@ -799,161 +612,63 @@ import someLib from "https://esm.sh/some-package@1.0.0";
 
 ---
 
-## Testing Strategy for New Implementations
+## 🧪 Testing Requirements
 
-### Test File Naming Convention
-- `main/tests/builtins_<name>_test.js` - for builtin tests
-- Example: `builtins_fetchurl_test.js`, `builtins_path_test.js`
+**Create test file**: `main/tests/builtins_<name>_test.js`
 
-### Required Test Cases (Minimum)
-For each builtin, test AT LEAST:
-1. **Happy path** - basic functionality works
-2. **Argument variants** - string vs object, optional params
-3. **Error cases** - invalid input throws appropriate error
-4. **Edge cases** - empty input, special characters, etc.
-5. **Caching** - if applicable, verify cache hit/miss behavior
-6. **Integration** - works with other builtins (e.g., toJSON(fetchurl(...)))
+**Required test cases (minimum):**
+1. Happy path - basic functionality
+2. Argument variants - string vs object, optional params
+3. Error cases - invalid input
+4. Edge cases - empty input, special characters
+5. Caching - cache hit/miss behavior (if applicable)
+6. Integration - works with other builtins
 
-### Test Structure Pattern
-```javascript
-Deno.test("builtin_name - description", async () => {
-    const result = await builtins.builtin_name(args);
-    assertEquals(result, expected);
-});
-```
-
-### Running Tests
+**Run tests:**
 ```bash
-# Run all tests
-deno test --allow-all
-
-# Run specific test file
-deno test --allow-all main/tests/builtins_fetchurl_test.js
-
-# Watch mode (auto-rerun on changes)
-deno test --allow-all --watch
+deno test --allow-all                                    # all tests
+deno test --allow-all main/tests/builtins_fetchgit_test.js  # specific file
 ```
 
-### Test Coverage Goals
-- Aim for 100% of code paths tested
-- Every error condition should have a test
-- Every argument variant should have a test
-- Integration with related builtins should be tested
+## ✅ Definition of Done (When is Implementation Complete?)
 
-### ⚠️ WHEN IS AN IMPLEMENTATION COMPLETE? ⚠️
+**An implementation is NOT complete until:**
+1. Documentation verified - behavior matches https://noogle.dev exactly
+2. All tests pass - no skips, no .only, no known bugs
+3. No NotImplemented errors remain
+4. Edge cases handled - null, undefined, empty, invalid inputs
+5. Error messages clear and actionable
+6. Behavior matches real Nix (test against actual Nix if possible)
 
-An implementation is NOT complete until ALL of these requirements are met:
-
-1. **Documentation verified**: Read https://noogle.dev/f/builtins/<function_name> and confirm behavior matches exactly
-2. **All test cases pass**: Every test in the test file passes without skips or .only
-3. **No NotImplemented errors**: Function doesn't throw NotImplemented
-4. **Edge cases handled**: Null, undefined, empty, invalid inputs all handled properly
-5. **Error messages clear**: Errors tell user what went wrong and how to fix it
-6. **Behavior matches Nix**: Test against real Nix if possible
-
-**RED FLAGS - Implementation is NOT complete if:**
-- ❌ Tests are skipped, commented out, or marked with .only
+**RED FLAGS - NOT complete if:**
+- ❌ You haven't read https://noogle.dev documentation
+- ❌ Tests are skipped or commented out
 - ❌ Known bugs exist (even if "minor")
-- ❌ Error handling is missing or generic
-- ❌ Behavior doesn't match official Nix documentation
-- ❌ You haven't verified against https://noogle.dev documentation
-- ❌ You're guessing at behavior instead of reading documentation
+- ❌ Error handling is missing
+- ❌ Guessing behavior instead of reading docs
 
-**CRITICAL RULE**: If you can't verify behavior matches Nix documentation at https://noogle.dev, the implementation is NOT complete. Read the docs first!
+## 🎯 FINAL REMINDERS
 
----
+**WORK ORDER (STRICT):**
+1. Runtime (main/runtime.js) - Finish ALL fetchers/store functions FIRST
+2. Translator (main.js) - ONLY after runtime complete
+3. Nix-lib tests - ONLY after runtime AND translator complete
 
-## 🔍 VERIFICATION CHECKLIST - REQUIRED FOR EACH BUILTIN 🔍
+**YOU ARE IN PHASE 1: RUNTIME IMPLEMENTATION**
+- Do NOT touch translator (main.js)
+- Do NOT write nix-lib tests
+- Do NOT work on docs/examples
 
-After implementing each builtin, you MUST verify ALL of these items:
+**YOUR TASK:** Implement builtins.fetchGit
 
-### 1. Documentation Verification (MANDATORY FIRST STEP)
-MUST complete before writing ANY code:
-- Read official Nix 2.18 manual for the builtin at https://noogle.dev
-- Confirm all parameters match documentation
-- Confirm all default values match documentation
-- Confirm return value structure matches documentation
-- Confirm edge case behavior matches documentation
+**BEFORE CODING:**
+1. Read https://noogle.dev/f/builtins/fetchGit (entire page)
+2. Read https://nix.dev/manual/nix/2.18/language/builtins (fetchGit section)
+3. Write down what you learned
+4. THEN start coding
 
-### 2. Test Coverage Verification (REQUIRED)
-Must create and verify:
-- Comprehensive test file (main/tests/builtins_<name>_test.js)
-- All test cases passing
-- Tested happy path (basic usage)
-- Tested all parameter variants
-- Tested error cases (invalid input)
-- Tested edge cases (empty, null, special characters)
-- Tested caching behavior (if applicable)
-- Tested integration with other builtins
-
-### 3. Real-World Verification (REQUIRED)
-Test against actual public repositories (for fetchers):
-- Verify output matches actual Nix (same store paths, same metadata)
-- Test with both HTTPS and SSH URLs (for git fetchers)
-- Test with local paths (for git fetchers)
-
-### 4. Code Quality Verification (REQUIRED)
-Ensure these requirements are met:
-- No NotImplemented errors remain
-- Error messages are clear and actionable
-- Code follows existing patterns in runtime.js
-- No hardcoded paths or assumptions
-- Proper temp directory cleanup on errors
-- No memory leaks (streams closed, temp files removed)
-
-### 5. Integration Verification (REQUIRED)
-Run these verification steps:
-- Run full test suite: `deno test --allow-all`
-- All existing tests still pass
-- No regressions in other builtins
-- Works correctly with builtins.import
-- Works correctly with toJSON
-
-**CRITICAL**: An implementation is incomplete until all 5 categories above are verified. Partial implementations are not acceptable.
-
----
-
-## 🎯 FINAL REMINDERS - READ BEFORE STARTING 🎯
-
-**⚠️ CRITICAL WORK ORDER - FOLLOW THIS SEQUENCE ⚠️**
-
-You MUST work in this exact order:
-1. **Runtime (main/runtime.js)** - Implement ALL network fetchers and store functions FIRST
-2. **Translator (main.js)** - ONLY after runtime is 100% complete
-3. **Nix-lib tests** - ONLY after both runtime AND translator are 100% complete
-
-**RIGHT NOW**: You are in Phase 1 (Runtime). Do NOT work on translator or nix-lib tests.
-
-**YOUR CURRENT TASK**: Implement builtins.fetchGit
-
-**DOCUMENTATION REQUIREMENTS** (MANDATORY):
-1. **READ DOCUMENTATION FIRST**: Go to https://noogle.dev/f/builtins/fetchGit and read the ENTIRE page
-2. **UNDERSTAND THE BEHAVIOR**: Study all examples and parameters in the documentation
-3. **BASE YOUR IMPLEMENTATION ON THE DOCS**: Your code MUST match what's documented at https://noogle.dev
-4. **DO NOT GUESS**: If unclear about behavior, read the documentation again (guessing wastes hours)
-5. **TEST AGAINST EXAMPLES**: Use the examples from https://noogle.dev in your tests
-6. **VERIFY BEHAVIOR**: Your implementation must match Nix behavior exactly
-
-**REPORTING RULES** (MANDATORY):
-- ❌ NEVER report what you accomplished or completed
-- ❌ NEVER add checkboxes (✅) for completed work
-- ❌ NEVER say "we implemented X" or "completed Y"
-- ✅ ONLY report what is NOT working or NOT implemented
-- ✅ ONLY report remaining tasks and blockers
-- ✅ Remove achievement language from this document immediately
-
-**TASK BREAKDOWN RULES** (MANDATORY):
-- You are a senior developer - there are NO blockers, only tasks to break down further
-- Split large tasks into 1-2 hour chunks
-- If something seems hard, break it into smaller pieces
-- Write tests alongside implementation (TDD approach)
-- Test frequently (after each small piece)
-
-**NPM USAGE** (ALLOWED):
-- ✅ You CAN use npm modules through https://esm.sh/package-name@version
-- ⚠️ Test the import first (not all npm modules work through esm.sh)
-- ✅ Prefer Deno standard library (jsr:@std/*) when available
-
-**START HERE**: Implement builtins.fetchGit (see detailed plan above)
-
-**REMEMBER**: Read https://noogle.dev/f/builtins/fetchGit BEFORE writing ANY code!
+**REMEMBER:**
+- You are a senior developer - no blockers, only tasks to break down
+- Break large tasks into 1-2 hour chunks
+- Test as you go (TDD approach)
+- Base implementation on Nix documentation, not guesses
