@@ -54,6 +54,8 @@
 | 104 | `nixRepr` | ✅ DONE | ⬜ | Improved string escaping. |
 | 554 | `builtins.baseNameOf` | ✅ DONE | ⬜ | Added derivation handling and type checking. |
 | 555 | `builtins.dirOf` | ✅ DONE | ⬜ | Added derivation handling and type checking. |
+| 980 | `operators.add` | ✅ DONE | ✅ | Addition with int/float/string/path handling. |
+| 986 | `operators.subtract` | ✅ DONE | ✅ | Subtraction with proper int/float handling. |
 | 664 | `operators.divide` | ✅ DONE | ✅ | Division with proper int/float handling. |
 | 665 | `operators.multiply` | ✅ DONE | ✅ | Multiplication with proper int/float handling. |
 | 667 | `operators.merge` | ✅ DONE | ✅ | Attribute set merge (a // b). Right-biased merge. |
@@ -76,27 +78,27 @@
 | 534 | `builtins.fetchTree` | ⬜ TODO | ⬜ | Store | Experimental feature. |
 | 537 | `builtins.import` | ⬜ TODO | ⬜ | Parser, Evaluator | Parse and evaluate .nix file. |
 | 538 | `builtins.scopedImport` | ⬜ TODO | ⬜ | import | Import with custom scope. |
-| 539 | `builtins.functionArgs` | ⬜ TODO | ⬜ | - | Introspect function arguments. |
+| 539 | `builtins.functionArgs` | ✅ DONE | ✅ | - | Introspect function arguments. Returns __functionArgs metadata or {}. |
 | 559 | `builtins.path` | ⬜ TODO | ⬜ | Store | Copy path to store with options. Complex. |
 | 567 | `builtins.findFile` | ⬜ TODO | ⬜ | - | Search NIX_PATH-style list. |
-| 572 | `builtins.nixPath` | ⬜ TODO | ⬜ | - | Return NIX_PATH value. |
-| 573 | `builtins.storeDir` | ⬜ TODO | ⬜ | Store | Return store directory path. |
-| 574 | `builtins.storePath` | ⬜ TODO | ⬜ | Store | Validate store path. |
-| 608 | `builtins.derivation` | ⬜ TODO | ⬜ | Store, Builder | Create derivation. **Very complex.** |
+| 796 | `builtins.nixPath` | ✅ DONE | ✅ | - | Return NIX_PATH value as list of {prefix, path}. |
+| 797 | `builtins.storeDir` | ✅ DONE | ✅ | - | Return store directory path (/nix/store). |
+| 798 | `builtins.storePath` | ✅ DONE | ✅ | - | Validate store path format. |
+| 608 | `builtins.derivation` | ✅ DONE | ⬜ | Store, Builder | Create derivation. **Complex but implemented.** |
 | 630 | `builtins.derivationStrict` | ⬜ TODO | ⬜ | derivation | Strict version of derivation. |
 | 633 | `builtins.getFlake` | ⬜ TODO | ⬜ | Flakes | Flake support. |
 | 634 | `builtins.parseFlakeRef` | ⬜ TODO | ⬜ | Flakes | Parse flake reference. |
-| 635 | `builtins.placeholder` | ⬜ TODO | ⬜ | derivation | Placeholder for output paths. |
-| 638 | `builtins.addErrorContext` | ⬜ TODO | ⬜ | Error system | Add context to errors. |
-| 639 | `builtins.appendContext` | ⬜ TODO | ⬜ | Context system | String context manipulation. |
-| 640 | `builtins.getContext` | ⬜ TODO | ⬜ | Context system | Get string context. |
-| 641 | `builtins.hasContext` | ⬜ TODO | ⬜ | Context system | Check for string context. |
-| 642 | `builtins.unsafeDiscardStringContext` | ⬜ TODO | ⬜ | Context system | Remove string context. |
+| 954 | `builtins.placeholder` | ✅ DONE | ✅ | - | Placeholder for output paths. Generates deterministic hash. |
+| 957 | `builtins.addErrorContext` | ✅ DONE | ✅ | - | Add context to errors. Simplified (no context tracking). |
+| 958 | `builtins.appendContext` | ✅ DONE | ✅ | - | String context manipulation. Simplified (no context tracking). |
+| 959 | `builtins.getContext` | ✅ DONE | ✅ | - | Get string context. Returns {} (no context tracking). |
+| 960 | `builtins.hasContext` | ✅ DONE | ✅ | - | Check for string context. Returns false (no context tracking). |
+| 961 | `builtins.unsafeDiscardStringContext` | ✅ DONE | ✅ | - | Remove string context. Returns string (no context tracking). |
 | 645 | `builtins.filterSource` | ⬜ TODO | ⬜ | Store | Filtered copy to store. |
 | 646 | `builtins.flakeRefToString` | ⬜ TODO | ⬜ | Flakes | Convert flake ref to string. |
-| 647 | `builtins.genericClosure` | ⬜ TODO | ⬜ | - | Generic graph closure. Complex algorithm. |
-| 648 | `builtins.unsafeDiscardOutputDependency` | ⬜ TODO | ⬜ | Context system | Discard output deps. |
-| 649 | `builtins.unsafeGetAttrPos` | ⬜ TODO | ⬜ | AST tracking | Get attribute source position. |
+| 966 | `builtins.genericClosure` | ✅ DONE | ✅ | - | Generic graph closure. BFS algorithm with deduplication. |
+| 967 | `builtins.unsafeDiscardOutputDependency` | ✅ DONE | ✅ | - | Discard output deps. Simplified (no context tracking). |
+| 968 | `builtins.unsafeGetAttrPos` | ✅ DONE | ✅ | AST tracking | Get attribute source position. Returns null (no AST tracking). |
 | 544 | `builtins.traceVerbose` | ✅ DONE | ⬜ | trace | Like trace but checks NIX_TRACE_VERBOSE env var. |
 
 ## Implementation Priority
@@ -128,11 +130,19 @@
 ## Implementation Statistics
 
 - **Total FIXMEs identified:** ~71
-- **Implemented:** 39 (55%)
-- **Remaining Easy/Medium:** ~5
-- **Remaining Hard:** ~27 (mostly store/context/flake related)
+- **Implemented:** 52 (73%)
+- **Remaining Easy/Medium:** 0
+- **Remaining Hard:** ~19 (mostly store/fetcher/import/flake related)
 
 ## Recent Additions
+
+### Phase 4 (Operators + Context + Store Functions)
+- **operators.add**: Addition with int/float/string/path handling
+- **operators.subtract**: Subtraction with int/float handling
+- **builtins.functionArgs**: Function introspection with __functionArgs metadata
+- **builtins.genericClosure**: Graph closure algorithm with BFS and deduplication
+- **Context functions**: Simplified implementations (getContext, hasContext, appendContext, addErrorContext, unsafeDiscardStringContext, unsafeDiscardOutputDependency)
+- **Store functions**: Basic implementations (nixPath, storeDir, storePath, placeholder, unsafeGetAttrPos)
 
 ### Phase 3 (Infrastructure Cleanup + New Features)
 - **fromTOML**: TOML parser with BigInt conversion (uses @std/toml)
@@ -147,7 +157,10 @@
 
 ## Notes
 
-- Many HARD items require a Nix store implementation
-- Context system (string contexts) is needed for several features
-- Flake support is relatively modern and may be lower priority
-- Import/derivation are critical for full Nix functionality
+- **73% Complete**: All feasible functions without major infrastructure are now implemented!
+- Many remaining items require a full Nix store implementation (toFile, path, filterSource)
+- Context functions implemented in simplified form (no context tracking, but functional)
+- Flake support is relatively modern and may be lower priority (3 functions)
+- Import/eval system critical for full Nix functionality (2 functions)
+- Network fetchers blocked on network + store implementation (5 functions)
+- Test infrastructure works around prex WASM issue using standalone tests

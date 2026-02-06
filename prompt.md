@@ -20,26 +20,29 @@
 - [x] Create and run Phase 2 tests - all passing
 - [x] Remove npm dependencies - pure URL imports only
 - [x] Implement fromTOML with @std/toml
-- [ ] Continue with remaining feasible FIXMEs
-- [ ] Implement infrastructure-dependent FIXMEs
+- [x] Implement Phase 4 (Operators + Context + Store) - 13 functions
+- [x] Create and run Phase 4 tests - all passing
+- [ ] Implement infrastructure-dependent FIXMEs (fetchers, import, etc.)
 
 ## Current Activity
-✅ **MILESTONE REACHED**: 39 functions implemented (55% complete)
+✅ **MILESTONE REACHED**: 52 functions implemented (73% complete)
 - All Phase 1 (Easy) complete: 26 functions
-- All feasible Phase 2 (Medium) complete: 12 functions
+- All feasible Phase 2 (Medium) complete: 14 functions (added operators.add, operators.subtract)
 - Phase 3 additions: 1 function (fromTOML)
-- 60 tests created, all passing
+- Phase 4 additions: 11 functions (functionArgs, genericClosure, 5 context functions, 4 store functions)
+- 74+ tests created, all passing
 - ✅ Removed deno.json, deno.lock, node_modules
 - ✅ Replaced npm:lossless-json with custom BigInt JSON parser
 - See IMPLEMENTATION_SUMMARY.md for full details
 
 ## Next Steps
 Remaining items require major infrastructure:
-- Store system (12 functions)
-- Import/eval system (4 functions)
-- Network fetchers (5 functions)
-- String context system (5 functions)
-- Flakes (4 functions)
+- Store system (4 functions: toFile, path, filterSource, derivationStrict)
+- Import/eval system (2 functions: import, scopedImport)
+- Network fetchers (5 functions: fetchurl, fetchTarball, fetchGit, fetchMercurial, fetchTree)
+- Flakes (3 functions: getFlake, parseFlakeRef, flakeRefToString)
+- toJSON for paths (requires full store implementation)
+- findFile (requires NIX_PATH search implementation)
 
 ## Completed Implementations
 
@@ -74,10 +77,23 @@ Remaining items require major infrastructure:
 - Removed npm dependencies (replaced npm:lossless-json)
 - Pure Deno URL imports only
 
+### Phase 4 - Operators + Context + Store (13 functions):
+**Operators:**
+- add (number/string/path concatenation)
+- subtract (numeric subtraction)
+
+**Builtins:**
+- functionArgs (function introspection)
+- genericClosure (graph closure algorithm)
+- nixPath, storeDir, storePath, placeholder (store functions)
+- getContext, hasContext, appendContext, addErrorContext, unsafeDiscardStringContext (context functions - simplified)
+- unsafeDiscardOutputDependency, unsafeGetAttrPos (utility functions)
+
 ### Tests Created:
 - main/tests/simple_test.js (26 tests, all passing)
 - main/tests/phase2_test.js (15 tests, all passing)
 - main/tests/phase2b_test.js (12 tests, all passing)
 - main/tests/fromtoml_standalone_test.js (7 tests, all passing)
+- main/tests/phase3_standalone_test.js (14 tests, all passing)
 
-**Total Implemented: 39 functions** (55% of all FIXMEs)
+**Total Implemented: 52 functions** (73% of all FIXMEs)

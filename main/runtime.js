@@ -15,6 +15,7 @@ import { jsonParseWithBigInt } from "../tools/json_parse.js"
 import { lazyMap } from "../tools/lazy_array.js"
 import { prexRawMatch } from "https://deno.land/x/prex@0.0.0.1/main.js"
 import { parse as tomlParse } from "https://deno.land/std@0.224.0/toml/mod.ts"
+import { serializeDerivation, computeDrvPath, computeOutputPath } from "../tools/store_path.js"
 
 // core stuff
 import { NixError, NotImplemented } from "./errors.js"
@@ -679,7 +680,17 @@ import { NixError, NotImplemented } from "./errors.js"
         // misc
             "import": ()=>{/*FIXME*/},
             "scopedImport": ()=>{/*FIXME*/},
-            "functionArgs": ()=>{/*FIXME*/},
+            "functionArgs": (f)=>{
+                if (!builtins.isFunction(f)) {
+                    throw new NixError(`error: 'functionArgs' requires a function, got ${builtins.typeOf(f)}`)
+                }
+                // If function has __functionArgs metadata (set during parsing/evaluation), return it
+                if (f.__functionArgs) {
+                    return f.__functionArgs
+                }
+                // Otherwise return empty set (no formal args or not tracked)
+                return {}
+            },
         
         // evaluation control
             "break": (value)=>value, // NOTE: we just ignore the debugging aspect
@@ -792,63 +803,160 @@ import { NixError, NotImplemented } from "./errors.js"
                 // list[0] == { path = "/Users/jeffhykin/.nix-defexpr/channels"; prefix = ""; }
         
         // nix-y derivation-y stuff
-            "nixPath": ()=>{/*FIXME*/},
-            "storeDir": ()=>{/*FIXME*/},
-            "storePath": ()=>{/*FIXME*/},
-            "derivation": ({name, system, builder, args, outputs, meta})=>{
+            "nixPath": ()=>{
+                // Returns NIX_PATH as a list of attrsets
+                const nixPath = Deno.env.get("NIX_PATH") || ""
+                if (!nixPath) return []
+
+                return nixPath.split(":").map(entry => {
+                    const [prefix, path] = entry.includes("=")
+                        ? entry.split("=", 2)
+                        : ["", entry]
+                    return { prefix, path }
+                })
+            },
+            "storeDir": ()=>"/nix/store",
+            "storePath": (path)=>{
+                const pathStr = requireString(path).toString()
+                const storeDir = "/nix/store"
+
+                // Check if path is in store
+                if (!pathStr.startsWith(storeDir + "/")) {
+                    throw new NixError(`error: path '${pathStr}' is not in the Nix store`)
+                }
+
+                // Validate store path format: /nix/store/<hash>-<name>
+                const storePath = pathStr.slice(storeDir.length + 1)
+                const parts = storePath.split("/")[0] // Get first component
+                if (!parts.match(/^[a-z0-9]{32}-.+$/)) {
+                    throw new NixError(`error: path '${pathStr}' is not a valid store path`)
+                }
+
+                return pathStr
+            },
+            "derivation": (attrs)=>{
                 // https://nix.dev/manual/nix/2.18/language/derivations.html
 
-                // name: must be a string
-                // builder: a derivation or local file path
-                // args: optional list of strings (command-line arguments for the builder)
-                // outputs: an optional list of strings, default ["out"]
-                    // each of these becomes an environment variable containing a temp path to a folder
-                
-                // let returnValue = {
-                //     all         
-                //     drvAttrs    
-                //     name        
-                //     outPath     
-                //     system
-                //     builder     
-                //     drvPath     
-                //     out         
-                //     outputName  
-                //     type
-                // }
-                
-                // Every attribute is passed as an environment variable to the builder.
-                    // Strings and numbers are just passed verbatim.
-                    // true becomes "1"
-                    // false and null become ""
-                    // A path (e.g., ../foo/sources.tar) causes the referenced file to be copied to the store; its location in the store is put in the environment variable. The idea is that all sources should reside in the Nix store, since all inputs to a derivation should reside in the Nix store.
-                    // A derivation, 1. gets built 2. its output path becomes the environment variable
-                    // lists are concatenated with spaces
-                // args: a list of strings
-                    // Each string is a command-line argument to the builder.
+                // Validate required attributes
+                if (!attrs.name) throw new NixError("derivation requires 'name' attribute")
+                if (!attrs.system) throw new NixError("derivation requires 'system' attribute")
+                if (!attrs.builder) throw new NixError("derivation requires 'builder' attribute")
 
-                // https://nixos.org/manual/nix/stable/language/derivations.html
-                // FIXME
-                // {
-                //     "/nix/store/z3hhlxbckx4g3n9sw91nnvlkjvyw754p-myname.drv": {
-                //         outputs: {
-                //             out: {
-                //                 path: "/nix/store/40s0qmrfb45vlh6610rk29ym318dswdr-myname",
-                //             },
-                //         },
-                //         inputSrcs: [],
-                //         inputDrvs: {},
-                //         platform: "mysystem",
-                //         builder: "mybuilder",
-                //         args: [],
-                //         env: {
-                //             builder: "mybuilder",
-                //             name: "myname",
-                //             out: "/nix/store/40s0qmrfb45vlh6610rk29ym318dswdr-myname",
-                //             system,
-                //         },
-                //     },
-                // }
+                const name = requireString(attrs.name).toString()
+                const system = requireString(attrs.system).toString()
+
+                // Builder can be a string or derivation
+                let builder
+                if (typeof attrs.builder === "string") {
+                    builder = attrs.builder
+                } else if (attrs.builder?.type === "derivation") {
+                    builder = attrs.builder.outPath
+                } else {
+                    builder = requireString(attrs.builder).toString()
+                }
+
+                // Args default to empty list
+                const builderArgs = attrs.args ? requireList(attrs.args).map(a => requireString(a).toString()) : []
+
+                // Outputs default to ["out"]
+                const outputNames = attrs.outputs ? requireList(attrs.outputs).map(o => requireString(o).toString()) : ["out"]
+
+                // Reserved attributes that don't become env vars
+                const reserved = new Set(["name", "system", "builder", "args", "outputs"])
+
+                // Build environment variables from all attributes
+                const env = {}
+                for (const [key, value] of Object.entries(attrs)) {
+                    if (reserved.has(key)) continue
+
+                    // Convert value to environment variable string
+                    if (value === null) {
+                        env[key] = ""
+                    } else if (value === true) {
+                        env[key] = "1"
+                    } else if (value === false) {
+                        env[key] = ""
+                    } else if (typeof value === "string") {
+                        env[key] = value
+                    } else if (typeof value === "number" || typeof value === "bigint") {
+                        env[key] = String(value)
+                    } else if (Array.isArray(value)) {
+                        env[key] = value.map(v => requireString(v).toString()).join(" ")
+                    } else if (value?.type === "derivation") {
+                        env[key] = value.outPath
+                    } else if (value?.constructor?.name === "Path") {
+                        // TODO: copy path to store
+                        env[key] = value.toString()
+                    } else {
+                        env[key] = requireString(value).toString()
+                    }
+                }
+
+                // Add required env vars
+                env.name = name
+                env.builder = builder
+                env.system = system
+
+                // Create derivation structure for serialization (phase 1: empty output paths)
+                const drvStructure = {
+                    outputs: outputNames.map(o => [o, "", "", ""]),
+                    inputDrvs: [],
+                    inputSrcs: [],
+                    system: system,
+                    builder: builder,
+                    args: builderArgs,
+                    env: { ...env }
+                }
+
+                // Serialize to compute paths (with empty output paths in env)
+                const drvSerializedForHash = serializeDerivation(drvStructure)
+                const storeDir = "/nix/store"
+
+                // Compute output paths based on the serialization
+                const outputPaths = {}
+                for (const outputName of outputNames) {
+                    const outputPath = computeOutputPath(drvSerializedForHash, outputName, name, storeDir)
+                    outputPaths[outputName] = outputPath
+                    env[outputName] = outputPath
+                }
+
+                // Update derivation structure with actual output paths for final .drv
+                drvStructure.outputs = outputNames.map(o => [o, outputPaths[o], "", ""])
+                drvStructure.env = env
+
+                // Now compute drvPath from the complete serialization
+                const drvSerializedFinal = serializeDerivation(drvStructure)
+                const drvPath = computeDrvPath(drvSerializedForHash, name, storeDir)
+
+                // Build the return value
+                const derivation = {
+                    type: "derivation",
+                    name: name,
+                    system: system,
+                    builder: builder,
+                    args: builderArgs,
+                    outputs: outputNames,
+                    outputName: outputNames[0], // default output
+                    drvPath: drvPath,
+                    outPath: outputPaths[outputNames[0]],
+                }
+
+                // Add each output as a property
+                for (const outputName of outputNames) {
+                    derivation[outputName] = outputPaths[outputName]
+                }
+
+                // 'all' attribute contains all outputs
+                derivation.all = outputNames.map(o => outputPaths[o])
+
+                // 'drvAttrs' contains the attributes that went into the derivation
+                derivation.drvAttrs = { ...attrs }
+
+                // Make derivation coerce to string (return outPath)
+                derivation.toString = () => derivation.outPath
+                derivation[Symbol.toPrimitive] = () => derivation.outPath
+
+                return derivation
             },
             "derivationStrict": ()=>{/*FIXME*/},
             "parseDrvName": (s)=>{
@@ -881,21 +989,99 @@ import { NixError, NotImplemented } from "./errors.js"
             },
             "getFlake": ()=>{/*FIXME*/},
             "parseFlakeRef": ()=>{/*FIXME*/},
-            "placeholder": ()=>{/*FIXME*/},
+            "placeholder": (outputName)=>{
+                const name = requireString(outputName).toString()
+                // Returns a placeholder string for use in derivation env vars
+                // The actual hash is computed during build
+                // Format: /1rz4g4znpzjwh1xymhjpm42vipw92pr73vdgl6xs1hycac8kf2n9
+                // For now, we generate a deterministic placeholder based on output name
+                const hash = sha256Hex(name).slice(0, 32)
+                return `/${hash}`
+            },
         
         // context (these are going to be a pain)
-            "addErrorContext": ()=>{/*FIXME*/},
-            "appendContext": ()=>{/*FIXME*/},
-            "getContext": ()=>{/*FIXME*/},
-            "hasContext": ()=>{/*FIXME*/},
-            "unsafeDiscardStringContext": ()=>{/*FIXME*/},
+            "addErrorContext": (context)=>(value)=>{
+                // In full Nix, this adds context to error messages
+                // For now, we just return the value (context is lost)
+                return value
+            },
+            "appendContext": (s)=>(context)=>{
+                requireString(s)
+                requireAttrSet(context)
+                // In full Nix, this attaches context metadata to strings
+                // For now, just return the string (contexts not tracked)
+                return s.toString()
+            },
+            "getContext": (s)=>{
+                requireString(s)
+                // In full Nix, returns an attrset describing the string's context
+                // For now, return empty set (no context tracking)
+                return {}
+            },
+            "hasContext": (s)=>{
+                requireString(s)
+                // In full Nix, returns true if string has context
+                // For now, always return false (no context tracking)
+                return false
+            },
+            "unsafeDiscardStringContext": (s)=>{
+                requireString(s)
+                // Remove context from string (for now, just return the string)
+                return s.toString()
+            },
         
         // complicated to explain functionality 
             "filterSource": ()=>{/*FIXME*/},
             "flakeRefToString": ()=>{/*FIXME*/},
-            "genericClosure": ()=>{/*FIXME*/},
-            "unsafeDiscardOutputDependency": ()=>{/*FIXME*/},
-            "unsafeGetAttrPos": ()=>{/*FIXME*/},
+            "genericClosure": (attrset)=>{
+                requireAttrSet(attrset)
+
+                const startSet = requireList(attrset.startSet)
+                const operatorFn = attrset.operator
+                if (!builtins.isFunction(operatorFn)) {
+                    throw new NixError(`error: 'operator' attribute must be a function`)
+                }
+
+                const result = []
+                const seen = new Map() // Track by key to avoid duplicates
+                const queue = [...startSet]
+
+                while (queue.length > 0) {
+                    const item = queue.shift()
+                    requireAttrSet(item)
+
+                    if (!item.hasOwnProperty('key')) {
+                        throw new NixError(`error: attribute 'key' required in genericClosure item`)
+                    }
+
+                    const key = builtins.toString(item.key)
+
+                    if (!seen.has(key)) {
+                        seen.set(key, true)
+                        result.push(item)
+
+                        const newItems = operatorFn(item)
+                        requireList(newItems)
+                        queue.push(...newItems)
+                    }
+                }
+
+                return result
+            },
+            "unsafeDiscardOutputDependency": (s)=>{
+                requireString(s)
+                // In full Nix, removes output dependency from string context
+                // For now, just return the string (no context tracking)
+                return s.toString()
+            },
+            "unsafeGetAttrPos": (attr)=>(attrset)=>{
+                requireString(attr)
+                requireAttrSet(attrset)
+                // In full Nix, returns source position of attribute
+                // Would require AST tracking during evaluation
+                // Return null (position unknown)
+                return null
+            },
     }
     builtins.builtins = builtins
     Object.freeze(builtins)
@@ -907,13 +1093,35 @@ import { NixError, NotImplemented } from "./errors.js"
             requireList(other)
             return value.concat(other)
         },
-        add: (value, other)=>{},                            // a + b
-            // number + number : Addition
-            // string + string : String concatenation
-            // path + path     : Path concatenation
-            // path + string   : Path and string concatenation
-            // string + path   : String and path concatenation
-        subtract: (value, other)=>{},                       // a - b
+        add: (value, other)=>{
+            const vType = builtins.typeOf(value)
+            const oType = builtins.typeOf(other)
+
+            if ((vType === "int" || vType === "float") && (oType === "int" || oType === "float")) {
+                if (typeof value == "bigint" && typeof other == "bigint") {
+                    return value + other
+                } else {
+                    return toFloat(value) + toFloat(other)
+                }
+            } else if (vType === "string" && oType === "string") {
+                return value.toString() + other.toString()
+            } else if (vType === "path" && oType === "path") {
+                return new Path([""], [()=>value.toString() + other.toString()])
+            } else if (vType === "path" && oType === "string") {
+                return new Path([""], [()=>value.toString() + other.toString()])
+            } else if (vType === "string" && oType === "path") {
+                return value.toString() + other.toString()
+            } else {
+                throw new NixError(`error: cannot add ${vType} to ${oType}`)
+            }
+        },
+        subtract: (value, other)=>{
+            if (typeof value == "bigint" && typeof other == "bigint") {
+                return value - other
+            } else {
+                return toFloat(value) - toFloat(other)
+            }
+        },
         divide: (value, other)=>{
             if (typeof value == "bigint" && typeof other == "bigint") {
                 return value/other
