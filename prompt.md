@@ -251,7 +251,24 @@ examples/
 
 ## 3. nixpkgs.lib Testing
 
-**Current**: 11/34 lib files tested (32%)
+**Current**: 15/34 lib files tested (44%)
+
+### Files Successfully Tested ✅
+- ascii-table.nix
+- strings.nix (with imports)
+- minfeatures.nix
+- source-types.nix
+- versions.nix
+- kernel.nix
+- flakes.nix
+- flake-version-info.nix
+- systems/flake-systems.nix
+- systems/supported.nix
+- fetchers.nix
+- systems/parse.nix (inferred from tests)
+- systems/inspect.nix (inferred from tests)
+- systems/default.nix (inferred from tests)
+- systems/doubles.nix (inferred from tests)
 
 ### Remaining Files to Test
 
@@ -261,36 +278,80 @@ examples/
 - [ ] derivations.nix - derivation helpers
 - [ ] licenses.nix - license data
 - [ ] cli.nix - CLI utilities
+- [ ] options.nix - option definitions
+- [ ] modules.nix - module system (complex, multi-week)
+- [ ] types.nix - type system (complex, multi-week)
 
-**Need lib context** (circular dependencies):
-- [ ] fixed-points.nix - lib.fix, lib.extends
-- [ ] trivial.nix - core utilities
-- [ ] lists.nix - list operations
-- [ ] attrsets.nix - attrset operations
-- [ ] asserts.nix - assertions
+**Need lib context** (circular dependencies with lib.trivial/lib.lists/etc):
+- [ ] fixed-points.nix - lib.fix, lib.extends (needs lib.trivial)
+- [ ] trivial.nix - core utilities (20 functions already tested standalone)
+- [ ] lists.nix - list operations (needs lib.trivial)
+- [ ] attrsets.nix - attrset operations (needs lib.trivial, lib.lists)
+- [ ] asserts.nix - assertions (needs lib.trivial)
+- [ ] strings.nix - already tested but depends on ascii-table
+- [ ] path/* - path manipulation utilities
 
-**Complex/deferred**:
-- modules.nix - module system (very complex)
-- types.nix - type system (very complex)
-- sources.nix - needs fetch* builtins
+**Blocked by infrastructure**:
+- [ ] sources.nix - needs fetch* builtins (fetchurl, fetchTarball)
+- [ ] customisation.nix - needs derivation system
+
+## 4. Performance & Optimization
+
+### Tasks Remaining
+
+- [ ] Profile translator performance on large files (e.g., full nixpkgs.lib/attrsets.nix)
+- [ ] Optimize recursive scope traversal (currently uses prototype chain lookup)
+- [ ] Cache parsed ASTs to avoid re-parsing imported files
+- [ ] Add lazy evaluation optimizations for large attribute sets
+- [ ] Benchmark against native Nix evaluation
+- [ ] Document performance characteristics and limitations
+
+## 5. Documentation
+
+### Tasks Remaining
+
+- [ ] Document all translator limitations (what Nix features aren't supported)
+- [ ] Create ARCHITECTURE.md explaining system design
+- [ ] Add inline comments for complex translation logic
+- [ ] Document scope management strategy (Object.create vs spread)
+- [ ] Create troubleshooting guide for common translation errors
+- [ ] Add performance tuning guide
 
 ## Summary of Immediate Tasks
 
-**Week 1-2**:
-1. Implement store path system (helpers/store.js)
-2. Implement fetchurl (helpers/fetch.js + runtime.js)
-3. Create examples directory with 5-10 examples
-4. Test fetchurl thoroughly
+**Priority 1 - Examples & Documentation** (1-2 days):
+1. Create examples/ directory structure
+2. Add 10-15 example pairs from existing tests
+3. Write examples/README.md explaining translation patterns
+4. Update main README.md with examples section
 
-**Week 3-4**:
-1. Find and integrate tar extraction library
-2. Implement fetchTarball (helpers/tarball.js + runtime.js)
-3. Add more examples (total 10-15)
-4. Test fetchTarball thoroughly
-5. Test 3-5 more nixpkgs.lib files
+**Priority 2 - More nixpkgs.lib Testing** (3-5 days):
+1. Test debug.nix (debugging utilities)
+2. Test generators.nix (JSON/YAML generation)
+3. Test licenses.nix (license data)
+4. Test options.nix (option definitions)
+5. Attempt trivial.nix (core utilities - may need lib context)
 
-**After that**:
-- Reassess what's needed in runtime.js
-- Consider fetchGit implementation
-- Continue nixpkgs.lib testing
-- Performance optimization
+**Priority 3 - Store Path System** (1-2 weeks):
+1. Research Nix store path computation algorithm
+2. Implement helpers/store.js with path computation
+3. Add file integrity verification
+4. Create test suite for store operations
+5. Document store path implementation
+
+**Priority 4 - Network Fetchers** (2-4 weeks):
+1. Implement fetchurl (helpers/fetch.js)
+   - HTTP download with retry logic
+   - Hash verification
+   - Store integration
+2. Implement fetchTarball (helpers/tarball.js)
+   - Find tar extraction library (esm.sh)
+   - Directory hash computation (NAR-compatible)
+   - Extract and verify
+3. Test with sources.nix from nixpkgs.lib
+
+**Deferred - Advanced Features**:
+- fetchGit implementation (needs git CLI integration)
+- fetchClosure (binary cache, very complex)
+- Module system testing (modules.nix, types.nix)
+- Performance profiling and optimization
