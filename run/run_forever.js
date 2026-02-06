@@ -26,7 +26,7 @@ while (true) {
                 - Do not work on the translator until the runtime is fully implemented.
                 - (in other words finish the network fetchers and store functions in runtime.js before doing ANYTHING ELSE)
     
-            - Evaluate if those rules are being followed. If not, edit the prompt.md file to encourage the bot to follow the rules.
+            - Evaluate if those rules are being followed. If not, enforce them yourself and edit the prompt.md file to encourage the bot to follow the rules.
         `} &> .claude/${increment++}.log`
     await $`git add -A`
     await $`git commit -m ${`CLAUDE: change ${increment}`}`
