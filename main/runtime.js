@@ -13,7 +13,8 @@ import { toFloat } from "../tools/generic.js"
 import { sha256Hex, md5Hex, sha1Hex, sha512Hex } from "../tools/hashing.js"
 import { jsonParseWithBigInt } from "../tools/json_parse.js"
 import { lazyMap } from "../tools/lazy_array.js"
-import { prexRawMatch } from "https://deno.land/x/prex@0.0.0.1/main.js"
+// Removed prex dependency due to WASM initialization issues
+// Replaced with custom POSIX regex converter below
 import { parse as tomlParse } from "https://deno.land/std@0.224.0/toml/mod.ts"
 import { serializeDerivation, computeDrvPath, computeOutputPath } from "../tools/store_path.js"
 
@@ -107,6 +108,34 @@ import { NixError, NotImplemented } from "./errors.js"
             return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\t/g, '\\t')}"`
         }
         return JSON.stringify(value)
+    }
+
+    // Convert POSIX regex patterns to JavaScript-compatible regex
+    // Nix uses POSIX extended regex which includes character classes like [[:space:]], [[:upper:]], etc.
+    const posixToJsRegex = (posixPattern) => {
+        // Map POSIX character classes to JavaScript equivalents
+        const posixClasses = {
+            'alnum': 'a-zA-Z0-9',
+            'alpha': 'a-zA-Z',
+            'blank': ' \\t',
+            'cntrl': '\\x00-\\x1F\\x7F',
+            'digit': '0-9',
+            'graph': '\\x21-\\x7E',
+            'lower': 'a-z',
+            'print': '\\x20-\\x7E',
+            'punct': '\\x21-\\x2F\\x3A-\\x40\\x5B-\\x60\\x7B-\\x7E',
+            'space': ' \\t\\r\\n\\v\\f',
+            'upper': 'A-Z',
+            'xdigit': '0-9A-Fa-f',
+        }
+
+        let jsPattern = posixPattern
+        for (const [className, jsClass] of Object.entries(posixClasses)) {
+            // Replace [[:xxx:]] with the JavaScript equivalent
+            jsPattern = jsPattern.replace(new RegExp(`\\[\\[:${className}:\\]\\]`, 'g'), `[${jsClass}]`)
+        }
+
+        return jsPattern
     }
 
 // 
@@ -418,12 +447,26 @@ import { NixError, NotImplemented } from "./errors.js"
                 // builtins.match "ab" "abc" => null.
                 // builtins.match "abc" "abc" => [ ].
                 // builtins.match "a(b)(c)" "abc" => [ "b" "c" ].
-                // builtins.match "[[:space:]]+([[:upper:]]+)[[:space:]]+" "  FOO   " => [ "FOO" ]. 
-                const output = prexRawMatch(regex.toString(), str.toString())
-                if (output.length==0){
-                    return null
-                } else {
-                    return output.slice(1,)
+                // builtins.match "[[:space:]]+([[:upper:]]+)[[:space:]]+" "  FOO   " => [ "FOO" ].
+                const regexStr = requireString(regex).toString()
+                const stringStr = requireString(str).toString()
+
+                // Convert POSIX regex to JavaScript regex
+                const jsRegexStr = posixToJsRegex(regexStr)
+
+                try {
+                    const re = new RegExp(`^(?:${jsRegexStr})$`)
+                    const match = stringStr.match(re)
+
+                    if (!match) {
+                        return null
+                    }
+
+                    // Return capture groups (exclude full match at index 0)
+                    const captureGroups = match.slice(1)
+                    return captureGroups
+                } catch (error) {
+                    throw new NixError(`error: invalid regular expression '${regexStr}'`)
                 }
             },
             "split": (regex)=>(str)=>{

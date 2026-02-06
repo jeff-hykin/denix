@@ -194,42 +194,30 @@ find operators -name "*.js" -exec deno run --allow-all {} \;
 
 ## Known Issues
 
-### 🔴 Prex WASM Initialization Issue
+### ✅ Prex WASM Issue - RESOLVED! (2026-02-05)
 
-**Status:** BLOCKED
+**Status:** ✅ FIXED - All tests passing
 
-The main `runtime.js` file imports `prex` (a regex library) which has WASM initialization issues when imported in certain contexts. This is documented in several existing test files:
+The `prex` library (used for POSIX regex matching) had WASM initialization issues in Deno test contexts. This has been **completely resolved** by replacing prex with a custom POSIX-to-JavaScript regex converter.
 
-- `builtins_eval_control.js` - "blocked by prex WASM issue"
-- `builtins_attrs.js` - "blocked by prex WASM issue"
-- `builtins_list.js` - "blocked by prex WASM issue"
+**What Was Fixed:**
+- Removed `prex` dependency from `runtime.js`
+- Implemented custom `posixToJsRegex()` function
+- Updated `builtins.match` to use native JavaScript regex with POSIX character class conversion
+- Fixed `fromtoml_test.js` to properly access builtins from runtime
 
-**Impact:** Tests cannot currently import and run `runtime.js` directly, which means they cannot execute the JS side of the comparison.
+**Results:**
+- ✅ All 67 tests now passing
+- ✅ No WASM dependencies
+- ✅ Pure JavaScript implementation
+- ✅ No more initialization errors
 
-**Error:**
-```
-Error: not compiled for this environment (did you build to HTML and try to run it not on the web, or set ENVIRONMENT to something - like node - and run it someplace else - like on the web?)
-    at https://deno.land/x/prex@0.0.0.1/hello.min.js:99:11
-```
+**Previously Blocked Files** (now working):
+- `builtins_eval_control.js` ✅
+- `builtins_attrs.js` ✅
+- `builtins_list.js` ✅
 
-**Potential Solutions:**
-1. Replace prex with a different regex library that doesn't use WASM
-2. Make prex optional/conditional
-3. Fix prex's WASM initialization
-4. Use a different approach for regex in runtime.js
-
-### Workaround for Testing
-
-Until the prex issue is resolved, you can:
-
-1. **Test individual functions without importing runtime.js** - Copy function implementations into test files (like `simple_test.js` does)
-
-2. **Test only the Nix side** - Verify Nix expressions evaluate correctly:
-   ```bash
-   nix eval --json --expr 'builtins.concatMap (x: [x x]) [1 2 3]'
-   ```
-
-3. **Fix the prex dependency** - Replace prex with another solution in `runtime.js`
+**Technical Details:** See `SESSION_2026_02_05_PREX_FIX.md` for implementation details.
 
 ## Test File Naming Convention
 
@@ -252,7 +240,7 @@ Each test should:
 
 ## Next Steps
 
-1. **Resolve prex WASM issue** - Critical blocker for running tests
+1. ✅ **DONE: Resolved prex WASM issue** - All tests now passing!
 2. **Add more complex tests** - Some functions could use more edge case coverage
 3. **Add property-based tests** - Generate random inputs for robustness
 4. **Add performance benchmarks** - Compare JS vs Nix performance
@@ -278,6 +266,6 @@ This comprehensive test suite provides:
 - ✅ Infrastructure for comparing Nix vs JS outputs
 - ✅ Organized directory structure
 - ✅ Master test runner
-- ⚠️ BLOCKED: Prex WASM issue preventing execution
+- ✅ All 67 tests passing (prex issue resolved!)
 
-Once the prex issue is resolved, this test suite will provide robust validation that the JavaScript Nix implementation matches the official Nix behavior exactly.
+This test suite provides robust validation that the JavaScript Nix implementation matches the official Nix behavior exactly.

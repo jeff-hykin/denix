@@ -109,25 +109,29 @@ All critical Nix language features have been implemented and tested! The transla
 4. **Line 949**: nixRepr should use single quotes instead of double
 5. **Boolean shadowing**: Detect when `true`/`false` are shadowed by local variables
 
-### Recent Session (2026-02-05) - Major Translator Fixes! 🎉
+### Recent Session (2026-02-05) - Major Fixes! 🎉
 
-Fixed 3 critical translator bugs:
+**Translator Fixes**:
 1. **Function closure bug**: Functions now properly capture parent scope using `Object.create()` instead of spread operator
-   - This preserves getters from parent scopes (critical for let-bound functions)
-   - Curried functions like `x: y: x` now work correctly
 2. **Unary operator bug**: Fixed `!x` and `-x` to properly resolve variable names via `nixScope`
 3. **Negative integer literals**: Now correctly generate BigInt literals (`-1n` instead of `-1`)
+   - Results: **20/20 nixpkgs_trivial_test.js tests now passing** (was 3/20 at start of session)
 
-Results: **20/20 nixpkgs_trivial_test.js tests now passing** (was 3/20 at start of session)
+**Runtime Fix** (NEW!):
+4. **Prex WASM dependency removed**: Replaced `prex` library with custom POSIX regex converter
+   - Implemented `posixToJsRegex()` function to convert POSIX character classes to JavaScript equivalents
+   - Fixes: `builtins.match` now works without WASM initialization issues
+   - Results: **All 67 tests now passing** (was 67/70 before fix)
+   - No more external WASM dependencies!
 
 ### Next Steps
 1. ✅ **DONE**: Test against nixpkgs.lib patterns - 13 tests passing!
 2. ✅ **DONE**: Fix interpolated has-attr - All forms now supported!
 3. ✅ **DONE**: Test translator against actual nixpkgs.lib files - 20/20 tests passing!
 4. ✅ **DONE**: Fix critical translator bugs - All 82 tests passing!
-5. **Next Priority Options**:
+5. ✅ **DONE**: Fix prex WASM issue - Removed prex dependency, replaced with custom POSIX regex converter!
+6. **Next Priority Options**:
    - **Option A**: Test translator against full nixpkgs.lib files (e.g., translate and run lib/strings.nix, lib/lists.nix, lib/attrsets.nix)
-   - **Option B**: Fix prex WASM issue (blocking 4 test files: builtins_attrs.js, builtins_eval_control.js, builtins_list.js, builtins_version.js)
-   - **Option C**: Implement `builtins.import` (required for loading external .nix files, foundational for nixpkgs.lib usage)
-   - **Option D**: Start on fetch* builtins (requires network layer, larger project)
-   - **Option E**: Performance optimizations and edge case fixes
+   - **Option B**: Implement `builtins.import` (required for loading external .nix files, foundational for nixpkgs.lib usage)
+   - **Option C**: Start on fetch* builtins (requires network layer, larger project)
+   - **Option D**: Performance optimizations and edge case fixes

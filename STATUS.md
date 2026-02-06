@@ -114,11 +114,11 @@ Correctly implements:
 - Output method for derivation outputs
 
 ### Dependencies
-Pure Deno with URL imports:
+Pure Deno with URL imports (no WASM dependencies):
 - `deno.land/x/quickr@0.6.51` - File system and utilities
 - `deno.land/x/good@1.5.1.0` - Value manipulation
-- `deno.land/x/prex@0.0.0.1` - Regex matching
 - `deno.land/std@0.224.0/toml` - TOML parsing
+- Custom POSIX regex converter (replaced prex to eliminate WASM issues)
 
 ---
 

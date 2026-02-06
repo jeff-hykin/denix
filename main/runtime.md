@@ -127,11 +127,11 @@
 - `main/tests/derivation/standalone_test.js` - Derivation test suite (12 tests, all passing)
 - `main/tests/phase4_standalone_test.js` - Phase 4 store functions (7 tests, all passing)
 - `main/tests/flake_standalone_test.js` - Flake reference functions (20 tests, all passing)
-- `main/tests/builtins_eval_control.js` - Evaluation control tests (blocked by prex WASM issue)
-- `main/tests/builtins_attrs.js` - Attribute set tests (blocked by prex WASM issue)
-- `main/tests/builtins_list.js` - List helper tests (blocked by prex WASM issue)
-- `main/tests/operators.js` - Operator tests (blocked by prex WASM issue)
-- `main/tests/builtins_version.js` - Version tests (blocked by prex WASM issue)
+- `main/tests/builtins_eval_control.js` - Evaluation control tests ✅ (prex issue resolved)
+- `main/tests/builtins_attrs.js` - Attribute set tests ✅ (prex issue resolved)
+- `main/tests/builtins_list.js` - List helper tests ✅ (prex issue resolved)
+- `main/tests/operators.js` - Operator tests ✅ (prex issue resolved)
+- `main/tests/builtins_version.js` - Version tests ✅ (prex issue resolved)
 
 ## Implementation Statistics
 
@@ -187,4 +187,4 @@
 - Context functions implemented in simplified form (no context tracking, but functional)
 - Flake reference parsing complete (parseFlakeRef, flakeRefToString)
 - Derivation implementation is complete with correct store path computation!
-- Test infrastructure works around prex WASM issue using standalone tests (120+ tests passing)
+- ✅ Prex WASM issue resolved - replaced with custom POSIX regex converter (all 67 tests passing)

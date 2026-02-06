@@ -1,7 +1,7 @@
 import { createRuntime } from "../runtime.js"
 
 const runtime = createRuntime()
-const { builtins } = runtime
+const { builtins } = runtime.rootScope
 
 // Test helper
 function test(name, fn) {
