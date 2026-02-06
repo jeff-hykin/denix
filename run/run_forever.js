@@ -34,5 +34,5 @@ while (true) {
             - Remind the agent they are allowed to use npm modules but only if they are done through https://esm.sh/NPM_MODULE_NAME (which doesn't always work)
         `} &> .claude/${increment++}.log`
     await $`git add -A`
-    await $`git commit -m ${`CLAUDE: change ${increment}`}`
+    await $`git commit -m ${`CLAUDE: change ${increment} - manager`}`
 }
