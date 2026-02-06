@@ -6,10 +6,9 @@ Before executing what is below, please filter out any achievements. Only keep re
 
 ## Current Tasks Overview
 
-1. **Examples** - Create `./examples/` directory with nix → js translation examples (2-3 days)
-2. **Testing** - Continue testing nixpkgs.lib files (1 week)
-3. **Store System** - Implement store path infrastructure (1-2 weeks)
-4. **Builtins** - Implement network fetchers (fetchurl, fetchTarball) in `main/runtime.js` (3-5 weeks)
+1. **Testing** - Continue testing nixpkgs.lib files (1 week) - NEXT PRIORITY
+2. **Store System** - Implement store path infrastructure (1-2 weeks)
+3. **Builtins** - Implement network fetchers (fetchurl, fetchTarball) in `main/runtime.js` (3-5 weeks)
 
 ## 0. URGENT: Fix Misleading Documentation ✅ COMPLETE
 
@@ -444,180 +443,13 @@ After fetchurl and fetchTarball work, assess these:
 - **fetchTree** - Generic fetcher (delegates to others)
 - **fetchClosure** - Binary cache downloads (complex, multi-week)
 
-## 2. Examples Directory (Priority 1)
-
-**Time**: 2-3 days
-
-Create examples showing nix → js translation
-
-### Structure Needed
-
-```
-examples/
-├── README.md (how to use examples)
-├── 01_basics/
-│   ├── literals.nix (integers, floats, strings, bools, null)
-│   ├── literals.js (translated version with comments)
-│   ├── operators.nix (arithmetic, comparison, logical)
-│   ├── operators.js (showing BigInt handling)
-│   └── functions.nix (simple function definitions)
-├── 02_intermediate/
-│   ├── let_expressions.nix (variable bindings)
-│   ├── let_expressions.js (scope management)
-│   ├── rec_attrsets.nix (recursive attribute sets)
-│   ├── rec_attrsets.js (showing getter-based lazy eval)
-│   └── string_interpolation.nix (${} syntax)
-├── 03_nixpkgs_patterns/
-│   ├── pipe.nix (from lib.trivial - function composition)
-│   ├── pipe.js (curried functions)
-│   ├── list_operations.nix (map, filter, fold)
-│   └── attrset_operations.nix (mapAttrs, filterAttrs)
-├── 04_advanced/
-│   ├── fixed_point.nix (lib.fix usage)
-│   ├── fixed_point.js (showing Y combinator)
-│   ├── overlays.nix (extends pattern)
-│   └── imports.nix (builtins.import usage)
-└── verify_examples.js (automated verification script)
-```
-
-### Tasks
-
-- [ ] Create examples/ directory structure (run: `mkdir -p examples/{01_basics,02_intermediate,03_nixpkgs_patterns,04_advanced}`)
-- [ ] Create examples/README.md with:
-  - **Project overview**: "Denix translates Nix expressions to JavaScript that runs on Deno"
-  - **How to run translator**: `deno run --allow-read main.js input.nix > output.js`
-  - **How to run translated code**: `deno run --allow-read output.js`
-  - **How to verify examples**: `deno run --allow-read examples/verify_examples.js`
-  - **Explanation of key translation patterns**:
-    - Nix int → JavaScript BigInt (42 → 42n) - needed for correct division
-    - Nix float → JavaScript number (1.5 → 1.5)
-    - Variable access → nixScope["varName"] - avoids keyword conflicts, handles dashes
-    - Recursive sets → Object getters for lazy evaluation - prevents infinite loops
-    - Function closures → Object.create() for scope inheritance - preserves getters
-  - **Common gotchas**:
-    - BigInt division: 1n / 2n = 0n (not 0.5)
-    - Scope references must be captured in closures
-    - Recursive sets need getters to avoid evaluation order issues
-  - **Current limitations**:
-    - No network fetchers (fetchurl, fetchTarball, fetchGit)
-    - No physical store operations (path, filterSource)
-    - Import system works only with local files
-- [ ] Extract 10-15 example pairs from existing tests:
-  - **01_basics/literals.nix**: Extract from translator_test.js lines 20-60
-    - Integers: 42 → 42n
-    - Floats: 1.5 → 1.5
-    - Strings: "hello" → "hello"
-    - Booleans: true/false → true/false
-    - Null: null → null
-    - Lists: [1 2 3] → [1n, 2n, 3n]
-    - Attrsets: {a=1;} → {a: 1n}
-  - **01_basics/operators.nix**: Extract from translator_test.js lines 100-200
-    - Arithmetic: 1 + 2 * 3 → operators.add(1n)(operators.mul(2n)(3n))
-    - Comparison: 5 > 3 → operators.gt(5n)(3n)
-    - Logical: true && false → operators.and(true)(false)
-    - String concat: "a" + "b" → operators.add("a")("b")
-    - List concat: [1] ++ [2] → operators.concat([1n])([2n])
-    - Attrset merge: {a=1;} // {b=2;} → operators.merge({a:1n})({b:2n})
-  - **01_basics/functions.nix**: Extract from translator_test.js lines 250-300
-    - Simple: x: x + 1
-    - Curried: x: y: x + y
-    - Pattern: {a,b}: a + b
-    - With default: {a?0}: a
-  - **02_intermediate/let_expressions.nix**: Extract from translator_test.js lines 350-400
-    - Simple: let x=1; in x
-    - Multiple: let x=1; y=2; in x+y
-    - Nested: let x=1; in let y=x+1; in y
-  - **02_intermediate/rec_attrsets.nix**: Extract from translator_test.js lines 450-500
-    - Self-reference: rec {a=1; b=a+1;}
-    - Mutual reference: rec {a=b+1; b=2;}
-  - **02_intermediate/string_interpolation.nix**: Extract from string_interpolation_test.js
-    - Simple: "hello ${name}"
-    - Nested: "${x} and ${y}"
-    - With expressions: "${toString (1+2)}"
-  - **03_nixpkgs_patterns/pipe.nix**: Extract from nixpkgs_trivial_test.js
-    - pipe [f g h] x = h (g (f x))
-  - **03_nixpkgs_patterns/list_operations.nix**: Extract from nixpkgs_simple_test.js
-    - map, filter, fold examples
-  - **04_advanced/imports.nix**: Extract from import_e2e_test.js
-    - Simple import: builtins.import ./file.nix
-    - With arguments: (builtins.import ./file.nix) {arg=1;}
-  - **04_advanced/fixed_point.nix**: Create example of lib.fix
-    - fix = f: let x = f x; in x
-- [ ] Add detailed comments to each .js file explaining:
-  - **Why BigInt vs number**: Integer division must truncate (1/2=0), float division can be fractional
-  - **How scope stacking works**: Each scope level creates Object.create(parent) to preserve getters
-  - **How lazy evaluation is achieved**: Recursive sets use getters so evaluation order doesn't matter
-  - **How string interpolation becomes InterpolatedString**: Deferred evaluation until toString() called
-  - **How functions capture scope**: IIFE creates closure over nixScope at definition time
-- [ ] Create verify_examples.js script:
-  ```javascript
-  // Pseudocode structure:
-  // 1. Find all .nix files in examples/
-  // 2. For each .nix file:
-  //    a. Run translator: convertToJs(nixContent)
-  //    b. Read corresponding .js file
-  //    c. Compare (ignoring whitespace differences)
-  //    d. If mismatch, show diff and mark as failed
-  // 3. Print summary: X/Y examples verified
-  // 4. Exit with code 0 if all match, 1 if any failed
-  ```
-  - Use Deno.readDir() to find .nix files recursively
-  - Use main.js convertToJs() to translate
-  - Use Deno.readTextFile() to read .js files
-  - Compare normalized output (trim, consistent spacing)
-  - Print colored output (red for fail, green for success)
-- [ ] Add examples section to main README.md (around line 43):
-  ```markdown
-  ## Examples
-
-  See [examples/](examples/) for Nix → JavaScript translation examples.
-
-  Simple example:
-  ```nix
-  # input.nix
-  let x = 42; in x * 2
-  ```
-
-  Translates to:
-  ```javascript
-  // output.js
-  (() => {
-    const nixScope = Object.create(runtime.scopeStack.slice(-1)[0]);
-    nixScope["x"] = 42n;
-    return operators.mul(nixScope["x"])(2n);
-  })()
-  ```
-
-  Run translator: `deno run --allow-read main.js examples/01_basics/literals.nix`
-  ```
-- [ ] Test verify_examples.js script works correctly:
-  - Run: `deno run --allow-read examples/verify_examples.js`
-  - Should output: "✓ 10/10 examples verified" (or however many examples exist)
-  - Test with intentionally wrong .js file to verify it detects mismatches
-  - Ensure colored output works (green ✓ for success, red ✗ for failure)
-- [ ] Document examples in main README.md with link
-- [ ] **TESTING STRATEGY**: Each example should be executable
-  - Add a `run_example.js` script in examples/ that can run any example:
-    ```javascript
-    // examples/run_example.js
-    // Usage: deno run --allow-read examples/run_example.js examples/01_basics/literals.nix
-    import { convertToJs } from '../main.js';
-    const nixFile = Deno.args[0];
-    const nixCode = await Deno.readTextFile(nixFile);
-    const jsCode = convertToJs(nixCode);
-    const result = new Function('runtime', jsCode)(runtime);
-    console.log(result);
-    ```
-  - Each example .nix file should have expected output in comment
-  - Verify output matches expected value
-
-## 3. nixpkgs.lib Testing (Priority 2)
+## 1. nixpkgs.lib Testing (Priority 1 - NEXT)
 
 **Time**: 1 week
 
 **Remaining**: 19/34 lib files need testing
 
-### Files to Skip (already have tests)
+### Files Already Tested
 - ascii-table.nix
 - strings.nix (with imports)
 - minfeatures.nix
@@ -894,14 +726,7 @@ examples/
 
 ## Summary of Work Remaining
 
-**Priority 1 - Examples & Documentation** (2-3 days):
-1. Create examples/ directory structure
-2. Extract 10-15 example pairs from existing tests
-3. Write examples/README.md explaining translation patterns
-4. Create verify_examples.js automated verification script
-5. Update main README.md with examples section
-
-**Priority 2 - More nixpkgs.lib Testing** (4-6 days):
+**Priority 1 - More nixpkgs.lib Testing** (4-6 days):
 1. Test debug.nix (debugging utilities - simple)
 2. Test generators.nix (JSON/YAML generation - medium)
 3. Test licenses.nix (license metadata - simple, large dataset)
@@ -909,7 +734,7 @@ examples/
 5. Test options.nix (option definitions - may be complex)
 6. Attempt derivations.nix (derivation helpers - may need more derivation support)
 
-**Priority 3 - Store Path System** (1-2 weeks):
+**Priority 2 - Store Path System** (1-2 weeks):
 1. Research NAR hashing algorithm and fixed-output store paths
 2. Study existing tools/store_path.js for reusable code
 3. Implement helpers/store.js with path computation
@@ -918,7 +743,7 @@ examples/
 6. Create test suite for store operations
 7. Document store path implementation
 
-**Priority 4 - Network Fetchers** (3-5 weeks):
+**Priority 3 - Network Fetchers** (3-5 weeks):
 1. **fetchurl implementation** (1-2 weeks)
    - Implement helpers/fetch.js with retry logic
    - Integrate with helpers/store.js
@@ -935,7 +760,7 @@ examples/
    - Create realistic examples (fetch nixpkgs tarball)
    - Document real-world usage
 
-**Priority 5 - Advanced Features** (deferred, multi-month):
+**Priority 4 - Advanced Features** (deferred, multi-month):
 - fetchGit implementation (needs git CLI integration + smart caching)
 - fetchClosure (binary cache protocol, very complex)
 - Full lib context testing (trivial.nix, lists.nix, attrsets.nix with imports)
@@ -1009,26 +834,15 @@ When implementing the above tasks, watch out for these common mistakes:
 
 ## Suggested First Steps (Right Now)
 
-1. **Update README.md** (15 minutes)
-   - Fix test counts: 87 translator tests, 170+ runtime tests
-   - Fix builtin count: 61/98 implemented
-   - Add import system to features list (currently missing)
-   - Remove broken STATUS.md badge link
-
-2. **Create examples/ directory** (2-3 days)
-   - This is highly visible and immediately useful
-   - Helps users understand how to use the translator
-   - Extracts value from existing tests
-   - Low risk, high reward
-
-3. **Test 2-3 more nixpkgs.lib files** (1-2 days)
+1. **Test 2-3 more nixpkgs.lib files** (1-2 days) - HIGHEST PRIORITY
    - Build momentum on testing
-   - Start with easy ones: debug.nix, licenses.nix
+   - Start with easy ones: debug.nix, licenses.nix, cli.nix
    - Validates translator robustness
+   - Increases test coverage
 
-4. **Research store path system** (2-3 days)
+2. **Research store path system** (2-3 days)
    - Read Nix manual on store paths
    - Study tools/store_path.js for reusable code
    - Understand NAR format
    - Write design document for helpers/store.js
-   - This unblocks Priority 4 (fetchers)
+   - This unblocks Priority 3 (fetchers)

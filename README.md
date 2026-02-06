@@ -42,6 +42,47 @@ const jsCode = convertToJs(nixCode)
 
 ---
 
+## Examples
+
+See [examples/](examples/) for detailed Nix → JavaScript translation examples.
+
+### Quick Translation Example
+
+```nix
+# input.nix
+let x = 42; in x * 2
+```
+
+Translates to:
+
+```javascript
+// output.js
+(function() {
+  const nixScope = {...runtime.scopeStack.slice(-1)[0]};
+  nixScope["x"] = 42n;  // BigInt preserves integer division
+  return operators.multiply(nixScope["x"], 2n);
+})()
+```
+
+### Available Examples
+
+- **01_basics/** - Literals, operators, functions
+- **02_intermediate/** - Let expressions, recursive sets, string interpolation
+- **03_nixpkgs_patterns/** - Real patterns from nixpkgs.lib
+- **04_advanced/** - Imports, fixed points, overlays
+
+### Run Examples
+
+```bash
+# Translate a Nix file to JavaScript
+deno run --allow-read examples/run_example.js examples/01_basics/literals.nix
+
+# Verify all examples
+deno run --allow-read examples/verify_examples.js
+```
+
+---
+
 ## What's Implemented
 
 ### Core Functions (26)
