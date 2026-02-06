@@ -758,6 +758,167 @@ Deno.test("nixpkgs.lib file loading", async (t) => {
         console.log("✅ flake-version-info.nix loaded successfully (lib overlay)")
     })
 
+    await t.step("load systems/flake-systems.nix (simple list of platforms)", () => {
+        // flake-systems.nix is a minimal file that just returns a list of supported platforms
+        const filePath = join(nixpkgsLibPath, "systems/flake-systems.nix")
+        const nixCode = Deno.readTextFileSync(filePath)
+
+        // Translate to JS
+        let jsCode = convertToJs(nixCode, { relativePath: filePath })
+
+        // Create runtime
+        const runtime = createRuntime()
+
+        // Remove import statements
+        if (jsCode.includes('import { createRuntime }')) {
+            jsCode = jsCode.replace(/import \{ createRuntime \}.*\n/, '')
+            jsCode = jsCode.replace(/const runtime = createRuntime\(\)\n/, '')
+        }
+
+        // Remove multi-line comments
+        jsCode = jsCode.replace(/\/\*\*[\s\S]*?\*\//g, '')
+        jsCode = jsCode.trim()
+
+        // Create evaluation scope
+        const nixScope = {
+            builtins: runtime.runtime.builtins,
+            ...runtime.runtime.builtins
+        }
+
+        // Evaluate
+        const evalFunc = new Function(
+            'runtime',
+            'operators',
+            'builtins',
+            'nixScope',
+            'InterpolatedString',
+            'Path',
+            `return (${jsCode})`
+        )
+
+        const moduleFactory = evalFunc(
+            { scopeStack: [nixScope] },
+            runtime.runtime.operators,
+            runtime.runtime.builtins,
+            nixScope,
+            runtime.runtime.InterpolatedString,
+            runtime.runtime.Path
+        )
+
+        // Call with empty args (takes { })
+        const systems = moduleFactory({})
+
+        // Verify it's a list
+        assertExists(systems)
+        assertEquals(Array.isArray(systems), true, "flake-systems.nix should return a list")
+
+        // Check some known platforms
+        assertEquals(systems.includes("x86_64-linux"), true, "Should include x86_64-linux")
+        assertEquals(systems.includes("aarch64-linux"), true, "Should include aarch64-linux")
+        assertEquals(systems.includes("x86_64-darwin"), true, "Should include x86_64-darwin")
+        assertEquals(systems.includes("aarch64-darwin"), true, "Should include aarch64-darwin")
+
+        // Verify all are strings
+        for (const sys of systems) {
+            assertEquals(typeof sys, "string", `Platform ${sys} should be a string`)
+        }
+
+        // Should have 8-10 systems (based on the file content)
+        assertEquals(systems.length >= 7, true, `Expected at least 7 platforms, got ${systems.length}`)
+
+        console.log(`✅ flake-systems.nix loaded successfully (${systems.length} platforms)`)
+    })
+
+    // Note: licenses.nix skipped - it uses complex function patterns with @attrs syntax
+    // combined with optionalAttrs that requires more sophisticated pattern matching support
+
+    await t.step("load systems/supported.nix (rec attrset with platform tiers)", () => {
+        // supported.nix is a rec attrset that organizes platforms by tier
+        const filePath = join(nixpkgsLibPath, "systems/supported.nix")
+        const nixCode = Deno.readTextFileSync(filePath)
+
+        // Translate to JS
+        let jsCode = convertToJs(nixCode, { relativePath: filePath })
+
+        // Create runtime
+        const runtime = createRuntime()
+
+        // Remove import statements
+        if (jsCode.includes('import { createRuntime }')) {
+            jsCode = jsCode.replace(/import \{ createRuntime \}.*\n/, '')
+            jsCode = jsCode.replace(/const runtime = createRuntime\(\)\n/, '')
+        }
+
+        // Remove multi-line comments
+        jsCode = jsCode.replace(/\/\*\*[\s\S]*?\*\//g, '')
+        jsCode = jsCode.trim()
+
+        // Create evaluation scope
+        const nixScope = {
+            builtins: runtime.runtime.builtins,
+            ...runtime.runtime.builtins
+        }
+
+        // Evaluate
+        const evalFunc = new Function(
+            'runtime',
+            'operators',
+            'builtins',
+            'nixScope',
+            'InterpolatedString',
+            'Path',
+            `return (${jsCode})`
+        )
+
+        const moduleFactory = evalFunc(
+            { scopeStack: [nixScope] },
+            runtime.runtime.operators,
+            runtime.runtime.builtins,
+            nixScope,
+            runtime.runtime.InterpolatedString,
+            runtime.runtime.Path
+        )
+
+        // Call with { lib } argument
+        const supported = moduleFactory({ lib: {} })
+
+        // Verify structure
+        assertExists(supported)
+        assertEquals(typeof supported, "object")
+
+        // Check tier1
+        assertExists(supported.tier1, "Should have tier1")
+        assertEquals(Array.isArray(supported.tier1), true, "tier1 should be a list")
+        assertEquals(supported.tier1.includes("x86_64-linux"), true, "tier1 should include x86_64-linux")
+
+        // Check tier2
+        assertExists(supported.tier2, "Should have tier2")
+        assertEquals(Array.isArray(supported.tier2), true, "tier2 should be a list")
+        assertEquals(supported.tier2.includes("aarch64-linux"), true, "tier2 should include aarch64-linux")
+        assertEquals(supported.tier2.includes("x86_64-darwin"), true, "tier2 should include x86_64-darwin")
+
+        // Check tier3
+        assertExists(supported.tier3, "Should have tier3")
+        assertEquals(Array.isArray(supported.tier3), true, "tier3 should be a list")
+        assertEquals(supported.tier3.includes("armv6l-linux"), true, "tier3 should include armv6l-linux")
+
+        // Check hydra (computed from tier1 ++ tier2 ++ tier3 ++ ["aarch64-darwin"])
+        assertExists(supported.hydra, "Should have hydra")
+        assertEquals(Array.isArray(supported.hydra), true, "hydra should be a list")
+
+        // Verify hydra contains elements from all tiers
+        assertEquals(supported.hydra.includes("x86_64-linux"), true, "hydra should include tier1 platforms")
+        assertEquals(supported.hydra.includes("aarch64-linux"), true, "hydra should include tier2 platforms")
+        assertEquals(supported.hydra.includes("armv6l-linux"), true, "hydra should include tier3 platforms")
+        assertEquals(supported.hydra.includes("aarch64-darwin"), true, "hydra should include aarch64-darwin")
+
+        // Verify rec evaluation: hydra should be the concatenation of all tiers + extra
+        const expectedHydraLength = supported.tier1.length + supported.tier2.length + supported.tier3.length + 1
+        assertEquals(supported.hydra.length, expectedHydraLength, "hydra length should match tier1 + tier2 + tier3 + 1")
+
+        console.log(`✅ supported.nix loaded successfully (${supported.hydra.length} hydra platforms)`)
+    })
+
     // Note: zip-int-bits.nix is skipped because it uses complex closures with asserts
     // that reference builtins at call-time, which requires more sophisticated scope
     // management than our current test harness provides. The translator works correctly,
