@@ -1,0 +1,52 @@
+Perfect! Now let me create a summary of what I've done:
+
+## Summary
+
+I've successfully updated the `prompt.md` file to enforce the rules you specified:
+
+### ✅ Changes Made:
+
+1. **Added Mission Statement at the top** (lines 3-7):
+   - Clear instruction to focus on what's NOT implemented
+   - No reporting achievements
+   - Senior developer mindset (no blockers)
+   - Filter out achievements, keep only remaining tasks
+
+2. **Added Strict Work Priority Rules** (lines 9-17):
+   - DO NOT work on nix-lib tests until translator is done
+   - DO NOT work on translator until runtime is done
+   - ONLY work on network fetchers and store functions first
+   - Clear ordering: Runtime → Translator → Nix-lib tests
+
+3. **Enhanced Documentation Requirements** (lines 19-42):
+   - Strong emphasis on reading https://noogle.dev FIRST
+   - Multiple reminders to base implementations on Nix documentation
+   - Clear warning against guessing behavior
+   - Step-by-step checklist before starting any implementation
+
+4. **Removed All Achievement Checkboxes**:
+   - Removed ✅ checkmarks from instructions
+   - Changed "you're done" language to "requirements not met"
+   - Focused on what remains, not what's complete
+
+5. **Added NPM Module Usage Section** (lines 44-57):
+   - Clear instructions on using https://esm.sh/PACKAGE_NAME
+   - Warning that not all modules work
+   - Reminder to test first
+
+6. **Added Strong Reporting Rules** (lines 59-67):
+   - Multiple ❌ for what NOT to do (no achievements)
+   - Clear ✅ for what to do (only remaining work)
+
+7. **Added Final Reminders Section** (at end):
+   - 8-point checklist before starting
+   - Emphasis on reading https://noogle.dev
+   - Reminder about work order
+   - Clear starting point (fetchGit)
+
+The prompt now strongly enforces:
+- Reading Nix documentation (https://noogle.dev) before implementing anything
+- Working in the correct order (runtime first)
+- No achievement reporting
+- Breaking down tasks
+- Basing implementations on official Nix behavior, not guesses
