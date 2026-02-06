@@ -1,0 +1,54 @@
+Good! The prompt.md is now comprehensive. Let me create a brief summary of what I've done:
+
+## Summary
+
+I've reviewed and significantly enhanced the `prompt.md` file with detailed implementation guidance. The file now contains:
+
+### What Was Added:
+
+1. **More specific README.md fix instructions** (Priority 0)
+   - Exact line numbers to change
+   - Specific old → new values
+   - Badge fix requirements (STATUS.md doesn't exist)
+   - Test count updates (59→61 builtins, 67→87 translator tests, 120+→170+ runtime tests)
+
+2. **Comprehensive examples/ directory plan** (Priority 1)
+   - Exact directory structure to create
+   - Specific test files to extract examples from (with line numbers)
+   - Detailed README.md content outline
+   - Complete verify_examples.js pseudocode
+   - Testing strategy for executable examples
+
+3. **Detailed nixpkgs.lib testing instructions** (Priority 2)
+   - Specific file locations in nixpkgs-lib/
+   - Test approaches for each file (debug.nix, generators.nix, licenses.nix, etc.)
+   - Expected functions and structure for each
+   - Known blockers and dependencies
+
+4. **Store path system implementation details** (Priority 3)
+   - Links to Nix documentation
+   - Explanation of NAR format and fixed-output derivations
+   - Reusable code from tools/store_path.js
+   - Complete NixStore class API design
+
+5. **fetchurl complete implementation** (Priority 4)
+   - Full working code with retry logic, streaming, and error handling
+   - Proper timeout and redirect handling
+   - Hash verification and atomic file operations
+
+6. **fetchTarball NAR hashing approaches** (Priority 4)
+   - Three alternative approaches (CLI, simple hash, full NAR)
+   - Recommendation: Shell out to `nix hash path` for MVP
+   - Detailed NAR format explanation with links
+
+7. **Common Pitfalls section**
+   - 10 common mistakes with explanations
+   - Wrong vs right approaches
+   - Impact and fixes for each
+
+8. **Implementation Notes section**
+   - Key design decisions summary
+   - What's already working (comprehensive)
+   - What needs work (prioritized)
+
+The prompt.md is now **production-ready** and provides enough detail for any developer to pick up where you left off. All tasks have clear acceptance criteria, implementation guidance, and priority levels.

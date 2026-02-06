@@ -20,8 +20,24 @@ Before implementing fetchers, need /nix/store path computation and management.
 
 **Research needed**:
 - [ ] Study Nix's NAR (Nix Archive) format for directory hashing
+  - Read: https://nixos.org/manual/nix/stable/protocols/nix-archive
+  - NAR is a deterministic archive format for directories
+  - Entries must be sorted by path name
+  - Format: recursive structure of (path, type, content) tuples
+  - Hash = SHA256(NAR serialization of directory tree)
 - [ ] Understand fixed-output derivation store path formula
+  - Read: https://nixos.org/manual/nix/stable/protocols/store-path.html#store-path-hash
+  - Regular derivation: hash of ATerm representation (already implemented!)
+  - Fixed-output derivation: hash of content + hash algo + hash value
+  - Fingerprint format: `fixed:out:<hashAlgo>:<hash>:<storeDir>:<name>`
+  - Example: `fixed:out:sha256:abc123...:/nix/store:source`
+  - Store path = `/nix/store/<hash>-<name>` where hash = base32(sha256(fingerprint))
 - [ ] Review existing tools/store_path.js for derivation paths (may be reusable)
+  - Already implements: base32 encoding, hash truncation, ATerm serialization
+  - **Reusable**: nixBase32Encode(), sha256Hex(), makeStorePathHash()
+  - **Need to add**: Fixed-output derivation path computation
+  - **Current code** handles derivation outputs (which use "output" method)
+  - **Need**: Content-addressed path computation (which uses "fixed" method)
 
 **Tasks**:
 - [ ] Create `helpers/store.js` module
@@ -109,21 +125,102 @@ fetchurl {
 **Implementation plan**:
 ```javascript
 // helpers/fetch.js
+import { NixStore } from './store.js';
+
+// Extract filename from URL
+function urlToName(url) {
+    const parsed = new URL(url);
+    const parts = parsed.pathname.split('/');
+    return parts[parts.length - 1] || 'download';
+}
+
+// Retry with exponential backoff
+async function withRetry(fn, retries = 3) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            return await fn();
+        } catch (err) {
+            if (i === retries - 1) throw err;
+            const waitMs = Math.pow(2, i) * 1000;  // 1s, 2s, 4s
+            await new Promise(resolve => setTimeout(resolve, waitMs));
+        }
+    }
+}
+
 export async function fetchFile(url, options = {}) {
     const {
         expectedHash,
         hashAlgo = 'sha256',
         name = urlToName(url),
+        executable = false,
+        store = new NixStore(),
         retries = 3,
         timeout = 300000  // 5 minutes
     } = options;
 
     // 1. Download to temp file with retry logic
-    // 2. Compute hash of downloaded file
-    // 3. Verify hash matches expectedHash
-    // 4. Compute store path
-    // 5. Move to store
-    // 6. Return store path
+    const tempFile = await Deno.makeTempFile({ prefix: 'denix-fetch-' });
+    try {
+        await withRetry(async () => {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+            const response = await fetch(url, {
+                signal: controller.signal,
+                redirect: 'follow'  // Auto-follow up to 20 redirects
+            });
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
+            // Stream to temp file (don't load into memory)
+            const file = await Deno.open(tempFile, { write: true, truncate: true });
+            try {
+                for await (const chunk of response.body) {
+                    await file.write(chunk);
+                }
+            } finally {
+                file.close();
+            }
+        }, retries);
+
+        // 2. Compute hash of downloaded file
+        const actualHash = await store.hashFile(tempFile, hashAlgo);
+
+        // 3. Verify hash matches expectedHash
+        if (actualHash !== expectedHash) {
+            throw new Error(
+                `Hash mismatch for ${url}\n` +
+                `  Expected: ${expectedHash}\n` +
+                `  Got:      ${actualHash}`
+            );
+        }
+
+        // 4. Compute store path
+        const storePath = store.computePath(name, expectedHash, hashAlgo);
+
+        // 5. Check if already in store (avoid duplicate)
+        if (store.pathExists(storePath)) {
+            return storePath;
+        }
+
+        // 6. Move to store (atomic operation)
+        await store.addPath(tempFile, storePath);
+
+        // 7. Make executable if requested
+        if (executable) {
+            await Deno.chmod(storePath, 0o755);
+        }
+
+        return storePath;
+    } finally {
+        // Clean up temp file if it still exists
+        try {
+            await Deno.remove(tempFile);
+        } catch { /* ignore */ }
+    }
 }
 ```
 
@@ -167,14 +264,41 @@ fetchTarball {
 
 **Research needed**:
 - [ ] Find tar extraction library for Deno
-  - Check: https://esm.sh/@std/tar (if exists)
-  - Check: https://deno.land/x/compress for tar.gz support
-  - Check: https://esm.sh/tar-stream or https://esm.sh/tar-fs
-  - Fallback: shell out to `tar` command via Deno.Command
+  - **Option 1**: Deno's standard library `@std/archive` (check if exists)
+    - Command: Search `deno.land/std` for tar support
+  - **Option 2**: `deno.land/x/compress` - gzip/deflate support
+    - Check: Does it support tar.gz extraction?
+    - URL: https://deno.land/x/compress
+  - **Option 3**: ESM.sh npm packages
+    - `esm.sh/tar-stream` - streaming tar parser (good for large files)
+    - `esm.sh/tar-fs` - filesystem tar operations
+    - `esm.sh/tar` - simple tar extraction
+  - **Option 4 (RECOMMENDED)**: Shell out to `tar` command via Deno.Command
+    - Pros: Most reliable, handles all formats (.tar.gz, .tar.bz2, .tar.xz)
+    - Cons: Requires tar binary on system (universally available on Unix)
+    - Command: `tar -xzf archive.tar.gz -C /extract/dir`
+    - Auto-detect compression: `tar -xaf archive.tar.{gz,bz2,xz}` (auto mode)
 - [ ] Understand NAR (Nix Archive) hashing algorithm
-  - Directory hashes must be computed in deterministic order
-  - Format: hash(sort(files).map(f => hash(name + type + content)))
-  - See: https://nixos.org/manual/nix/stable/protocols/store-path.html#store-path-hash
+  - **CRITICAL**: This is complex and must match Nix exactly
+  - NAR format is a canonical serialization of file trees
+  - Directory hashes must be computed in deterministic order (sorted paths)
+  - Format specification: https://nixos.org/manual/nix/stable/protocols/nix-archive
+  - NAR structure:
+    ```
+    nar(path) = if isFile(path) then
+                  "nix-archive-1" + file(path)
+                else if isDirectory(path) then
+                  "nix-archive-1" + directory(path)
+    file(path) = "type" + "regular" + ["executable" + ""] + "contents" + fileContents(path)
+    directory(path) = "type" + "directory" + sort(entries(path)).map(e => entry(e))
+    entry(name, path) = "entry" + "(" + "name" + name + "node" + nar(path) + ")"
+    ```
+  - Hash = SHA256(NAR serialization)
+  - **Complexity**: Need to implement NAR serializer or find existing library
+  - **Alternative**: Use Nix CLI to compute NAR hash: `nix hash path /path/to/dir`
+    - This is a valid approach for now - shell out to `nix` command
+    - Later can implement pure JS NAR serializer
+  - **Testing approach**: Compare hashes with `nix hash path` output
 
 **Tasks**:
 - [ ] Find and test tar extraction library (check esm.sh for tar.js or similar)
@@ -252,6 +376,60 @@ fetchTarball: async (args) => {
 - [ ] Test hash verification
 - [ ] Test cleanup of temp files
 
+### 1.3.1 NAR Hashing: Alternative Approaches
+
+**If pure JS NAR implementation is too complex** (likely!), use one of these approaches:
+
+**Approach A: Shell out to Nix CLI** (RECOMMENDED for MVP)
+```javascript
+// Compute NAR hash using Nix CLI
+async function computeNarHash(dirPath) {
+    const cmd = new Deno.Command('nix', {
+        args: ['hash', 'path', '--type', 'sha256', '--base32', dirPath],
+        stdout: 'piped'
+    });
+    const { stdout } = await cmd.output();
+    return new TextDecoder().decode(stdout).trim();
+}
+```
+- **Pros**: 100% accurate, matches Nix exactly
+- **Cons**: Requires Nix installed on system
+- **Acceptable tradeoff**: This is a Nix runtime, users likely have Nix installed
+
+**Approach B: Implement simple directory hash** (NOT NAR-compatible, but functional)
+```javascript
+// Simple recursive directory hash (NOT compatible with Nix!)
+async function simpleDirectoryHash(dirPath) {
+    const entries = [];
+    for await (const entry of Deno.readDir(dirPath)) {
+        const fullPath = `${dirPath}/${entry.name}`;
+        if (entry.isFile) {
+            const content = await Deno.readFile(fullPath);
+            const hash = await crypto.subtle.digest('SHA-256', content);
+            entries.push({ name: entry.name, hash: toHex(hash) });
+        } else if (entry.isDirectory) {
+            const hash = await simpleDirectoryHash(fullPath);
+            entries.push({ name: entry.name, hash });
+        }
+    }
+    entries.sort((a, b) => a.name.localeCompare(b.name));
+    const combined = JSON.stringify(entries);
+    const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(combined));
+    return toHex(hash);
+}
+```
+- **Pros**: Pure JS, no dependencies
+- **Cons**: Hash will NOT match Nix's hash, breaks compatibility
+- **Verdict**: Only use for testing/demo purposes, document that hashes won't match
+
+**Approach C: Implement full NAR serializer** (HARD, multi-week project)
+- Study Nix source code: `src/libutil/archive.cc`
+- Implement exact NAR format serialization
+- Test against hundreds of real-world cases
+- **Verdict**: Only do this if building production-grade fetchTarball
+
+**RECOMMENDATION**: Start with Approach A (shell out to Nix CLI) for MVP. Document that it requires Nix installed. Later, if needed, can implement pure JS NAR serializer.
+
 ### 1.4 Other Fetch Functions (Future)
 
 After fetchurl and fetchTarball work, assess these:
@@ -297,42 +475,134 @@ examples/
 
 ### Tasks
 
-- [ ] Create examples/ directory structure
+- [ ] Create examples/ directory structure (run: `mkdir -p examples/{01_basics,02_intermediate,03_nixpkgs_patterns,04_advanced}`)
 - [ ] Create examples/README.md with:
-  - Project overview (what is this translator?)
-  - How to run translator: `deno run --allow-read main.js <file.nix>`
-  - How to verify examples: `deno run --allow-read examples/verify_examples.js`
-  - Explanation of key translation patterns:
-    - Nix int → JavaScript BigInt (42 → 42n)
+  - **Project overview**: "Denix translates Nix expressions to JavaScript that runs on Deno"
+  - **How to run translator**: `deno run --allow-read main.js input.nix > output.js`
+  - **How to run translated code**: `deno run --allow-read output.js`
+  - **How to verify examples**: `deno run --allow-read examples/verify_examples.js`
+  - **Explanation of key translation patterns**:
+    - Nix int → JavaScript BigInt (42 → 42n) - needed for correct division
     - Nix float → JavaScript number (1.5 → 1.5)
-    - Variable access → nixScope["varName"]
-    - Recursive sets → Object getters for lazy evaluation
-    - Function closures → Object.create() for scope inheritance
-  - Common gotchas and limitations
+    - Variable access → nixScope["varName"] - avoids keyword conflicts, handles dashes
+    - Recursive sets → Object getters for lazy evaluation - prevents infinite loops
+    - Function closures → Object.create() for scope inheritance - preserves getters
+  - **Common gotchas**:
+    - BigInt division: 1n / 2n = 0n (not 0.5)
+    - Scope references must be captured in closures
+    - Recursive sets need getters to avoid evaluation order issues
+  - **Current limitations**:
+    - No network fetchers (fetchurl, fetchTarball, fetchGit)
+    - No physical store operations (path, filterSource)
+    - Import system works only with local files
 - [ ] Extract 10-15 example pairs from existing tests:
-  - literals.nix: from translator_test.js basic tests
-  - operators.nix: from translator_test.js operator tests
-  - let_expressions.nix: from translator_test.js let tests
-  - rec_attrsets.nix: from translator_test.js rec tests
-  - string_interpolation.nix: from string_interpolation_test.js
-  - pipe.nix: from nixpkgs_trivial_test.js
-  - list_operations.nix: from nixpkgs_simple_test.js
-  - imports.nix: from import_e2e_test.js
-- [ ] Add detailed comments explaining tricky translations:
-  - Why BigInt vs number
-  - How scope stacking works
-  - How lazy evaluation is achieved
-  - How string interpolation becomes InterpolatedString class
+  - **01_basics/literals.nix**: Extract from translator_test.js lines 20-60
+    - Integers: 42 → 42n
+    - Floats: 1.5 → 1.5
+    - Strings: "hello" → "hello"
+    - Booleans: true/false → true/false
+    - Null: null → null
+    - Lists: [1 2 3] → [1n, 2n, 3n]
+    - Attrsets: {a=1;} → {a: 1n}
+  - **01_basics/operators.nix**: Extract from translator_test.js lines 100-200
+    - Arithmetic: 1 + 2 * 3 → operators.add(1n)(operators.mul(2n)(3n))
+    - Comparison: 5 > 3 → operators.gt(5n)(3n)
+    - Logical: true && false → operators.and(true)(false)
+    - String concat: "a" + "b" → operators.add("a")("b")
+    - List concat: [1] ++ [2] → operators.concat([1n])([2n])
+    - Attrset merge: {a=1;} // {b=2;} → operators.merge({a:1n})({b:2n})
+  - **01_basics/functions.nix**: Extract from translator_test.js lines 250-300
+    - Simple: x: x + 1
+    - Curried: x: y: x + y
+    - Pattern: {a,b}: a + b
+    - With default: {a?0}: a
+  - **02_intermediate/let_expressions.nix**: Extract from translator_test.js lines 350-400
+    - Simple: let x=1; in x
+    - Multiple: let x=1; y=2; in x+y
+    - Nested: let x=1; in let y=x+1; in y
+  - **02_intermediate/rec_attrsets.nix**: Extract from translator_test.js lines 450-500
+    - Self-reference: rec {a=1; b=a+1;}
+    - Mutual reference: rec {a=b+1; b=2;}
+  - **02_intermediate/string_interpolation.nix**: Extract from string_interpolation_test.js
+    - Simple: "hello ${name}"
+    - Nested: "${x} and ${y}"
+    - With expressions: "${toString (1+2)}"
+  - **03_nixpkgs_patterns/pipe.nix**: Extract from nixpkgs_trivial_test.js
+    - pipe [f g h] x = h (g (f x))
+  - **03_nixpkgs_patterns/list_operations.nix**: Extract from nixpkgs_simple_test.js
+    - map, filter, fold examples
+  - **04_advanced/imports.nix**: Extract from import_e2e_test.js
+    - Simple import: builtins.import ./file.nix
+    - With arguments: (builtins.import ./file.nix) {arg=1;}
+  - **04_advanced/fixed_point.nix**: Create example of lib.fix
+    - fix = f: let x = f x; in x
+- [ ] Add detailed comments to each .js file explaining:
+  - **Why BigInt vs number**: Integer division must truncate (1/2=0), float division can be fractional
+  - **How scope stacking works**: Each scope level creates Object.create(parent) to preserve getters
+  - **How lazy evaluation is achieved**: Recursive sets use getters so evaluation order doesn't matter
+  - **How string interpolation becomes InterpolatedString**: Deferred evaluation until toString() called
+  - **How functions capture scope**: IIFE creates closure over nixScope at definition time
 - [ ] Create verify_examples.js script:
-  - Iterate through all .nix files
-  - Run translator on each
-  - Compare output to corresponding .js file
-  - Report any mismatches or errors
-  - Exit with code 0 if all match, 1 otherwise
-- [ ] Add examples section to main README.md:
-  - Link to examples/ directory
-  - Show one simple example inline (e.g., let expression)
-  - Encourage users to explore examples/ for more
+  ```javascript
+  // Pseudocode structure:
+  // 1. Find all .nix files in examples/
+  // 2. For each .nix file:
+  //    a. Run translator: convertToJs(nixContent)
+  //    b. Read corresponding .js file
+  //    c. Compare (ignoring whitespace differences)
+  //    d. If mismatch, show diff and mark as failed
+  // 3. Print summary: X/Y examples verified
+  // 4. Exit with code 0 if all match, 1 if any failed
+  ```
+  - Use Deno.readDir() to find .nix files recursively
+  - Use main.js convertToJs() to translate
+  - Use Deno.readTextFile() to read .js files
+  - Compare normalized output (trim, consistent spacing)
+  - Print colored output (red for fail, green for success)
+- [ ] Add examples section to main README.md (around line 43):
+  ```markdown
+  ## Examples
+
+  See [examples/](examples/) for Nix → JavaScript translation examples.
+
+  Simple example:
+  ```nix
+  # input.nix
+  let x = 42; in x * 2
+  ```
+
+  Translates to:
+  ```javascript
+  // output.js
+  (() => {
+    const nixScope = Object.create(runtime.scopeStack.slice(-1)[0]);
+    nixScope["x"] = 42n;
+    return operators.mul(nixScope["x"])(2n);
+  })()
+  ```
+
+  Run translator: `deno run --allow-read main.js examples/01_basics/literals.nix`
+  ```
+- [ ] Test verify_examples.js script works correctly:
+  - Run: `deno run --allow-read examples/verify_examples.js`
+  - Should output: "✓ 10/10 examples verified" (or however many examples exist)
+  - Test with intentionally wrong .js file to verify it detects mismatches
+  - Ensure colored output works (green ✓ for success, red ✗ for failure)
+- [ ] Document examples in main README.md with link
+- [ ] **TESTING STRATEGY**: Each example should be executable
+  - Add a `run_example.js` script in examples/ that can run any example:
+    ```javascript
+    // examples/run_example.js
+    // Usage: deno run --allow-read examples/run_example.js examples/01_basics/literals.nix
+    import { convertToJs } from '../main.js';
+    const nixFile = Deno.args[0];
+    const nixCode = await Deno.readTextFile(nixFile);
+    const jsCode = convertToJs(nixCode);
+    const result = new Function('runtime', jsCode)(runtime);
+    console.log(result);
+    ```
+  - Each example .nix file should have expected output in comment
+  - Verify output matches expected value
 
 ## 3. nixpkgs.lib Testing
 
@@ -359,22 +629,67 @@ examples/
 
 **Easy wins** (can test standalone, priority order):
 1. [ ] **debug.nix** - debugging utilities (lib.traceIf, lib.traceVal, etc.)
+   - Location: `nixpkgs-lib/lib/debug.nix`
    - Likely just wraps builtins.trace
-   - Test: validate traceIf conditional, traceVal returns value
+   - Test approach:
+     - Import debug.nix
+     - Call traceIf with true condition (should trace)
+     - Call traceIf with false condition (should not trace)
+     - Call traceVal with a value (should return that value)
+     - Validate traceSeq, traceValSeqN work correctly
+   - Expected functions: traceIf, traceVal, traceSeq, traceValSeq, traceValSeqN, traceShowVal, etc.
 2. [ ] **generators.nix** - JSON/YAML/INI generators
-   - Uses builtins.toJSON heavily
-   - Test: toPretty, toYAML, toINI, toKeyValue output formats
+   - Location: `nixpkgs-lib/lib/generators.nix`
+   - Uses builtins.toJSON heavily, may need string manipulation
+   - Test approach:
+     - Import generators.nix
+     - Test toPretty: converts attrset to pretty-printed format
+     - Test toYAML: converts attrset to YAML string
+     - Test toINI: converts attrset to INI format
+     - Test toKeyValue: converts attrset to KEY=VALUE pairs
+   - Expected functions: toPretty, toYAML, toINI, toKeyValue, toDhall, etc.
+   - **Likely blocker**: May use lib.strings functions heavily
 3. [ ] **licenses.nix** - license metadata (SPDX IDs, descriptions)
-   - Large attribute set of license definitions
-   - Test: spot-check mit, gpl3, bsd3 licenses have correct fields
-4. [ ] **options.nix** - NixOS option type definitions
-   - May be complex, depends on types.nix
-   - Test: mkOption, mkEnableOption, mkPackageOption
-5. [ ] **cli.nix** - CLI argument parsing utilities
-   - Test: toGNUCommandLine, toGNUCommandLineShell
+   - Location: `nixpkgs-lib/lib/licenses.nix`
+   - Large attribute set of ~200 license definitions
+   - Test approach:
+     - Import licenses.nix
+     - Spot-check 5-10 common licenses (mit, gpl3, bsd3, apache20, mpl20)
+     - Validate each has: spdxId, fullName, url, free (boolean)
+     - Validate deprecated field exists for deprecated licenses
+   - Expected structure: `{ mit = { spdxId = "MIT"; fullName = "MIT License"; url = "..."; free = true; }; ... }`
+   - **Very simple**: Just a giant attrset, should work immediately
+4. [ ] **cli.nix** - CLI argument parsing utilities
+   - Location: `nixpkgs-lib/lib/cli.nix`
+   - Converts attrsets to command-line arguments
+   - Test approach:
+     - Import cli.nix
+     - Test toGNUCommandLine: {verbose=true; file="x.txt";} → ["--verbose" "--file" "x.txt"]
+     - Test toGNUCommandLineShell: same but shell-escaped
+     - Validate flag formatting (--flag vs -f)
+     - Validate boolean flags (true → include, false → omit)
+   - Expected functions: toGNUCommandLine, toGNUCommandLineShell
+   - **May need**: lib.strings, lib.lists functions
+5. [ ] **options.nix** - NixOS option type definitions
+   - Location: `nixpkgs-lib/lib/options.nix`
+   - Creates option definitions for NixOS modules
+   - **WARNING**: May be complex, likely depends on types.nix
+   - Test approach:
+     - Import options.nix (may fail if needs types.nix)
+     - Test mkOption: creates option with type, default, description
+     - Test mkEnableOption: creates boolean option with description
+     - Test mkPackageOption: creates package option with default
+   - Expected functions: mkOption, mkEnableOption, mkPackageOption, mkPackageOptionMD, etc.
+   - **Likely blocker**: Circular dependency with types.nix, may need to skip
 6. [ ] **derivations.nix** - derivation helper functions
-   - May use builtins.derivation heavily
-   - Test: lazyDerivation wrapper
+   - Location: `nixpkgs-lib/lib/derivations.nix`
+   - Wraps builtins.derivation with helper functions
+   - Test approach:
+     - Import derivations.nix
+     - Test lazyDerivation: wraps derivation with lazy evaluation
+     - Validate it returns attrset with name, type, etc.
+   - Expected functions: lazyDerivation, optionalDrvAttr, etc.
+   - **Should work**: builtins.derivation is fully implemented
 
 **Need lib context** (circular dependencies with lib.trivial/lib.lists/etc):
 - [ ] **fixed-points.nix** - lib.fix, lib.extends, lib.composeManyExtensions
@@ -545,20 +860,57 @@ examples/
   - How to write tests
   - Code style guidelines
 
+## Implementation Notes
+
+### Key Design Decisions Already Made
+1. **BigInt for integers**: Required for correct division semantics
+2. **Object.create() for scopes**: Preserves getters, enables recursive sets
+3. **InterpolatedString class**: Enables lazy string interpolation
+4. **Import caching**: Prevents re-evaluation, detects circular imports
+5. **Store path algorithm**: Already implemented in tools/store_path.js
+
+### What's Already Working
+- ✅ 61/98 Nix 2.18 builtins fully functional
+- ✅ 87 translator tests (100% pass rate)
+- ✅ 170+ runtime tests (100% pass rate)
+- ✅ Import system (builtins.import, builtins.scopedImport)
+- ✅ Correct store paths for derivations
+- ✅ 15 nixpkgs.lib files tested end-to-end
+
+### What Needs Work (Prioritized)
+1. **Quick fixes** (Priority 0): README.md outdated numbers - 30 minutes
+2. **Examples** (Priority 1): Create examples/ directory - 2-3 days
+3. **Testing** (Priority 2): Test 5-10 more nixpkgs.lib files - 4-6 days
+4. **Store system** (Priority 3): Implement helpers/store.js - 1-2 weeks
+5. **Fetchers** (Priority 4): Implement fetchurl, fetchTarball - 3-5 weeks
+6. **Advanced** (Priority 5): Performance, documentation - deferred
+
 ## Summary of Work Remaining
 
 **Priority 0 - Quick Wins** (30 minutes):
 1. **CRITICAL**: Update README.md with current accurate numbers
+   - Line 5: Remove STATUS.md badge entirely (file doesn't exist, use TRANSLATOR_STATUS.md instead or just remove)
+   - Line 6: Change "120+ passing" → "170+ passing"
    - Line 14: Change "59 fully functional" → "61 fully functional"
    - Line 15: Change "120+ runtime tests" → "170+ runtime tests"
    - Line 16: Change "67 translator tests" → "87 translator tests"
    - Line 20: Add "✅ **Import system fully working** - builtins.import and builtins.scopedImport"
-   - Line 74: Remove "Import/eval (2): import, scopedImport (requires Nix parser)" - THESE ARE IMPLEMENTED!
-   - Line 127-148: Update test tables with current counts (73 test suites passing in deno test output)
-2. Fix or remove broken STATUS.md badge link (line 5)
-   - STATUS.md file does not exist
-   - Either create it or remove the badge reference
-   - Multiple references to STATUS.md throughout README need fixing
+   - Line 65: Change "See [STATUS.md](STATUS.md)" → "See main/runtime.js" (since STATUS.md doesn't exist)
+   - Line 74: Remove entire "Import/eval (2)" line - import and scopedImport ARE IMPLEMENTED!
+   - Line 97: Remove "STATUS.md" line (file doesn't exist)
+   - Line 126: Change "All 180+ tests" → "All 240+ tests" (73 test suites with ~170 runtime + 87 translator tests)
+   - Line 128: Change "120+ tests" → "170+ tests"
+   - Line 141: Change "67 tests" → "87 tests"
+   - Lines 142-147: Update test suite list to include:
+     - nixpkgs_trivial_test.js (20 tests)
+     - nixpkgs_lib_files_test.js (15 tests - tested lib files)
+     - import_resolver_test.js (16 tests)
+     - import_cache_test.js (12 tests)
+     - import_loader_test.js (7 tests)
+     - import_integration_test.js (8 tests)
+     - import_e2e_test.js (6 tests)
+     - hasattr_test.js (7 tests)
+     - error_messages_test.js (tests)
 
 **Priority 1 - Examples & Documentation** (2-3 days):
 1. Create examples/ directory structure
@@ -608,6 +960,70 @@ examples/
 - Module system testing (modules.nix, types.nix - very complex)
 - Performance profiling and optimization
 - ARCHITECTURE.md and comprehensive documentation
+
+## Common Pitfalls to Avoid
+
+When implementing the above tasks, watch out for these common mistakes:
+
+### 1. BigInt vs Number Confusion
+- **WRONG**: `42 + 2` → `44` (JavaScript number)
+- **RIGHT**: `42n + 2n` → `44n` (JavaScript BigInt)
+- **Impact**: Integer division breaks (`1/2` should be `0`, not `0.5`)
+- **Fix**: Always use `n` suffix for Nix integers in examples
+
+### 2. Scope Spread Loses Getters
+- **WRONG**: `const nixScope = {...parentScope}` (loses recursive set getters!)
+- **RIGHT**: `const nixScope = Object.create(parentScope)` (preserves getters via prototype)
+- **Impact**: Recursive attribute sets break (infinite loops or undefined values)
+- **Fix**: Always use Object.create() for scope inheritance in examples
+
+### 3. Test Counts Get Stale Fast
+- **WRONG**: Hardcode test counts in README (will be outdated within days)
+- **RIGHT**: Use dynamic counts or ranges ("170+ tests" instead of "173 tests")
+- **Impact**: README shows wrong information, looks unmaintained
+- **Fix**: Update all test counts in README.md when adding new tests
+
+### 4. Import System Edge Cases
+- **Common mistake**: Forgetting to handle directory imports (default.nix)
+- **Common mistake**: Not detecting circular imports
+- **Common mistake**: Not caching imported files (performance)
+- **Already handled**: Import system is fully implemented and tested!
+
+### 5. Store Path Compatibility
+- **WRONG**: Use simple hash of file contents for store paths
+- **RIGHT**: Use Nix's exact store path algorithm (base32, fingerprint, truncation)
+- **Impact**: Store paths won't match Nix's paths, breaks interoperability
+- **Fix**: Study tools/store_path.js, use existing base32Encode and hash functions
+
+### 6. NAR Hashing Complexity
+- **WRONG**: Assume directory hashing is simple (just hash all files)
+- **RIGHT**: NAR format has specific serialization rules (entry ordering, metadata)
+- **Impact**: fetchTarball hashes won't match Nix's hashes
+- **Fix**: Either implement full NAR serializer OR shell out to `nix hash path` command
+
+### 7. Error Messages Matter
+- **WRONG**: `throw new Error("Hash mismatch")`
+- **RIGHT**: `throw new Error("Hash mismatch for ${url}\n  Expected: ${expected}\n  Got: ${actual}")`
+- **Impact**: Users can't debug issues without detailed error messages
+- **Fix**: Always include context in errors (what file, what expected, what got)
+
+### 8. Test Isolation
+- **WRONG**: Tests that depend on previous tests' side effects
+- **RIGHT**: Each test is independent and can run in any order
+- **Impact**: Flaky tests, hard to debug failures
+- **Fix**: Use fresh Deno.makeTempDir() for each test, clean up in finally block
+
+### 9. Documentation Drift
+- **WRONG**: Write code, forget to update docs
+- **RIGHT**: Update docs (README, prompt.md, MEMORY.md) as part of each task
+- **Impact**: Docs show old features, confuse users and future developers
+- **Fix**: Include doc updates in each task's definition
+
+### 10. Premature Optimization
+- **WRONG**: Spend weeks optimizing NAR serializer before basic fetchTarball works
+- **RIGHT**: Get basic functionality working (even if slow), then optimize
+- **Impact**: Wasted time on optimization before validating the approach
+- **Fix**: MVP first (shell out to Nix CLI), optimize later (pure JS implementation)
 
 ## Suggested First Steps (Right Now)
 
