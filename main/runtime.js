@@ -701,6 +701,10 @@ import { loadAndEvaluateSync } from "./import_loader.js"
                 }
                 return result
             },
+            "optionalAttrs": (cond)=>(attrset)=>{
+                // Returns attrset if cond is true, otherwise returns empty set
+                return cond ? attrset : {}
+            },
             "removeAttrs": (set)=>(list)=>{
                 requireAttrSet(set)
                 requireList(list)

@@ -961,7 +961,9 @@ const nixNodeToJs = (node)=>{
                 const formalChildren = valueBasedChildren(each)
                 const argName = formalChildren[0].text
                 const defaultValue = nixNodeToJs(formalChildren[2])
-                return `${JSON.stringify(argName)}: ${defaultValue},`
+                // Wrap default value in IIFE to capture parent scope at evaluation time
+                // This allows defaults to reference outer function parameters (e.g., lname: { shortName ? lname }: ...)
+                return `${JSON.stringify(argName)}: (()=>{ const nixScope = runtime.scopeStack.slice(-1)[0]; return ${defaultValue}; })(),`
             }).join("")
 
             // Handle @ syntax: { a, b }@args: body
@@ -978,8 +980,7 @@ const nixNodeToJs = (node)=>{
             // The body is the last child (after the ":")
             const body = children.slice(-1)[0]
 
-            return `
-                (function(arg){
+            return `(function(arg){
                     const nixScope = {
                         // inherit parent scope
                         ...runtime.scopeStack.slice(-1)[0],
@@ -996,8 +997,7 @@ const nixNodeToJs = (node)=>{
                     } finally {
                         runtime.scopeStack.pop()
                     }
-                })
-            `
+                })`
 
         }
     } else if (node.type == "let_expression") {

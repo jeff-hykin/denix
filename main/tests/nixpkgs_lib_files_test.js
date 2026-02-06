@@ -919,6 +919,100 @@ Deno.test("nixpkgs.lib file loading", async (t) => {
         console.log(`✅ supported.nix loaded successfully (${supported.hydra.length} hydra platforms)`)
     })
 
+    await t.step("load licenses.nix (pure data, no complex dependencies)", () => {
+        // licenses.nix requires lib.mapAttrs and lib.optionalAttrs
+        // Create minimal lib context with these functions
+        const nixCode = Deno.readTextFileSync(join(nixpkgsLibPath, "licenses.nix"))
+
+        // Translate to JS
+        let jsCode = convertToJs(nixCode, { relativePath: join(nixpkgsLibPath, "licenses.nix") })
+
+        // Remove import statements
+        if (jsCode.includes('import { createRuntime }')) {
+            jsCode = jsCode.replace(/import \{ createRuntime \}.*\n/, '')
+            jsCode = jsCode.replace(/const runtime = createRuntime\(\)\n/, '')
+        }
+
+        // Remove multi-line comments
+        jsCode = jsCode.replace(/\/\*\*[\s\S]*?\*\//g, '')
+        jsCode = jsCode.trim()
+
+        // Create runtime
+        const runtime = createRuntime()
+
+        // Create lib context with mapAttrs and optionalAttrs
+        const lib = {
+            mapAttrs: runtime.runtime.builtins.mapAttrs,
+            optionalAttrs: runtime.runtime.builtins.optionalAttrs
+        }
+
+        // Create evaluation scope
+        const nixScope = {
+            builtins: runtime.runtime.builtins,
+            ...runtime.runtime.builtins,
+            lib
+        }
+
+        // Evaluate
+        const evalFunc = new Function(
+            'runtime',
+            'operators',
+            'builtins',
+            'nixScope',
+            'InterpolatedString',
+            'Path',
+            `return (${jsCode})`
+        )
+
+        const moduleFactory = evalFunc(
+            { scopeStack: [nixScope] },
+            runtime.runtime.operators,
+            runtime.runtime.builtins,
+            nixScope,
+            runtime.runtime.InterpolatedString,
+            runtime.runtime.Path
+        )
+
+        // Call with { lib } argument
+        const licenses = moduleFactory({ lib })
+
+        // Verify it's an attribute set
+        assertExists(licenses)
+        assertEquals(typeof licenses, "object")
+
+        // Check common licenses
+        assertExists(licenses.mit, "Should have MIT license")
+        assertEquals(licenses.mit.spdxId, "MIT")
+        assertEquals(licenses.mit.free, true)
+        assertExists(licenses.mit.fullName)
+        assertExists(licenses.mit.url)
+        // URL is an InterpolatedString, convert to string first
+        const mitUrl = licenses.mit.url.toString()
+        assertEquals(mitUrl.includes("spdx.org"), true)
+
+        assertExists(licenses.gpl3, "Should have GPL3 license")
+        assertEquals(licenses.gpl3.spdxId, "GPL-3.0")
+        assertEquals(licenses.gpl3.free, true)
+
+        assertExists(licenses.bsd3, "Should have BSD3 license")
+        assertEquals(licenses.bsd3.spdxId, "BSD-3-Clause")
+        assertEquals(licenses.bsd3.free, true)
+
+        assertExists(licenses.asl20, "Should have Apache 2.0 license")
+        assertEquals(licenses.asl20.spdxId, "Apache-2.0")
+        assertEquals(licenses.asl20.free, true)
+
+        assertExists(licenses.mpl20, "Should have MPL 2.0 license")
+        assertEquals(licenses.mpl20.spdxId, "MPL-2.0")
+        assertEquals(licenses.mpl20.free, true)
+
+        // Count total licenses (should be ~200)
+        const licenseCount = Object.keys(licenses).length
+        assertEquals(licenseCount >= 150, true, `Expected at least 150 licenses, got ${licenseCount}`)
+
+        console.log(`✅ licenses.nix loaded successfully (${licenseCount} licenses)`)
+    })
+
     // Note: fetchers.nix test skipped - requires more complex lib context
     // The file has complex let-in-rec patterns that need all lib functions available
     // Added interpolation support (obj.${expr}) and fixed rec attrset scoping as part of attempt
