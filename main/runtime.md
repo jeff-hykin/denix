@@ -86,8 +86,8 @@
 | 798 | `builtins.storePath` | ✅ DONE | ✅ | - | Validate store path format. |
 | 608 | `builtins.derivation` | ✅ DONE | ✅ | Store, Builder | Create derivation. **Fully working with correct store paths!** |
 | 630 | `builtins.derivationStrict` | ✅ DONE | ✅ | derivation | Same as derivation (historical difference removed). |
-| 633 | `builtins.getFlake` | ⬜ TODO | ⬜ | Flakes | Flake support. |
-| 634 | `builtins.parseFlakeRef` | ⬜ TODO | ⬜ | Flakes | Parse flake reference. |
+| 633 | `builtins.getFlake` | ⬜ TODO | ⬜ | Flakes | Flake support (requires fetch). |
+| 634 | `builtins.parseFlakeRef` | ✅ DONE | ✅ | Flakes | Parse flake reference (github, gitlab, git, path, tarball, indirect). |
 | 954 | `builtins.placeholder` | ✅ DONE | ✅ | - | Placeholder for output paths. Generates deterministic hash. |
 | 957 | `builtins.addErrorContext` | ✅ DONE | ✅ | - | Add context to errors. Simplified (no context tracking). |
 | 958 | `builtins.appendContext` | ✅ DONE | ✅ | - | String context manipulation. Simplified (no context tracking). |
@@ -95,7 +95,7 @@
 | 960 | `builtins.hasContext` | ✅ DONE | ✅ | - | Check for string context. Returns false (no context tracking). |
 | 961 | `builtins.unsafeDiscardStringContext` | ✅ DONE | ✅ | - | Remove string context. Returns string (no context tracking). |
 | 645 | `builtins.filterSource` | ⬜ TODO | ⬜ | Store | Filtered copy to store. |
-| 646 | `builtins.flakeRefToString` | ⬜ TODO | ⬜ | Flakes | Convert flake ref to string. |
+| 646 | `builtins.flakeRefToString` | ✅ DONE | ✅ | Flakes | Convert flake ref attrset to string. |
 | 966 | `builtins.genericClosure` | ✅ DONE | ✅ | - | Generic graph closure. BFS algorithm with deduplication. |
 | 967 | `builtins.unsafeDiscardOutputDependency` | ✅ DONE | ✅ | - | Discard output deps. Simplified (no context tracking). |
 | 968 | `builtins.unsafeGetAttrPos` | ✅ DONE | ✅ | AST tracking | Get attribute source position. Returns null (no AST tracking). |
@@ -121,6 +121,10 @@
 - `main/tests/phase2_test.js` - Phase 2 test suite (15 tests, all passing)
 - `main/tests/phase2b_test.js` - Phase 2b test suite (12 tests, all passing)
 - `main/tests/fromtoml_standalone_test.js` - TOML parser test suite (7 tests, all passing)
+- `main/tests/phase3_standalone_test.js` - Phase 3 standalone test suite (14 tests, all passing)
+- `main/tests/derivation/standalone_test.js` - Derivation test suite (12 tests, all passing)
+- `main/tests/phase4_standalone_test.js` - Phase 4 store functions (7 tests, all passing)
+- `main/tests/flake_standalone_test.js` - Flake reference functions (20 tests, all passing)
 - `main/tests/builtins_eval_control.js` - Evaluation control tests (blocked by prex WASM issue)
 - `main/tests/builtins_attrs.js` - Attribute set tests (blocked by prex WASM issue)
 - `main/tests/builtins_list.js` - List helper tests (blocked by prex WASM issue)
@@ -130,11 +134,18 @@
 ## Implementation Statistics
 
 - **Total FIXMEs identified:** ~71
-- **Implemented:** 52 (73%)
+- **Implemented:** 57 (80%)
 - **Remaining Easy/Medium:** 0
-- **Remaining Hard:** ~19 (mostly store/fetcher/import/flake related)
+- **Remaining Hard:** ~14 (mostly fetcher/import/store related)
 
 ## Recent Additions
+
+### Phase 5 (Additional Store + Flake Functions)
+- **builtins.toFile**: Computes correct store path using text method (doesn't physically write)
+- **builtins.findFile**: Search NIX_PATH-style list with prefix support
+- **builtins.derivationStrict**: Wrapper around derivation (identical in modern Nix)
+- **builtins.parseFlakeRef**: Parse flake reference strings (github, gitlab, git, path, tarball, indirect)
+- **builtins.flakeRefToString**: Convert flake ref attrset to string (round-trip compatible)
 
 ### Phase 4 (Operators + Context + Store Functions)
 - **operators.add**: Addition with int/float/string/path handling
@@ -157,10 +168,14 @@
 
 ## Notes
 
-- **73% Complete**: All feasible functions without major infrastructure are now implemented!
-- Many remaining items require a full Nix store implementation (toFile, path, filterSource)
+- **80% Complete**: All feasible functions without major infrastructure are now implemented!
+- Remaining 14 functions require major infrastructure:
+  - Full store system (2 functions: path, filterSource)
+  - Import/eval system with Nix parser (2 functions: import, scopedImport)
+  - Network fetchers with store integration (5 functions: fetchurl, fetchTarball, fetchGit, fetchMercurial, fetchTree)
+  - Flake evaluation system (1 function: getFlake)
+  - Store-backed toJSON for paths (1 enhancement)
 - Context functions implemented in simplified form (no context tracking, but functional)
-- Flake support is relatively modern and may be lower priority (3 functions)
-- Import/eval system critical for full Nix functionality (2 functions)
-- Network fetchers blocked on network + store implementation (5 functions)
-- Test infrastructure works around prex WASM issue using standalone tests
+- Flake reference parsing complete (parseFlakeRef, flakeRefToString)
+- Derivation implementation is complete with correct store path computation!
+- Test infrastructure works around prex WASM issue using standalone tests (113+ tests passing)

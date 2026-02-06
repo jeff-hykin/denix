@@ -25,24 +25,23 @@
 - [ ] Implement infrastructure-dependent FIXMEs (fetchers, import, etc.)
 
 ## Current Activity
-✅ **MILESTONE REACHED**: 52 functions implemented (73% complete)
+✅ **MILESTONE REACHED**: 57 functions implemented (80% complete)
 - All Phase 1 (Easy) complete: 26 functions
 - All feasible Phase 2 (Medium) complete: 14 functions (added operators.add, operators.subtract)
 - Phase 3 additions: 1 function (fromTOML)
 - Phase 4 additions: 11 functions (functionArgs, genericClosure, 5 context functions, 4 store functions)
-- 74+ tests created, all passing
+- Phase 5 additions: 5 functions (toFile, findFile, derivationStrict, parseFlakeRef, flakeRefToString)
+- 101+ tests created, all passing
 - ✅ Removed deno.json, deno.lock, node_modules
 - ✅ Replaced npm:lossless-json with custom BigInt JSON parser
-- See IMPLEMENTATION_SUMMARY.md for full details
 
 ## Next Steps
 Remaining items require major infrastructure:
-- Store system (4 functions: toFile, path, filterSource, derivationStrict)
+- Store system (2 functions: path, filterSource)
 - Import/eval system (2 functions: import, scopedImport)
 - Network fetchers (5 functions: fetchurl, fetchTarball, fetchGit, fetchMercurial, fetchTree)
-- Flakes (3 functions: getFlake, parseFlakeRef, flakeRefToString)
+- Flakes (1 function: getFlake - requires fetch)
 - toJSON for paths (requires full store implementation)
-- findFile (requires NIX_PATH search implementation)
 
 ## Completed Implementations
 
@@ -96,4 +95,4 @@ Remaining items require major infrastructure:
 - main/tests/fromtoml_standalone_test.js (7 tests, all passing)
 - main/tests/phase3_standalone_test.js (14 tests, all passing)
 
-**Total Implemented: 52 functions** (73% of all FIXMEs)
+**Total Implemented: 57 functions** (80% of all FIXMEs)

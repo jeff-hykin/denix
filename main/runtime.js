@@ -1073,7 +1073,57 @@ import { NixError, NotImplemented } from "./errors.js"
                 return 0
             },
             "getFlake": ()=>{/*FIXME*/},
-            "parseFlakeRef": ()=>{/*FIXME*/},
+            "parseFlakeRef": (flakeRef)=>{
+                // Parse flake reference string into structured form
+                // Examples:
+                //   "nixpkgs" -> { type: "indirect", id: "nixpkgs" }
+                //   "github:NixOS/nixpkgs" -> { type: "github", owner: "NixOS", repo: "nixpkgs" }
+                //   "path:/path/to/flake" -> { type: "path", path: "/path/to/flake" }
+                //   "git+https://..." -> { type: "git", url: "https://..." }
+
+                const ref = requireString(flakeRef).toString()
+
+                // Git URL with explicit git+ prefix
+                if (ref.startsWith("git+")) {
+                    const url = ref.slice(4)
+                    return { type: "git", url }
+                }
+
+                // GitHub shorthand: github:owner/repo[/ref]
+                if (ref.startsWith("github:")) {
+                    const parts = ref.slice(7).split("/")
+                    const result = { type: "github", owner: parts[0], repo: parts[1] }
+                    if (parts[2]) result.ref = parts[2]
+                    return result
+                }
+
+                // GitLab shorthand: gitlab:owner/repo[/ref]
+                if (ref.startsWith("gitlab:")) {
+                    const parts = ref.slice(7).split("/")
+                    const result = { type: "gitlab", owner: parts[0], repo: parts[1] }
+                    if (parts[2]) result.ref = parts[2]
+                    return result
+                }
+
+                // Path reference: path:/absolute/path or /absolute/path
+                if (ref.startsWith("path:")) {
+                    return { type: "path", path: ref.slice(5) }
+                }
+                if (ref.startsWith("/")) {
+                    return { type: "path", path: ref }
+                }
+                if (ref.startsWith("./") || ref.startsWith("../")) {
+                    return { type: "path", path: ref }
+                }
+
+                // Tarball URL
+                if (ref.startsWith("http://") || ref.startsWith("https://")) {
+                    return { type: "tarball", url: ref }
+                }
+
+                // Indirect reference (registry lookup)
+                return { type: "indirect", id: ref }
+            },
             "placeholder": (outputName)=>{
                 const name = requireString(outputName).toString()
                 // Returns a placeholder string for use in derivation env vars
@@ -1117,7 +1167,48 @@ import { NixError, NotImplemented } from "./errors.js"
         
         // complicated to explain functionality 
             "filterSource": ()=>{/*FIXME*/},
-            "flakeRefToString": ()=>{/*FIXME*/},
+            "flakeRefToString": (attrs)=>{
+                // Convert structured flake reference to string
+                requireAttrSet(attrs)
+                const type = requireString(attrs.type || "indirect").toString()
+
+                switch (type) {
+                    case "github":
+                        const owner = requireString(attrs.owner).toString()
+                        const repo = requireString(attrs.repo).toString()
+                        let result = `github:${owner}/${repo}`
+                        if (attrs.ref) {
+                            result += `/${requireString(attrs.ref).toString()}`
+                        }
+                        return result
+
+                    case "gitlab":
+                        const glOwner = requireString(attrs.owner).toString()
+                        const glRepo = requireString(attrs.repo).toString()
+                        let glResult = `gitlab:${glOwner}/${glRepo}`
+                        if (attrs.ref) {
+                            glResult += `/${requireString(attrs.ref).toString()}`
+                        }
+                        return glResult
+
+                    case "git":
+                        const url = requireString(attrs.url).toString()
+                        return `git+${url}`
+
+                    case "path":
+                        const path = requireString(attrs.path).toString()
+                        return `path:${path}`
+
+                    case "tarball":
+                        return requireString(attrs.url).toString()
+
+                    case "indirect":
+                        return requireString(attrs.id).toString()
+
+                    default:
+                        throw new NixError(`error: unknown flake reference type: ${type}`)
+                }
+            },
             "genericClosure": (attrset)=>{
                 requireAttrSet(attrset)
 
