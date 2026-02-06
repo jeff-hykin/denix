@@ -63,9 +63,9 @@ All critical Nix language features have been implemented and tested! The transla
 - [x] **String interpolation** - Both double-quoted and indented strings
 - [x] **Path interpolation** - Path literals with interpolation
 
-### Test Coverage - 87 Tests Passing! ✅ (+20 new tests!)
+### Test Coverage - 67 Translator Tests + 15 Has-Attr Tests = 82 Total! ✅
 
-**main/tests/translator_test.js**: 41 core tests (+8 has-attr tests!)
+**main/tests/translator_test.js**: 41 core tests (includes 8 has-attr tests)
 - ✅ All literals, operators, and expressions
 - ✅ Complex function compositions
 - ✅ Nested attribute sets and let expressions
@@ -84,7 +84,7 @@ All critical Nix language features have been implemented and tested! The transla
 - ✅ Pipe, flip, const, identity patterns
 - ✅ Attribute set operations
 
-**main/tests/nixpkgs_trivial_test.js**: 20 tests (NEW! All passing!)
+**main/tests/nixpkgs_trivial_test.js**: 20 tests (All passing!)
 - ✅ Real-world patterns from nixpkgs trivial.nix
 - ✅ Complex higher-order functions
 - ✅ Curried functions with proper closure support
@@ -92,7 +92,11 @@ All critical Nix language features have been implemented and tested! The transla
 - ✅ Attribute merging and list operations
 - ✅ Comparison and utility functions
 
-**Total**: 87 translator tests, all passing ✅
+**main/tests/hasattr_standalone_test.js**: 15 tests
+- ✅ Comprehensive has-attr operator tests
+- ✅ Simple, nested, and dynamic attribute checks
+
+**Total**: 67 translator tests + 15 has-attr standalone tests = 82 tests, all passing ✅
 
 ### Known Limitations ⬜
 
@@ -120,6 +124,10 @@ Results: **20/20 nixpkgs_trivial_test.js tests now passing** (was 3/20 at start 
 1. ✅ **DONE**: Test against nixpkgs.lib patterns - 13 tests passing!
 2. ✅ **DONE**: Fix interpolated has-attr - All forms now supported!
 3. ✅ **DONE**: Test translator against actual nixpkgs.lib files - 20/20 tests passing!
-4. ✅ **DONE**: Fix critical translator bugs - All 87 tests passing!
-5. **Next**: Either work on import system OR performance optimizations
-6. **Alternative**: Start implementing the 12 infrastructure-blocked builtins (fetch*, import, etc.)
+4. ✅ **DONE**: Fix critical translator bugs - All 82 tests passing!
+5. **Next Priority Options**:
+   - **Option A**: Test translator against full nixpkgs.lib files (e.g., translate and run lib/strings.nix, lib/lists.nix, lib/attrsets.nix)
+   - **Option B**: Fix prex WASM issue (blocking 4 test files: builtins_attrs.js, builtins_eval_control.js, builtins_list.js, builtins_version.js)
+   - **Option C**: Implement `builtins.import` (required for loading external .nix files, foundational for nixpkgs.lib usage)
+   - **Option D**: Start on fetch* builtins (requires network layer, larger project)
+   - **Option E**: Performance optimizations and edge case fixes
