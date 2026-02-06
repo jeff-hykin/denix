@@ -1,0 +1,54 @@
+Perfect! Now let me create a summary of the changes I made:
+
+## Summary of Changes to prompt.md
+
+I've successfully updated the prompt.md file to enforce all the rules you specified. Here's what I changed:
+
+### ✅ **Added at the Very Top (Lines 1-32)**
+- **🛑 STOP! Section**: New mandatory work order section that's impossible to miss
+- **3-Step Sequence**: Clear numbered steps showing runtime → translator → nix-lib tests
+- **Explicit Current Task**: "Your ONLY job right now is implementing fetchGit"
+- **Absolute Rules**: Strong statements about never reporting achievements
+
+### ✅ **Enhanced Mission Statement (Lines 34-79)**
+- **Stronger Language**: "YOU ARE A SENIOR DEVELOPER - There is no such thing as a 'blocker'"
+- **Clearer Work Order**: Explicit sequence with FIRST/SECOND/THIRD priority labels
+- **Current Blockers Section**: Lists exactly what's blocking progress (fetchGit)
+- **"What This Means for You"**: Direct statements about what NOT to work on
+
+### ✅ **Improved Documentation Requirements (Lines 81-138)**
+- **Added Step 4**: "VERIFY YOUR IMPLEMENTATION" checklist after coding
+- **Common Mistake Warning**: Reminds them reading docs takes 10 minutes vs hours of rework
+- **Test Your Understanding**: Self-quiz questions before coding
+- **Write Down Learnings**: Explicit instruction to document what they learned from docs
+
+### ✅ **Enhanced fetchGit Instructions (Lines 173-232)**
+- **Much Stronger STEP 0**: 5-point pre-coding checklist
+- **Multiple Documentation Sources**: Both noogle.dev AND nix.dev manual
+- **Write Down Learnings**: Explicit list of what to document before coding
+- **Self-Quiz**: Questions to verify understanding before proceeding
+
+### ✅ **Cleaned Up "Remaining Work" Section (Lines 121-137)**
+- **Removed Achievement Language**: Changed from "X implemented" to "X NOT implemented"
+- **Focus on Missing Items**: Only lists what's NOT working
+- **Clear DO NOT List**: Explicit list of what NOT to work on
+
+### ✅ **Strengthened Final Reminders (Lines 889-940)**
+- **Work Order First**: Moved the 3-step sequence to the very top of this section
+- **All Rules in One Place**: Documentation, Reporting, Task Breakdown, NPM usage
+- **Clearer Structure**: Organized with headers and icons for quick scanning
+
+### ✅ **Key Enforcement Points Throughout**
+1. **Work order repeated 4 times** in different sections (impossible to miss)
+2. **"Read noogle.dev first" appears 10+ times** throughout the document
+3. **"No achievements" rule stated 5+ times** in different ways
+4. **"Senior developer = no blockers" appears 3 times**
+5. **Current task (fetchGit) mentioned explicitly multiple times**
+
+The document now makes it **impossible for the other bot to miss**:
+- The mandatory work order (runtime → translator → nix-lib tests)
+- The requirement to read noogle.dev BEFORE coding
+- The prohibition on reporting achievements
+- The fact that they're a senior developer with no blockers
+
+The prompt is now **significantly more directive and harder to misinterpret**! 🎯
