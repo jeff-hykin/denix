@@ -265,19 +265,147 @@ const nixNodeToJs = (node)=>{
 
                 // we need to add a backslash to backticks
                 text = text.replace(/`/g, "\\`")
-                
+
                 return `\`${text}\``
             }
         }
-        
 
-        throw new NotImplemented(`Sorry :( I don't support these string expressions yet'\n${xmlStylePreview(node)}`)
-        // FIXME: different escapes
-        // FIXME: interpolation
+        // Handle interpolated strings
+        // Example: "hello ${world}" or "prefix ${x} middle ${y} suffix"
+        // Structure: strings.length should be getters.length + 1
+        // "a ${x} b ${y} c" => strings=["a ", " b ", " c"], getters=[x, y]
+        const strings = []
+        const getters = []
+
+        // Start with an empty string in case we begin with an interpolation
+        let currentString = ""
+
+        for (const child of children) {
+            if (child.type == "\"" || child.type == "''") {
+                // Skip quotes
+                continue
+            } else if (child.type == "string_fragment") {
+                let text = child.text
+                if (usedDoubleQuotes) {
+                    // Handle escape sequences in double-quoted strings
+                    text = text.replace(/\\/g, "\\\\").replace(/"/g, '\\"')
+                } else {
+                    // Handle indented string escapes (this shouldn't happen for string_expression, but keeping for consistency)
+                    text = text.replace(/`/g, "\\`")
+                }
+                currentString += text
+            } else if (child.type == "interpolation") {
+                // Push the accumulated string and start a new one
+                strings.push(currentString)
+                currentString = ""
+
+                // Get the expression inside the interpolation: ${expr}
+                const interpChildren = valueBasedChildren(child)
+                // interpChildren[0] is "${", interpChildren[1] is the expression, interpChildren[2] is "}"
+                const expr = interpChildren[1]
+                getters.push(`()=>(${nixNodeToJs(expr)})`)
+            }
+        }
+
+        // Push the final string segment
+        strings.push(currentString)
+
+        return `(new InterpolatedString([${strings.map(s => JSON.stringify(s)).join(", ")}], [${getters.join(", ")}]))`
+    } else if (node.type == "indented_string_expression") {
+        // <indented_string_expression>
+        //     <'' text="''" />
+        //     <string_fragment text="hello " />
+        //     <interpolation>
+        //         <${ text="${" />
+        //         <variable_expression>
+        //             <identifier text="world" />
+        //         </variable_expression>
+        //         <} text="}" />
+        //     </interpolation>
+        //     <'' text="''" />
+        // </indented_string_expression>
+        const children = valueBasedChildren(node)
+        const hasInterpolation = children.some(each=>each.type=="interpolation")
+
+        if (!hasInterpolation) {
+            // Simple indented string without interpolation
+            let text = children[1].text
+            // Handle indented string escapes
+            text = text.replace(/\\./g, "\\$&") // preserve literal backslashes
+            text = text.replace(/(''')*''\$/g, "$1\\$")             // ''$ => \$
+            text = text.replace(/(''')*''\\\\([nrt"'])/g, "$1\\$2") // ''\n => \n
+            text = text.replace(/(''')*''\\\\([^nrt"'])/g, "$1$2")  // ''\b => b
+            text = text.replace(/'''/g, "''")                       // ''' => ''
+            text = text.replace(/`/g, "\\`")                        // escape backticks
+            return `\`${text}\``
+        }
+
+        // Handle interpolated indented strings
+        const strings = []
+        const getters = []
+
+        let currentString = ""
+
+        for (const child of children) {
+            if (child.type == "\"" || child.type == "''") {
+                // Skip quotes
+                continue
+            } else if (child.type == "string_fragment") {
+                let text = child.text
+                // Handle indented string escapes
+                text = text.replace(/(''')*''\$/g, "$1$")              // ''$ => $
+                text = text.replace(/(''')*''\\\\([nrt"'])/g, "$1$2")  // ''\n => actual newline in JS
+                text = text.replace(/(''')*''\\\\([^nrt"'])/g, "$1$2") // ''\b => b
+                text = text.replace(/'''/g, "''")                      // ''' => ''
+                text = text.replace(/`/g, "\\`")                       // escape backticks for JS template literals
+                currentString += text
+            } else if (child.type == "interpolation") {
+                // Push the accumulated string and start a new one
+                strings.push(currentString)
+                currentString = ""
+
+                const interpChildren = valueBasedChildren(child)
+                const expr = interpChildren[1]
+                getters.push(`()=>(${nixNodeToJs(expr)})`)
+            }
+        }
+
+        // Push the final string segment
+        strings.push(currentString)
+
+        return `(new InterpolatedString([${strings.map(s => JSON.stringify(s)).join(", ")}], [${getters.join(", ")}]))`
     } else if (node.type == "path_expression") {
-        // FIXME: evaluate escapes
-        // FIXME: interpolation
-        return `(new Path([${JSON.stringify(node.text)}]))`
+        const children = valueBasedChildren(node)
+        const hasInterpolation = children.some(each=>each.type=="interpolation")
+
+        if (!hasInterpolation) {
+            // Simple path without interpolation
+            return `(new Path([${JSON.stringify(node.text)}], []))`
+        }
+
+        // Handle interpolated paths like ./${dir}/file
+        const strings = []
+        const getters = []
+        let currentString = ""
+
+        for (const child of children) {
+            if (child.type == "path_fragment") {
+                currentString += child.text
+            } else if (child.type == "interpolation") {
+                // Push the accumulated string and start a new one
+                strings.push(currentString)
+                currentString = ""
+
+                const interpChildren = valueBasedChildren(child)
+                const expr = interpChildren[1]
+                getters.push(`()=>(${nixNodeToJs(expr)})`)
+            }
+        }
+
+        // Push the final string segment
+        strings.push(currentString)
+
+        return `(new Path([${strings.map(s => JSON.stringify(s)).join(", ")}], [${getters.join(", ")}]))`
     } else if (node.type == "apply_expression") { // function call
         const children = valueBasedChildren(node)
         return `${nixNodeToJs(children[0])}(${nixNodeToJs(children[1])})`

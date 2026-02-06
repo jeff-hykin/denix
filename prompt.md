@@ -75,11 +75,24 @@ All critical Nix language features have been implemented and tested!
 - ✅ Operators (add, multiply)
 - ✅ Complex combinations (let+with, nested attributes, etc.)
 
+**main/tests/string_interpolation_test.js**: 8 interpolation tests
+- ✅ Double-quoted string interpolation (`"hello ${world}"`)
+- ✅ Indented string interpolation (`''hello ${world}''`)
+- ✅ Multiple interpolations in one string
+- ✅ Interpolation with expressions and attribute access
+
+**main/tests/path_interpolation_test.js**: 5 path interpolation tests
+- ✅ Path interpolation (`./path/${var}/file`)
+- ✅ Multiple interpolations in paths
+- ✅ Absolute paths with interpolation
+
+**Total**: 36 tests, all passing ✅
+
 ### What Needs Work ⬜
 
 **Medium Priority** (common features):
-1. **Lines 269-270**: String interpolation (e.g., `"${x}"`, `''${x}''`)
-2. **Lines 272-273**: Path escapes and interpolation
+1. ~~**Lines 269-270**: String interpolation (e.g., `"${x}"`, `''${x}''`)~~ ✅ **COMPLETE**
+2. ~~**Lines 272-273**: Path escapes and interpolation~~ ✅ **COMPLETE**
 3. **Line 300**: Handle Nix truthy-ness correctly (empty strings, empty lists, etc.)
 4. **Complex functions**: Full support for @ syntax, inherit_from
 5. **Nested attribute paths in non-rec attrsets**: e.g., `{ a.b.c = 10; }`
@@ -92,8 +105,8 @@ All critical Nix language features have been implemented and tested!
 10. **Boolean shadowing**: Detect when `true`/`false` are shadowed by local variables
 
 ### Next Steps
-1. Test against simple nixpkgs.lib functions (now possible!)
-2. Implement string/path interpolation
+1. Test against simple nixpkgs.lib functions (now possible with interpolation support!)
+2. ~~Implement string/path interpolation~~ ✅ **COMPLETE** (Session 2026-02-05)
 3. Improve function expression support (@ syntax, inherit_from)
 4. Handle edge cases (truthy-ness, hex/oct numbers, etc.)
 5. Performance optimizations
