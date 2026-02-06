@@ -493,6 +493,102 @@ Deno.test("nixpkgs.lib file loading", async (t) => {
         console.log("✅ versions.nix major/minor/patch functions work")
     })
 
+    await t.step("test kernel.nix configuration helpers", () => {
+        // kernel.nix provides helpers for Linux kernel configuration
+        const filePath = join(nixpkgsLibPath, "kernel.nix")
+        const nixCode = Deno.readTextFileSync(filePath)
+
+        let jsCode = convertToJs(nixCode, { relativePath: filePath })
+
+        const runtime = createRuntime()
+
+        if (jsCode.includes('import { createRuntime }')) {
+            jsCode = jsCode.replace(/import \{ createRuntime \}.*\n/, '')
+            jsCode = jsCode.replace(/const runtime = createRuntime\(\)\n/, '')
+        }
+
+        jsCode = jsCode.replace(/\/\*\*[\s\S]*?\*\//g, '')
+        jsCode = jsCode.trim()
+
+        const nixScope = {
+            builtins: runtime.runtime.builtins,
+            ...runtime.runtime.builtins
+        }
+
+        const evalFunc = new Function(
+            'runtime',
+            'operators',
+            'builtins',
+            'nixScope',
+            'InterpolatedString',
+            'Path',
+            `return (${jsCode})`
+        )
+
+        const moduleFactory = evalFunc(
+            { scopeStack: [nixScope] },
+            runtime.runtime.operators,
+            runtime.runtime.builtins,
+            nixScope,
+            runtime.runtime.InterpolatedString,
+            runtime.runtime.Path
+        )
+
+        // Provide minimal lib with mkIf, versionAtLeast, versionOlder
+        const minimalLib = {
+            mkIf: (cond, val) => cond ? val : null,
+            versionAtLeast: (v1, v2) => runtime.runtime.builtins.compareVersions(v1, v2) >= 0n,
+            versionOlder: (v1, v2) => runtime.runtime.builtins.compareVersions(v1, v2) < 0n,
+        }
+
+        const kernel = moduleFactory({ lib: minimalLib })
+
+        // Verify structure
+        assertExists(kernel)
+        assertEquals(typeof kernel, "object")
+
+        // Test option function
+        assertExists(kernel.option)
+        assertEquals(typeof kernel.option, "function")
+        const opt = kernel.option({ foo: "bar" })
+        assertEquals(opt.foo, "bar")
+        assertEquals(opt.optional, true)
+
+        // Test kernel state constants
+        assertExists(kernel.yes)
+        assertEquals(kernel.yes.tristate, "y")
+        assertEquals(kernel.yes.optional, false)
+
+        assertExists(kernel.no)
+        assertEquals(kernel.no.tristate, "n")
+        assertEquals(kernel.no.optional, false)
+
+        assertExists(kernel.module)
+        assertEquals(kernel.module.tristate, "m")
+        assertEquals(kernel.module.optional, false)
+
+        assertExists(kernel.unset)
+        assertEquals(kernel.unset.tristate, null)
+        assertEquals(kernel.unset.optional, false)
+
+        // Test freeform function
+        assertExists(kernel.freeform)
+        assertEquals(typeof kernel.freeform, "function")
+        const ff = kernel.freeform("test-value")
+        assertEquals(ff.freeform, "test-value")
+        assertEquals(ff.optional, false)
+
+        // Test whenHelpers
+        assertExists(kernel.whenHelpers)
+        assertEquals(typeof kernel.whenHelpers, "function")
+        const helpers = kernel.whenHelpers("5.10.0")
+        assertExists(helpers.whenAtLeast)
+        assertExists(helpers.whenOlder)
+        assertExists(helpers.whenBetween)
+
+        console.log("✅ kernel.nix configuration helpers work correctly")
+    })
+
     // Note: zip-int-bits.nix is skipped because it uses complex closures with asserts
     // that reference builtins at call-time, which requires more sophisticated scope
     // management than our current test harness provides. The translator works correctly,

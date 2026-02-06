@@ -97,19 +97,20 @@ All critical Nix language features have been implemented and tested! The transla
 - ✅ Attribute merging and list operations
 - ✅ Comparison and utility functions
 
-**main/tests/nixpkgs_lib_files_test.js**: 9 tests (NEW! All passing!)
+**main/tests/nixpkgs_lib_files_test.js**: 10 tests (NEW! All passing!)
 - ✅ ascii-table.nix - 98 ASCII character mappings
 - ✅ strings.nix - String utilities (with import of ascii-table.nix)
 - ✅ minfeatures.nix - Nix version feature detection
 - ✅ source-types.nix - Source type definitions
 - ✅ versions.nix - Version parsing utilities (major/minor/patch)
+- ✅ kernel.nix - Linux kernel configuration helpers
 - Tests complete library files end-to-end with imports
 
 **main/tests/hasattr_standalone_test.js**: 15 tests
 - ✅ Comprehensive has-attr operator tests
 - ✅ Simple, nested, and dynamic attribute checks
 
-**Total**: 67 translator tests + 15 has-attr standalone tests + 9 lib file tests = 91 tests, all passing ✅
+**Total**: 67 translator tests + 15 has-attr standalone tests + 10 lib file tests = 92 tests, all passing ✅
 
 ### Known Limitations ⬜
 
