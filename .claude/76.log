@@ -1,0 +1,50 @@
+Perfect! Now I have successfully edited the prompt.md file to enforce all the rules requested. Let me create a summary of the changes:
+
+## Summary
+
+I've successfully edited `/Users/jeffhykin/repos/denix/prompt.md` to enforce the coaching rules you specified:
+
+### Key Changes Made:
+
+1. **Strong enforcement header** (lines 1-35):
+   - Clear "CRITICAL RULES" section at the very top
+   - 5 absolute rules that MUST be followed
+   - Removed soft language, made everything directive
+   - Added RULE 4: Never add checkmarks or achievements to this file
+   - Added RULE 5: Break down blockers instead of claiming they exist
+
+2. **Removed achievement-focused sections**:
+   - Removed "Current Status Summary" with checkmarks
+   - Replaced with "REMAINING WORK" sections focusing only on what's NOT done
+   - Changed from "✅ X implemented" to "❌ X not implemented"
+
+3. **Added mandatory documentation requirements** (lines 37-77, 959-985):
+   - Created "MANDATORY IMPLEMENTATION PROCESS" section
+   - Added 5-step process that MUST be followed before coding
+   - Added "MANDATORY BEFORE CODING" checklists for each task
+   - Added "DOCUMENTATION REQUIREMENTS (READ WHILE WORKING)" section at end
+   - Included citation requirement for implementations
+
+4. **Strengthened enforcement language**:
+   - Changed "Before starting: Read..." to "MANDATORY BEFORE CODING:"
+   - Changed "DO NOT" to "NEVER" with "(VIOLATIONS WILL BE REJECTED)"
+   - Made all rules absolute with no wiggle room
+
+5. **Documentation links at every task**:
+   - Task 1 (fetchTree path): Links to Noogle + specific guidance
+   - Task 2 (fetchMercurial): 5-point checklist including Noogle, comparison with fetchGit
+   - Task 3 (fetchClosure): 6-point checklist including protocol docs, NAR format, testing
+   - Task 4 (getFlake): 7-point checklist including flake manual, lock format, input resolution
+   - Task 5 (fetchTree indirect): 5-point checklist including registry format
+
+6. **Added esm.sh reminder** (line 66-68):
+   - Noted that npm modules can be used via https://esm.sh/
+   - Added warning that esm.sh is unreliable
+   - Recommended Deno @std/* when possible
+
+The prompt.md file now acts as a strict coach that:
+- Forces documentation reading before ANY coding
+- Removes all achievement language
+- Makes work order absolute and non-negotiable
+- Breaks down tasks clearly
+- Reminds about Noogle/Nix manual at every implementation task
