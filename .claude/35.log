@@ -1,0 +1,8 @@
+Perfect! Now the prompt.md is updated with a clear plan focused on what remains to be done. The document now has:
+
+1. **Builtins section** - Detailed breakdown of fetchurl and fetchTarball implementation with subtasks
+2. **Examples section** - Clear structure for the examples directory
+3. **nixpkgs.lib testing** - List of remaining files to test
+4. **Timeline** - Week-by-week breakdown of immediate tasks
+
+All achievements have been removed, and only remaining work is documented. The tasks are broken down into concrete, actionable items with checkboxes.
