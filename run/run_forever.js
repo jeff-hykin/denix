@@ -8,7 +8,7 @@ const $$ = (...args)=>$(...args).noThrow()
 // await $$`false`.text("combined")
 // await $$`echo`.stdinText("yes\n")
 
-let increment = 33
+let increment = 50
 while (true) {
     console.log(`increment: ${increment}`)
     await $`claude --allowedTools "Task,Edit,Read,Update,Write,WebFetch,WebSearch,Glob,Grep,Write(./**/*),Bash(*)" -p ${`
