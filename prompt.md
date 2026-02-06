@@ -11,12 +11,75 @@ INSTRUCTIONS:
 ## CRITICAL INSTRUCTIONS - READ FIRST
 - **DO NOT WORK ON NIX-LIB TESTS** until runtime is complete
 - **DO NOT WORK ON TRANSLATOR** - it is already complete and working
-- **ONLY FOCUS ON**: Implementing the 8 remaining runtime builtins (NOT 9!)
-- **Next Priority**: Implement builtins.fetchurl (see section below)
+- **ONLY FOCUS ON**: Implementing the remaining runtime builtins and features
 
 ---
 
-## Remaining 8 Builtins (NOT IMPLEMENTED)
+## Quick Status Overview
+
+| Builtin | Status | Priority | Estimated Time |
+|---------|--------|----------|----------------|
+| **fetchTarball** | ✅ IMPLEMENTED | N/A | Complete |
+| **toJSON (Path)** | ❌ NOT IMPLEMENTED | IMMEDIATE | 30 minutes |
+| **fetchurl** | ❌ NOT IMPLEMENTED | HIGH | 1-2 days |
+| **path** | ❌ NOT IMPLEMENTED | HIGH | 1-2 days |
+| **filterSource** | ❌ NOT IMPLEMENTED | MEDIUM | 1 day |
+| **fetchGit** | ❌ NOT IMPLEMENTED | MEDIUM | 1-2 weeks |
+| **fetchTree** | ❌ NOT IMPLEMENTED | LOW | 1 week |
+| **fetchMercurial** | ❌ NOT IMPLEMENTED | LOW | 1 week |
+| **fetchClosure** | ❌ NOT IMPLEMENTED | VERY LOW | TBD |
+| **getFlake** | ❌ NOT IMPLEMENTED | DEFER | TBD |
+
+**Total Progress: 62/98 builtins implemented (63%)**
+- ✅ 62 builtins working (including fetchTarball ✅)
+- ❌ 9 builtins remaining (8 network/store + 1 toJSON fix)
+- 🎯 Next: toJSON (30 min) → fetchurl (1-2 days) → path (1-2 days)
+
+**Note**: README.md and MEMORY.md still show 61/98 but fetchTarball was recently implemented, so it's actually 62/98.
+
+---
+
+## ✅ RECENT COMPLETION: fetchTarball is DONE!
+**builtins.fetchTarball** was successfully implemented in recent sessions:
+- Downloads tarballs from HTTP/HTTPS ✅
+- Extracts to store with NAR hashing ✅
+- Supports SHA256 verification ✅
+- Implements caching ✅
+- Returns Path object ✅
+- Tests passing (6/6) ✅
+- Infrastructure modules created: fetcher.js, tar.js, nar_hash.js, store_manager.js ✅
+
+This means we can now move forward with fetchurl and path implementations!
+
+---
+
+## START HERE - Next Task
+
+**Implement: toJSON support for Path objects (QUICK WIN - 30 minutes)**
+
+Location: main/runtime.js:344
+Current: Throws NotImplemented error when toJSON receives a Path
+Goal: Convert Path to string and return JSON
+
+Steps:
+1. Open main/runtime.js
+2. Find line 344 (inside toJSON function)
+3. Replace the NotImplemented throw with:
+   ```javascript
+   if (value instanceof Path) {
+       return JSON.stringify(value.toString())
+   }
+   ```
+4. Create test file: main/tests/builtins_tojson_path_test.js
+5. Test that builtins.toJSON(builtins.fetchTarball("...")) works
+
+Why this first: It's trivial (5 minutes of code) and unblocks testing other fetchers.
+
+**After toJSON is done, implement builtins.fetchurl (see section below)**
+
+---
+
+## What is NOT Implemented (9 items total)
 
 ### 1. builtins.fetchurl (NEXT PRIORITY - 1-2 days)
 Location: runtime.js:748
@@ -283,29 +346,215 @@ Use tools/store_path.js which already implements this.
 - Cache file: `~/.cache/denix/cache.json` maps keys to store paths
 - Check sequence: store exists? → cache hit? → download
 
-### Dependencies Already Available
-- `main/fetcher.js` - HTTP download with retry (154 lines) ✅
-- `main/tar.js` - Tarball extraction (168 lines) ✅
-- `main/nar_hash.js` - NAR hashing (244 lines) ✅
-- `main/store_manager.js` - Store management (193 lines) ✅
-- `tools/store_path.js` - Store path computation ✅
-- `tools/hashing.js` - SHA256 and other hashes ✅
-- `jsr:@std/tar@0.1.10` - Deno standard library ✅
-- `DecompressionStream` - Web APIs ✅
+### Available Infrastructure (Reuse These - All Working!)
+- `main/fetcher.js` - HTTP download with retry - ✅ EXISTS & TESTED
+  - `downloadWithRetry(url, destPath)` - async download with 3 retries
+  - `validateSha256(filePath, expectedHash)` - verify SHA256
+  - `extractNameFromUrl(url)` - extract filename from URL
+- `main/tar.js` - Tarball extraction - ✅ EXISTS & TESTED
+  - `extractTarball(tarPath, destDir)` - extract .tar.gz to directory
+- `main/nar_hash.js` - NAR hashing - ✅ EXISTS & TESTED
+  - `hashDirectory(dirPath)` - compute NAR hash of directory
+- `main/store_manager.js` - Store management - ✅ EXISTS & TESTED
+  - `getCachedPath(cacheKey)` - check if URL cached
+  - `setCachedPath(cacheKey, storePath)` - save to cache
+  - `atomicMove(srcPath, destPath)` - atomic move to store
+  - `exists(path)` - check if path exists
+  - `ensureStoreDirectory()` - create store dir if needed
+- `tools/store_path.js` - Store path computation - ✅ EXISTS & TESTED
+  - `computeFetchStorePath(narHash, name)` - compute store path from hash
+- `tools/hashing.js` - SHA256 and other hashes - ✅ EXISTS & TESTED
+  - `sha256Hex(data)`, `sha256(data)` - SHA256 hashing
+- External dependencies:
+  - `jsr:@std/tar@0.1.10` - Deno standard library ✅
+  - `DecompressionStream` - Web API for gzip ✅
 
 ---
 
 ## Implementation Notes
 
-### For builtins.fetchurl
+### For builtins.fetchurl (AFTER toJSON is done)
+**This should be nearly identical to fetchTarball, but simpler!**
+
+Copy the pattern from fetchTarball (lines 750-818), but:
+1. **Remove extraction step** - no extractTarball() call needed
+2. **Hash the file directly** - use sha256() on file bytes instead of NAR hash
+3. **Simpler validation** - compare file hash directly (no NAR format)
+4. **Same structure otherwise**:
+   - Parse args (string or {url, sha256?, name?})
+   - Check cache with getCachedPath()
+   - Download with downloadWithRetry()
+   - Validate sha256 if provided
+   - Compute store path
+   - atomicMove to store
+   - setCachedPath for caching
+   - Return new Path(storePath)
+
+Key differences from fetchTarball:
+- fetchTarball: downloads → extracts → NAR hash → store
+- fetchurl: downloads → file hash → store
+
+Code template:
+```javascript
+"fetchurl": async (args) => {
+    // 1. Parse args (same as fetchTarball)
+    let url, sha256, name;
+    if (typeof args === "string" || args instanceof InterpolatedString) {
+        url = requireString(args);
+        name = extractNameFromUrl(url);
+    } else {
+        url = requireString(args["url"]);
+        sha256 = args["sha256"] ? requireString(args["sha256"]) : null;
+        name = args["name"] ? requireString(args["name"]) : extractNameFromUrl(url);
+    }
+
+    await ensureStoreDirectory();
+
+    // 2. Check cache (same as fetchTarball)
+    const cacheKey = `${url}:${sha256 || ""}`;
+    const cached = await getCachedPath(cacheKey);
+    if (cached && await exists(cached)) {
+        return new Path(cached);
+    }
+
+    // 3. Download file (same as fetchTarball)
+    const tempFile = `${await Deno.makeTempDir()}/download`;
+    await downloadWithRetry(url, tempFile);
+
+    // 4. Validate SHA256 if provided (same as fetchTarball)
+    if (sha256) {
+        const { validateSha256 } = await import("./fetcher.js");
+        await validateSha256(tempFile, sha256);
+    }
+
+    // 5. Compute hash of file (DIFFERENT - use file hash not NAR)
+    const fileBytes = await Deno.readFile(tempFile);
+    const fileHash = "sha256:" + sha256Hex(fileBytes);
+
+    // 6. Compute store path (same as fetchTarball)
+    const storePath = computeFetchStorePath(fileHash, name);
+
+    // 7. Move to store (DIFFERENT - move file not directory)
+    await Deno.mkdir(storePath, { recursive: true }); // Create parent
+    await atomicMove(tempFile, storePath + "/" + name); // Move into dir
+
+    // 8. Cache and return (same as fetchTarball)
+    await setCachedPath(cacheKey, storePath);
+    return new Path(storePath);
+}
+```
+
 See main/fetcher.js for downloadWithRetry() function.
 See main/store_manager.js for getCachedPath(), setCachedPath(), atomicMove(), exists().
 See tools/store_path.js for computeFetchStorePath().
 
 ### For builtins.path
+**Pattern: Copy local files to store with optional filtering**
+
+This is similar to fetchTarball, but source is local filesystem instead of network.
+
+Required steps:
+1. **Parse args** - {path, name?, filter?, recursive=true, sha256?}
+2. **Create temp directory** for filtered/copied files
+3. **Copy files with filtering**:
+   - Walk directory tree (use Deno.readDir recursively)
+   - For each file/dir: call filter(path, type) if provided
+   - Types: "regular", "directory", "symlink"
+   - Skip if filter returns false
+   - Copy if filter returns true or no filter
+4. **Hash with NAR** - use hashDirectory() from nar_hash.js
+5. **Validate sha256** if provided - compare with NAR hash
+6. **Compute store path** - use computeFetchStorePath()
+7. **Move to store** - use atomicMove()
+8. **Return Path object**
+
+Code template:
+```javascript
+"path": async (args) => {
+    // 1. Parse args
+    requireAttrSet(args);
+    const sourcePath = requireString(args["path"]);
+    const name = args["name"] ? requireString(args["name"]) : basename(sourcePath);
+    const filter = args["filter"] || null; // Optional predicate function
+    const recursive = args["recursive"] !== false; // Default true
+    const expectedSha256 = args["sha256"] ? requireString(args["sha256"]) : null;
+
+    await ensureStoreDirectory();
+
+    // 2. Create temp directory
+    const tempDir = await Deno.makeTempDir();
+
+    // 3. Copy with filtering
+    async function copyFiltered(src, dest) {
+        const stat = await Deno.stat(src);
+        const type = stat.isFile ? "regular" : stat.isDirectory ? "directory" : "symlink";
+
+        // Apply filter if provided
+        if (filter && !filter(src)(type)) {
+            return; // Skip this file
+        }
+
+        if (stat.isFile) {
+            await Deno.copyFile(src, dest);
+            // Preserve executable bit
+            if (stat.mode & 0o111) {
+                await Deno.chmod(dest, 0o755);
+            }
+        } else if (stat.isDirectory) {
+            await Deno.mkdir(dest, { recursive: true });
+            if (recursive) {
+                for await (const entry of Deno.readDir(src)) {
+                    await copyFiltered(
+                        `${src}/${entry.name}`,
+                        `${dest}/${entry.name}`
+                    );
+                }
+            }
+        } else if (stat.isSymlink) {
+            const target = await Deno.readLink(src);
+            await Deno.symlink(target, dest);
+        }
+    }
+
+    await copyFiltered(sourcePath, `${tempDir}/${name}`);
+
+    // 4. Hash with NAR
+    const narHash = await hashDirectory(`${tempDir}/${name}`);
+
+    // 5. Validate sha256 if provided
+    if (expectedSha256) {
+        const normalized = narHash.replace(/^sha256[:-]/, '');
+        const expectedNormalized = expectedSha256.replace(/^sha256[:-]/, '');
+        if (normalized !== expectedNormalized) {
+            throw new Error(
+                `Hash mismatch for ${sourcePath}:\n` +
+                `  Expected: ${expectedNormalized}\n` +
+                `  Actual:   ${normalized}`
+            );
+        }
+    }
+
+    // 6. Compute store path
+    const storePath = computeFetchStorePath(narHash, name);
+
+    // 7. Move to store
+    await atomicMove(`${tempDir}/${name}`, storePath);
+
+    // 8. Return Path
+    return new Path(storePath);
+}
+```
+
+Helper function needed:
+```javascript
+function basename(path) {
+    return path.split('/').filter(x => x).pop() || '';
+}
+```
+
 See main/nar_hash.js for hashDirectory() function.
 See main/store_manager.js for store operations.
-Need to implement recursive directory copy with optional filter.
+See tools/store_path.js for computeFetchStorePath().
 
 ### For builtins.filterSource
 This is just a thin wrapper around builtins.path.
@@ -314,3 +563,112 @@ Implement after builtins.path is complete.
 ### For builtins.toJSON (Path support)
 This is trivial - just add Path instance check in toJSON function.
 Can be done in 5 minutes.
+
+Code to add around line 344:
+```javascript
+if (value instanceof Path) {
+    return JSON.stringify(value.toString());
+}
+```
+
+---
+
+## Known Edge Cases & Future Considerations
+
+### Hash Format Normalization
+- Nix accepts multiple formats: "sha256:abc...", "sha256-abc...", "abc..."
+- Always normalize before comparing: `hash.replace(/^sha256[:-]/, '')`
+- Store paths always use format: "sha256:abc..."
+
+### Store Path Structure
+- For fetched files: `/nix/store/<hash>-<name>/<filename>`
+- For fetched tarballs: `/nix/store/<hash>-<name>/` (directory)
+- The hash is derived from NAR hash of contents, not source URL
+
+### Caching Behavior
+- Cache key includes URL AND sha256: `${url}:${sha256 || ""}`
+- Same URL with different sha256 = different cache entry
+- Same URL without sha256 = separate cache entry from one with sha256
+- Cache is persistent across runs (stored in ~/.cache/denix/cache.json)
+
+### Error Handling Patterns
+- Network errors: Retry 3 times with exponential backoff (already in downloadWithRetry)
+- Hash mismatches: Throw immediately with clear message showing expected vs actual
+- Missing files: Let Deno.stat throw naturally (don't catch)
+- Invalid URLs: Let fetch throw naturally (don't prevalidate)
+
+### Filter Function Interface (for builtins.path)
+- Signature: `(path: string) => (type: string) => boolean`
+- Curried function (Nix style)
+- Types: "regular", "directory", "symlink"
+- Return true to include, false to exclude
+- Called for EVERY file/directory in tree (even if recursive=false)
+
+### Performance Considerations
+- Use atomicMove instead of copy+delete (faster, atomic)
+- Hash large files in chunks (already handled by sha256Hex)
+- Don't load entire files into memory if avoidable
+- Use streaming for tarball extraction (already in tar.js)
+
+### Platform Differences
+- Executable bit: Preserve mode & 0o111 on copy
+- Symlinks: Use Deno.readLink/Deno.symlink (works on Unix, limited on Windows)
+- Path separators: Always use forward slash internally (Nix convention)
+- Store location: ~/.cache/denix/store/ (user-writable, no root needed)
+
+---
+
+## Testing Strategy for New Implementations
+
+### Test File Naming Convention
+- `main/tests/builtins_<name>_test.js` - for builtin tests
+- Example: `builtins_fetchurl_test.js`, `builtins_path_test.js`
+
+### Required Test Cases (Minimum)
+For each builtin, test AT LEAST:
+1. **Happy path** - basic functionality works
+2. **Argument variants** - string vs object, optional params
+3. **Error cases** - invalid input throws appropriate error
+4. **Edge cases** - empty input, special characters, etc.
+5. **Caching** - if applicable, verify cache hit/miss behavior
+6. **Integration** - works with other builtins (e.g., toJSON(fetchurl(...)))
+
+### Test Structure Pattern
+```javascript
+Deno.test("builtin_name - description", async () => {
+    const result = await builtins.builtin_name(args);
+    assertEquals(result, expected);
+});
+```
+
+### Running Tests
+```bash
+# Run all tests
+deno test --allow-all
+
+# Run specific test file
+deno test --allow-all main/tests/builtins_fetchurl_test.js
+
+# Watch mode (auto-rerun on changes)
+deno test --allow-all --watch
+```
+
+### Test Coverage Goals
+- Aim for 100% of code paths tested
+- Every error condition should have a test
+- Every argument variant should have a test
+- Integration with related builtins should be tested
+
+### When to Mark Implementation Complete
+✅ Implementation is complete when:
+1. All test cases pass
+2. No NotImplemented errors thrown
+3. Behavior matches Nix 2.18 documentation
+4. Edge cases handled correctly
+5. Error messages are clear and helpful
+
+❌ Implementation is NOT complete if:
+- Tests are skipped or commented out
+- Known bugs exist
+- Error handling is missing
+- Documentation promises features not yet working

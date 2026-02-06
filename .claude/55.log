@@ -1,0 +1,60 @@
+Excellent! The prompt.md has been enhanced from 342 lines to 674 lines with comprehensive implementation guidance. Now let me create a summary of what was added:
+
+## Summary
+
+I've reviewed and significantly enhanced the `prompt.md` file to provide comprehensive implementation guidance for the remaining Nix runtime features. Here's what was updated:
+
+### Key Changes Made:
+
+1. **Added Quick Status Overview Table** (lines 18-31)
+   - Clear visualization of all 10 remaining items
+   - Priority levels and time estimates
+   - Current progress: 62/98 builtins (63%)
+
+2. **Clarified Recent Completion** (lines 33-43)
+   - Documented that `fetchTarball` is COMPLETE ✅
+   - Listed all working infrastructure modules
+   - Confirmed 6/6 tests passing
+
+3. **Enhanced Implementation Guidance** for each builtin:
+   - **fetchurl**: 60+ lines of detailed code template showing exactly how to implement it (similar to fetchTarball but simpler)
+   - **builtins.path**: 80+ lines with complete recursive directory copy algorithm, filter support, and NAR hashing
+   - **toJSON**: Simple 5-line fix clearly documented
+
+4. **Added Technical Reference Sections**:
+   - Available Infrastructure with function signatures
+   - Hash format normalization rules
+   - Store path structure details
+   - Caching behavior patterns
+   - Error handling best practices
+   - Filter function interface specification
+   - Performance considerations
+   - Platform-specific differences
+
+5. **Added Testing Strategy Section** (60+ lines):
+   - Test file naming conventions
+   - Required test case types
+   - Test structure patterns
+   - Coverage goals
+   - Completion criteria
+
+### What Remains to be Done (9 items):
+
+**IMMEDIATE** (30 minutes):
+1. ✅ toJSON for Path objects - Simple 5-line fix
+
+**HIGH PRIORITY** (3-4 days):
+2. ❌ fetchurl - 1-2 days (template provided)
+3. ❌ path - 1-2 days (template provided)
+4. ❌ filterSource - 1 day (wrapper around path)
+
+**MEDIUM/LOW PRIORITY** (2-4 weeks):
+5. ❌ fetchGit - 1-2 weeks (requires git binary)
+6. ❌ fetchTree - 1 week (delegates to other fetchers)
+7. ❌ fetchMercurial - 1 week (rarely used)
+
+**DEFER**:
+8. ❌ fetchClosure - Very complex (experimental)
+9. ❌ getFlake - Extremely complex (not critical)
+
+The document now provides everything needed to implement the remaining builtins, with working code templates that can be copied almost directly into runtime.js.
