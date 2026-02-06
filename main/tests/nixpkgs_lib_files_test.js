@@ -166,6 +166,9 @@ Deno.test("nixpkgs.lib file loading", async (t) => {
         // Remove multi-line comments (/** ... */) which break Function evaluation
         jsCode = jsCode.replace(/\/\*\*[\s\S]*?\*\//g, '')
 
+        // Trim leading/trailing whitespace to avoid ASI issues with "return\n..."
+        jsCode = jsCode.trim()
+
         // Create evaluation scope
         const nixScope = {
             builtins: runtime.runtime.builtins,
@@ -180,7 +183,7 @@ Deno.test("nixpkgs.lib file loading", async (t) => {
             'nixScope',
             'InterpolatedString',
             'Path',
-            `return ${jsCode}`
+            `return (${jsCode})`
         )
 
         const moduleFactory = evalFunc(
@@ -235,6 +238,9 @@ Deno.test("nixpkgs.lib file loading", async (t) => {
         // Remove multi-line comments (/** ... */) which break Function evaluation
         jsCode = jsCode.replace(/\/\*\*[\s\S]*?\*\//g, '')
 
+        // Trim leading/trailing whitespace to avoid ASI issues with "return\n..."
+        jsCode = jsCode.trim()
+
         // Create evaluation scope
         const nixScope = {
             builtins: runtime.runtime.builtins,
@@ -249,7 +255,7 @@ Deno.test("nixpkgs.lib file loading", async (t) => {
             'nixScope',
             'InterpolatedString',
             'Path',
-            `return ${jsCode}`
+            `return (${jsCode})`
         )
 
         const moduleFactory = evalFunc(

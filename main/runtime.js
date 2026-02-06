@@ -434,7 +434,10 @@ import { loadAndEvaluateSync } from "./import_loader.js"
                 requireList(list)
                 // .toString is to handle interpolated strings
                 return list.map(
-                    each=>requireString(each),each.toString()
+                    each => {
+                        requireString(each)
+                        return each.toString()
+                    }
                 ).join(separator.toString())
             },
             // (builtins.replaceStrings ["oo" "a"] ["a" "i"] "foobar") == "fabir"
