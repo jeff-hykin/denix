@@ -297,7 +297,7 @@ import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPa
                         throw Error(`Called builtins.toJSON, which only works with valid nix values, but instead got type ${typeof value}, with a value of: ${safeToString(value)} `)
                 }
             },
-            "toJSON": (value)=>{
+            "toJSON": async (value)=>{
                 switch (typeof value) {
                     case "boolean":
                     case "string":
@@ -321,28 +321,31 @@ import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPa
                         } else if (value instanceof InterpolatedString) {
                             return value.toString()
                         } else if (value instanceof Array) {
-                            return `[${value.map(builtins.toJSON).join(",")}]`
+                            const items = await Promise.all(value.map(builtins.toJSON))
+                            return `[${items.join(",")}]`
                         } else if (Object.getPrototypeOf({}) == Object.getPrototypeOf(value)) {
                             const keys = Object.getOwnPropertyNames(value)
                             const entries = []
                             for (const each of keys) {
-                                entries.push(`${JSON.stringify(each)}:${builtins.toJSON(value[each])}`)
+                                const jsonValue = await builtins.toJSON(value[each])
+                                entries.push(`${JSON.stringify(each)}:${jsonValue}`)
                             }
                             return `{${entries.join(",")}}`
                         } else if (value instanceof Path) {
-                            const absolutePath = FileSystem.makeAbsolutePath(value.toString())
-                            const itemInfo = FileSystem.sync.info(absolutePath)
-                            if (!itemInfo.exists) {
-                                throw new NixError(`error: getting status of ${JSON.stringify(absolutePath)}: No such file or directory`)
-                            } else {
-                                // FIXME:
-                                    // Nix will
-                                    // create a hash of the file/directory
-                                    // create a /nix/store/ entry under that hash
-                                    // copy all the files to that location and strip them of information (reset the touched-date etc)
-                                    // then JSON.stringify the /nix/store path, and return that value
-                                throw new NotImplemented(`Sorry :( I don't support toJSON of paths yet'`)
+                            const pathString = value.toString()
+
+                            // If the path is already in the store (e.g., from fetchTarball), use it directly
+                            if (pathString.includes('/store/') || pathString.includes('/.cache/denix/store/')) {
+                                return JSON.stringify(pathString)
                             }
+
+                            // For local paths, copy to store using builtins.path
+                            const storeResult = await builtins.path({
+                                path: pathString,
+                                recursive: true
+                            })
+
+                            return JSON.stringify(storeResult.toString())
                         } else {
                             throw Error(`Called builtins.toJSON, which only works with valid nix values, but instead got type ${typeof value}, with a value of: ${safeToString(value)} `)
                         }
@@ -744,8 +747,65 @@ import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPa
             },
         
         // fetchers
-            "fetchurl": (url)=>{
-                throw new NotImplemented(`builtins.fetchurl requires network layer and store implementation`)
+            "fetchurl": async (args) => {
+                // Parse arguments: can be string URL or {url, sha256?, name?}
+                let url, sha256, name;
+                if (typeof args === "string" || args instanceof InterpolatedString) {
+                    url = requireString(args);
+                    name = extractNameFromUrl(url);
+                } else {
+                    url = requireString(args["url"]);
+                    sha256 = args["sha256"] ? requireString(args["sha256"]) : null;
+                    name = args["name"] ? requireString(args["name"]) : extractNameFromUrl(url);
+                }
+
+                // Ensure store directory exists
+                await ensureStoreDirectory();
+
+                // Check cache
+                const cacheKey = `fetchurl:${url}:${sha256 || ""}`;
+                const cached = await getCachedPath(cacheKey);
+                if (cached && await exists(cached)) {
+                    return new Path(cached);
+                }
+
+                // Download file
+                const tempFile = `${await Deno.makeTempDir()}/download`;
+                await downloadWithRetry(url, tempFile);
+
+                // Validate SHA256 if provided (before moving to store)
+                if (sha256) {
+                    const fileBytes = await Deno.readFile(tempFile);
+                    const actualHash = sha256Hex(fileBytes);
+                    const normalizedExpected = sha256.replace(/^sha256[:-]/, '');
+                    if (actualHash !== normalizedExpected) {
+                        // Clean up temp file
+                        try { await Deno.remove(tempFile); } catch {}
+                        throw new Error(
+                            `Hash mismatch for ${url}:\n` +
+                            `  Expected: ${normalizedExpected}\n` +
+                            `  Actual:   ${actualHash}`
+                        );
+                    }
+                }
+
+                // Compute hash of file for store path
+                const fileBytes = await Deno.readFile(tempFile);
+                const fileHash = "sha256:" + sha256Hex(fileBytes);
+
+                // Compute store path
+                const storePath = computeFetchStorePath(fileHash, name);
+
+                // Create store directory and move file into it
+                await Deno.mkdir(storePath, { recursive: true });
+                const finalPath = `${storePath}/${name}`;
+                await atomicMove(tempFile, finalPath);
+
+                // Cache the result
+                await setCachedPath(cacheKey, storePath);
+
+                // Return Path object pointing to the directory (Nix convention)
+                return new Path(storePath);
             },
             "fetchTarball": async (args) => {
                 // Parse arguments: can be string URL or {url, sha256?, name?}
@@ -991,8 +1051,132 @@ import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPa
                     return "unknown"
                 }
             },
-            "path": (args)=>{
-                throw new NotImplemented(`builtins.path requires full store implementation with filtering support. See: https://nix-community.github.io/docnix/reference/builtins/builtins-path/`)
+            "path": async (args) => {
+                // Parse arguments
+                requireAttrSet(args);
+                const sourcePath = requireString(args["path"]).toString();
+
+                // Get optional parameters
+                const name = args["name"]
+                    ? requireString(args["name"]).toString()
+                    : FileSystem.basename(sourcePath);
+                const filter = args["filter"] || null; // Optional predicate function
+                const recursive = args["recursive"] !== false; // Default true
+                const expectedSha256 = args["sha256"]
+                    ? requireString(args["sha256"]).toString()
+                    : null;
+
+                // Ensure store directory exists
+                await ensureStoreDirectory();
+
+                // Resolve to absolute path
+                const absPath = FileSystem.makeAbsolutePath(sourcePath);
+
+                // Check if source exists
+                const sourceInfo = FileSystem.sync.info(absPath);
+                if (!sourceInfo.exists) {
+                    throw new NixError(`error: path '${sourcePath}' does not exist`);
+                }
+
+                // Create temp directory for copying
+                const tempDir = await Deno.makeTempDir();
+                const tempPath = `${tempDir}/${name}`;
+
+                try {
+                    // Helper to determine file type string
+                    const getFileType = (stat) => {
+                        if (stat.isFile) return "regular";
+                        if (stat.isDirectory) return "directory";
+                        if (stat.isSymlink) return "symlink";
+                        return "unknown";
+                    };
+
+                    // Recursive copy function with filtering
+                    const copyFiltered = async (src, dest) => {
+                        const stat = await Deno.stat(src);
+                        const type = getFileType(stat);
+
+                        // Apply filter if provided
+                        // Filter signature: (path, type) => boolean
+                        if (filter) {
+                            const shouldInclude = filter(src)(type);
+                            if (!shouldInclude) {
+                                return; // Skip this file
+                            }
+                        }
+
+                        if (stat.isFile) {
+                            // Copy file
+                            await Deno.copyFile(src, dest);
+                            // Preserve executable bit
+                            if (stat.mode && (stat.mode & 0o111)) {
+                                await Deno.chmod(dest, stat.mode);
+                            }
+                        } else if (stat.isDirectory) {
+                            // Create directory
+                            await Deno.mkdir(dest, { recursive: true });
+
+                            // If recursive, copy contents
+                            if (recursive) {
+                                for await (const entry of Deno.readDir(src)) {
+                                    await copyFiltered(
+                                        `${src}/${entry.name}`,
+                                        `${dest}/${entry.name}`
+                                    );
+                                }
+                            }
+                        } else if (stat.isSymlink) {
+                            // Copy symlink
+                            const target = await Deno.readLink(src);
+                            await Deno.symlink(target, dest);
+                        }
+                    };
+
+                    // Copy source to temp location
+                    await copyFiltered(absPath, tempPath);
+
+                    // Hash the copied directory/file with NAR
+                    let narHash;
+                    if (recursive && (await Deno.stat(tempPath)).isDirectory) {
+                        // Use NAR hash for directories
+                        narHash = await hashDirectory(tempPath);
+                    } else if ((await Deno.stat(tempPath)).isFile) {
+                        // For single files, use direct file hash
+                        const fileBytes = await Deno.readFile(tempPath);
+                        narHash = "sha256:" + sha256Hex(fileBytes);
+                    } else {
+                        // For directories when recursive=false, still use NAR
+                        narHash = await hashDirectory(tempPath);
+                    }
+
+                    // Validate sha256 if provided
+                    if (expectedSha256) {
+                        const normalizedExpected = expectedSha256.replace(/^sha256[:-]/, '');
+                        const normalizedActual = narHash.replace(/^sha256[:-]/, '');
+                        if (normalizedExpected !== normalizedActual) {
+                            throw new Error(
+                                `Hash mismatch for ${sourcePath}:\n` +
+                                `  Expected: ${normalizedExpected}\n` +
+                                `  Actual:   ${normalizedActual}`
+                            );
+                        }
+                    }
+
+                    // Compute store path
+                    const storePath = computeFetchStorePath(narHash, name);
+
+                    // Move to store (atomic operation)
+                    await atomicMove(tempPath, storePath);
+
+                    // Return Path object
+                    return new Path(storePath);
+                } catch (error) {
+                    // Clean up temp directory on error
+                    try {
+                        await Deno.remove(tempDir, { recursive: true });
+                    } catch {}
+                    throw error;
+                }
             },
             
             "readDir": (path)=>{
@@ -1347,8 +1531,14 @@ import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPa
             },
         
         // complicated to explain functionality
-            "filterSource": (filter)=>(path)=>{
-                throw new NotImplemented(`builtins.filterSource requires full store implementation with predicate-based file filtering`)
+            "filterSource": (filter) => async (path) => {
+                // filterSource is just a wrapper around builtins.path with a filter
+                // Signature: filterSource :: (path -> type -> bool) -> path -> storePath
+                return await builtins.path({
+                    path: path,
+                    filter: filter,
+                    recursive: true
+                });
             },
             "flakeRefToString": (attrs)=>{
                 // Convert structured flake reference to string

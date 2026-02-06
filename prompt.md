@@ -21,169 +21,89 @@ INSTRUCTIONS:
 
 | Builtin | Status | Priority | Estimated Time | Documentation |
 |---------|--------|----------|----------------|---------------|
-| **toJSON (Path)** | NOT IMPLEMENTED | IMMEDIATE | 30 minutes | https://noogle.dev/f/builtins/toJSON |
-| **fetchurl** | NOT IMPLEMENTED | HIGH | 1-2 days | https://noogle.dev/f/builtins/fetchurl |
-| **path** | NOT IMPLEMENTED | HIGH | 1-2 days | https://noogle.dev/f/builtins/path |
-| **filterSource** | NOT IMPLEMENTED | MEDIUM | 1 day | https://noogle.dev/f/builtins/filterSource |
-| **fetchGit** | NOT IMPLEMENTED | MEDIUM | 1-2 weeks | https://noogle.dev/f/builtins/fetchGit |
-| **fetchTree** | NOT IMPLEMENTED | LOW | 1 week | https://noogle.dev/f/builtins/fetchTree |
+| **toJSON (Path)** | ✅ IMPLEMENTED | - | - | https://noogle.dev/f/builtins/toJSON |
+| **fetchurl** | ✅ IMPLEMENTED | - | - | https://noogle.dev/f/builtins/fetchurl |
+| **path** | ✅ IMPLEMENTED | - | - | https://noogle.dev/f/builtins/path |
+| **filterSource** | ✅ IMPLEMENTED | - | - | https://noogle.dev/f/builtins/filterSource |
+| **fetchGit** | NOT IMPLEMENTED | HIGH | 1-2 weeks | https://noogle.dev/f/builtins/fetchGit |
+| **fetchTree** | NOT IMPLEMENTED | MEDIUM | 1 week | https://noogle.dev/f/builtins/fetchTree |
 | **fetchMercurial** | NOT IMPLEMENTED | LOW | 1 week | https://noogle.dev/f/builtins/fetchMercurial |
 | **fetchClosure** | NOT IMPLEMENTED | VERY LOW | TBD | https://noogle.dev/f/builtins/fetchClosure |
 | **getFlake** | NOT IMPLEMENTED | DEFER | TBD | https://noogle.dev/f/builtins/getFlake |
 
-**9 builtins remaining to implement** (8 network/store + 1 toJSON fix)
+**5 builtins remaining to implement** (5 network/store/flake functions)
+
+### Recently Completed (Session 24)
+- ✅ **toJSON for Path objects** (runtime.js:300-348) - FULLY IMPLEMENTED
+  - Handles store paths directly (from fetchTarball, fetchurl, etc.)
+  - Copies local filesystem paths to store using builtins.path
+  - Made toJSON async to support path copying
+  - Fixed recursive toJSON calls to await properly
+  - Created comprehensive test suite (main/tests/builtins_tojson_path_test.js) - 3 tests, all passing
+
+- ✅ **fetchurl** (runtime.js:748-804) - FULLY IMPLEMENTED
+  - Downloads single files from URLs
+  - Supports both string URL and {url, sha256?, name?} object formats
+  - SHA256 validation with clear mismatch errors
+  - Caching system (same URL = cache hit)
+  - Name extraction from URLs
+  - Reuses fetcher.js and store_manager.js infrastructure
+  - Created comprehensive test suite (main/tests/builtins_fetchurl_test.js) - 7 tests, all passing
+  - Integration with toJSON verified
+
+- ✅ **builtins.path** (runtime.js:1053-1168) - FULLY IMPLEMENTED
+  - Copies local filesystem paths to Nix store
+  - Supports all parameters: path (required), name, filter, recursive, sha256
+  - Filter function with signature: (path) => (type) => boolean
+  - Types: "regular", "directory", "symlink", "unknown"
+  - NAR hashing for directories
+  - SHA256 validation support
+  - Preserves executable bits on files
+  - Handles symlinks correctly
+  - Created comprehensive test suite (main/tests/builtins_path_test.js) - 8 tests, all passing
+
+- ✅ **builtins.filterSource** (runtime.js:1533-1540) - FULLY IMPLEMENTED
+  - Thin wrapper around builtins.path with filter parameter
+  - Curried function: filter -> path -> storePath
+  - Filter signature: (path) => (type) => boolean
+  - Created comprehensive test suite (main/tests/builtins_filtersource_test.js) - 6 tests, all passing
+  - Verified integration with toJSON
+
+**Total Progress**: 65/98 builtins implemented (66.3%)
 
 ---
 
 ## START HERE - Next Task
 
-**Implement: toJSON support for Path objects (QUICK WIN - 30 minutes)**
+**Implement: builtins.fetchGit (HIGH PRIORITY - 1-2 weeks)**
 
-**READ FIRST**: https://noogle.dev/f/builtins/toJSON
+**READ FIRST**: https://noogle.dev/f/builtins/fetchGit
 
-Location: main/runtime.js:344
-Current: Throws NotImplemented error when toJSON receives a Path
-Goal: Convert Path to string and return JSON
+Location: main/runtime.js:819
+Current: Throws NotImplemented error
+Goal: Clone Git repositories and copy to store with metadata
 
-Steps:
-1. Read documentation: https://noogle.dev/f/builtins/toJSON
-2. Understand how Nix handles Path objects in toJSON
-3. Open main/runtime.js
-4. Find line 344 (inside toJSON function)
-5. Replace the NotImplemented throw with:
-   ```javascript
-   if (value instanceof Path) {
-       return JSON.stringify(value.toString())
-   }
-   ```
-6. Create test file: main/tests/builtins_tojson_path_test.js
-7. Test that builtins.toJSON(builtins.fetchTarball("...")) works
-8. Verify behavior matches Nix 2.18 documentation
+This is the most important remaining fetcher. It's used extensively in:
+- Flakes (flake inputs)
+- Nixpkgs overlays
+- Private repository fetching
+- Pinned dependencies
 
-Why this first: It's trivial (5 minutes of code) and unblocks testing other fetchers.
+Implementation requires:
+1. Git binary integration (Deno.Command)
+2. Parsing complex argument structure
+3. Handling refs, revs, shallow clones, submodules
+4. Extracting commit metadata (shortRev, revCount, lastModified)
+5. NAR hashing after .git removal
+6. Store path computation and caching
 
-**After toJSON is done, implement builtins.fetchurl (see section below)**
+Estimated effort: 1-2 weeks (most complex remaining builtin)
 
 ---
 
-## What is NOT Implemented (9 items total)
+## What is NOT Implemented (5 items total)
 
-### 1. builtins.fetchurl (NEXT PRIORITY - 1-2 days)
-
-**READ FIRST**: https://noogle.dev/f/builtins/fetchurl
-
-Location: runtime.js:748
-Status: NOT IMPLEMENTED (throws NotImplemented error)
-Requirements:
-- Parse arguments: url (string or {url, sha256?, name?})
-- Reuse main/fetcher.js for download (downloadWithRetry function)
-- Reuse main/store_manager.js for store operations
-- No extraction needed (single file)
-- Verify SHA256 of downloaded file directly
-- Move file to store at computed store path
-- Return Path object pointing to store path
-
-Implementation steps:
-1. Parse url argument (support both string and object formats)
-2. Extract name from URL or use provided name
-3. Check cache first (getCachedPath)
-4. If not cached: downloadWithRetry to temp location
-5. Verify sha256 if provided
-6. Compute store path using computeFetchStorePath
-7. Move file to store using atomicMove
-8. Update cache using setCachedPath
-9. Return new Path(storePath)
-
-Test requirements:
-- String URL argument
-- Object argument with URL
-- Object argument with URL + sha256
-- Object argument with URL + name
-- Caching works (second call uses cache)
-- SHA256 validation (mismatch throws error)
-- Invalid URL throws error
-
-### 2. builtins.path (1-2 days)
-
-**READ FIRST**: https://noogle.dev/f/builtins/path
-
-Location: runtime.js:995
-Status: NOT IMPLEMENTED (throws NotImplemented error)
-Requirements:
-- Parse params: {path, name?, filter?, recursive=true, sha256?}
-- Copy local path to temp dir (apply filter if provided)
-- Hash directory with NAR (using main/nar_hash.js)
-- Verify sha256 if provided (throw if mismatch)
-- Compute store path
-- Move to store using atomicMove
-- Return Path object
-
-Implementation steps:
-1. Parse args object: requireAttrs(args, ["path"])
-2. Get source path (convert to string)
-3. Determine name (from args.name or basename of path)
-4. Copy files to temp directory
-   - If filter provided: call filter(path, type) for each entry
-   - If recursive=false: only top-level files
-5. Hash temp directory using hashDirectory (NAR format)
-6. If sha256 provided: verify match
-7. Compute store path using hash
-8. Move temp dir to store
-9. Return new Path(storePath)
-
-Test requirements:
-- Copy single file
-- Copy directory (recursive=true)
-- Copy with filter function
-- Verify sha256 match
-- Verify sha256 mismatch throws error
-- Custom name parameter
-
-### 3. builtins.filterSource (1 day)
-
-**READ FIRST**: https://noogle.dev/f/builtins/filterSource
-
-Location: runtime.js:1351
-Status: NOT IMPLEMENTED (throws NotImplemented error)
-Requirements:
-- Takes filter function and path
-- Delegates to builtins.path with filter parameter
-- Return result from path
-
-Implementation steps:
-1. Parse args: filter (function), path (string or Path)
-2. Call builtins.path({path, filter, recursive: true})
-3. Return result
-
-This is simple - just a wrapper around builtins.path.
-Implement AFTER builtins.path is complete.
-
-Test requirements:
-- Filter out specific files by name
-- Filter by file type (regular/directory/symlink)
-- Result is same as builtins.path with filter
-
-### 4. builtins.toJSON for Path (QUICK WIN - 1 hour)
-Location: runtime.js:344
-Status: NOT IMPLEMENTED (throws NotImplemented error in toJSON function)
-Requirements:
-- Check if value is Path instance
-- Convert Path to string (path.toString())
-- Return JSON.stringify(pathString)
-
-Implementation steps:
-1. In toJSON function (around line 344), add check: `if (value instanceof Path)`
-2. Convert to string: `const pathStr = value.toString()`
-3. Return JSON.stringify(pathStr)
-
-This is trivial. The Path class already has toString().
-Can be implemented in 5 minutes.
-
-Test requirements:
-- builtins.toJSON(builtins.fetchTarball("...")) returns JSON string
-- String contains /nix/store path
-
-### 5. builtins.fetchGit (COMPLEX - 1-2 weeks)
+### 1. builtins.fetchGit (HIGH PRIORITY - 1-2 weeks)
 
 **READ FIRST**: https://noogle.dev/f/builtins/fetchGit
 
@@ -228,7 +148,7 @@ Test requirements:
 - Submodules
 - Error handling for invalid URL
 
-### 6. builtins.fetchTree (EXPERIMENTAL - 1 week)
+### 2. builtins.fetchTree (EXPERIMENTAL - 1 week)
 
 **READ FIRST**: https://noogle.dev/f/builtins/fetchTree
 
@@ -257,7 +177,7 @@ Implementation steps:
 This requires all other fetchers to be implemented first.
 LOW PRIORITY - experimental Nix feature.
 
-### 7. builtins.fetchMercurial (LOW PRIORITY)
+### 3. builtins.fetchMercurial (LOW PRIORITY)
 
 **READ FIRST**: https://noogle.dev/f/builtins/fetchMercurial
 
@@ -277,7 +197,7 @@ Implementation: Nearly identical to fetchGit, but using `hg` instead of `git`.
 Requires Mercurial binary installed.
 LOW PRIORITY - rarely used in modern Nix code.
 
-### 8. builtins.fetchClosure (VERY LOW PRIORITY - DON'T IMPLEMENT YET)
+### 4. builtins.fetchClosure (VERY LOW PRIORITY - DON'T IMPLEMENT YET)
 
 **READ FIRST**: https://noogle.dev/f/builtins/fetchClosure
 
@@ -294,7 +214,7 @@ This is VERY COMPLEX and EXPERIMENTAL.
 Requires full binary cache support (narinfo parsing, NAR downloading, signature verification).
 Should be LAST priority after all other fetchers work.
 
-### 9. builtins.getFlake (DEFER - NOT CRITICAL)
+### 5. builtins.getFlake (DEFER - NOT CRITICAL)
 
 **READ FIRST**: https://noogle.dev/f/builtins/getFlake
 
@@ -317,22 +237,18 @@ DEFER until all basic fetchers work.
 
 ## Implementation Priority Order
 
-**IMMEDIATE (Do First - 1 hour total):**
-1. builtins.toJSON for Path (runtime.js:344) - 30 minutes - https://noogle.dev/f/builtins/toJSON
+**HIGH PRIORITY (Git integration - 1-2 weeks):**
+1. builtins.fetchGit (runtime.js:819) - 1-2 weeks - https://noogle.dev/f/builtins/fetchGit
 
-**HIGH PRIORITY (Core fetchers - 3-5 days):**
-2. builtins.fetchurl (runtime.js:748) - 1-2 days - https://noogle.dev/f/builtins/fetchurl
-3. builtins.path (runtime.js:995) - 1-2 days - https://noogle.dev/f/builtins/path
-4. builtins.filterSource (runtime.js:1351) - 1 day (depends on #3) - https://noogle.dev/f/builtins/filterSource
+**MEDIUM PRIORITY (Advanced fetchers):**
+2. builtins.fetchTree (runtime.js:826) - depends on fetchGit - https://noogle.dev/f/builtins/fetchTree
 
-**MEDIUM PRIORITY (Git integration - 1-2 weeks):**
-5. builtins.fetchGit (runtime.js:820) - 1-2 weeks - https://noogle.dev/f/builtins/fetchGit
+**LOW PRIORITY (Rarely used):**
+3. builtins.fetchMercurial (runtime.js:822) - rarely used - https://noogle.dev/f/builtins/fetchMercurial
 
-**LOW PRIORITY (Advanced/Experimental):**
-6. builtins.fetchTree (runtime.js:826) - depends on #2,#3,#5 - https://noogle.dev/f/builtins/fetchTree
-7. builtins.fetchMercurial (runtime.js:823) - rarely used - https://noogle.dev/f/builtins/fetchMercurial
-8. builtins.fetchClosure (runtime.js:829) - very complex - https://noogle.dev/f/builtins/fetchClosure
-9. builtins.getFlake (runtime.js:1240) - defer indefinitely - https://noogle.dev/f/builtins/getFlake
+**VERY LOW PRIORITY (Defer):**
+4. builtins.fetchClosure (runtime.js:828) - very complex experimental feature - https://noogle.dev/f/builtins/fetchClosure
+5. builtins.getFlake (runtime.js:1240) - defer indefinitely - https://noogle.dev/f/builtins/getFlake
 
 ---
 
@@ -385,209 +301,15 @@ Use tools/store_path.js which already implements this.
 
 ## Implementation Notes
 
-### For builtins.fetchurl (AFTER toJSON is done)
+### Completed Implementation Notes
 
-**READ DOCUMENTATION FIRST**: https://noogle.dev/f/builtins/fetchurl
+The following have been fully implemented and tested:
+- ✅ **builtins.toJSON (Path support)** - Handles both store paths and local paths
+- ✅ **builtins.fetchurl** - Downloads single files from URLs
+- ✅ **builtins.path** - Copies local filesystem paths to store with filtering
+- ✅ **builtins.filterSource** - Wrapper around builtins.path with filter parameter
 
-**This should be nearly identical to fetchTarball, but simpler!**
-
-Copy the pattern from fetchTarball (lines 750-818), but:
-1. **Remove extraction step** - no extractTarball() call needed
-2. **Hash the file directly** - use sha256() on file bytes instead of NAR hash
-3. **Simpler validation** - compare file hash directly (no NAR format)
-4. **Same structure otherwise**:
-   - Parse args (string or {url, sha256?, name?})
-   - Check cache with getCachedPath()
-   - Download with downloadWithRetry()
-   - Validate sha256 if provided
-   - Compute store path
-   - atomicMove to store
-   - setCachedPath for caching
-   - Return new Path(storePath)
-
-Key differences from fetchTarball:
-- fetchTarball: downloads → extracts → NAR hash → store
-- fetchurl: downloads → file hash → store
-
-Code template:
-```javascript
-"fetchurl": async (args) => {
-    // 1. Parse args (same as fetchTarball)
-    let url, sha256, name;
-    if (typeof args === "string" || args instanceof InterpolatedString) {
-        url = requireString(args);
-        name = extractNameFromUrl(url);
-    } else {
-        url = requireString(args["url"]);
-        sha256 = args["sha256"] ? requireString(args["sha256"]) : null;
-        name = args["name"] ? requireString(args["name"]) : extractNameFromUrl(url);
-    }
-
-    await ensureStoreDirectory();
-
-    // 2. Check cache (same as fetchTarball)
-    const cacheKey = `${url}:${sha256 || ""}`;
-    const cached = await getCachedPath(cacheKey);
-    if (cached && await exists(cached)) {
-        return new Path(cached);
-    }
-
-    // 3. Download file (same as fetchTarball)
-    const tempFile = `${await Deno.makeTempDir()}/download`;
-    await downloadWithRetry(url, tempFile);
-
-    // 4. Validate SHA256 if provided (same as fetchTarball)
-    if (sha256) {
-        const { validateSha256 } = await import("./fetcher.js");
-        await validateSha256(tempFile, sha256);
-    }
-
-    // 5. Compute hash of file (DIFFERENT - use file hash not NAR)
-    const fileBytes = await Deno.readFile(tempFile);
-    const fileHash = "sha256:" + sha256Hex(fileBytes);
-
-    // 6. Compute store path (same as fetchTarball)
-    const storePath = computeFetchStorePath(fileHash, name);
-
-    // 7. Move to store (DIFFERENT - move file not directory)
-    await Deno.mkdir(storePath, { recursive: true }); // Create parent
-    await atomicMove(tempFile, storePath + "/" + name); // Move into dir
-
-    // 8. Cache and return (same as fetchTarball)
-    await setCachedPath(cacheKey, storePath);
-    return new Path(storePath);
-}
-```
-
-See main/fetcher.js for downloadWithRetry() function.
-See main/store_manager.js for getCachedPath(), setCachedPath(), atomicMove(), exists().
-See tools/store_path.js for computeFetchStorePath().
-
-### For builtins.path
-
-**READ DOCUMENTATION FIRST**: https://noogle.dev/f/builtins/path
-
-**Pattern: Copy local files to store with optional filtering**
-
-This is similar to fetchTarball, but source is local filesystem instead of network.
-
-Required steps:
-1. **Parse args** - {path, name?, filter?, recursive=true, sha256?}
-2. **Create temp directory** for filtered/copied files
-3. **Copy files with filtering**:
-   - Walk directory tree (use Deno.readDir recursively)
-   - For each file/dir: call filter(path, type) if provided
-   - Types: "regular", "directory", "symlink"
-   - Skip if filter returns false
-   - Copy if filter returns true or no filter
-4. **Hash with NAR** - use hashDirectory() from nar_hash.js
-5. **Validate sha256** if provided - compare with NAR hash
-6. **Compute store path** - use computeFetchStorePath()
-7. **Move to store** - use atomicMove()
-8. **Return Path object**
-
-Code template:
-```javascript
-"path": async (args) => {
-    // 1. Parse args
-    requireAttrSet(args);
-    const sourcePath = requireString(args["path"]);
-    const name = args["name"] ? requireString(args["name"]) : basename(sourcePath);
-    const filter = args["filter"] || null; // Optional predicate function
-    const recursive = args["recursive"] !== false; // Default true
-    const expectedSha256 = args["sha256"] ? requireString(args["sha256"]) : null;
-
-    await ensureStoreDirectory();
-
-    // 2. Create temp directory
-    const tempDir = await Deno.makeTempDir();
-
-    // 3. Copy with filtering
-    async function copyFiltered(src, dest) {
-        const stat = await Deno.stat(src);
-        const type = stat.isFile ? "regular" : stat.isDirectory ? "directory" : "symlink";
-
-        // Apply filter if provided
-        if (filter && !filter(src)(type)) {
-            return; // Skip this file
-        }
-
-        if (stat.isFile) {
-            await Deno.copyFile(src, dest);
-            // Preserve executable bit
-            if (stat.mode & 0o111) {
-                await Deno.chmod(dest, 0o755);
-            }
-        } else if (stat.isDirectory) {
-            await Deno.mkdir(dest, { recursive: true });
-            if (recursive) {
-                for await (const entry of Deno.readDir(src)) {
-                    await copyFiltered(
-                        `${src}/${entry.name}`,
-                        `${dest}/${entry.name}`
-                    );
-                }
-            }
-        } else if (stat.isSymlink) {
-            const target = await Deno.readLink(src);
-            await Deno.symlink(target, dest);
-        }
-    }
-
-    await copyFiltered(sourcePath, `${tempDir}/${name}`);
-
-    // 4. Hash with NAR
-    const narHash = await hashDirectory(`${tempDir}/${name}`);
-
-    // 5. Validate sha256 if provided
-    if (expectedSha256) {
-        const normalized = narHash.replace(/^sha256[:-]/, '');
-        const expectedNormalized = expectedSha256.replace(/^sha256[:-]/, '');
-        if (normalized !== expectedNormalized) {
-            throw new Error(
-                `Hash mismatch for ${sourcePath}:\n` +
-                `  Expected: ${expectedNormalized}\n` +
-                `  Actual:   ${normalized}`
-            );
-        }
-    }
-
-    // 6. Compute store path
-    const storePath = computeFetchStorePath(narHash, name);
-
-    // 7. Move to store
-    await atomicMove(`${tempDir}/${name}`, storePath);
-
-    // 8. Return Path
-    return new Path(storePath);
-}
-```
-
-Helper function needed:
-```javascript
-function basename(path) {
-    return path.split('/').filter(x => x).pop() || '';
-}
-```
-
-See main/nar_hash.js for hashDirectory() function.
-See main/store_manager.js for store operations.
-See tools/store_path.js for computeFetchStorePath().
-
-### For builtins.filterSource
-This is just a thin wrapper around builtins.path.
-Implement after builtins.path is complete.
-
-### For builtins.toJSON (Path support)
-This is trivial - just add Path instance check in toJSON function.
-Can be done in 5 minutes.
-
-Code to add around line 344:
-```javascript
-if (value instanceof Path) {
-    return JSON.stringify(value.toString());
-}
-```
+See Session 24 completion notes above for implementation details.
 
 ---
 
