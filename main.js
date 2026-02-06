@@ -499,12 +499,36 @@ const nixNodeToJs = (node)=>{
             throw Error(`has_attr_expression has no attrpath: ${node.text}`)
         }
         const pathParts = valueBasedChildren(attrpath).filter(each => each.type !== ".")
-        // For simple case like `a ? b`, generate operators.hasAttr(a, "b")
-        if (pathParts.length === 1 && pathParts[0].type === "identifier") {
-            return `operators.hasAttr(${obj}, ${JSON.stringify(pathParts[0].text)})`
+
+        // Build an array of attribute names (some may be dynamic via interpolation)
+        const attrPathElements = pathParts.map(part => {
+            if (part.type === "identifier") {
+                // Static attribute name
+                return JSON.stringify(part.text)
+            } else if (part.type === "interpolation") {
+                // Dynamic attribute name via ${...}
+                const interpolatedExpr = valueBasedChildren(part).find(child =>
+                    child.type !== "${" && child.type !== "}"
+                )
+                if (!interpolatedExpr) {
+                    throw Error(`interpolation in has_attr has no expression: ${part.text}`)
+                }
+                return nixNodeToJs(interpolatedExpr)
+            } else if (part.type === "string_expression") {
+                // String expression (could contain interpolation)
+                return nixNodeToJs(part)
+            } else {
+                throw new NotImplemented(`Unsupported attrpath element type in has_attr: ${part.type}`)
+            }
+        })
+
+        // For simple case like `a ? b`, use operators.hasAttr(a, "b")
+        if (attrPathElements.length === 1) {
+            return `operators.hasAttr(${obj}, ${attrPathElements[0]})`
         }
-        // For complex paths like `a ? b.c.d`, we need to check nested
-        throw new NotImplemented(`Complex has_attr_expression with nested paths not yet supported: ${node.text}`)
+
+        // For nested paths like `a ? b.c.d` or `a ? b.${x}.c`, use operators.hasAttrPath
+        return `operators.hasAttrPath(${obj}, ${attrPathElements.join(", ")})`
     } else if (node.type == "attrset_expression" || node.type == "rec_attrset_expression") {
         // node = <attrset_expression>
         //     <{ text="{" />

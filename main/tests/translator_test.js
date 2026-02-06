@@ -48,6 +48,19 @@ const evalTranslated = (nixCode) => {
         hasAttr: (obj, attr) => {
             return obj && Object.prototype.hasOwnProperty.call(obj, attr)
         },
+        hasAttrPath: (obj, ...attrPath) => {
+            let current = obj
+            for (const attr of attrPath) {
+                if (typeof current !== "object" || current === null || Array.isArray(current)) {
+                    return false
+                }
+                if (!Object.prototype.hasOwnProperty.call(current, attr)) {
+                    return false
+                }
+                current = current[attr]
+            }
+            return true
+        },
     }
 
     // Strip import statement if present (for simple expressions that don't need runtime)
@@ -329,3 +342,46 @@ Deno.test("Scientific notation - negative exponent", () => {
     // Use approximate equality for floating point
     assertEquals(Math.abs(result - 0.000023) < 0.0000001, true)
 })
+
+// === Has-attr expression tests ===
+
+Deno.test("Simple has-attr - exists", () => {
+    const result = evalTranslated(`{ a = 1; b = 2; } ? a`)
+    assertEquals(result, true)
+})
+
+Deno.test("Simple has-attr - missing", () => {
+    const result = evalTranslated(`{ a = 1; b = 2; } ? c`)
+    assertEquals(result, false)
+})
+
+Deno.test("Nested has-attr - exists", () => {
+    const result = evalTranslated(`{ a = { b = { c = 42; }; }; } ? a.b.c`)
+    assertEquals(result, true)
+})
+
+Deno.test("Nested has-attr - missing leaf", () => {
+    const result = evalTranslated(`{ a = { b = { c = 42; }; }; } ? a.b.d`)
+    assertEquals(result, false)
+})
+
+Deno.test("Nested has-attr - missing intermediate", () => {
+    const result = evalTranslated(`{ a = { b = { c = 42; }; }; } ? a.x.c`)
+    assertEquals(result, false)
+})
+
+Deno.test("Nested has-attr - non-object intermediate", () => {
+    const result = evalTranslated(`{ a = 1; } ? a.b`)
+    assertEquals(result, false)
+})
+
+Deno.test("Interpolated has-attr", () => {
+    const result = evalTranslated(`let x = "b"; in { a = { b = 42; }; } ? a.\${x}`)
+    assertEquals(result, true)
+})
+
+Deno.test("Mixed interpolated has-attr", () => {
+    const result = evalTranslated(`let x = "b"; in { a = { b = { c = 42; }; }; } ? a.\${x}.c`)
+    assertEquals(result, true)
+})
+

@@ -61,12 +61,13 @@ All critical Nix language features have been implemented and tested! The transla
 - [x] **String interpolation** - Both double-quoted and indented strings
 - [x] **Path interpolation** - Path literals with interpolation
 
-### Test Coverage - 59 Tests Passing! ✅
+### Test Coverage - 67 Tests Passing! ✅
 
-**main/tests/translator_test.js**: 33 core tests
+**main/tests/translator_test.js**: 41 core tests (+8 has-attr tests!)
 - ✅ All literals, operators, and expressions
 - ✅ Complex function compositions
 - ✅ Nested attribute sets and let expressions
+- ✅ Has-attr with nested and interpolated paths
 
 **main/tests/string_interpolation_test.js**: 8 tests
 - ✅ Full interpolation support for both string styles
@@ -74,31 +75,28 @@ All critical Nix language features have been implemented and tested! The transla
 **main/tests/path_interpolation_test.js**: 5 tests
 - ✅ Path literals with interpolation
 
-**main/tests/nixpkgs_simple_test.js**: 13 tests (NEW!)
+**main/tests/nixpkgs_simple_test.js**: 13 tests
 - ✅ Common nixpkgs.lib patterns
 - ✅ Higher-order functions (map, filter, fold)
 - ✅ Recursion and complex compositions
 - ✅ Pipe, flip, const, identity patterns
 - ✅ Attribute set operations
 
-**Total**: 59 translator tests, all passing ✅
+**Total**: 67 translator tests, all passing ✅
 
 ### Known Limitations ⬜
 
-**One remaining translator issue**:
-1. **Line 507**: Interpolated has-attr - `attrset ? ${var}` not supported yet
-   - Simple cases work: `attrset ? foo` ✅
-   - Dynamic cases blocked: `attrset ? ${dynamicAttr}` ❌
+**All core functionality complete!** ✅
 
 **Low Priority** (edge cases and optimizations):
-2. **Line 191**: Hex/octal literals (Nix doesn't support these anyway)
-3. **Line 207**: Add more literal optimization cases
-4. **Line 147**: Design TODO - record unsafeGetAttrPos, handle `<nixpkgs>` syntax
-5. **Line 949**: nixRepr should use single quotes instead of double
-6. **Boolean shadowing**: Detect when `true`/`false` are shadowed by local variables
+1. **Line 191**: Hex/octal literals (Nix doesn't support these anyway)
+2. **Line 207**: Add more literal optimization cases
+3. **Line 147**: Design TODO - record unsafeGetAttrPos, handle `<nixpkgs>` syntax
+4. **Line 949**: nixRepr should use single quotes instead of double
+5. **Boolean shadowing**: Detect when `true`/`false` are shadowed by local variables
 
 ### Next Steps
 1. ✅ **DONE**: Test against nixpkgs.lib patterns - 13 tests passing!
-2. **Next**: Fix interpolated has-attr (line 507) - needed for some nixpkgs.lib code
-3. **Then**: Test translator against actual nixpkgs.lib files (will require import system work)
+2. ✅ **DONE**: Fix interpolated has-attr - All forms now supported!
+3. **Next**: Test translator against actual nixpkgs.lib files (will require import system work)
 4. **Optional**: Performance optimizations (non-critical)

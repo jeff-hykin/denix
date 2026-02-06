@@ -13,7 +13,7 @@ A faithful re-implementation of Nix builtins in JavaScript for Deno.
 
 ✅ **59 fully functional** Nix 2.18 builtins
 ✅ **120+ runtime tests** all passing
-✅ **59 translator tests** all passing (NEW!)
+✅ **67 translator tests** all passing (NEW!)
 ✅ **Correct derivation store paths** matching Nix exactly
 ✅ **Pure Deno** - no npm/jsr dependencies
 ✅ **Nix to JavaScript translator** - converts Nix expressions to runnable JS
@@ -138,10 +138,10 @@ All 180+ tests passing ✅
 | flake_standalone_test.js | 20 | Flake references |
 | nix218_builtins_test.js | 7 | Nix 2.18 compliance |
 
-### Translator Tests (59 tests) NEW! ✨
+### Translator Tests (67 tests) NEW! ✨
 | Suite | Tests | Coverage |
 |-------|-------|----------|
-| translator_test.js | 33 | Core translation features |
+| translator_test.js | 41 | Core translation features + has-attr |
 | string_interpolation_test.js | 8 | String interpolation |
 | path_interpolation_test.js | 5 | Path interpolation |
 | nixpkgs_simple_test.js | 13 | Common nixpkgs.lib patterns |

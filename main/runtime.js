@@ -1396,6 +1396,22 @@ import { NixError, NotImplemented } from "./errors.js"
             requireString(attr)
             return attrset.hasOwnProperty(attr.toString())
         },
+        hasAttrPath: (attrset, ...attrPath)=>{
+            // Check if a nested attribute path exists
+            // e.g., hasAttrPath({a: {b: {c: 1}}}, "a", "b", "c") => true
+            let current = attrset
+            for (const attr of attrPath) {
+                if (typeof current !== "object" || current === null || Array.isArray(current)) {
+                    return false
+                }
+                const attrStr = requireString(attr).toString()
+                if (!current.hasOwnProperty(attrStr)) {
+                    return false
+                }
+                current = current[attrStr]
+            }
+            return true
+        },
     }
     
     export const createRuntime = ()=>{

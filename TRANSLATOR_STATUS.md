@@ -10,7 +10,7 @@ The Nix to JavaScript translator is **functionally complete** for most common Ni
 ## Test Results
 
 ### Core Translator Tests (translator_test.js)
-✅ **33 tests passing** - All core features working:
+✅ **41 tests passing** - All core features working:
 - Literals (integers, floats, strings, paths)
 - Lists and attribute sets (simple and recursive)
 - Let expressions with nested attributes
@@ -21,6 +21,7 @@ The Nix to JavaScript translator is **functionally complete** for most common Ni
 - Functions (simple, with defaults, with @ syntax)
 - String interpolation (double-quoted and indented)
 - Path interpolation
+- **Has-attr with nested and interpolated paths** (NEW!)
 
 ### String Interpolation Tests (string_interpolation_test.js)
 ✅ **8 tests passing** - Full interpolation support
@@ -40,7 +41,7 @@ The Nix to JavaScript translator is **functionally complete** for most common Ni
 - Curried functions
 - Complex function composition
 
-**Total**: 59 translator tests, all passing! ✅
+**Total**: 67 translator tests, all passing! ✅
 
 ## What Works
 
@@ -53,7 +54,7 @@ The Nix to JavaScript translator is **functionally complete** for most common Ni
 - ✅ Let-in expressions with nested attribute paths
 - ✅ Rec attribute sets with lazy evaluation
 - ✅ Select expressions (a.b.c)
-- ✅ Has-attr expressions (a ? b) for simple cases
+- ✅ Has-attr expressions (a ? b, a ? b.c.d, a ? ${x}, a ? b.${x}.c) - all forms supported!
 - ✅ If-then-else with strict type checking
 - ✅ With expressions for scope manipulation
 - ✅ String interpolation (both styles: `"${x}"` and `''${x}''`)
@@ -76,29 +77,30 @@ The Nix to JavaScript translator is **functionally complete** for most common Ni
 ## Known Limitations
 
 ### Not Yet Implemented
-1. **Has-attr with interpolation** (`attrset ? ${var}`) - Line 507 in main.js
-   - Simple cases work: `attrset ? foo`
-   - Complex cases not supported: `attrset ? ${dynamicAttr}`
 
-2. **Number format edge cases** (Line 191):
+**All core functionality complete!** ✅
+
+**Low priority optimizations and edge cases**:
+
+1. **Number format edge cases** (Line 191):
    - Hex literals (0xFF) - Nix doesn't support these anyway
    - Octal literals (0o77) - Nix doesn't support these anyway
    - Scientific notation works (1.5e10, 2.3e-5)
 
-3. **Boolean shadowing detection** (Line 186):
+2. **Boolean shadowing detection** (Line 186):
    - Currently treats `true`/`false` as literals
    - Should detect when shadowed by local variables
    - Not a critical issue in practice
 
-4. **Literal optimizations** (Line 207):
+3. **Literal optimizations** (Line 207):
    - Some operator cases could avoid runtime calls
    - Not critical, just a performance optimization
 
-5. **Special syntax** (Line 148):
+4. **Special syntax** (Line 148):
    - `<nixpkgs>` angle bracket imports - should map to `builtins.findFile`
    - `unsafeGetAttrPos` tracking - needs AST position metadata
 
-6. **String representation** (Line 949):
+5. **String representation** (Line 949):
    - `nixRepr` should use single quotes to match Nix
    - Uses double quotes currently
 
@@ -122,7 +124,7 @@ These require systems beyond the translator:
 - Helper functions for common patterns
 
 ### Test Coverage
-- 59 total translator tests
+- 67 total translator tests
 - Tests cover all major language features
 - Integration tests for complex combinations
 - Validates against common nixpkgs.lib patterns
@@ -145,9 +147,9 @@ None of these are critical - current performance is good.
 ## Next Steps
 
 ### High Priority
-1. **Fix interpolated has-attr**: Support `attrset ? ${var}` pattern
-   - Used in nixpkgs.lib for dynamic attribute checks
-   - Line 507 in main.js
+1. ✅ **DONE - Fix interpolated has-attr**: Support `attrset ? ${var}` pattern
+   - All forms now supported: simple, nested, interpolated, and mixed!
+   - Tests passing for all cases
 
 2. **Test against actual nixpkgs.lib files**:
    - Start with simple modules (trivial.nix, lists.nix)
@@ -174,7 +176,7 @@ The translator is **production-ready** for:
 - ✅ String and path interpolation
 
 **Remaining work** is primarily:
-1. Edge cases (interpolated has-attr)
+1. ✅ ~~Edge cases (interpolated has-attr)~~ **DONE!**
 2. Testing against real nixpkgs code
 3. Performance optimizations (non-critical)
 
