@@ -1,0 +1,10 @@
+Perfect! The prompt.md has been updated with a comprehensive breakdown of remaining work. The file now clearly documents:
+
+1. **Test Coverage Gap**: 23 of 34 nixpkgs.lib files remain untested (68% not yet covered)
+2. **Priority-ordered tasks**: HIGH (lists, attrsets, trivial, fixed-points), MEDIUM (debug, asserts, derivations, generators), LOW (complex/specialized)
+3. **Examples Directory**: Completely missing, needs creation with structure from basics to advanced
+4. **Builtins Status**: 10 functions blocked by infrastructure (fetch*, path, etc.), 6 minor edge case TODOs
+5. **Translator Status**: Working well, 4 minor TODOs
+6. **Documentation**: Needs updates to reflect actual test counts and features
+
+The document is now focused entirely on what remains to be done, with no mention of accomplishments, as requested.
