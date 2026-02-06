@@ -1,11 +1,24 @@
 # Denix Implementation Status
 
+> **NOTE**: This file is deprecated. See [README.md](README.md) and [STATUS.md](STATUS.md) for current documentation.
+
 **Date**: 2026-02-05
 **Implementation Progress**: 59/98 Nix 2.18 builtins (60% complete, 100% of feasible scope)
 
 ## Overview
 
 This project is a faithful re-implementation of Nix builtins in JavaScript for Deno. The runtime supports pure URL imports (no npm/jsr dependencies) and includes comprehensive test coverage.
+
+## Current Documentation
+
+- **[README.md](README.md)** - Quick start guide and features
+- **[STATUS.md](STATUS.md)** - Comprehensive implementation status
+- **[prompt.md](prompt.md)** - Development notes and progress
+- **[main/runtime.md](main/runtime.md)** - FIXME tracking
+
+---
+
+# Original Content (Archived)
 
 ## Implementation Statistics
 
