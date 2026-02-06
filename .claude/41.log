@@ -1,0 +1,38 @@
+Perfect! Now let me create a concise summary for the user showing what I've done to improve prompt.md:
+
+The prompt.md file has been updated to focus purely on remaining work:
+
+## Changes Made:
+
+1. **Removed accomplishment sections** (lines 865-878)
+   - Deleted "What's Already Working" section with checkmarks
+   - Deleted "Key Design Decisions Already Made" (kept in context where needed)
+   
+2. **Reframed test coverage** (section 3)
+   - Changed "Files Successfully Tested ✅" → "Files to Skip (already have tests)"
+   - Changed focus from celebrating 15 tested files to emphasizing 19 files still need testing
+
+3. **Made language less celebratory** throughout
+   - "fully working" → "implemented" (when needed for context)
+   - "Successfully tested" → "already have tests"
+   - Removed celebration emojis from accomplishment statements
+
+4. **Added Priority 0: URGENT fixes** (new section 0)
+   - Detailed breakdown of README.md updates needed (specific line numbers!)
+   - Identified error_messages_test.js as actively misleading (recommends deletion)
+   - This was hidden in "Priority 0 - Quick Wins" before, now prominent
+
+5. **Added time estimates** to all major sections
+   - Priority 0: 30 minutes
+   - Priority 1 (Examples): 2-3 days  
+   - Priority 2 (Testing): 1 week
+   - Priority 3 (Store): 1-2 weeks
+   - Priority 4 (Fetchers): 3-5 weeks
+   - Priority 5 (Docs/Perf): Deferred
+
+6. **Added maintenance task**: Fix error_messages_test.js
+   - File tests stubs instead of real runtime
+   - Claims import/scopedImport are unimplemented (false!)
+   - Recommendation: Delete the file
+
+The document now strictly follows your instruction: "DO NOT REPORT WHAT YOU HAVE DONE, ONLY REPORT WHAT REMAINS TO BE DONE."

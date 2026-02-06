@@ -6,9 +6,88 @@ Before executing what is below, please filter out any achievements. Only keep re
 
 ## Current Tasks Overview
 
-1. **Builtins** - Implement network fetchers (fetchurl, fetchTarball) in `main/runtime.js`
-2. **Examples** - Create `./examples/` directory with nix → js translation examples
-3. **Testing** - Continue testing nixpkgs.lib files
+0. **URGENT: Fix Misleading Documentation** - README.md outdated, error_messages_test.js incorrect (30 minutes)
+1. **Examples** - Create `./examples/` directory with nix → js translation examples (2-3 days)
+2. **Testing** - Continue testing nixpkgs.lib files (1 week)
+3. **Store System** - Implement store path infrastructure (1-2 weeks)
+4. **Builtins** - Implement network fetchers (fetchurl, fetchTarball) in `main/runtime.js` (3-5 weeks)
+
+## 0. URGENT: Fix Misleading Documentation
+
+**Time**: 30 minutes
+
+### 0.1 Update README.md
+
+All numbers are outdated. Need to update to reflect current state.
+
+**Tasks**:
+- [ ] Line 5: Remove or fix STATUS.md badge (file doesn't exist)
+  - Current: `[![Status](https://img.shields.io/badge/status-complete-brightgreen)](STATUS.md)`
+  - Options:
+    1. Remove badge entirely
+    2. Change link to TRANSLATOR_STATUS.md
+    3. Create STATUS.md file
+  - **Recommended**: Remove badge (STATUS.md doesn't exist)
+- [ ] Line 6: Update test count badge
+  - Current: `[![Tests](https://img.shields.io/badge/tests-120%2B%20passing-brightgreen)]`
+  - Change to: `[![Tests](https://img.shields.io/badge/tests-170%2B%20passing-brightgreen)]`
+- [ ] Line 14: Update builtin count
+  - Current: `✅ **59 fully functional** Nix 2.18 builtins`
+  - Change to: `✅ **61 fully functional** Nix 2.18 builtins`
+- [ ] Line 15: Update runtime test count
+  - Current: `✅ **120+ runtime tests** all passing`
+  - Change to: `✅ **170+ runtime tests** all passing`
+- [ ] Line 16: Update translator test count
+  - Current: `✅ **67 translator tests** all passing`
+  - Change to: `✅ **87 translator tests** all passing`
+- [ ] Line 20: Add import system to feature list (currently missing)
+  - Add after line 19: `✅ **Import system** - builtins.import and builtins.scopedImport`
+- [ ] Line 65: Fix broken STATUS.md link
+  - Current: `See [STATUS.md](STATUS.md) for complete list`
+  - Change to: `See main/runtime.js for complete list`
+- [ ] Line 74: Remove incorrect unimplemented functions
+  - Current: `- **Import/eval** (2): \`import\`, \`scopedImport\` (requires Nix parser)`
+  - **Action**: DELETE this line (both functions are implemented!)
+- [ ] Line 97: Remove non-existent STATUS.md reference
+  - Current: Has STATUS.md in file structure
+  - **Action**: Remove or replace with actual files
+- [ ] Line 126: Update total test count
+  - Current: `All 180+ tests passing ✅`
+  - Change to: `All 240+ tests passing ✅`
+- [ ] Line 128: Update runtime test header
+  - Current: `### Runtime Tests (120+ tests)`
+  - Change to: `### Runtime Tests (170+ tests)`
+- [ ] Line 141: Update translator test header
+  - Current: `### Translator Tests (67 tests) NEW! ✨`
+  - Change to: `### Translator Tests (87 tests)`
+- [ ] Lines 142-147: Add missing test suites to table
+  - Add these rows:
+    - `nixpkgs_trivial_test.js | 20 | Functions from lib.trivial`
+    - `nixpkgs_lib_files_test.js | 15 | Complete lib file tests`
+    - `import_resolver_test.js | 16 | Path resolution`
+    - `import_cache_test.js | 12 | Import caching`
+    - `import_loader_test.js | 7 | File loading`
+    - `import_integration_test.js | 8 | Import builtins`
+    - `import_e2e_test.js | 6 | End-to-end import`
+    - `hasattr_test.js | 7 | has-attr operator`
+
+### 0.2 Fix error_messages_test.js
+
+This test file is actively misleading - it claims import/scopedImport are unimplemented.
+
+**Problem**:
+- File: `main/tests/error_messages_test.js`
+- Lines 40-44 define stub builtins.import that throws NotImplemented
+- Lines 109-127 test that import/scopedImport throw NotImplemented
+- **Reality**: import and scopedImport ARE fully implemented in runtime.js!
+- This test passes because it's testing STUBS, not the real runtime
+
+**Tasks**:
+- [ ] Delete main/tests/error_messages_test.js
+  - File provides no value (tests stubs, not reality)
+  - Actively misleading (claims things are unimplemented that are implemented)
+  - If needed for actual error message testing, rewrite to test runtime.js
+  - **Recommended**: Just delete it
 
 ## 1. Builtins: Network Fetchers Implementation
 
@@ -439,9 +518,11 @@ After fetchurl and fetchTarball work, assess these:
 - **fetchTree** - Generic fetcher (delegates to others)
 - **fetchClosure** - Binary cache downloads (complex, multi-week)
 
-## 2. Examples Directory
+## 2. Examples Directory (Priority 1)
 
-**IMMEDIATE TASK**: Create examples showing nix → js translation
+**Time**: 2-3 days
+
+Create examples showing nix → js translation
 
 ### Structure Needed
 
@@ -604,11 +685,13 @@ examples/
   - Each example .nix file should have expected output in comment
   - Verify output matches expected value
 
-## 3. nixpkgs.lib Testing
+## 3. nixpkgs.lib Testing (Priority 2)
 
-**Current**: 15/34 lib files tested (44%)
+**Time**: 1 week
 
-### Files Successfully Tested ✅
+**Remaining**: 19/34 lib files need testing
+
+### Files to Skip (already have tests)
 - ascii-table.nix
 - strings.nix (with imports)
 - minfeatures.nix
@@ -620,12 +703,12 @@ examples/
 - systems/flake-systems.nix
 - systems/supported.nix
 - fetchers.nix
-- systems/parse.nix (inferred from tests)
-- systems/inspect.nix (inferred from tests)
-- systems/default.nix (inferred from tests)
-- systems/doubles.nix (inferred from tests)
+- systems/parse.nix
+- systems/inspect.nix
+- systems/default.nix
+- systems/doubles.nix
 
-### Remaining Files to Test (19 files)
+### Files Needing Tests (19 files)
 
 **Easy wins** (can test standalone, priority order):
 1. [ ] **debug.nix** - debugging utilities (lib.traceIf, lib.traceVal, etc.)
@@ -733,7 +816,9 @@ examples/
   - Fundamental to module system
   - Test: types.str, types.int, types.bool, types.listOf, types.attrsOf
 
-## 4. Performance & Optimization
+## 4. Performance & Optimization (Priority 5 - Deferred)
+
+**Time**: Weeks to months
 
 ### Tasks Remaining
 
@@ -775,7 +860,9 @@ examples/
     - Benchmark results vs native Nix
     - Recommendations for users (avoid deep nesting, use non-rec when possible)
 
-## 5. Documentation
+## 5. Documentation (Priority 5 - Deferred)
+
+**Time**: 1-2 weeks
 
 ### Tasks Remaining
 
@@ -833,7 +920,9 @@ examples/
   - Covered in PERFORMANCE.md (see section 4)
   - Link from main README.md
 
-## 6. Maintenance & Infrastructure
+## 6. Maintenance & Infrastructure (Priority 5 - Deferred)
+
+**Time**: 1-2 weeks
 
 ### Tasks Remaining
 
@@ -854,6 +943,14 @@ examples/
   - Several SESSION_*.md files in root directory
   - Move to docs/ subdirectory or archive
   - Keep MEMORY.md reference current
+- [ ] Fix or remove error_messages_test.js
+  - Current test file (main/tests/error_messages_test.js) tests stub implementations, not real runtime
+  - Lines 40-44 claim import/scopedImport are NotImplemented (incorrect - they ARE implemented!)
+  - Options:
+    1. Delete the file (it's testing stubs, not real functionality)
+    2. Update to test actual runtime.js error messages for truly unimplemented functions
+    3. Rename to stub_error_messages_test.js to clarify it's not testing runtime
+  - **Recommended**: Delete the file - it's misleading and provides no value
 - [ ] Create contributor guide (CONTRIBUTING.md)
   - How to add a new builtin
   - How to add a translator feature
@@ -861,21 +958,6 @@ examples/
   - Code style guidelines
 
 ## Implementation Notes
-
-### Key Design Decisions Already Made
-1. **BigInt for integers**: Required for correct division semantics
-2. **Object.create() for scopes**: Preserves getters, enables recursive sets
-3. **InterpolatedString class**: Enables lazy string interpolation
-4. **Import caching**: Prevents re-evaluation, detects circular imports
-5. **Store path algorithm**: Already implemented in tools/store_path.js
-
-### What's Already Working
-- ✅ 61/98 Nix 2.18 builtins fully functional
-- ✅ 87 translator tests (100% pass rate)
-- ✅ 170+ runtime tests (100% pass rate)
-- ✅ Import system (builtins.import, builtins.scopedImport)
-- ✅ Correct store paths for derivations
-- ✅ 15 nixpkgs.lib files tested end-to-end
 
 ### What Needs Work (Prioritized)
 1. **Quick fixes** (Priority 0): README.md outdated numbers - 30 minutes
@@ -888,29 +970,28 @@ examples/
 ## Summary of Work Remaining
 
 **Priority 0 - Quick Wins** (30 minutes):
-1. **CRITICAL**: Update README.md with current accurate numbers
-   - Line 5: Remove STATUS.md badge entirely (file doesn't exist, use TRANSLATOR_STATUS.md instead or just remove)
-   - Line 6: Change "120+ passing" → "170+ passing"
-   - Line 14: Change "59 fully functional" → "61 fully functional"
-   - Line 15: Change "120+ runtime tests" → "170+ runtime tests"
-   - Line 16: Change "67 translator tests" → "87 translator tests"
-   - Line 20: Add "✅ **Import system fully working** - builtins.import and builtins.scopedImport"
-   - Line 65: Change "See [STATUS.md](STATUS.md)" → "See main/runtime.js" (since STATUS.md doesn't exist)
-   - Line 74: Remove entire "Import/eval (2)" line - import and scopedImport ARE IMPLEMENTED!
-   - Line 97: Remove "STATUS.md" line (file doesn't exist)
-   - Line 126: Change "All 180+ tests" → "All 240+ tests" (73 test suites with ~170 runtime + 87 translator tests)
-   - Line 128: Change "120+ tests" → "170+ tests"
-   - Line 141: Change "67 tests" → "87 tests"
-   - Lines 142-147: Update test suite list to include:
+1. **CRITICAL**: Update README.md to fix outdated information
+   - Line 5: Remove STATUS.md badge (file doesn't exist)
+   - Line 6: Update test count: "120+ passing" → "170+ passing"
+   - Line 14: Update builtin count: "59 fully functional" → "61 fully functional"
+   - Line 15: Update test count: "120+ runtime tests" → "170+ runtime tests"
+   - Line 16: Update test count: "67 translator tests" → "87 translator tests"
+   - Line 20: Add import system feature (currently missing from features list)
+   - Line 65: Fix broken link: "See [STATUS.md](STATUS.md)" → "See main/runtime.js"
+   - Line 74: Remove incorrect "Import/eval (2)" line (these are implemented)
+   - Line 97: Remove non-existent "STATUS.md" reference
+   - Line 126: Update total: "All 180+ tests" → "All 240+ tests"
+   - Line 128: Update runtime: "120+ tests" → "170+ tests"
+   - Line 141: Update translator: "67 tests" → "87 tests"
+   - Lines 142-147: Add missing test suites:
      - nixpkgs_trivial_test.js (20 tests)
-     - nixpkgs_lib_files_test.js (15 tests - tested lib files)
+     - nixpkgs_lib_files_test.js (15 tests)
      - import_resolver_test.js (16 tests)
      - import_cache_test.js (12 tests)
      - import_loader_test.js (7 tests)
      - import_integration_test.js (8 tests)
      - import_e2e_test.js (6 tests)
      - hasattr_test.js (7 tests)
-     - error_messages_test.js (tests)
 
 **Priority 1 - Examples & Documentation** (2-3 days):
 1. Create examples/ directory structure
@@ -1030,8 +1111,8 @@ When implementing the above tasks, watch out for these common mistakes:
 1. **Update README.md** (15 minutes)
    - Fix test counts: 87 translator tests, 170+ runtime tests
    - Fix builtin count: 61/98 implemented
-   - Mention import system is fully working
-   - Remove STATUS.md badge or create the file
+   - Add import system to features list (currently missing)
+   - Remove broken STATUS.md badge link
 
 2. **Create examples/ directory** (2-3 days)
    - This is highly visible and immediately useful
