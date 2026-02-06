@@ -876,8 +876,180 @@ import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPa
                 // Return Path object
                 return new Path(storePath);
             },
-            "fetchGit": (args)=>{
-                throw new NotImplemented(`builtins.fetchGit requires git binary integration and store implementation`)
+            "fetchGit": async (args) => {
+                // Parse arguments: can be string URL or {url, name?, rev?, ref?, submodules?, shallow?, allRefs?}
+                let url, name, rev, ref, submodules, shallow, allRefs;
+                if (typeof args === "string" || args instanceof InterpolatedString) {
+                    url = requireString(args);
+                    name = extractNameFromUrl(url) || "source";
+                    rev = null;
+                    ref = "HEAD";
+                    submodules = false;
+                    shallow = false;
+                    allRefs = false;
+                } else {
+                    url = requireString(args["url"]);
+                    name = args["name"] ? requireString(args["name"]) : (extractNameFromUrl(url) || "source");
+                    rev = args["rev"] ? requireString(args["rev"]) : null;
+                    ref = args["ref"] ? requireString(args["ref"]) : "HEAD";
+                    submodules = args["submodules"] === true;
+                    shallow = args["shallow"] === true;
+                    allRefs = args["allRefs"] === true;
+                }
+
+                // Normalize ref: add refs/heads/ prefix unless ref starts with refs/ or is HEAD
+                let normalizedRef = ref;
+                if (ref && ref !== "HEAD" && !ref.startsWith("refs/")) {
+                    normalizedRef = `refs/heads/${ref}`;
+                }
+
+                // Ensure store directory exists
+                await ensureStoreDirectory();
+
+                // Check cache
+                // TODO: Store and retrieve metadata with cached paths
+                // For now, skip cache to ensure metadata is always available
+                const cacheKey = `fetchgit:${url}:${normalizedRef}:${rev || "tip"}`;
+                // const cached = await getCachedPath(cacheKey);
+                // if (cached && await exists(cached)) {
+                //     const result = new Path(cached);
+                //     return result;
+                // }
+
+                // Validate git binary exists
+                try {
+                    const gitVersion = new Deno.Command("git", {
+                        args: ["--version"],
+                        stdout: "piped",
+                        stderr: "piped",
+                    });
+                    const { code } = await gitVersion.output();
+                    if (code !== 0) {
+                        throw new Error("git command failed");
+                    }
+                } catch (error) {
+                    throw new Error(
+                        `builtins.fetchGit requires git binary to be installed\n` +
+                        `Error: ${error.message}`
+                    );
+                }
+
+                // Create temp directory for cloning
+                const tempDir = await Deno.makeTempDir();
+
+                try {
+                    // Build git clone command
+                    const cloneArgs = ["clone"];
+                    if (shallow) {
+                        cloneArgs.push("--depth", "1");
+                    }
+                    if (submodules) {
+                        cloneArgs.push("--recurse-submodules");
+                    }
+                    // Note: Only specify branch if not HEAD and not using rev
+                    // If rev is specified, we'll checkout after clone
+                    // Use the original ref for --branch (git expects branch name, not refs/heads/...)
+                    if (!rev && ref && ref !== "HEAD") {
+                        cloneArgs.push("--branch", ref);
+                    }
+                    cloneArgs.push(url, tempDir);
+
+                    // Execute git clone
+                    const cloneCmd = new Deno.Command("git", {
+                        args: cloneArgs,
+                        stdout: "piped",
+                        stderr: "piped",
+                    });
+
+                    const cloneResult = await cloneCmd.output();
+                    if (cloneResult.code !== 0) {
+                        const errorText = new TextDecoder().decode(cloneResult.stderr);
+                        throw new Error(`git clone failed: ${errorText}`);
+                    }
+
+                    // If allRefs is true, fetch all refs
+                    if (allRefs) {
+                        const fetchCmd = new Deno.Command("git", {
+                            args: ["-C", tempDir, "fetch", "--all"],
+                            stdout: "piped",
+                            stderr: "piped",
+                        });
+                        await fetchCmd.output(); // Ignore errors on fetch --all
+                    }
+
+                    // If specific revision requested, checkout that revision
+                    if (rev) {
+                        const checkoutCmd = new Deno.Command("git", {
+                            args: ["-C", tempDir, "checkout", rev],
+                            stdout: "piped",
+                            stderr: "piped",
+                        });
+                        const checkoutResult = await checkoutCmd.output();
+                        if (checkoutResult.code !== 0) {
+                            const errorText = new TextDecoder().decode(checkoutResult.stderr);
+                            throw new Error(`git checkout ${rev} failed: ${errorText}`);
+                        }
+                    }
+
+                    // Helper function to run git command and get output
+                    async function gitOutput(args) {
+                        const cmd = new Deno.Command("git", {
+                            args: ["-C", tempDir, ...args],
+                            stdout: "piped",
+                            stderr: "piped",
+                        });
+                        const { code, stdout } = await cmd.output();
+                        if (code !== 0) {
+                            throw new Error(`git ${args.join(" ")} failed`);
+                        }
+                        return new TextDecoder().decode(stdout).trim();
+                    }
+
+                    // Extract metadata
+                    const fullRev = await gitOutput(["rev-parse", "HEAD"]);
+                    const shortRev = await gitOutput(["rev-parse", "--short", "HEAD"]);
+                    const revCountStr = await gitOutput(["rev-list", "--count", "HEAD"]);
+                    const revCount = BigInt(revCountStr);
+                    const lastModifiedStr = await gitOutput(["log", "-1", "--format=%ct", "HEAD"]);
+                    const lastModified = BigInt(lastModifiedStr);
+
+                    // Remove .git directory for determinism
+                    try {
+                        await Deno.remove(`${tempDir}/.git`, { recursive: true });
+                    } catch {
+                        // Ignore errors if .git doesn't exist or can't be removed
+                    }
+
+                    // Compute NAR hash of directory
+                    const narHash = await hashDirectory(tempDir);
+
+                    // Compute store path
+                    const storePath = computeFetchStorePath(narHash, name);
+
+                    // Move to store
+                    await atomicMove(tempDir, storePath);
+
+                    // Cache the result
+                    await setCachedPath(cacheKey, storePath);
+
+                    // Return Path object with metadata as properties
+                    const result = new Path(storePath);
+                    result.rev = fullRev;
+                    result.shortRev = shortRev;
+                    result.revCount = revCount;
+                    result.lastModified = lastModified;
+                    result.narHash = narHash;
+                    result.submodules = submodules;
+                    return result;
+                } catch (error) {
+                    // Clean up temp directory on error
+                    try {
+                        await Deno.remove(tempDir, { recursive: true });
+                    } catch {
+                        // Ignore cleanup errors
+                    }
+                    throw error;
+                }
             },
             "fetchMercurial": (args)=>{
                 throw new NotImplemented(`builtins.fetchMercurial requires hg binary integration and store implementation`)

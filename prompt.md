@@ -35,66 +35,55 @@
 
 ## 📊 WHAT REMAINS TO IMPLEMENT
 
-**5 builtins throw NotImplemented errors in main/runtime.js:**
-1. **fetchGit** - NOT IMPLEMENTED (HIGH PRIORITY - START HERE)
-2. **fetchTree** - NOT IMPLEMENTED (MEDIUM PRIORITY - requires fetchGit first)
-3. **fetchMercurial** - NOT IMPLEMENTED (LOW PRIORITY - rarely used)
-4. **fetchClosure** - NOT IMPLEMENTED (DEFER - very complex)
-5. **getFlake** - NOT IMPLEMENTED (SKIP - massive undertaking)
+**4 builtins throw NotImplemented errors in main/runtime.js:**
+1. **fetchTree** - NOT IMPLEMENTED (HIGH PRIORITY - START HERE)
+2. **fetchMercurial** - NOT IMPLEMENTED (MEDIUM PRIORITY)
+3. **fetchClosure** - NOT IMPLEMENTED (DEFER - very complex)
+4. **getFlake** - NOT IMPLEMENTED (SKIP - massive undertaking)
 
-**YOUR IMMEDIATE TASK:** Implement builtins.fetchGit (14-16 hours)
+**YOUR IMMEDIATE TASK:** Implement builtins.fetchTree (6-8 hours)
 
 **BEFORE YOU START:**
-1. Read https://noogle.dev/f/builtins/fetchGit (complete page)
-2. Read https://nix.dev/manual/nix/2.18/language/builtins (fetchGit section)
+1. Read https://noogle.dev/f/builtins/fetchTree (complete page)
+2. Read https://nix.dev/manual/nix/2.25/language/builtins (fetchTree section)
 3. Write notes on what you learned
 4. Understand ALL parameters, defaults, and return values
 5. THEN begin implementation
 
 ## 📊 CURRENT STATUS SUMMARY
 
-**Network Fetchers (7 total) - 2 implemented, 5 remain:**
-- ❌ fetchGit - NOT IMPLEMENTED (HIGH PRIORITY - DO THIS FIRST)
-- ❌ fetchTree - NOT IMPLEMENTED (MEDIUM PRIORITY, needs fetchGit)
-- ❌ fetchMercurial - NOT IMPLEMENTED (LOW PRIORITY)
+**Network Fetchers (7 total) - 4 implemented, 3 remain:**
+- ❌ fetchTree - NOT IMPLEMENTED (HIGH PRIORITY - DO THIS FIRST)
+- ❌ fetchMercurial - NOT IMPLEMENTED (MEDIUM PRIORITY)
 - ❌ fetchClosure - NOT IMPLEMENTED (DEFER - very complex)
-- ❌ getFlake - NOT IMPLEMENTED (SKIP - massive undertaking)
 
-**Remaining Work:** 5 fetchers to implement (29% done so far)
+**Remaining Work:** 3 fetchers to implement (57% done so far)
 
 ## 🎯 IMPLEMENTATION PRIORITIES
 
 **PHASE 1: Runtime Builtins (CURRENT PHASE - DO THIS NOW)**
 
-### Task 1: fetchGit (HIGH PRIORITY - START HERE)
-- **Location**: main/runtime.js line 879
-- **Status**: NOT IMPLEMENTED - throws NotImplemented error
-- **Time**: 14-16 hours over 2-3 days
-- **Blocks**: fetchTree cannot be implemented without this
-- **Dependencies**: Git binary must be installed
-
-### Task 2: fetchTree (MEDIUM PRIORITY - AFTER fetchGit)
-- **Location**: main/runtime.js line 886
+### Task 1: fetchTree (HIGH PRIORITY - START HERE)
+- **Location**: main/runtime.js line ~1057
 - **Status**: NOT IMPLEMENTED - throws NotImplemented error
 - **Time**: 6-8 hours over 1-2 days
-- **Requires**: fetchGit MUST be complete first
-- **Note**: Experimental feature, wraps other fetchers
+- **Note**: Experimental feature, wraps other fetchers (fetchGit, fetchTarball, fetchurl)
 
-### Task 3: fetchMercurial (LOW PRIORITY - OPTIONAL)
-- **Location**: main/runtime.js line 883
+### Task 2: fetchMercurial (MEDIUM PRIORITY - OPTIONAL)
+- **Location**: main/runtime.js line ~1054
 - **Status**: NOT IMPLEMENTED - throws NotImplemented error
 - **Time**: 8-10 hours
 - **Notes**: Rarely used, can skip
 - **Dependencies**: Mercurial (hg) binary must be installed
 
-### Task 4: fetchClosure (DEFER)
-- **Location**: main/runtime.js line 889
+### Task 3: fetchClosure (DEFER)
+- **Location**: main/runtime.js line ~1060
 - **Status**: NOT IMPLEMENTED - throws NotImplemented error
 - **Time**: 40+ hours (very complex)
 - **Notes**: Do not implement unless explicitly required
 - **Complexity**: Requires binary cache protocol, signature verification, NAR deserialization
 
-### Task 5: getFlake (SKIP)
+### Task 4: getFlake (SKIP)
 - **Location**: main/runtime.js line 1424
 - **Status**: NOT IMPLEMENTED - throws NotImplemented error
 - **Time**: 80-120+ hours
@@ -147,70 +136,46 @@
 6. THEN start coding
 
 
-## 🎯 YOUR CURRENT TASK: Implement fetchGit
+## 🎯 YOUR CURRENT TASK: Implement fetchTree
 
 **START HERE - Do this before anything else:**
 
 ### Step 0: Read Documentation (MANDATORY - 15 minutes)
-1. Go to https://noogle.dev/f/builtins/fetchGit
+1. Go to https://noogle.dev/f/builtins/fetchTree
 2. Read the ENTIRE page (every word, every example)
-3. Go to https://nix.dev/manual/nix/2.18/language/builtins
-4. Read the fetchGit section completely
+3. Go to https://nix.dev/manual/nix/2.25/language/builtins
+4. Read the fetchTree section completely
 5. Write down what you learned before coding
 
 **Do NOT proceed to Step 1 until you have read and understood the official documentation.**
 
-### Step 1: Implement Argument Parsing (1 hour)
-- Location: main/runtime.js line 879
-- Accept URL string OR attribute set
-- Parse and validate all parameters (url, name, rev, ref, submodules, shallow, allRefs)
-- Apply default values per Nix documentation
+### Step 1: Implement URL Scheme Detection (1 hour)
+- Location: main/runtime.js (after fetchGit)
+- Parse URL to detect type: git, tarball, file, github
+- Handle both string URLs and {url, type?} attribute sets
 
-### Step 2: Validate Git Binary (30 minutes)
-- Check if git is installed
-- Throw clear error if not found
+### Step 2: Normalize URLs (1 hour)
+- Transform github:owner/repo → git URL
+- Handle git+https://, git+ssh:// schemes
+- Detect tarball from .tar.gz, .tar.bz2, .tar.xz extensions
 
-### Step 3: Implement Caching (30 minutes)
-- Build cache key from URL + ref + rev
-- Check if already cached
-- Return cached result if exists
+### Step 3: Delegate to Appropriate Fetcher (2 hours)
+- type="git" → call builtins.fetchGit
+- type="tarball" → call builtins.fetchTarball
+- type="file" → call builtins.fetchurl
+- type="github" → transform and call fetchGit
 
-### Step 4: Clone Repository (3 hours)
-- Create temp directory
-- Execute git clone with appropriate flags
-- Handle errors (network, auth, invalid URL)
+### Step 4: Normalize Return Format (1 hour)
+- Ensure consistent output structure across fetchers
+- Return Path with metadata
 
-### Step 5: Checkout Revision (1 hour)
-- Checkout specific revision if provided
-- Verify checkout succeeded
-
-### Step 6: Extract Metadata (2 hours)
-- Get rev (git rev-parse HEAD)
-- Get shortRev (git rev-parse --short HEAD)
-- Get revCount (git rev-list --count HEAD)
-- Get lastModified (git log -1 --format=%ct HEAD)
-
-### Step 7: Clean Working Directory (30 minutes)
-- Remove .git directory
-- Result should be clean directory with only repo contents
-
-### Step 8: Hash and Store (1.5 hours)
-- Compute NAR hash using nar_hash.js
-- Compute store path using store_path.js
-- Move to store using store_manager.js
-- Save to cache
-
-### Step 9: Build Result (30 minutes)
-- Return attribute set matching Nix structure
-- Include: outPath, rev, shortRev, revCount, lastModified, narHash, submodules
-
-### Step 10: Write Tests (4 hours)
-- Create main/tests/builtins_fetchgit_test.js
-- Test basic clone, specific revision, branch reference
-- Test caching, errors, edge cases
+### Step 5: Write Tests (2 hours)
+- Create main/tests/builtins_fetchtree_test.js
+- Test git URLs, tarball URLs, github shortcuts
+- Test type detection and delegation
 - Verify output matches Nix behavior
 
-**Total Time: 14-16 hours over 2-3 days**
+**Total Time: 6-8 hours over 1-2 days**
 
 ## 🔧 NPM MODULE USAGE (ALLOWED)
 
@@ -228,15 +193,14 @@ import pkg from "https://esm.sh/package-name@1.0.0";
 - ⚠️ Node-specific APIs may not work through esm.sh
 
 
-## 📋 UNIMPLEMENTED BUILTINS (5 total)
+## 📋 UNIMPLEMENTED BUILTINS (4 total)
 
-| Builtin | Status | Priority | Est. Time | Documentation Link | Blocks |
-|---------|--------|----------|-----------|-------------------|--------|
-| **fetchGit** | NOT IMPL | 🔴 HIGH | 14-16 hrs | https://noogle.dev/f/builtins/fetchGit | fetchTree |
-| **fetchTree** | NOT IMPL | 🟡 MEDIUM | 6-8 hrs | https://noogle.dev/f/builtins/fetchTree | (experimental) |
-| **fetchMercurial** | NOT IMPL | 🟢 LOW | 8-10 hrs | https://noogle.dev/f/builtins/fetchMercurial | (rarely used) |
-| **fetchClosure** | NOT IMPL | ⚪ DEFER | 40+ hrs | https://noogle.dev/f/builtins/fetchClosure | (experimental) |
-| **getFlake** | NOT IMPL | ⚫ SKIP | 80+ hrs | https://noogle.dev/f/builtins/getFlake | (months of work) |
+| Builtin | Status | Priority | Est. Time | Documentation Link | Notes |
+|---------|--------|----------|-----------|-------------------|-------|
+| **fetchTree** | NOT IMPL | 🔴 HIGH | 6-8 hrs | https://noogle.dev/f/builtins/fetchTree | experimental, wraps other fetchers |
+| **fetchMercurial** | NOT IMPL | 🟡 MEDIUM | 8-10 hrs | https://noogle.dev/f/builtins/fetchMercurial | rarely used |
+| **fetchClosure** | NOT IMPL | ⚪ DEFER | 40+ hrs | https://noogle.dev/f/builtins/fetchClosure | experimental, very complex |
+| **getFlake** | NOT IMPL | ⚫ SKIP | 80+ hrs | https://noogle.dev/f/builtins/getFlake | massive undertaking |
 
 ---
 
@@ -614,48 +578,7 @@ Deno.test("fetchGit - metadata types", async () => {
 
 ## 📋 DETAILED BREAKDOWN: Remaining Implementations
 
-### 1. builtins.fetchGit - NOT IMPLEMENTED (HIGH PRIORITY - START HERE)
-
-**OFFICIAL DOCUMENTATION**: https://nix.dev/manual/nix/2.18/language/builtins (fetchGit section)
-
-Location: main/runtime.js line 879 (search for "fetchGit")
-Current State: Throws NotImplemented error
-
-**What it does**: Clones Git repositories and copies them to the Nix store with metadata (commit hash, revision count, etc.)
-
-**Input Parameters** (official Nix 2.18 spec):
-- url (string, required): Git repository URL
-- name (string, optional): Store directory name (default: basename of URL)
-- rev (string, optional): Git revision/commit hash (default: tip of ref)
-- ref (string, optional): Branch/tag name (default: "HEAD", auto-prefixed with "refs/heads/")
-- submodules (boolean, optional): Checkout submodules (default: false)
-- shallow (boolean, optional): Use shallow clone (default: false)
-- allRefs (boolean, optional): Fetch all refs (default: false)
-
-**Return Value**: Attribute set with:
-- outPath: Store path string
-- rev: Full commit hash (40 chars)
-- shortRev: Short commit hash (7 chars)
-- revCount: Integer commit count
-- lastModified: Unix timestamp of commit
-- narHash: SHA256 hash of directory contents
-- submodules: Boolean echoing input
-
-**Implementation Plan**: See START HERE section above for detailed 10-phase breakdown
-
-**Key Implementation Challenges**:
-1. Git command execution with proper error handling
-2. Parsing git command outputs (commit hashes, timestamps, etc.)
-3. Ref name normalization (auto-prefix "refs/heads/")
-4. Local directory handling (git ls-files filtering)
-5. Cache key construction (URL + ref + rev)
-
-**Testing Requirements**:
-- 13 test cases covering URL variants, caching, errors, metadata extraction
-- Test against real public repos (e.g., NixOS/nix, small test repos)
-- Verify output matches Nix exactly (same outPath, same metadata)
-
-### 2. builtins.fetchTree - NOT IMPLEMENTED (MEDIUM PRIORITY - EXPERIMENTAL)
+### 1. builtins.fetchTree - NOT IMPLEMENTED (HIGH PRIORITY - EXPERIMENTAL)
 
 **DOCUMENTATION**:
 - Noogle: https://noogle.dev/f/builtins/fetchTree
@@ -701,7 +624,7 @@ Current State: Throws NotImplemented error
 
 **Estimated Time**: 6-8 hours (mostly URL parsing and delegation logic)
 
-### 3. builtins.fetchMercurial - NOT IMPLEMENTED (LOW PRIORITY - LEGACY)
+### 2. builtins.fetchMercurial - NOT IMPLEMENTED (MEDIUM PRIORITY - LEGACY)
 
 **DOCUMENTATION**:
 - Release notes: https://nix.dev/manual/nix/2.18/release-notes/rl-2.0 (mentions fetchMercurial)
@@ -744,7 +667,7 @@ Current State: Throws NotImplemented error
 
 **Estimated Time**: 8-10 hours (similar to fetchGit implementation)
 
-### 4. builtins.fetchClosure - NOT IMPLEMENTED (VERY LOW PRIORITY - EXPERIMENTAL)
+### 3. builtins.fetchClosure - NOT IMPLEMENTED (DEFER - EXPERIMENTAL)
 
 **OFFICIAL DOCUMENTATION**: https://nix.dev/manual/nix/2.18/language/builtins (fetchClosure section)
 
@@ -802,7 +725,7 @@ Current State: Throws NotImplemented error
 
 **RECOMMENDATION**: Skip unless absolutely necessary. Rarely used, experimental, and blocks nothing important.
 
-### 5. builtins.getFlake - NOT IMPLEMENTED (DEFER INDEFINITELY - EXPERIMENTAL)
+### 4. builtins.getFlake - NOT IMPLEMENTED (SKIP - EXPERIMENTAL)
 
 **OFFICIAL DOCUMENTATION**: https://nix.dev/manual/nix/2.18/language/builtins (getFlake section)
 
@@ -994,13 +917,13 @@ deno test --allow-all main/tests/builtins_fetchgit_test.js  # specific file
 - Do NOT update README.md
 - Do NOT celebrate or report achievements
 
-**YOUR SINGLE TASK:** Implement builtins.fetchGit in main/runtime.js
+**YOUR SINGLE TASK:** Implement builtins.fetchTree in main/runtime.js
 
 **BEFORE WRITING A SINGLE LINE OF CODE:**
-1. Visit https://noogle.dev/f/builtins/fetchGit
+1. Visit https://noogle.dev/f/builtins/fetchTree
 2. Read the ENTIRE page (every word, every example)
-3. Visit https://nix.dev/manual/nix/2.18/language/builtins
-4. Read the fetchGit section completely
+3. Visit https://nix.dev/manual/nix/2.25/language/builtins
+4. Read the fetchTree section completely
 5. Write notes on what you learned (parameters, defaults, return values)
 6. Can you explain ALL parameters and their defaults? If not, read again.
 7. ONLY THEN begin implementation
