@@ -142,6 +142,138 @@ Deno.test("nixpkgs.lib file loading", async (t) => {
 
         console.log("✅ inherit_from in attrsets works")
     })
+
+    await t.step("load strings.nix with import (imports ascii-table.nix)", () => {
+        // strings.nix takes { lib } as argument and imports ascii-table.nix
+        // We'll create a minimal lib context to pass to it
+
+        const filePath = join(nixpkgsLibPath, "strings.nix")
+        const nixCode = Deno.readTextFileSync(filePath)
+
+        // Translate to JS
+        let jsCode = convertToJs(nixCode, { relativePath: filePath })
+
+        // Create runtime with import support
+        const runtime = createRuntime()
+        runtime.runtime.currentFile = filePath  // Set current file for relative imports
+
+        // Remove import statements (we'll pass runtime directly)
+        if (jsCode.includes('import { createRuntime }')) {
+            jsCode = jsCode.replace(/import \{ createRuntime \}.*\n/, '')
+            jsCode = jsCode.replace(/const runtime = createRuntime\(\)\n/, '')
+        }
+
+        // Remove multi-line comments (/** ... */) which break Function evaluation
+        jsCode = jsCode.replace(/\/\*\*[\s\S]*?\*\//g, '')
+
+        // Create evaluation scope
+        const nixScope = {
+            builtins: runtime.runtime.builtins,
+            ...runtime.runtime.builtins
+        }
+
+        // Evaluate using Function constructor
+        const evalFunc = new Function(
+            'runtime',
+            'operators',
+            'builtins',
+            'nixScope',
+            'InterpolatedString',
+            'Path',
+            `return ${jsCode}`
+        )
+
+        const moduleFactory = evalFunc(
+            { scopeStack: [nixScope] },
+            runtime.runtime.operators,
+            runtime.runtime.builtins,
+            nixScope,
+            runtime.runtime.InterpolatedString,
+            runtime.runtime.Path
+        )
+
+        // Verify it's a function
+        assertEquals(typeof moduleFactory, "function", "strings.nix should export a function")
+
+        // Create a minimal lib context for testing
+        // strings.nix needs lib.trivial.warnIf
+        const minimalLib = {
+            trivial: {
+                warnIf: (cond, msg, val) => val,  // Simplified warnIf
+            }
+        }
+
+        // Call the module factory with lib argument
+        const stringsModule = moduleFactory({ lib: minimalLib })
+
+        // Verify it returned an object
+        assertEquals(typeof stringsModule, "object", "strings.nix should return an object")
+        assertExists(stringsModule, "strings.nix should return a non-null value")
+
+        // Verify it has some expected string functions
+        // (We can't test all functions without a full lib context, but we can check structure)
+        assertExists(stringsModule.concatStrings, "strings.nix should have concatStrings")
+        assertExists(stringsModule.concatStringsSep, "strings.nix should have concatStringsSep")
+
+        console.log("✅ strings.nix loaded successfully with ascii-table.nix import")
+    })
+
+    await t.step("test strings.nix concatStrings function", () => {
+        const filePath = join(nixpkgsLibPath, "strings.nix")
+        const nixCode = Deno.readTextFileSync(filePath)
+        let jsCode = convertToJs(nixCode, { relativePath: filePath })
+
+        const runtime = createRuntime()
+        runtime.runtime.currentFile = filePath
+
+        // Remove import statements
+        if (jsCode.includes('import { createRuntime }')) {
+            jsCode = jsCode.replace(/import \{ createRuntime \}.*\n/, '')
+            jsCode = jsCode.replace(/const runtime = createRuntime\(\)\n/, '')
+        }
+
+        // Remove multi-line comments (/** ... */) which break Function evaluation
+        jsCode = jsCode.replace(/\/\*\*[\s\S]*?\*\//g, '')
+
+        // Create evaluation scope
+        const nixScope = {
+            builtins: runtime.runtime.builtins,
+            ...runtime.runtime.builtins
+        }
+
+        // Evaluate
+        const evalFunc = new Function(
+            'runtime',
+            'operators',
+            'builtins',
+            'nixScope',
+            'InterpolatedString',
+            'Path',
+            `return ${jsCode}`
+        )
+
+        const moduleFactory = evalFunc(
+            { scopeStack: [nixScope] },
+            runtime.runtime.operators,
+            runtime.runtime.builtins,
+            nixScope,
+            runtime.runtime.InterpolatedString,
+            runtime.runtime.Path
+        )
+
+        const minimalLib = {
+            trivial: {
+                warnIf: (cond, msg, val) => val,
+            }
+        }
+        const stringsModule = moduleFactory({ lib: minimalLib })
+
+        // Test concatStrings
+        const result = stringsModule.concatStrings(["hello", " ", "world"])
+        assertEquals(result, "hello world")
+
+        console.log("✅ strings.nix concatStrings function works")
+    })
 })
 
 console.log("\n🚀 Testing nixpkgs.lib file loading")

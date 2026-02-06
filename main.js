@@ -618,8 +618,9 @@ const nixNodeToJs = (node)=>{
         // For rec, we need a scope with getters; for non-rec, we can use a plain object
         if (isRec) {
             // Similar to let expression, but returns the scope itself
+            // NOTE: rec sets need parent scope for inherit and function references
             let code = `(function(){\n`
-            code += `    const nixScope = {};\n`
+            code += `    const nixScope = {...runtime.scopeStack.slice(-1)[0]};\n`
 
             // Process bindings similar to let
             const bindingsByBase = {}
@@ -1141,6 +1142,39 @@ const nixNodeToJs = (node)=>{
         code += `        runtime.scopeStack.pop();\n`
         code += `    }\n`
         code += `})(${nixNodeToJs(attrsetExpr)})`
+
+        return code
+    } else if (node.type == "assert_expression") {
+        // <assert_expression>
+        //     <assert text="assert" />
+        //     <binary_expression>...</binary_expression>
+        //     <; text=";" />
+        //     <string_expression>...</string_expression>
+        // </assert_expression>
+
+        // Assert expressions in Nix: assert condition; value
+        // If condition is false, throw an error
+        // If condition is true, return the value
+
+        const children = valueBasedChildren(node)
+        const assertIndex = children.findIndex(each => each.type === "assert")
+        const semiIndex = children.findIndex(each => each.text === ";")
+
+        const conditionExpr = children[assertIndex + 1]
+        const valueExpr = children[semiIndex + 1]
+
+        if (!conditionExpr || !valueExpr) {
+            throw Error(`assert_expression missing condition or value: ${node.text}`)
+        }
+
+        // Generate: (condition ? value : throw error)
+        // We use an IIFE to evaluate the condition once
+        let code = `((_cond)=>{\n`
+        code += `    if (!_cond) {\n`
+        code += `        throw new Error("assertion failed: " + ${JSON.stringify(node.text.split(';')[0].replace('assert', '').trim())});\n`
+        code += `    }\n`
+        code += `    return ${nixNodeToJs(valueExpr)};\n`
+        code += `})(${nixNodeToJs(conditionExpr)})`
 
         return code
     } else {
