@@ -24,43 +24,67 @@ When implementing any builtin:
 ## 🚨 CURRENT BLOCKERS (as of 2026-02-06)
 
 ### BLOCKER #1: Derivation tests FAILING (0/10 passing)
-- Error: "undefined is not iterable (cannot read property Symbol(Symbol.iterator))"
+- Error: "error: cannot convert a function to JSON"
 - Location: main/tests/derivation/001_basic_tests.js
+- **Root cause identified**: builtins.toJSON iterates over ALL properties including functions
 - **This MUST be fixed before any other work**
 
 ---
 
-## 📋 PRIORITY 1: Fix derivation implementation
+## 📋 PRIORITY 1: Fix toJSON to handle derivation objects
 
-**STATUS:** Derivation builtin exists but failing all tests. Root cause unknown. Must investigate and fix:
+**STATUS:** Root cause found! `builtins.toJSON` fails when serializing derivation objects.
 
-### Steps to debug and fix:
+### Problem Details:
 
-1. **Run test and capture error:**
+1. **Expected behavior (verified in Nix 2.18):**
+   ```bash
+   nix eval --json --expr 'builtins.toJSON (derivation {...})'
+   # Returns: "\"/nix/store/...-name\""  (just the outPath as a JSON string!)
+   ```
+
+2. **Actual behavior in denix:**
+   - toJSON tries to serialize the entire derivation object
+   - Encounters function properties (toString, Symbol.toPrimitive)
+   - Throws error: "cannot convert a function to JSON"
+
+3. **Root cause:**
+   - toJSON needs special handling for derivation objects (line 326-333)
+   - Derivations should coerce to their outPath string, not serialize as objects
+
+### Solution:
+
+**Add derivation check BEFORE generic object handler**
+
+In runtime.js around line 326, add this BEFORE the `Object.getPrototypeOf({})` check:
+
+```javascript
+} else if (value.type === "derivation") {
+    // Derivations coerce to their outPath string
+    return JSON.stringify(value.outPath)
+```
+
+### Steps to fix:
+
+1. **Edit runtime.js around line 326:**
+   - Find: `} else if (value instanceof Array) {`
+   - After the Array block, ADD derivation check BEFORE the generic object check
+   - New code:
+     ```javascript
+     } else if (value.type === "derivation") {
+         // Derivations coerce to their outPath string (like in Nix)
+         return JSON.stringify(value.outPath)
+     } else if (Object.getPrototypeOf({}) == Object.getPrototypeOf(value)) {
+     ```
+
+2. **Test the fix:**
    ```bash
    deno run --allow-all main/tests/derivation/001_basic_tests.js
    ```
 
-2. **Check builtins.derivation return value:**
-   - Add console.log in runtime.js at line ~1692
-   - Verify it returns object with: outPath, drvPath, outputs, all properties
-   - Check outputs is an array (not string)
-   - Check if any code tries to iterate over non-iterable
+3. **Verify all 10 derivation tests pass**
 
-3. **Check builtins.toJSON implementation:**
-   - Verify it handles derivation objects correctly
-   - Ensure it doesn't try to iterate over non-iterable properties
-   - Check how it serializes Symbol properties
-
-4. **Common issues:**
-   - outputs not an array (should be ["out"] by default)
-   - Missing required properties on derivation object
-   - toJSON trying to iterate over wrong type
-   - Symbol.iterator missing on a required iterable
-
-5. **Fix and verify:** All 10 derivation tests must pass before proceeding
-
-**TIME ESTIMATE:** 2-4 hours to debug and fix
+**TIME ESTIMATE:** 5 minutes to fix + test
 
 **STOP HERE. DO NOT PROCEED TO PRIORITY 2 UNTIL THIS IS FIXED.**
 
