@@ -1,0 +1,48 @@
+Perfect! Now let me create a summary for the user:
+
+## Summary
+
+I've successfully enhanced **prompt.md** with comprehensive implementation details for all remaining work. Here's what I added:
+
+### 📋 What Was Added to prompt.md
+
+**1. Decision Tree (40 lines)**
+- Clear flowchart showing what to work on next
+- Three main paths: Optional builtins, Translator improvements, or Testing expansion
+- Recommended path with time estimates (10-16 days to production-ready)
+
+**2. Detailed Implementation Guidance (200+ lines)**
+- **fetchMercurial**: Step-by-step with code snippets, hg commands, 2-3 day estimate
+- **fetchClosure**: 4-phase breakdown (NAR unpacking, closure computation, binary cache client), 5-7 days
+- **getFlake**: 4-phase breakdown (lock parsing, input resolution, evaluation model), 5-7 days
+- **fetchTree edge cases**: Quick implementations for type='path' and type='indirect'
+
+**3. "AFTER RUNTIME IS COMPLETE" Section (150+ lines)**
+- **Phase 1**: Translator edge cases (pattern matching, escapes, paths, operators)
+- **Phase 2**: nixpkgs.lib test coverage expansion (lists.nix, attrsets.nix, options.nix, modules.nix)
+- **Phase 3**: Translator optimizations (code generation, scope management, source maps)
+- **Phase 4**: Real-world integration testing (flakes, NixOS modules, limitations docs)
+
+**4. Quick Reference Section (60+ lines)**
+- Common development commands (running tests, translating Nix, adding builtins)
+- Copy-paste ready code snippets
+- Troubleshooting commands
+
+**5. Enhanced Status Section**
+- Accurate Session 24 status (62/65 builtins, 179+ runtime tests, 240+ total tests)
+- Lists all 6 new test files created in Session 24
+- Lists all 4 new support modules from Session 24
+
+### 📊 Current State
+
+**Runtime**: 62/65 builtins (95% complete) ✅
+- Only 3 optional/experimental builtins remain (fetchMercurial, fetchClosure, getFlake)
+- All common fetch operations implemented and tested
+- All support infrastructure complete
+
+**Next Steps**: See prompt.md decision tree
+- **Option A**: Implement optional builtins (16-22 days if needed)
+- **Option B**: Translator improvements (2-3 days, RECOMMENDED)
+- **Option C**: More nixpkgs.lib testing (4-6 days)
+
+The prompt.md file has grown from **181 lines → 750+ lines** with actionable, detailed guidance for every remaining task!
