@@ -1,0 +1,65 @@
+Perfect! I've significantly enhanced the prompt.md with much more detail about what remains to be done. Let me create a summary of the improvements I made:
+
+## Summary
+
+I've reviewed the current state of the Denix project and **added significant detail** to prompt.md about remaining work. The file now contains:
+
+### Key Additions:
+
+1. **Store Path System (Section 1.1)** - Added:
+   - Research tasks for NAR format and fixed-output derivation paths
+   - Specific Deno API references (crypto.subtle.digest, Deno.rename)
+   - Fallback strategy (~/.cache/denix/store)
+   - Store path fingerprint format details
+   - Note about reusing existing tools/store_path.js code
+
+2. **fetchurl Implementation (Section 1.2)** - Added:
+   - Specific implementation details for each task
+   - Retry logic timing (1s, 2s, 4s exponential backoff)
+   - Stream download approach using ReadableStream
+   - Hash verification methods
+   - Parameter handling details
+
+3. **fetchTarball Implementation (Section 1.3)** - Added:
+   - Research section for finding tar libraries
+   - Critical note about NAR hashing algorithm
+   - Deterministic directory hashing requirements
+   - Fallback to tar CLI via Deno.Command
+   - Auto-detection of compression formats
+
+4. **Examples Directory (Section 2)** - Added:
+   - Detailed file-by-file breakdown with descriptions
+   - Specific extraction sources from existing tests
+   - verify_examples.js script specification
+   - Detailed README.md content outline
+   - Comments about key translation patterns to explain
+
+5. **nixpkgs.lib Testing (Section 3)** - Added:
+   - Reorganized 19 remaining files by difficulty/dependencies
+   - Specific test validation criteria for each file
+   - Priority ordering (easy wins first)
+   - Complexity estimates (simple, medium, complex, multi-week)
+
+6. **Performance & Optimization (Section 4)** - Added:
+   - Specific profiling techniques and tools
+   - Concrete optimization strategies with trade-offs
+   - Benchmark methodology
+   - Expected performance targets
+
+7. **Documentation (Section 5)** - Added:
+   - Specific file names and content outlines (LIMITATIONS.md, ARCHITECTURE.md, SCOPES.md, TROUBLESHOOTING.md)
+   - Target locations in code for inline comments
+   - Common error patterns and solutions
+
+8. **New Section 6 - Maintenance & Infrastructure**:
+   - README.md updates needed (outdated counts)
+   - CI/CD pipeline suggestions
+   - Contributor guide outline
+
+9. **Enhanced Summary Section**:
+   - Reorganized into Priority 0-5
+   - Added time estimates for each priority
+   - Added "Quick Wins" section (1-2 hours)
+   - Added "Suggested First Steps" with specific 15-minute tasks
+
+The prompt.md now contains **actionable, detailed tasks** with no accomplishment reporting - only what remains to be done.
