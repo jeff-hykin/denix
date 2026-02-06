@@ -1,0 +1,15 @@
+Perfect! I've completely rewritten prompt.md to be much cleaner and more focused. The key changes:
+
+1. **Clear instructions at the top**: Don't work on translator or nix-lib tests, only focus on the 10 missing builtins
+2. **Removed all duplication**: The original had the same information repeated multiple times
+3. **Step-by-step breakdown**: 5 clear steps for implementing fetchTarball with specific file names, function signatures, and test requirements
+4. **Concise remaining work**: After fetchTarball, listed the other 9 builtins with brief requirements
+5. **Technical reference**: Kept the NAR format and store path details at the bottom for reference
+
+The prompt is now 305 lines (down from 646 lines) and much more actionable. It clearly states:
+- Start with Step 1 (main/fetcher.js)
+- Do the steps in order
+- Don't touch the translator or lib tests
+- Focus only on implementing the 10 missing builtins
+
+This should keep the development focused on completing the runtime before moving on to other tasks.

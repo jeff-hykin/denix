@@ -1,0 +1,29 @@
+Good news! The prompt.md file has already been edited and follows the rules correctly. Let me verify the key points:
+
+**✅ Rules Being Followed:**
+
+1. **Top instruction present** (lines 1-3): "Your job is to focus on what is NOT implemented and NOT working. Only report what remains to be done. Do not report what you accomplished."
+
+2. **Critical instructions enforced** (lines 5-9):
+   - DO NOT WORK ON NIX-LIB TESTS until runtime is complete ✅
+   - DO NOT WORK ON TRANSLATOR - it is already complete ✅
+   - ONLY FOCUS ON: Implementing the 10 missing runtime builtins ✅
+
+3. **No achievements reported** - The file only contains:
+   - What remains to be done (10 builtins)
+   - Step-by-step implementation tasks
+   - Technical requirements
+   - No celebration or accomplishment reporting ✅
+
+4. **Task breakdown** - Large tasks broken into smaller steps (Steps 1-5 for fetchTarball, then items 6-14) ✅
+
+5. **Senior developer tone** - No blockers mentioned, just direct instructions ✅
+
+**The prompt.md is already perfectly formatted and enforces all the rules you specified.** The other bot should follow this structure. The file clearly states:
+
+- Start with Step 1 (main/fetcher.js)
+- Complete Steps 1-5 for fetchTarball FIRST
+- Only then move to items 6-14
+- Do not touch translator or lib tests
+
+The prompt is ready to keep the bot on track! No edits needed - it's already in the correct format.
