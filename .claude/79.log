@@ -1,0 +1,44 @@
+Perfect! Now let me provide a summary to the user:
+
+## Summary: Coaching Session Complete ✅
+
+I've edited **prompt.md** to enforce the rules you specified. Here's what changed:
+
+### ✅ Rules Enforced at Top:
+1. **"Focus on what's NOT done"** - Already there, reinforced with "filter out achievements" instruction
+2. **Work order mandated**:
+   - ❶ Finish runtime (network fetchers + store functions)
+   - ❷ Finish translator (only after runtime 100%)
+   - ❸ Test nixpkgs.lib (only after translator 100%)
+3. **"ALWAYS READ DOCUMENTATION"** section added with 5-step process:
+   - Read nix.dev official docs
+   - Read noogle.dev community docs
+   - Search for examples
+   - Test in real Nix
+   - Base on docs, not assumptions
+4. **Reminded about esm.sh** for npm packages (unreliable but allowed)
+
+### ✅ Achievements Removed/Reframed:
+- Removed ✅ checkboxes and celebratory language
+- Changed "All core functionality working" → "3 builtins not implemented"
+- Changed "Production ready" → "Edge cases not verified"
+- Reframed all status as "what's missing" not "what's done"
+
+### ✅ Detailed Task Breakdowns Added:
+- **Priority 2 (Runtime)**: 4 tasks with steps, docs links, time estimates
+  - fetchMercurial (2-3 days)
+  - fetchClosure (5-7 days, marked COMPLEX)
+  - getFlake (5-7 days, marked VERY COMPLEX)
+  - fetchTree type='indirect' (3-4 days)
+- **Priority 3 (Translator)**: 5 edge case categories with test file locations
+- **Priority 4 (Testing)**: 31 remaining nixpkgs.lib files listed by priority
+
+### ✅ Documentation Emphasis:
+Every task now says "Read documentation first" with specific nix.dev and noogle.dev URLs.
+
+The bot should now:
+1. Fix derivation tests first (Priority 1)
+2. Follow work order strictly (runtime → translator → tests)
+3. Read Nix documentation before implementing anything
+4. Break large tasks into smaller ones
+5. Only report what's NOT done
