@@ -21,6 +21,11 @@ import { serializeDerivation, computeDrvPath, computeOutputPath } from "../tools
 // core stuff
 import { NixError, NotImplemented } from "./errors.js"
 
+// import system
+import { ImportCache } from "./import_cache.js"
+import { resolveImportPath } from "../tools/import_resolver.js"
+import { loadAndEvaluateSync } from "./import_loader.js"
+
 // hard parts right now:
     // builtins.fetchGit
     // builtins.sort
@@ -29,10 +34,19 @@ import { NixError, NotImplemented } from "./errors.js"
     // builtins.fetchMercurial
     // create the value-to-env-var function for derivations
 
-// 
+//
+// Import state (shared across runtime instances)
+//
+    // Global state for import functions (gets set by createRuntime)
+    const globalImportState = {
+        importFn: null,
+        scopedImportFn: null,
+    }
+
+//
 // classes
-// 
-    
+//
+
 
     export class Interpolater {
         constructor(strings, getters) {
@@ -734,11 +748,19 @@ import { NixError, NotImplemented } from "./errors.js"
             },
 
         // misc
+            // Note: import and scopedImport delegate to runtime-initialized versions
+            // We use a shared state object that gets initialized by createRuntime()
             "import": (path)=>{
-                throw new NotImplemented(`builtins.import requires a full Nix language parser and evaluator`)
+                if (!globalImportState.importFn) {
+                    throw new NixError(`builtins.import called before runtime initialization`)
+                }
+                return globalImportState.importFn(path)
             },
             "scopedImport": (scope)=>(path)=>{
-                throw new NotImplemented(`builtins.scopedImport requires a full Nix language parser and evaluator with scope management`)
+                if (!globalImportState.scopedImportFn) {
+                    throw new NixError(`builtins.scopedImport called before runtime initialization`)
+                }
+                return globalImportState.scopedImportFn(scope)(path)
             },
             "functionArgs": (f)=>{
                 if (!builtins.isFunction(f)) {
@@ -1458,12 +1480,108 @@ import { NixError, NotImplemented } from "./errors.js"
     }
     
     export const createRuntime = ()=>{
+        // Create import cache for this runtime instance
+        const importCache = new ImportCache()
+
+        // Create runtime object that will be passed to builtins
+        const runtime = {
+            builtins,
+            operators,
+            InterpolatedString,
+            Path,
+            importCache,
+            currentFile: null, // Track current file for relative imports
+        }
+
+        // Initialize import functions with runtime context
+        globalImportState.importFn = (path) => {
+            // Convert Path object to string if needed
+            const pathStr = path instanceof Path ? path.toString() : requireString(path).toString()
+
+            // Resolve path relative to current file
+            const absPath = runtime.currentFile
+                ? resolveImportPath(runtime.currentFile, pathStr)
+                : FileSystem.makeAbsolutePath(pathStr)
+
+            // Check cache first
+            if (importCache.has(absPath)) {
+                return importCache.get(absPath)
+            }
+
+            // Track import stack for circular detection
+            importCache.pushStack(absPath)
+
+            try {
+                // Save current file context
+                const prevFile = runtime.currentFile
+                runtime.currentFile = absPath
+
+                // Load and evaluate the file
+                const result = loadAndEvaluateSync(absPath, runtime)
+
+                // Cache result
+                importCache.set(absPath, result)
+
+                // Restore previous file context
+                runtime.currentFile = prevFile
+
+                return result
+            } finally {
+                importCache.popStack()
+            }
+        }
+
+        globalImportState.scopedImportFn = (scope) => (path) => {
+            // scopedImport is like import but with a custom scope
+            // This allows overriding builtins and other values
+            requireAttrSet(scope)
+
+            // Convert Path object to string if needed
+            const pathStr = path instanceof Path ? path.toString() : requireString(path).toString()
+
+            // Resolve path relative to current file
+            const absPath = runtime.currentFile
+                ? resolveImportPath(runtime.currentFile, pathStr)
+                : FileSystem.makeAbsolutePath(pathStr)
+
+            // Note: scopedImport does NOT use cache (Nix behavior)
+            // Each call evaluates fresh with the new scope
+
+            // Track import stack for circular detection
+            importCache.pushStack(absPath)
+
+            try {
+                // Save current file context
+                const prevFile = runtime.currentFile
+                runtime.currentFile = absPath
+
+                // Create a modified runtime with custom scope
+                const scopedRuntime = {
+                    ...runtime,
+                    builtins: {
+                        ...runtime.builtins,
+                        ...scope, // Override with custom scope
+                    },
+                }
+
+                // Load and evaluate the file with scoped runtime
+                const result = loadAndEvaluateSync(absPath, scopedRuntime)
+
+                // Restore previous file context
+                runtime.currentFile = prevFile
+
+                return result
+            } finally {
+                importCache.popStack()
+            }
+        }
+
         const rootScope = {
             builtins,
             true: builtins.true,
             false: builtins.false,
             null: builtins.null,
-            
+
             // https://nixos.org/manual/nix/stable/language/builtins.html
             derivation: builtins.derivation,
             import: builtins.import,
@@ -1473,5 +1591,7 @@ import { NixError, NotImplemented } from "./errors.js"
         return {
             scopeStack: [rootScope],
             rootScope: rootScope,
+            runtime, // Expose runtime for use by import system
+            importCache,
         }
     }

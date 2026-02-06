@@ -12,10 +12,11 @@
 
 ## 1. Builtins Progress Status
 
-**Status**: INCOMPLETE 59/98 Nix 2.18 builtins fully functional 
+**Status**: 61/98 Nix 2.18 builtins fully functional (import system complete!) 
 
 **What Works**:
-- ✅ 120+ tests, all passing
+- ✅ 170+ tests, all passing (was 120+, +50 with import tests!)
+- ✅ **Import system fully working**: `builtins.import` and `builtins.scopedImport` ✅
 - ✅ Correct derivation store paths matching Nix exactly
 - ✅ Pure Deno with URL imports (no npm/jsr dependencies)
 - ✅ All 98 Nix 2.18 builtins present in codebase
@@ -23,7 +24,11 @@
 **Remaining Items**:
 - **1 FIXME** (line 289): `toJSON` for paths - requires full store infrastructure
 - **5 TODOs** (lines 235, 411, 459, 540, 986): Minor edge case notes (non-blocking)
-- **12 functions** need to start work on large tasks: fetchurl, fetchTarball, fetchGit, fetchMercurial, fetchTree, fetchClosure, import, scopedImport, path, filterSource, getFlake. These require weeks of work, so I should use libraries for things like git, and break down the work into smaller tasks and start working on those smaller tasks in helper directories.
+- **10 functions** need to start work on large tasks: fetchurl, fetchTarball, fetchGit, fetchMercurial, fetchTree, fetchClosure, path, filterSource, getFlake. These require weeks of work, so I should use libraries for things like git, and break down the work into smaller tasks and start working on those smaller tasks in helper directories.
+
+**Recently Completed**:
+- ✅ **import** - Fully working with caching and circular detection (Session 6)
+- ✅ **scopedImport** - Custom scope support implemented (Session 6)
 
 **1 FIXME**:
 - toJSON for paths (line 289) - requires store to hash/copy files to /nix/store
@@ -35,9 +40,8 @@
 - Line 540: foldl' edge cases
 - Line 986: add operator path copy to store
 
-**12 Infrastructure-Blocked Functions**:
+**10 Infrastructure-Blocked Functions**:
 - Store system (2): path, filterSource
-- Import/eval system (2): import, scopedImport
 - Network fetchers (6): fetchurl, fetchTarball, fetchGit, fetchMercurial, fetchTree, fetchClosure
 - Flakes (1): getFlake
 

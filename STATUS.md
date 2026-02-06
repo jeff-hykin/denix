@@ -1,8 +1,8 @@
 # Denix - Nix Builtins in JavaScript/Deno
 
-**Status**: ✅ COMPLETE (within feasible scope)
+**Status**: ✅ COMPLETE (including import system!)
 **Date**: 2026-02-05
-**Progress**: 59/98 Nix 2.18 builtins (60% complete, 100% of feasible functions)
+**Progress**: 61/98 Nix 2.18 builtins (62% complete, import system fully working!)
 
 ---
 
@@ -12,22 +12,26 @@ This project is a faithful re-implementation of Nix builtins in JavaScript for D
 
 ### What Works ✅
 
-- **59 fully functional builtins** with correct Nix semantics
-- **120+ tests** across 9 test suites, all passing
+- **61 fully functional builtins** with correct Nix semantics (was 59, +2 with import!)
+- **170+ tests** across 14 test suites, all passing (was 120+, +50 with import tests!)
+- **Import system fully working**: `builtins.import` and `builtins.scopedImport` ✅
 - **Correct derivation store paths** matching Nix output exactly
 - **Pure Deno** with URL imports (no npm/jsr dependencies)
-- **All 98 Nix 2.18 builtins** present (59 working, 12 infrastructure-blocked, 27 simplified)
+- **All 98 Nix 2.18 builtins** present (61 working, 10 infrastructure-blocked, 27 simplified)
 
 ### What's Blocked 🚧
 
-**12 functions** require major infrastructure:
+**10 functions** require major infrastructure:
 - Network fetchers (6): fetchurl, fetchTarball, fetchGit, fetchMercurial, fetchTree, fetchClosure
-- Import/eval (2): import, scopedImport
 - Store operations (2): path, filterSource
 - Flakes (1): getFlake
 - Enhancement (1): toJSON for paths
 
 **5 TODOs** remain (minor edge case notes, non-blocking)
+
+### Newly Unblocked! ✅
+- ✅ **import** - Fully working with caching and circular detection
+- ✅ **scopedImport** - Custom scope support implemented
 
 ---
 
@@ -78,6 +82,7 @@ This project is a faithful re-implementation of Nix builtins in JavaScript for D
 
 All tests passing ✅
 
+### Runtime Tests
 1. **simple_test.js** - 26 tests (Phase 1)
 2. **phase2_test.js** - 15 tests (Phase 2)
 3. **phase2b_test.js** - 12 tests (Phase 2 continued)
@@ -88,7 +93,14 @@ All tests passing ✅
 8. **flake_standalone_test.js** - 20 tests (flake references)
 9. **nix218_builtins_test.js** - 7 tests (Nix 2.18 compliance)
 
-**Total**: 120+ tests
+### Import System Tests (NEW!)
+10. **import_resolver_test.js** - 16 tests (path resolution)
+11. **import_cache_test.js** - 12 tests (caching & circular detection)
+12. **import_loader_test.js** - 7 tests (file loading)
+13. **import_integration_test.js** - 8 tests (builtins.import)
+14. **import_e2e_test.js** - 6 tests (full translator integration)
+
+**Total**: 170+ tests (49 import tests!)
 
 ---
 
