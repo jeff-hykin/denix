@@ -24,9 +24,10 @@
 - [x] Create and run Phase 4 tests - all passing
 - [x] Implement Phase 5 (Store + Flakes) - 5 functions
 - [x] Create and run Phase 5 tests - all passing
+- [x] Improve error handling for unimplemented FIXMEs
 - [ ] Implement infrastructure-dependent FIXMEs (fetchers, import, etc.) - BLOCKED
 
-## Current Status
+## Current Status (Latest Update: 2026-02-05)
 ✅ **MILESTONE REACHED**: 57 functions implemented (80% complete)
 - All Phase 1 (Easy) complete: 26 functions
 - All Phase 2 (Medium) complete: 14 functions
@@ -37,6 +38,7 @@
 - ✅ Removed npm dependencies - pure URL imports only
 - ✅ Replaced npm:lossless-json with custom BigInt JSON parser
 - ✅ Derivation implementation complete with correct store paths
+- ✅ Improved error handling - all FIXME stubs throw descriptive NotImplemented errors
 
 ## Next Steps
 **All feasible functions have been implemented!** Remaining 14 functions require major infrastructure:

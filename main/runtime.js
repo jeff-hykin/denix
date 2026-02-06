@@ -671,15 +671,29 @@ import { NixError, NotImplemented } from "./errors.js"
             },
         
         // fetchers
-            "fetchurl": (url)=>{/*FIXME*/}, // not available in restricted mode
-            "fetchTarball": ()=>{/*FIXME*/},
-            "fetchGit": ()=>{/*FIXME*/}, // TODO: use git binary from ahgamut/superconfigure
-            "fetchMercurial": ()=>{/*FIXME*/},
-            "fetchTree": ()=>{/*FIXME*/}, // experimental
+            "fetchurl": (url)=>{
+                throw new NotImplemented(`builtins.fetchurl requires network layer and store implementation`)
+            },
+            "fetchTarball": (url)=>{
+                throw new NotImplemented(`builtins.fetchTarball requires network layer, tar extraction, and store implementation`)
+            },
+            "fetchGit": (args)=>{
+                throw new NotImplemented(`builtins.fetchGit requires git binary integration and store implementation`)
+            },
+            "fetchMercurial": (args)=>{
+                throw new NotImplemented(`builtins.fetchMercurial requires hg binary integration and store implementation`)
+            },
+            "fetchTree": (args)=>{
+                throw new NotImplemented(`builtins.fetchTree is an experimental feature requiring fetch system and store implementation`)
+            },
 
         // misc
-            "import": ()=>{/*FIXME*/},
-            "scopedImport": ()=>{/*FIXME*/},
+            "import": (path)=>{
+                throw new NotImplemented(`builtins.import requires a full Nix language parser and evaluator`)
+            },
+            "scopedImport": (scope)=>(path)=>{
+                throw new NotImplemented(`builtins.scopedImport requires a full Nix language parser and evaluator with scope management`)
+            },
             "functionArgs": (f)=>{
                 if (!builtins.isFunction(f)) {
                     throw new NixError(`error: 'functionArgs' requires a function, got ${builtins.typeOf(f)}`)
@@ -827,9 +841,9 @@ import { NixError, NotImplemented } from "./errors.js"
                     return "unknown"
                 }
             },
-            "path": ()=>{/*FIXME*/},
-                // kinda complicated:
-                // https://nix-community.github.io/docnix/reference/builtins/builtins-path/
+            "path": (args)=>{
+                throw new NotImplemented(`builtins.path requires full store implementation with filtering support. See: https://nix-community.github.io/docnix/reference/builtins/builtins-path/`)
+            },
             
             "readDir": (path)=>{
                 const absolutePath = FileSystem.makeAbsolutePath(path.toString())
@@ -1072,7 +1086,9 @@ import { NixError, NotImplemented } from "./errors.js"
                 }
                 return 0
             },
-            "getFlake": ()=>{/*FIXME*/},
+            "getFlake": (flakeRef)=>{
+                throw new NotImplemented(`builtins.getFlake requires flake system with network fetching, lock files, and evaluation`)
+            },
             "parseFlakeRef": (flakeRef)=>{
                 // Parse flake reference string into structured form
                 // Examples:
@@ -1165,8 +1181,10 @@ import { NixError, NotImplemented } from "./errors.js"
                 return s.toString()
             },
         
-        // complicated to explain functionality 
-            "filterSource": ()=>{/*FIXME*/},
+        // complicated to explain functionality
+            "filterSource": (filter)=>(path)=>{
+                throw new NotImplemented(`builtins.filterSource requires full store implementation with predicate-based file filtering`)
+            },
             "flakeRefToString": (attrs)=>{
                 // Convert structured flake reference to string
                 requireAttrSet(attrs)

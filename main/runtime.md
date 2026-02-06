@@ -140,6 +140,10 @@
 
 ## Recent Additions
 
+### Error Handling Improvements (Current Session)
+- **Better error messages**: All remaining FIXME stubs now throw proper `NotImplemented` errors with descriptive messages explaining what infrastructure is required (network layer, parser, store system, etc.)
+- **Improved debugging**: Users who call unimplemented functions now get clear, actionable error messages instead of silent failures
+
 ### Phase 5 (Additional Store + Flake Functions)
 - **builtins.toFile**: Computes correct store path using text method (doesn't physically write)
 - **builtins.findFile**: Search NIX_PATH-style list with prefix support

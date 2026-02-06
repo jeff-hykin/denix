@@ -157,8 +157,9 @@ prompt.md               - Task instructions
 CURRENT_STATUS.md       - This file
 ```
 
-## Recent Changes (This Session)
+## Recent Changes
 
+### Previous Sessions
 1. ✅ Implemented `builtins.toFile` - computes correct store paths
 2. ✅ Implemented `builtins.findFile` - NIX_PATH search with prefix support
 3. ✅ Implemented `builtins.derivationStrict` - wrapper around derivation
@@ -166,7 +167,13 @@ CURRENT_STATUS.md       - This file
 5. ✅ Implemented `builtins.flakeRefToString` - convert flake refs to strings
 6. ✅ Created phase4_standalone_test.js - 7 tests
 7. ✅ Created flake_standalone_test.js - 20 tests
-8. ✅ Updated all progress tracking documents
+
+### Session 2026-02-05
+1. ✅ Improved error handling - all 10 unimplemented FIXMEs now throw descriptive `NotImplemented` errors
+2. ✅ Created error_messages_test.js - 10 new tests for error validation
+3. ✅ Verified all test suites pass - 123+ tests total (113 implementation + 10 error tests)
+4. ✅ Created SESSION_2026_02_05.md with comprehensive analysis
+5. ✅ Updated all documentation files
 
 ## Next Steps
 
