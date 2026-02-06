@@ -1,4 +1,4 @@
-# Remaining Work: Git Fetchers & Advanced Features
+# Remaining Work: Network Fetchers & Store Operations
 
 ## 🛑 MANDATORY RULES - READ THIS FIRST 🛑
 
@@ -6,18 +6,32 @@
 
 **Before executing what is below, please filter out any achievements. Only keep remaining/unsolved tasks in this document. Add detail to each task if its needed.**
 
+**CRITICAL: All implementations MUST be based on official Nix documentation and behavior:**
+- Read https://noogle.dev/f/builtins/<function_name> BEFORE writing ANY code
+- Read https://nix.dev/manual/nix/2.18/language/builtins for complete specification
+- Match Nix behavior exactly - do not guess or make assumptions
+- Test your implementation against real Nix if possible
+
+**NPM Modules (ALLOWED but with caution):**
+- ✅ You CAN use npm modules through https://esm.sh/NPM_MODULE_NAME
+- ⚠️ WARNING: Not all npm modules work through esm.sh - test first!
+- ✅ Prefer Deno standard library (jsr:@std/*) when available
+- ✅ Check Deno built-in APIs before using external packages
+
 ## 🚫 ABSOLUTE WORK ORDER - NO EXCEPTIONS 🚫
 
 **INSTRUCTIONS:**
 1. **DO NOT work on nix-lib tests** until the code translator is fully implemented
 2. **DO NOT work on the translator** until the runtime is fully implemented
-3. **IN OTHER WORDS**: Finish the git fetchers and advanced features in runtime.js BEFORE doing ANYTHING ELSE
+3. **IN OTHER WORDS**: Finish the network fetchers and store operations in runtime.js BEFORE doing ANYTHING ELSE
 
 **RIGHT NOW YOU ARE IN PHASE 1: RUNTIME IMPLEMENTATION**
 - Focus ONLY on implementing missing builtins in main/runtime.js
 - Do NOT touch main.js (translator)
 - Do NOT write nix-lib tests
 - Do NOT work on documentation or examples
+- Do NOT update README.md or create new examples
+- Do NOT celebrate achievements - only track remaining work
 
 ## 📊 WHAT REMAINS TO IMPLEMENT
 
@@ -28,46 +42,29 @@
 4. **fetchClosure** - NOT IMPLEMENTED (DEFER - very complex)
 5. **getFlake** - NOT IMPLEMENTED (SKIP - massive undertaking)
 
-**WHAT IS ALREADY IMPLEMENTED:**
-- ✅ **fetchurl** - FULLY IMPLEMENTED with 7 passing tests
-- ✅ **fetchTarball** - FULLY IMPLEMENTED with 6 passing tests
-- ✅ **Infrastructure modules** - All 4 support modules complete (fetcher.js, tar.js, nar_hash.js, store_manager.js)
-
 **YOUR IMMEDIATE TASK:** Implement builtins.fetchGit (14-16 hours)
+
+**BEFORE YOU START:**
+1. Read https://noogle.dev/f/builtins/fetchGit (complete page)
+2. Read https://nix.dev/manual/nix/2.18/language/builtins (fetchGit section)
+3. Write notes on what you learned
+4. Understand ALL parameters, defaults, and return values
+5. THEN begin implementation
 
 ## 📊 CURRENT STATUS SUMMARY
 
-**Network Fetchers (7 total):**
-- ✅ fetchurl - COMPLETE (7 tests passing)
-- ✅ fetchTarball - COMPLETE (6 tests passing)
-- ❌ fetchGit - NOT IMPLEMENTED (HIGH PRIORITY)
+**Network Fetchers (7 total) - 2 implemented, 5 remain:**
+- ❌ fetchGit - NOT IMPLEMENTED (HIGH PRIORITY - DO THIS FIRST)
 - ❌ fetchTree - NOT IMPLEMENTED (MEDIUM PRIORITY, needs fetchGit)
 - ❌ fetchMercurial - NOT IMPLEMENTED (LOW PRIORITY)
 - ❌ fetchClosure - NOT IMPLEMENTED (DEFER - very complex)
 - ❌ getFlake - NOT IMPLEMENTED (SKIP - massive undertaking)
 
-**Infrastructure (6 modules):**
-- ✅ main/fetcher.js - COMPLETE (155 lines)
-- ✅ main/tar.js - COMPLETE (169 lines)
-- ✅ main/nar_hash.js - COMPLETE (245 lines)
-- ✅ main/store_manager.js - COMPLETE (194 lines)
-- ✅ tools/store_path.js - COMPLETE (pre-existing)
-- ✅ tools/hashing.js - COMPLETE (pre-existing)
-
-**What This Means:**
-- 2/7 fetchers complete (29%)
-- ALL infrastructure complete (100%)
-- fetchGit can reuse ALL existing infrastructure
-- Estimated time to complete fetchGit: 14-16 hours
+**Remaining Work:** 5 fetchers to implement (29% done so far)
 
 ## 🎯 IMPLEMENTATION PRIORITIES
 
 **PHASE 1: Runtime Builtins (CURRENT PHASE - DO THIS NOW)**
-
-### ✅ COMPLETED:
-- **fetchurl** - Lines 750-809 in runtime.js - 7 passing tests
-- **fetchTarball** - Lines 810-878 in runtime.js - 6 passing tests
-- **Infrastructure** - fetcher.js, tar.js, nar_hash.js, store_manager.js all complete
 
 ### Task 1: fetchGit (HIGH PRIORITY - START HERE)
 - **Location**: main/runtime.js line 879
@@ -118,11 +115,13 @@
 
 **These rules override everything else in this document:**
 
-1. **NO ACHIEVEMENTS**: Never report what you accomplished. Remove any completed items from this document.
-2. **NO CHECKBOXES**: Never add ✅ marks. Only track what is NOT done.
-3. **NO BLOCKERS**: You are a senior developer. Break down hard tasks into smaller tasks.
+1. **NO ACHIEVEMENTS**: Never report what you accomplished. Remove any completed items from this document immediately.
+2. **NO CHECKBOXES**: Never add ✅ marks. If you see ✅ marks, DELETE those items - they are done.
+3. **NO BLOCKERS**: You are a senior developer. Break down hard tasks into smaller tasks (1-2 hour chunks).
 4. **DOCUMENTATION FIRST**: Always read https://noogle.dev/f/builtins/<function_name> BEFORE writing ANY code.
 5. **BASE ON NIX BEHAVIOR**: Implementations must match official Nix 2.18 documentation exactly.
+6. **NPM VIA ESM.SH**: You CAN use npm modules via https://esm.sh/PACKAGE_NAME (test first - not all work).
+7. **FOCUS ON RUNTIME**: Do NOT touch translator or tests until ALL runtime builtins are implemented.
 
 ## 📚 MANDATORY: READ DOCUMENTATION BEFORE CODING 📚
 
@@ -864,45 +863,42 @@ Current State: Throws NotImplemented error
 
 ---
 
-## 📦 Available Infrastructure (✅ ALL COMPLETE - Ready to Use)
+## 📦 Available Infrastructure (Ready to Use)
 
-**All infrastructure modules are fully implemented and tested:**
+**Infrastructure modules exist and can be imported:**
 
-### main/fetcher.js (155 lines) - HTTP Downloads
-- ✅ `downloadFile(url, destPath)` - Streaming download (doesn't load into memory)
-- ✅ `downloadWithRetry(url, destPath, retries=3)` - Download with exponential backoff
-- ✅ `extractNameFromUrl(url)` - Extract meaningful name from URL
-- ✅ `validateSha256(filePath, expectedSha256)` - Validate file hash
+### main/fetcher.js - HTTP Downloads
+- `downloadFile(url, destPath)` - Streaming download
+- `downloadWithRetry(url, destPath, retries=3)` - Download with retry
+- `extractNameFromUrl(url)` - Extract name from URL
+- `validateSha256(filePath, expectedSha256)` - Validate hash
 
-### main/tar.js (169 lines) - Tarball Extraction
-- ✅ `extractTarball(tarballPath, destDir)` - Extract .tar/.tar.gz/.tar.bz2/.tar.xz
-- ✅ `stripTopLevelDirectory(extractDir)` - Strip single top-level directory
-- ✅ `detectFormat(filePath)` - Detect archive format from extension
-- ✅ Uses Deno @std/tar for .tar.gz, falls back to `tar` command for bzip2/xz
+### main/tar.js - Tarball Extraction
+- `extractTarball(tarballPath, destDir)` - Extract archives
+- `stripTopLevelDirectory(extractDir)` - Strip top directory
+- `detectFormat(filePath)` - Detect archive format
 
-### main/nar_hash.js (245 lines) - Directory Hashing
-- ✅ `hashDirectory(dirPath)` - Compute NAR hash (tries `nix hash path`, falls back to pure JS)
-- ✅ `hashFile(filePath)` - Hash single file
-- ✅ `serializeNAR(path)` - Serialize file/directory/symlink in NAR format
-- ✅ Pure JavaScript NAR implementation (no Nix dependency)
+### main/nar_hash.js - Directory Hashing
+- `hashDirectory(dirPath)` - Compute NAR hash
+- `hashFile(filePath)` - Hash single file
+- `serializeNAR(path)` - Serialize in NAR format
 
-### main/store_manager.js (194 lines) - Store Management
-- ✅ `ensureStoreDirectory()` - Create store directory
-- ✅ `computeFetchStorePath(narHash, name)` - Compute store path for fixed-output derivations
-- ✅ `atomicMove(srcPath, destPath)` - Atomic rename to store
-- ✅ `getCachedPath(cacheKey)` - Check cache (returns null if not cached)
-- ✅ `setCachedPath(cacheKey, storePath)` - Save to cache (persistent JSON file)
-- ✅ `withLock(lockName, fn)` - Exclusive file locking
-- ✅ `exists(storePath)` - Check if path exists in store
+### main/store_manager.js - Store Management
+- `ensureStoreDirectory()` - Create store directory
+- `computeFetchStorePath(narHash, name)` - Compute store path
+- `atomicMove(srcPath, destPath)` - Atomic move to store
+- `getCachedPath(cacheKey)` - Check cache
+- `setCachedPath(cacheKey, storePath)` - Save to cache
+- `withLock(lockName, fn)` - File locking
+- `exists(storePath)` - Check if path exists
 
-### tools/store_path.js (Already existed)
-- ✅ `computeStorePath(type, hashInput, name, storeDir)` - Compute Nix store paths
+### tools/store_path.js
+- `computeStorePath(type, hashInput, name, storeDir)` - Compute Nix store paths
 
-### tools/hashing.js (Already existed)
-- ✅ `sha256Hex(data)` - SHA256 hash function
-- ✅ Other hash functions as needed
+### tools/hashing.js
+- `sha256Hex(data)` - SHA256 hash function
 
-**These modules power fetchurl and fetchTarball. Reuse them for fetchGit!**
+**Use these modules when implementing fetchGit!**
 
 ## 🔍 Known Edge Cases to Handle
 
@@ -984,9 +980,9 @@ deno test --allow-all main/tests/builtins_fetchgit_test.js  # specific file
 - ❌ Error handling is missing
 - ❌ Guessing behavior instead of reading docs
 
-## 🎯 FINAL REMINDERS
+## 🎯 FINAL REMINDERS - READ EVERY TIME
 
-**WORK ORDER (STRICT):**
+**WORK ORDER (STRICT - NO EXCEPTIONS):**
 1. Runtime (main/runtime.js) - Finish ALL fetchers/store functions FIRST
 2. Translator (main.js) - ONLY after runtime complete
 3. Nix-lib tests - ONLY after runtime AND translator complete
@@ -995,17 +991,30 @@ deno test --allow-all main/tests/builtins_fetchgit_test.js  # specific file
 - Do NOT touch translator (main.js)
 - Do NOT write nix-lib tests
 - Do NOT work on docs/examples
+- Do NOT update README.md
+- Do NOT celebrate or report achievements
 
-**YOUR TASK:** Implement builtins.fetchGit
+**YOUR SINGLE TASK:** Implement builtins.fetchGit in main/runtime.js
 
-**BEFORE CODING:**
-1. Read https://noogle.dev/f/builtins/fetchGit (entire page)
-2. Read https://nix.dev/manual/nix/2.18/language/builtins (fetchGit section)
-3. Write down what you learned
-4. THEN start coding
+**BEFORE WRITING A SINGLE LINE OF CODE:**
+1. Visit https://noogle.dev/f/builtins/fetchGit
+2. Read the ENTIRE page (every word, every example)
+3. Visit https://nix.dev/manual/nix/2.18/language/builtins
+4. Read the fetchGit section completely
+5. Write notes on what you learned (parameters, defaults, return values)
+6. Can you explain ALL parameters and their defaults? If not, read again.
+7. ONLY THEN begin implementation
 
 **REMEMBER:**
-- You are a senior developer - no blockers, only tasks to break down
-- Break large tasks into 1-2 hour chunks
-- Test as you go (TDD approach)
-- Base implementation on Nix documentation, not guesses
+- You are a senior developer - no blockers exist, only subtasks to break down
+- Break tasks into 1-2 hour chunks (not 14 hour monoliths)
+- Read documentation FIRST, code SECOND (never guess behavior)
+- Test as you implement (TDD approach - write tests first)
+- Match Nix behavior exactly (use noogle.dev as source of truth)
+
+**IF YOU COMPLETE SOMETHING:**
+- Do NOT report it as an achievement
+- Do NOT add ✅ marks
+- DELETE the completed item from this document
+- Move to the next remaining task
+- This document should ONLY contain what is NOT done

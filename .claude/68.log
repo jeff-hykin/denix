@@ -1,0 +1,54 @@
+Excellent! The changes are in place. Let me create a summary of what I've done:
+
+## Summary: prompt.md Updated to Enforce Strict Rules
+
+I've successfully updated the `prompt.md` file to enforce the rules you specified. Here are the key changes:
+
+### ✅ Changes Made:
+
+1. **Added mandatory rules at the top** (now appears 3 times throughout the document):
+   - Focus ONLY on what is NOT implemented
+   - Do NOT report achievements
+   - Break down tasks into smaller subtasks (1-2 hour chunks)
+   - You are a senior developer - no blockers exist
+
+2. **Added documentation-first requirement** prominently:
+   - MUST read https://noogle.dev/f/builtins/<function_name> before coding
+   - MUST read https://nix.dev/manual/nix/2.18/language/builtins
+   - Match Nix behavior exactly - no guessing
+
+3. **Added npm/esm.sh usage guidelines**:
+   - Allowed to use npm modules via https://esm.sh/PACKAGE_NAME
+   - Warning that not all modules work through esm.sh
+   - Prefer Deno standard library when available
+
+4. **Enforced strict work order**:
+   - DO NOT work on nix-lib tests until translator is complete
+   - DO NOT work on translator until runtime is complete
+   - IN OTHER WORDS: Finish network fetchers first!
+
+5. **Removed achievement checkboxes (✅)** from "What remains" sections:
+   - Changed "WHAT IS ALREADY IMPLEMENTED" to focus on remaining work
+   - Removed "COMPLETED" sections
+   - Changed infrastructure section to just list available tools (no ✅ marks)
+
+6. **Enhanced the "FINAL REMINDERS" section**:
+   - Added instruction to DELETE completed items from this document
+   - Added reminder that document should ONLY contain what is NOT done
+   - Emphasized reading documentation BEFORE writing any code
+
+### 📋 Document Structure Now:
+
+1. **Top section**: Mandatory rules + work order (very strict)
+2. **What Remains**: 5 unimplemented builtins (no completed items listed)
+3. **Current Status**: Only shows what's NOT done (29% done → 5 fetchers remain)
+4. **Implementation Plan**: Detailed fetchGit breakdown (remove when complete)
+5. **Available Infrastructure**: Lists tools without celebration
+6. **Final Reminders**: Reinforces rules one last time
+
+The agent should now:
+- Focus only on fetchGit implementation
+- Read noogle.dev documentation first
+- Not celebrate or report achievements
+- Delete completed items from the document
+- Stay in Phase 1 (runtime) until ALL fetchers are done
