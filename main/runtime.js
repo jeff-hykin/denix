@@ -1054,8 +1054,248 @@ import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPa
             "fetchMercurial": (args)=>{
                 throw new NotImplemented(`builtins.fetchMercurial requires hg binary integration and store implementation`)
             },
-            "fetchTree": (args)=>{
-                throw new NotImplemented(`builtins.fetchTree is an experimental feature requiring fetch system and store implementation`)
+            "fetchTree": async (args) => {
+                // fetchTree is a unified interface for fetching from different source types
+                // It accepts either:
+                //   1. An attribute set with {type, ...other params}
+                //   2. A URL-like string (requires flakes experimental feature)
+
+                let attrs;
+
+                // Parse input argument
+                if (typeof args === "string" || args instanceof InterpolatedString) {
+                    const urlString = requireString(args);
+
+                    // Parse URL-like syntax into attribute set
+                    // Supported formats:
+                    //   - github:owner/repo[/rev]
+                    //   - gitlab:owner/repo[/rev]
+                    //   - git+https://...
+                    //   - https://.../.tar.gz (tarball)
+                    //   - https://... (file)
+
+                    // GitHub shorthand: github:owner/repo or github:owner/repo/rev
+                    if (urlString.startsWith("github:")) {
+                        const parts = urlString.slice(7).split("/");
+                        attrs = {
+                            type: "github",
+                            owner: parts[0],
+                            repo: parts[1],
+                        };
+                        if (parts[2]) {
+                            attrs.rev = parts[2];
+                        }
+                    }
+                    // GitLab shorthand: gitlab:owner/repo or gitlab:owner/repo/rev
+                    else if (urlString.startsWith("gitlab:")) {
+                        const parts = urlString.slice(7).split("/");
+                        attrs = {
+                            type: "gitlab",
+                            owner: parts[0],
+                            repo: parts[1],
+                        };
+                        if (parts[2]) {
+                            attrs.rev = parts[2];
+                        }
+                    }
+                    // Git URLs: git+https://, git+ssh://, git://
+                    else if (urlString.match(/^git(\+https?|\+ssh)?:\/\//)) {
+                        attrs = {
+                            type: "git",
+                            url: urlString.replace(/^git\+/, ""), // Strip git+ prefix
+                        };
+                    }
+                    // Tarball detection: ends with .tar.gz, .tar.bz2, .tar.xz, .tgz, .tar
+                    else if (urlString.match(/\.(tar\.gz|tar\.bz2|tar\.xz|tgz|tar)$/)) {
+                        attrs = {
+                            type: "tarball",
+                            url: urlString,
+                        };
+                    }
+                    // Default to file type for other URLs
+                    else {
+                        attrs = {
+                            type: "file",
+                            url: urlString,
+                        };
+                    }
+                } else {
+                    // Attribute set input - use as-is
+                    attrs = args;
+                }
+
+                // Validate that type is specified
+                if (!attrs.type) {
+                    throw new Error("builtins.fetchTree: attribute 'type' is required");
+                }
+
+                const type = requireString(attrs.type);
+
+                // Delegate to appropriate fetcher based on type
+                switch (type) {
+                    case "git":
+                        // Delegate to fetchGit
+                        // Extract git-specific parameters
+                        const gitArgs = {
+                            url: attrs.url,
+                        };
+                        if (attrs.name) gitArgs.name = attrs.name;
+                        if (attrs.rev) gitArgs.rev = attrs.rev;
+                        if (attrs.ref) gitArgs.ref = attrs.ref;
+                        if (attrs.submodules !== undefined) gitArgs.submodules = attrs.submodules;
+                        if (attrs.shallow !== undefined) gitArgs.shallow = attrs.shallow;
+                        if (attrs.allRefs !== undefined) gitArgs.allRefs = attrs.allRefs;
+
+                        const gitResult = await builtins.fetchGit(gitArgs);
+
+                        // Return result with additional metadata if provided
+                        if (attrs.lastModified !== undefined) {
+                            gitResult.lastModified = BigInt(attrs.lastModified);
+                        }
+                        if (attrs.revCount !== undefined) {
+                            gitResult.revCount = BigInt(attrs.revCount);
+                        }
+
+                        return gitResult;
+
+                    case "tarball":
+                        // Delegate to fetchTarball
+                        const tarballArgs = {
+                            url: attrs.url,
+                        };
+                        if (attrs.name) tarballArgs.name = attrs.name;
+                        if (attrs.sha256) tarballArgs.sha256 = attrs.sha256;
+
+                        return await builtins.fetchTarball(tarballArgs);
+
+                    case "file":
+                        // Delegate to fetchurl
+                        const fileArgs = {
+                            url: attrs.url,
+                        };
+                        if (attrs.name) fileArgs.name = attrs.name;
+                        if (attrs.sha256) fileArgs.sha256 = attrs.sha256;
+
+                        return await builtins.fetchurl(fileArgs);
+
+                    case "github":
+                        // Transform GitHub shorthand to git URL
+                        if (!attrs.owner || !attrs.repo) {
+                            throw new Error("builtins.fetchTree: type 'github' requires 'owner' and 'repo' attributes");
+                        }
+
+                        const owner = requireString(attrs.owner);
+                        const repo = requireString(attrs.repo);
+                        const rev = attrs.rev ? requireString(attrs.rev) : null;
+                        const ref = attrs.ref ? requireString(attrs.ref) : null;
+
+                        // Build GitHub git URL
+                        const githubUrl = `https://github.com/${owner}/${repo}.git`;
+
+                        const githubArgs = {
+                            url: githubUrl,
+                            name: attrs.name || `${repo}-source`,
+                        };
+
+                        if (rev) {
+                            githubArgs.rev = rev;
+                        } else if (ref) {
+                            githubArgs.ref = ref;
+                        }
+
+                        if (attrs.submodules !== undefined) githubArgs.submodules = attrs.submodules;
+                        if (attrs.shallow !== undefined) githubArgs.shallow = attrs.shallow;
+                        if (attrs.allRefs !== undefined) githubArgs.allRefs = attrs.allRefs;
+
+                        const githubResult = await builtins.fetchGit(githubArgs);
+
+                        // Add shortRev if not already present
+                        if (!githubResult.shortRev && githubResult.rev) {
+                            githubResult.shortRev = githubResult.rev.slice(0, 7);
+                        }
+
+                        return githubResult;
+
+                    case "gitlab":
+                        // Transform GitLab shorthand to git URL
+                        if (!attrs.owner || !attrs.repo) {
+                            throw new Error("builtins.fetchTree: type 'gitlab' requires 'owner' and 'repo' attributes");
+                        }
+
+                        const glOwner = requireString(attrs.owner);
+                        const glRepo = requireString(attrs.repo);
+                        const glRev = attrs.rev ? requireString(attrs.rev) : null;
+                        const glRef = attrs.ref ? requireString(attrs.ref) : null;
+                        const glHost = attrs.host ? requireString(attrs.host) : "gitlab.com";
+
+                        // Build GitLab git URL
+                        const gitlabUrl = `https://${glHost}/${glOwner}/${glRepo}.git`;
+
+                        const gitlabArgs = {
+                            url: gitlabUrl,
+                            name: attrs.name || `${glRepo}-source`,
+                        };
+
+                        if (glRev) {
+                            gitlabArgs.rev = glRev;
+                        } else if (glRef) {
+                            gitlabArgs.ref = glRef;
+                        }
+
+                        if (attrs.submodules !== undefined) gitlabArgs.submodules = attrs.submodules;
+                        if (attrs.shallow !== undefined) gitlabArgs.shallow = attrs.shallow;
+                        if (attrs.allRefs !== undefined) gitlabArgs.allRefs = attrs.allRefs;
+
+                        return await builtins.fetchGit(gitlabArgs);
+
+                    case "sourcehut":
+                        // Transform SourceHut shorthand to git URL
+                        if (!attrs.owner || !attrs.repo) {
+                            throw new Error("builtins.fetchTree: type 'sourcehut' requires 'owner' and 'repo' attributes");
+                        }
+
+                        const shOwner = requireString(attrs.owner);
+                        const shRepo = requireString(attrs.repo);
+                        const shRev = attrs.rev ? requireString(attrs.rev) : null;
+                        const shRef = attrs.ref ? requireString(attrs.ref) : null;
+                        const shHost = attrs.host ? requireString(attrs.host) : "git.sr.ht";
+
+                        // Build SourceHut git URL
+                        const sourcehutUrl = `https://${shHost}/~${shOwner}/${shRepo}`;
+
+                        const sourcehutArgs = {
+                            url: sourcehutUrl,
+                            name: attrs.name || `${shRepo}-source`,
+                        };
+
+                        if (shRev) {
+                            sourcehutArgs.rev = shRev;
+                        } else if (shRef) {
+                            sourcehutArgs.ref = shRef;
+                        }
+
+                        if (attrs.submodules !== undefined) sourcehutArgs.submodules = attrs.submodules;
+                        if (attrs.shallow !== undefined) sourcehutArgs.shallow = attrs.shallow;
+                        if (attrs.allRefs !== undefined) sourcehutArgs.allRefs = attrs.allRefs;
+
+                        return await builtins.fetchGit(sourcehutArgs);
+
+                    case "mercurial":
+                    case "hg":
+                        // Delegate to fetchMercurial (which is not implemented yet)
+                        throw new NotImplemented("builtins.fetchTree: type 'mercurial' requires builtins.fetchMercurial to be implemented");
+
+                    case "path":
+                        // Local path type - would need special handling
+                        throw new NotImplemented("builtins.fetchTree: type 'path' is not yet implemented");
+
+                    case "indirect":
+                        // Flake registry indirection - requires flake registry support
+                        throw new NotImplemented("builtins.fetchTree: type 'indirect' requires flake registry support");
+
+                    default:
+                        throw new Error(`builtins.fetchTree: unsupported type '${type}'`);
+                }
             },
             "fetchClosure": (args)=>{
                 throw new NotImplemented(`builtins.fetchClosure requires binary cache support and store implementation (experimental feature)`)

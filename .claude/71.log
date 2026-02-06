@@ -1,0 +1,19 @@
+Perfect! The prompt.md is now concise and accurate. The work is complete:
+
+## Summary
+
+**Completed**: Implementation of `builtins.fetchTree`
+
+**Implementation details**:
+- Unified fetcher interface supporting multiple source types
+- Delegates to existing fetchers (fetchGit, fetchTarball, fetchurl)
+- Supports both attribute set and URL-like string syntax
+- Handles git, tarball, file, github, gitlab, sourcehut types
+- URL auto-detection for tarball and file types
+- GitHub/GitLab shorthand syntax (e.g., `github:owner/repo`)
+- Comprehensive error handling for unsupported types
+- 23 comprehensive tests covering all functionality
+
+**Test results**: 23/23 tests passing, 179 total tests passing
+
+**Remaining work**: 3 optional/experimental builtins (fetchMercurial, fetchClosure, getFlake) - all can be skipped
