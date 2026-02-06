@@ -1,0 +1,19 @@
+Perfect! The document is well-structured and action-oriented. Now let me write a brief summary of what was updated for the memory system:
+
+The prompt.md has been completely rewritten with:
+
+1. **Immediate action section** at top: Clear directive to test fixed-points.nix first
+2. **Current status**: Factual summary of what exists
+3. **Blockers**: None currently 
+4. **Remaining work**: Detailed breakdown of:
+   - Task 1.1: Test fixed-points.nix (9 functions, with code examples)
+   - Task 1.2: Implement makeTestLib() helper (with full code)
+   - Tasks 1.3-1.5: Test trivial, lists, attrsets through lib context
+5. **Key discoveries documented**:
+   - nixpkgs.lib files have circular dependencies through fixed-point pattern
+   - default.nix cannot be tested (needs full nixpkgs structure)
+   - Must create custom makeTestLib() using lib.fix
+6. **Task checklist** for tracking progress
+7. **Investigation section** for future work
+
+All tests currently passing (73 tests, 64 steps). Ready to proceed with testing fixed-points.nix.
