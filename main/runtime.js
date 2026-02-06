@@ -1286,8 +1286,22 @@ import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPa
                         throw new NotImplemented("builtins.fetchTree: type 'mercurial' requires builtins.fetchMercurial to be implemented");
 
                     case "path":
-                        // Local path type - would need special handling
-                        throw new NotImplemented("builtins.fetchTree: type 'path' is not yet implemented");
+                        // Delegate to builtins.path
+                        // Implementation based on https://noogle.dev/f/builtins/fetchTree
+                        // type='path' accepts: path (required), name (optional)
+                        if (!attrs.path) {
+                            throw new Error("builtins.fetchTree: type 'path' requires 'path' attribute");
+                        }
+
+                        const pathArgs = {
+                            path: attrs.path,
+                        };
+                        if (attrs.name) pathArgs.name = attrs.name;
+                        if (attrs.filter) pathArgs.filter = attrs.filter;
+                        if (attrs.recursive !== undefined) pathArgs.recursive = attrs.recursive;
+                        if (attrs.sha256) pathArgs.sha256 = attrs.sha256;
+
+                        return await builtins.path(pathArgs);
 
                     case "indirect":
                         // Flake registry indirection - requires flake registry support

@@ -160,17 +160,31 @@ Deno.test("fetchTree - mercurial type throws NotImplemented", async () => {
     );
 });
 
-Deno.test("fetchTree - path type throws NotImplemented", async () => {
-    await assertRejects(
-        async () => {
-            await builtins.fetchTree({
-                type: "path",
-                path: "/some/local/path",
-            });
-        },
-        Error,
-        "not yet implemented"
-    );
+Deno.test("fetchTree - path type with local directory", async () => {
+    // Create a temporary directory with some content
+    const tempDir = await Deno.makeTempDir();
+    await Deno.writeTextFile(`${tempDir}/test.txt`, "Hello from fetchTree path type!");
+
+    try {
+        // Test fetchTree with type='path'
+        const result = await builtins.fetchTree({
+            type: "path",
+            path: tempDir,
+            name: "test-path-source",
+        });
+
+        // Verify it returns a store path
+        assertExists(result.toString());
+        assertEquals(result.toString().includes("test-path-source"), true);
+
+        // Verify the file was copied to the store
+        const storePath = result.toString();
+        const testFile = await Deno.readTextFile(`${storePath}/test.txt`);
+        assertEquals(testFile, "Hello from fetchTree path type!");
+    } finally {
+        // Clean up temp directory
+        await Deno.remove(tempDir, { recursive: true });
+    }
 });
 
 Deno.test("fetchTree - indirect type throws NotImplemented", async () => {

@@ -22,17 +22,22 @@
 
 ## 📋 IMMEDIATE NEXT TASK
 
-**Current Task (1-2 hours):**
-1. Implement fetchTree type='path' (see Task 1, line ~107)
-2. Run: `deno test --allow-all main/tests/builtins_fetchtree_test.js`
-3. STOP and report completion
-4. Wait for instruction on next task (Option A or B below)
+**Awaiting user instruction on which path to take:**
 
-**After this task completes, two paths exist:**
-- Option A (16-22 days): Implement fetchMercurial, fetchClosure, getFlake
-- Option B (2-3 days): Translator edge case verification
+- **Option A (16-22 days)**: Implement remaining optional builtins
+  - fetchMercurial (2-3 days)
+  - fetchClosure (5-7 days)
+  - getFlake (5-7 days)
+  - fetchTree type='indirect' (3-4 days)
 
-**DO NOT choose a path yourself. Complete the immediate task, then stop.**
+- **Option B (2-3 days)**: Translator edge case verification
+  - Advanced pattern matching
+  - String escape sequences
+  - Path literal edge cases
+  - Operator precedence
+  - Additional language features
+
+**DO NOT choose a path yourself. Wait for user instruction.**
 
 ## 📚 MANDATORY IMPLEMENTATION PROCESS
 
@@ -83,16 +88,15 @@ Step 5: Create main/tests/builtins_fetchtarball_test.js
 **What is NOT implemented in runtime (main/runtime.js):**
 
 ### Incomplete: fetchTree builtin
-- Missing type='path' handler (line 1290) - MUST IMPLEMENT NEXT
-- Missing type='mercurial' handler (line 1286) - OPTIONAL
-- Missing type='indirect' handler (line 1294) - OPTIONAL
+- Missing type='mercurial' handler (line 1286) - OPTIONAL (requires fetchMercurial)
+- Missing type='indirect' handler (line 1294) - OPTIONAL (requires flake registry)
 
 ### Not Implemented: 3 Optional Builtins
 - fetchMercurial (line 1055) - Throws NotImplemented
 - fetchClosure (line 1301) - Throws NotImplemented
 - getFlake (line 1836) - Throws NotImplemented
 
-**NEXT TASK: Implement fetchTree type='path' (see Task 1 below)**
+**Runtime is 95% complete. Only optional/experimental features remain.**
 
 ---
 
@@ -134,11 +138,10 @@ See Phase 2 section (line ~620) for full list and priorities
 
 ### fetchTree Partial Implementation
 
-fetchTree throws NotImplemented for 3 edge cases:
+fetchTree throws NotImplemented for 2 edge cases:
 
 | Type | Line | Notes | Priority |
 |------|------|-------|----------|
-| 'path' | 1290 | 1-2 hours to implement | MEDIUM |
 | 'mercurial' | 1286 | Requires fetchMercurial | LOW |
 | 'indirect' | 1294 | Requires flake registry (3-4 days) | LOW |
 
@@ -146,33 +149,7 @@ fetchTree throws NotImplemented for 3 edge cases:
 
 ## 🛠️ IMPLEMENTATION GUIDE
 
-### Task 1: Implement fetchTree type='path' (1-2 hours - HIGHEST PRIORITY)
-
-**MANDATORY BEFORE CODING:**
-1. Read https://noogle.dev/f/builtins/fetchTree
-2. Study the type='path' parameter behavior
-3. Compare with builtins.path documentation
-4. Test in actual Nix if unclear
-
-Implementation (runtime.js line 1290):
-```javascript
-case "path": {
-    // Similar to builtins.path
-    // Args: { type: "path", path: "/some/local/path" }
-    // Just delegate to builtins.path
-    return await builtins.path({
-        path: args.path,
-        name: args.name || basename(args.path)
-    });
-}
-```
-
-Testing:
-1. Add test case to main/tests/builtins_fetchtree_test.js
-2. Verify it copies directory to store
-3. Verify hash matches builtins.path
-
-### Task 2: Implement fetchMercurial (2-3 days - LOW PRIORITY)
+### Task 1: Implement fetchMercurial (2-3 days)
 
 **MANDATORY BEFORE CODING:**
 1. Read https://noogle.dev/f/builtins/fetchMercurial
@@ -216,7 +193,7 @@ Steps:
    - Test caching behavior
    - Test error handling (missing hg, invalid URL)
 
-### Task 3: Implement fetchClosure (5-7 days - LOW PRIORITY, VERY COMPLEX)
+### Task 2: Implement fetchClosure (5-7 days)
 
 **MANDATORY BEFORE CODING:**
 1. Read https://noogle.dev/f/builtins/fetchClosure
@@ -302,7 +279,7 @@ Final steps:
    - Test NAR unpacking
    - Test error handling (missing paths, network failures)
 
-### Task 4: Implement getFlake (5-7 days - LOW PRIORITY, VERY COMPLEX)
+### Task 3: Implement getFlake (5-7 days - LOW PRIORITY, VERY COMPLEX)
 
 **MANDATORY BEFORE CODING:**
 1. Read https://noogle.dev/f/builtins/getFlake
@@ -420,7 +397,7 @@ Final steps:
    - Test with nested inputs
    - Test system-specific outputs
 
-### Task 5: Implement fetchTree type='indirect' (3-4 days - LOW PRIORITY)
+### Task 4: Implement fetchTree type='indirect' (3-4 days - LOW PRIORITY)
 
 **MANDATORY BEFORE CODING:**
 1. Read https://noogle.dev/f/builtins/fetchTree
