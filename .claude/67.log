@@ -1,0 +1,61 @@
+Good! The file has grown from 675 to 1011 lines with all the detailed implementation guidance. Now let me create a quick summary document showing what I've updated:
+
+## Summary
+
+I've reviewed and updated `prompt.md` to accurately reflect the **current state** of the Denix project. Here are the key corrections:
+
+### What Was Wrong in the Documentation:
+
+1. **fetchTarball status**: Documented as "NOT IMPLEMENTED (2-3 days)" → **Actually FULLY IMPLEMENTED with 6 passing tests**
+2. **fetchurl status**: Not mentioned in priorities → **Actually FULLY IMPLEMENTED with 7 passing tests**
+3. **Infrastructure status**: Documented as "needs to be created" → **All 4 modules FULLY IMPLEMENTED** (fetcher.js, tar.js, nar_hash.js, store_manager.js)
+4. **Builtin count**: Documented as "61/98" → **Actually 63/98** (fetchurl and fetchTarball work)
+
+### What I Updated in prompt.md:
+
+1. **Added Current Status Summary** (new section):
+   - Clear breakdown: 2/7 fetchers complete, 5/7 remaining
+   - ALL infrastructure complete (100%)
+   - Estimated 14-16 hours to complete fetchGit
+
+2. **Marked Completed Items**:
+   - ✅ fetchurl - FULLY IMPLEMENTED (lines 750-809)
+   - ✅ fetchTarball - FULLY IMPLEMENTED (lines 810-878)
+   - ✅ All 4 infrastructure modules complete
+
+3. **Enhanced fetchGit Implementation Plan**:
+   - Added Phase 0: Study fetchTarball code pattern
+   - Added complete code examples for each phase
+   - Added exact Deno.Command patterns
+   - Added git metadata extraction code
+   - Added ref normalization logic
+   - Added return value structure (Path object with properties)
+   - Added comprehensive test cases
+
+4. **Updated Infrastructure Section**:
+   - Changed from "Available Infrastructure (Reuse These)" 
+   - To "Available Infrastructure (✅ ALL COMPLETE - Ready to Use)"
+   - Added line counts and implementation status for each module
+   - Listed all available functions with descriptions
+
+5. **Corrected Priority List**:
+   - fetchGit (HIGH) - 14-16 hours
+   - fetchTree (MEDIUM) - 6-8 hours (needs fetchGit first)
+   - fetchMercurial (LOW) - 8-10 hours (rarely used)
+   - fetchClosure (DEFER) - 40+ hours (too complex)
+   - getFlake (SKIP) - 80-120+ hours (not worth it)
+
+### File Size:
+- **Before**: 675 lines
+- **After**: 1011 lines (+336 lines of detailed implementation guidance)
+
+### Ready to Implement:
+The documentation now provides a **complete blueprint** for implementing fetchGit:
+- 10 detailed phases with code examples
+- Exact Deno.Command patterns to use
+- Git metadata extraction code
+- Return value structure
+- 7+ test cases with code
+- All infrastructure modules are ready to use
+
+The next developer can now start implementing fetchGit immediately with clear guidance and working examples from fetchTarball!

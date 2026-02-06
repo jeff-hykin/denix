@@ -1,4 +1,4 @@
-# Remaining Work: Network Fetchers & Store Functions
+# Remaining Work: Git Fetchers & Advanced Features
 
 ## 🛑 MANDATORY RULES - READ THIS FIRST 🛑
 
@@ -11,7 +11,7 @@
 **INSTRUCTIONS:**
 1. **DO NOT work on nix-lib tests** until the code translator is fully implemented
 2. **DO NOT work on the translator** until the runtime is fully implemented
-3. **IN OTHER WORDS**: Finish the network fetchers and store functions in runtime.js BEFORE doing ANYTHING ELSE
+3. **IN OTHER WORDS**: Finish the git fetchers and advanced features in runtime.js BEFORE doing ANYTHING ELSE
 
 **RIGHT NOW YOU ARE IN PHASE 1: RUNTIME IMPLEMENTATION**
 - Focus ONLY on implementing missing builtins in main/runtime.js
@@ -28,41 +28,81 @@
 4. **fetchClosure** - NOT IMPLEMENTED (DEFER - very complex)
 5. **getFlake** - NOT IMPLEMENTED (SKIP - massive undertaking)
 
+**WHAT IS ALREADY IMPLEMENTED:**
+- ✅ **fetchurl** - FULLY IMPLEMENTED with 7 passing tests
+- ✅ **fetchTarball** - FULLY IMPLEMENTED with 6 passing tests
+- ✅ **Infrastructure modules** - All 4 support modules complete (fetcher.js, tar.js, nar_hash.js, store_manager.js)
+
 **YOUR IMMEDIATE TASK:** Implement builtins.fetchGit (14-16 hours)
+
+## 📊 CURRENT STATUS SUMMARY
+
+**Network Fetchers (7 total):**
+- ✅ fetchurl - COMPLETE (7 tests passing)
+- ✅ fetchTarball - COMPLETE (6 tests passing)
+- ❌ fetchGit - NOT IMPLEMENTED (HIGH PRIORITY)
+- ❌ fetchTree - NOT IMPLEMENTED (MEDIUM PRIORITY, needs fetchGit)
+- ❌ fetchMercurial - NOT IMPLEMENTED (LOW PRIORITY)
+- ❌ fetchClosure - NOT IMPLEMENTED (DEFER - very complex)
+- ❌ getFlake - NOT IMPLEMENTED (SKIP - massive undertaking)
+
+**Infrastructure (6 modules):**
+- ✅ main/fetcher.js - COMPLETE (155 lines)
+- ✅ main/tar.js - COMPLETE (169 lines)
+- ✅ main/nar_hash.js - COMPLETE (245 lines)
+- ✅ main/store_manager.js - COMPLETE (194 lines)
+- ✅ tools/store_path.js - COMPLETE (pre-existing)
+- ✅ tools/hashing.js - COMPLETE (pre-existing)
+
+**What This Means:**
+- 2/7 fetchers complete (29%)
+- ALL infrastructure complete (100%)
+- fetchGit can reuse ALL existing infrastructure
+- Estimated time to complete fetchGit: 14-16 hours
 
 ## 🎯 IMPLEMENTATION PRIORITIES
 
 **PHASE 1: Runtime Builtins (CURRENT PHASE - DO THIS NOW)**
+
+### ✅ COMPLETED:
+- **fetchurl** - Lines 750-809 in runtime.js - 7 passing tests
+- **fetchTarball** - Lines 810-878 in runtime.js - 6 passing tests
+- **Infrastructure** - fetcher.js, tar.js, nar_hash.js, store_manager.js all complete
 
 ### Task 1: fetchGit (HIGH PRIORITY - START HERE)
 - **Location**: main/runtime.js line 879
 - **Status**: NOT IMPLEMENTED - throws NotImplemented error
 - **Time**: 14-16 hours over 2-3 days
 - **Blocks**: fetchTree cannot be implemented without this
+- **Dependencies**: Git binary must be installed
 
 ### Task 2: fetchTree (MEDIUM PRIORITY - AFTER fetchGit)
-- **Location**: main/runtime.js line 885
+- **Location**: main/runtime.js line 886
 - **Status**: NOT IMPLEMENTED - throws NotImplemented error
 - **Time**: 6-8 hours over 1-2 days
 - **Requires**: fetchGit MUST be complete first
+- **Note**: Experimental feature, wraps other fetchers
 
 ### Task 3: fetchMercurial (LOW PRIORITY - OPTIONAL)
-- **Location**: main/runtime.js line 882
+- **Location**: main/runtime.js line 883
 - **Status**: NOT IMPLEMENTED - throws NotImplemented error
 - **Time**: 8-10 hours
 - **Notes**: Rarely used, can skip
+- **Dependencies**: Mercurial (hg) binary must be installed
 
 ### Task 4: fetchClosure (DEFER)
-- **Location**: main/runtime.js line 888
+- **Location**: main/runtime.js line 889
 - **Status**: NOT IMPLEMENTED - throws NotImplemented error
 - **Time**: 40+ hours (very complex)
 - **Notes**: Do not implement unless explicitly required
+- **Complexity**: Requires binary cache protocol, signature verification, NAR deserialization
 
 ### Task 5: getFlake (SKIP)
-- **Location**: main/runtime.js line 1423
+- **Location**: main/runtime.js line 1424
 - **Status**: NOT IMPLEMENTED - throws NotImplemented error
 - **Time**: 80-120+ hours
 - **Notes**: Experimental, massive scope - do not implement
+- **Complexity**: Requires full flake system, lockfile parsing, recursive input resolution
 
 **PHASE 2: Translator Features (DO NOT START YET)**
 - Wait until ALL Phase 1 tasks are complete
@@ -210,17 +250,126 @@ import pkg from "https://esm.sh/package-name@1.0.0";
 
 **⚠️ READ DOCUMENTATION BEFORE CODING (15 minutes required)**
 
+**Implementation Strategy**: Follow the same pattern as fetchTarball/fetchurl:
+1. Argument parsing (string or object)
+2. Cache check (getCachedPath)
+3. Download/clone to temp directory
+4. Extract metadata
+5. Compute NAR hash (hashDirectory)
+6. Move to store (atomicMove)
+7. Save to cache (setCachedPath)
+8. Return Path object
+
+### Phase 0: Study fetchTarball Implementation (30 min)
+**BEFORE CODING, READ THE EXISTING fetchTarball CODE (lines 810-878 in runtime.js)**
+
+The pattern to follow:
+```javascript
+"fetchGit": async (args) => {
+    // 1. Parse arguments (string or {url, name?, rev?, ref?, ...})
+    let url, name, rev, ref, submodules, shallow, allRefs;
+    if (typeof args === "string" || args instanceof InterpolatedString) {
+        url = requireString(args);
+        name = extractNameFromUrl(url); // From fetcher.js
+    } else {
+        url = requireString(args["url"]);
+        name = args["name"] ? requireString(args["name"]) : extractNameFromUrl(url);
+        // ... extract other params ...
+    }
+
+    // 2. Ensure store directory exists
+    await ensureStoreDirectory(); // From store_manager.js
+
+    // 3. Check cache
+    const cacheKey = `fetchgit:${url}:${ref}:${rev || ""}`;
+    const cached = await getCachedPath(cacheKey); // From store_manager.js
+    if (cached && await exists(cached)) { // exists from store_manager.js
+        return new Path(cached);
+    }
+
+    // 4. Clone to temp directory
+    const tempDir = await Deno.makeTempDir();
+    // ... git clone commands ...
+
+    // 5. Extract metadata (rev, shortRev, revCount, lastModified)
+    // ... git commands ...
+
+    // 6. Remove .git directory for determinism
+    await Deno.remove(`${tempDir}/.git`, {recursive: true});
+
+    // 7. Compute NAR hash
+    const narHash = await hashDirectory(tempDir); // From nar_hash.js
+
+    // 8. Compute store path
+    const storePath = computeFetchStorePath(narHash, name); // From store_manager.js
+
+    // 9. Move to store
+    await atomicMove(tempDir, storePath); // From store_manager.js
+
+    // 10. Cache the result
+    await setCachedPath(cacheKey, storePath); // From store_manager.js
+
+    // 11. Return Path object with metadata as properties
+    const result = new Path(storePath);
+    result.rev = rev;
+    result.shortRev = shortRev;
+    result.revCount = revCount;
+    result.lastModified = lastModified;
+    result.narHash = narHash;
+    result.submodules = submodules;
+    return result;
+}
+```
+
 ### Phase 1: Argument Parsing (1 hour)
-- Accept URL string OR attribute set
+- Accept URL string OR attribute set (same as fetchTarball)
 - Required: url (string)
 - Optional with defaults:
-  - name (default: basename of url)
-  - rev (default: tip of ref)
-  - ref (default: "HEAD", auto-prefix "refs/heads/" unless starts with "refs/")
+  - name (default: basename of url using extractNameFromUrl)
+  - rev (default: null, means tip of ref)
+  - ref (default: "HEAD")
   - submodules (default: false)
   - shallow (default: false)
   - allRefs (default: false)
 - Validate url is non-empty string
+
+**CRITICAL: Ref Normalization**
+
+Nix auto-prefixes branch names with "refs/heads/" unless they already start with "refs/":
+```javascript
+// Normalize ref parameter
+let normalizedRef = ref;
+if (ref && ref !== "HEAD" && !ref.startsWith("refs/")) {
+    normalizedRef = `refs/heads/${ref}`;
+}
+// Examples:
+//   "main" → "refs/heads/main"
+//   "v1.0" → "refs/heads/v1.0"
+//   "refs/tags/v1.0" → "refs/tags/v1.0" (unchanged)
+//   "HEAD" → "HEAD" (unchanged)
+```
+
+**Argument Parsing Example:**
+```javascript
+let url, name, rev, ref, submodules, shallow, allRefs;
+if (typeof args === "string" || args instanceof InterpolatedString) {
+    url = requireString(args);
+    name = extractNameFromUrl(url);
+    rev = null;
+    ref = "HEAD";
+    submodules = false;
+    shallow = false;
+    allRefs = false;
+} else {
+    url = requireString(args["url"]);
+    name = args["name"] ? requireString(args["name"]) : extractNameFromUrl(url);
+    rev = args["rev"] ? requireString(args["rev"]) : null;
+    ref = args["ref"] ? requireString(args["ref"]) : "HEAD";
+    submodules = args["submodules"] === true;
+    shallow = args["shallow"] === true;
+    allRefs = args["allRefs"] === true;
+}
+```
 
 ### Phase 2: Git Binary Validation (30 min)
 - Check if git is installed: `new Deno.Command("git", {args: ["--version"]})`
@@ -233,15 +382,51 @@ import pkg from "https://esm.sh/package-name@1.0.0";
 - Otherwise proceed with fetch
 
 ### Phase 4: Clone Repository (3 hours)
-- Create temp directory: `Deno.makeTempDir()`
-- Build git clone command with flags:
-  ```
-  git clone [--depth 1 if shallow] [--recurse-submodules if submodules]
-            [--branch <ref> if ref provided] <url> <tempDir>
-  ```
-- If allRefs=true: fetch all refs with `git fetch --all`
-- Handle errors: network failures, invalid URLs, auth failures
-- Parse stderr/stdout for error messages
+**Use Deno.Command API (same as tar.js uses):**
+
+```javascript
+// Create temp directory
+const tempDir = await Deno.makeTempDir();
+
+// Build git clone command
+const args = ["clone"];
+if (shallow) args.push("--depth", "1");
+if (submodules) args.push("--recurse-submodules");
+if (ref && ref !== "HEAD") args.push("--branch", normalizedRef);
+args.push(url, tempDir);
+
+// Execute git clone
+const command = new Deno.Command("git", {
+    args: args,
+    stdout: "piped",
+    stderr: "piped",
+});
+
+const { code, stdout, stderr } = await command.output();
+
+if (code !== 0) {
+    const errorText = new TextDecoder().decode(stderr);
+    // Clean up temp directory
+    try { await Deno.remove(tempDir, {recursive: true}); } catch {}
+    throw new Error(`git clone failed: ${errorText}`);
+}
+
+// If allRefs=true, fetch all refs
+if (allRefs) {
+    const fetchCmd = new Deno.Command("git", {
+        args: ["-C", tempDir, "fetch", "--all"],
+        stdout: "piped",
+        stderr: "piped",
+    });
+    await fetchCmd.output(); // Ignore errors on fetch --all
+}
+```
+
+**Error Handling:**
+- Network failures: Let git error naturally, wrap in Error
+- Invalid URLs: git will fail with clear error
+- Auth failures: git will prompt or fail (no special handling needed)
+- Clean up temp directory on ANY error
 
 ### Phase 5: Checkout Revision (1 hour)
 - If rev specified: `git checkout <rev>`
@@ -249,16 +434,61 @@ import pkg from "https://esm.sh/package-name@1.0.0";
 - Verify checkout succeeded (exit code 0)
 
 ### Phase 6: Extract Metadata (2 hours)
-- Get final rev: `git rev-parse HEAD` → string (40 char hex)
-- Get shortRev: `git rev-parse --short HEAD` → string (7 char hex)
-- Get revCount: `git rev-list --count HEAD` → integer
-- Get lastModified: `git log -1 --format=%ct HEAD` → unix timestamp
-- Parse command outputs (trim whitespace, convert to correct types)
+**Extract git metadata using Deno.Command:**
+
+```javascript
+// Helper function to run git command and get output
+async function gitOutput(dir, args) {
+    const cmd = new Deno.Command("git", {
+        args: ["-C", dir, ...args],
+        stdout: "piped",
+        stderr: "piped",
+    });
+    const { code, stdout } = await cmd.output();
+    if (code !== 0) {
+        throw new Error(`git ${args.join(" ")} failed`);
+    }
+    return new TextDecoder().decode(stdout).trim();
+}
+
+// Get full commit hash
+const fullRev = await gitOutput(tempDir, ["rev-parse", "HEAD"]);
+// Returns: "abc123def456..." (40 characters)
+
+// Get short commit hash
+const shortRev = await gitOutput(tempDir, ["rev-parse", "--short", "HEAD"]);
+// Returns: "abc1234" (7 characters)
+
+// Get commit count
+const revCountStr = await gitOutput(tempDir, ["rev-list", "--count", "HEAD"]);
+const revCount = BigInt(revCountStr); // Use BigInt for large repos
+// Returns: BigInt(1234)
+
+// Get last modified timestamp
+const lastModifiedStr = await gitOutput(tempDir, ["log", "-1", "--format=%ct", "HEAD"]);
+const lastModified = BigInt(lastModifiedStr); // Unix timestamp
+// Returns: BigInt(1706745600)
+```
+
+**Important:**
+- All outputs need `.trim()` to remove newlines
+- revCount and lastModified should be BigInt (Nix uses integers, could be large)
+- Commands use `-C <dir>` to run in the temp directory
 
 ### Phase 7: Clean Working Directory (30 min)
-- Remove .git directory for determinism: `Deno.remove(path + "/.git", {recursive: true})`
-- Apply git ls-files if local directory (filter to tracked files only)
-- Result should be clean directory with only repository contents
+**Remove .git directory for determinism:**
+```javascript
+// Remove .git directory
+await Deno.remove(`${tempDir}/.git`, {recursive: true});
+```
+
+**Note about local directories:**
+- If URL is a local path (starts with "/" or "."), Nix uses `git ls-files` to filter
+- For network URLs, just remove .git directory (all files are already from the repo)
+- **For MVP: Skip git ls-files filtering** (add later if needed)
+- All cloned repos from network URLs are already clean
+
+**Result:** Clean directory with only repository contents, no .git directory
 
 ### Phase 8: Hash and Store (1.5 hours)
 - Compute NAR hash: `await hashDirectory(clonePath)` from nar_hash.js
@@ -267,39 +497,125 @@ import pkg from "https://esm.sh/package-name@1.0.0";
 - Save to cache: `setCachedPath(cacheKey, storePath, metadata)`
 
 ### Phase 9: Build Result (30 min)
-- Return attribute set with:
-  - outPath: store path string
-  - rev: commit hash (40 char)
-  - shortRev: short commit hash (7 char)
-  - revCount: integer commit count
-  - lastModified: integer unix timestamp
-  - narHash: "sha256:..." string
-  - submodules: boolean (echo input parameter)
-- Match exact Nix output structure
+**CRITICAL DIFFERENCE FROM fetchTarball:**
+
+fetchGit returns a **Path object with extra properties**, NOT a plain object:
+```javascript
+const result = new Path(storePath);
+result.rev = fullRev;           // "abc123..." (40 chars)
+result.shortRev = shortRev;     // "abc1234" (7 chars)
+result.revCount = BigInt(count); // BigInt for large repos
+result.lastModified = BigInt(timestamp); // Unix timestamp as BigInt
+result.narHash = narHash;       // "sha256:..."
+result.submodules = submodules; // boolean
+return result;
+```
+
+The Path object:
+- toString() returns outPath (store path)
+- Can be used like a path: `"${result}/some-file"`
+- Extra properties accessible: `result.rev`, `result.shortRev`, etc.
+
+**Test the return value structure:**
+```javascript
+const result = await builtins.fetchGit("https://github.com/...");
+assertEquals(typeof result.toString(), "string"); // outPath
+assertEquals(result.rev.length, 40); // Full commit hash
+assertEquals(result.shortRev.length, 7); // Short hash
+assertEquals(typeof result.revCount, "bigint"); // BigInt
+assertEquals(typeof result.lastModified, "bigint"); // BigInt
+assertEquals(result.narHash.startsWith("sha256:"), true);
+```
 
 ### Phase 10: Testing (4 hours)
 Create main/tests/builtins_fetchgit_test.js with these required test cases:
-- Basic clone: public HTTPS repo with no options
-- String URL shorthand: `fetchGit "https://..."`
-- Specific revision: clone with rev parameter
-- Branch reference: clone with ref parameter
-- Ref auto-prefixing: "main" → "refs/heads/main"
-- Shallow clone: verify --depth 1 used
-- Submodules: verify submodules checked out
-- Cache hit: same fetch twice uses cache
-- Local directory: ./some-path handling
-- Error: git not installed
-- Error: invalid URL
-- Error: nonexistent repository
-- Error: invalid revision
+
+**Model after builtins_fetchtarball_test.js structure!**
+
+```javascript
+import { assertEquals, assertExists } from "jsr:@std/assert";
+import { builtins } from "../runtime.js";
+
+// Test 1: String URL argument (basic clone)
+Deno.test("fetchGit - string URL argument", async () => {
+    const result = await builtins.fetchGit("https://github.com/NixOS/nix.git");
+    assertExists(result.toString()); // outPath
+    assertEquals(result.rev.length, 40); // Full commit hash
+    assertEquals(result.shortRev.length, 7); // Short hash
+    assertEquals(typeof result.revCount, "bigint");
+    assertEquals(typeof result.lastModified, "bigint");
+    assertExists(result.narHash);
+});
+
+// Test 2: Object argument with URL
+Deno.test("fetchGit - object argument with URL", async () => {
+    const result = await builtins.fetchGit({
+        url: "https://github.com/NixOS/nix.git",
+        name: "nix-source",
+    });
+    assertEquals(result.toString().includes("nix-source"), true);
+});
+
+// Test 3: Specific revision
+Deno.test("fetchGit - specific revision", async () => {
+    const result = await builtins.fetchGit({
+        url: "https://github.com/NixOS/nix.git",
+        rev: "abc123...", // Use a real commit hash
+    });
+    assertEquals(result.rev, "abc123...");
+});
+
+// Test 4: Branch reference with auto-prefixing
+Deno.test("fetchGit - branch reference", async () => {
+    const result = await builtins.fetchGit({
+        url: "https://github.com/NixOS/nix.git",
+        ref: "master", // Should become refs/heads/master
+    });
+    assertExists(result.rev);
+});
+
+// Test 5: Caching works
+Deno.test("fetchGit - caching works", async () => {
+    const result1 = await builtins.fetchGit("https://github.com/NixOS/nix.git");
+    const result2 = await builtins.fetchGit("https://github.com/NixOS/nix.git");
+    assertEquals(result1.toString(), result2.toString()); // Same store path
+    assertEquals(result1.rev, result2.rev); // Same metadata
+});
+
+// Test 6: Invalid URL throws error
+Deno.test("fetchGit - invalid URL throws error", async () => {
+    try {
+        await builtins.fetchGit("https://invalid.example.com/nonexistent.git");
+        throw new Error("Should have thrown");
+    } catch (error) {
+        assertEquals(error.message.includes("git clone failed"), true);
+    }
+});
+
+// Test 7: Metadata types are correct
+Deno.test("fetchGit - metadata types", async () => {
+    const result = await builtins.fetchGit("https://github.com/NixOS/nix.git");
+    assertEquals(typeof result.rev, "string");
+    assertEquals(typeof result.shortRev, "string");
+    assertEquals(typeof result.revCount, "bigint");
+    assertEquals(typeof result.lastModified, "bigint");
+    assertEquals(typeof result.narHash, "string");
+    assertEquals(typeof result.submodules, "boolean");
+});
+```
+
+**Use a small, stable test repository:**
+- Don't use large repos (nixpkgs is too big)
+- Use a repo with known commit hashes for testing specific revisions
+- Consider creating a tiny test repo for predictable results
 
 **Total Estimated Time**: 14-16 hours over 2-3 days
 
 ---
 
-## What is NOT Implemented (5 items total)
+## 📋 DETAILED BREAKDOWN: Remaining Implementations
 
-### 1. builtins.fetchGit - NOT IMPLEMENTED (HIGH PRIORITY)
+### 1. builtins.fetchGit - NOT IMPLEMENTED (HIGH PRIORITY - START HERE)
 
 **OFFICIAL DOCUMENTATION**: https://nix.dev/manual/nix/2.18/language/builtins (fetchGit section)
 
@@ -548,24 +864,45 @@ Current State: Throws NotImplemented error
 
 ---
 
-## 📦 Available Infrastructure (Reuse These)
+## 📦 Available Infrastructure (✅ ALL COMPLETE - Ready to Use)
 
-**Existing modules to use:**
-- `main/fetcher.js` - HTTP downloads with retry logic
-- `main/tar.js` - Tarball extraction
-- `main/nar_hash.js` - Directory NAR hashing
-- `main/store_manager.js` - Store path management and caching
-- `tools/store_path.js` - Store path computation
-- `tools/hashing.js` - SHA256 and other hash functions
+**All infrastructure modules are fully implemented and tested:**
 
-**Key functions:**
-- `downloadWithRetry(url, destPath)` - Download with 3 retries
-- `extractTarball(tarPath, destDir)` - Extract .tar.gz
-- `hashDirectory(dirPath)` - Compute NAR hash
-- `getCachedPath(cacheKey)` - Check cache
-- `setCachedPath(cacheKey, storePath)` - Save to cache
-- `atomicMove(srcPath, destPath)` - Atomic move to store
-- `computeFetchStorePath(narHash, name)` - Compute store path
+### main/fetcher.js (155 lines) - HTTP Downloads
+- ✅ `downloadFile(url, destPath)` - Streaming download (doesn't load into memory)
+- ✅ `downloadWithRetry(url, destPath, retries=3)` - Download with exponential backoff
+- ✅ `extractNameFromUrl(url)` - Extract meaningful name from URL
+- ✅ `validateSha256(filePath, expectedSha256)` - Validate file hash
+
+### main/tar.js (169 lines) - Tarball Extraction
+- ✅ `extractTarball(tarballPath, destDir)` - Extract .tar/.tar.gz/.tar.bz2/.tar.xz
+- ✅ `stripTopLevelDirectory(extractDir)` - Strip single top-level directory
+- ✅ `detectFormat(filePath)` - Detect archive format from extension
+- ✅ Uses Deno @std/tar for .tar.gz, falls back to `tar` command for bzip2/xz
+
+### main/nar_hash.js (245 lines) - Directory Hashing
+- ✅ `hashDirectory(dirPath)` - Compute NAR hash (tries `nix hash path`, falls back to pure JS)
+- ✅ `hashFile(filePath)` - Hash single file
+- ✅ `serializeNAR(path)` - Serialize file/directory/symlink in NAR format
+- ✅ Pure JavaScript NAR implementation (no Nix dependency)
+
+### main/store_manager.js (194 lines) - Store Management
+- ✅ `ensureStoreDirectory()` - Create store directory
+- ✅ `computeFetchStorePath(narHash, name)` - Compute store path for fixed-output derivations
+- ✅ `atomicMove(srcPath, destPath)` - Atomic rename to store
+- ✅ `getCachedPath(cacheKey)` - Check cache (returns null if not cached)
+- ✅ `setCachedPath(cacheKey, storePath)` - Save to cache (persistent JSON file)
+- ✅ `withLock(lockName, fn)` - Exclusive file locking
+- ✅ `exists(storePath)` - Check if path exists in store
+
+### tools/store_path.js (Already existed)
+- ✅ `computeStorePath(type, hashInput, name, storeDir)` - Compute Nix store paths
+
+### tools/hashing.js (Already existed)
+- ✅ `sha256Hex(data)` - SHA256 hash function
+- ✅ Other hash functions as needed
+
+**These modules power fetchurl and fetchTarball. Reuse them for fetchGit!**
 
 ## 🔍 Known Edge Cases to Handle
 
