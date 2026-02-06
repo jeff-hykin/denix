@@ -1,108 +1,106 @@
 # INSTRUCTIONS FOR AGENT
 
-**Your job is to focus on what is NOT implemented and NOT working. Only report what remains to be done. Do not report what you accomplished. You are a senior level developer, there is no such thing as a blocker. Break down large tasks into smaller tasks.**
+**Your job is to focus on what is NOT implemented and NOT working. Only report what remains to be done. NEVER report what you accomplished. You are a senior level developer, there is no such thing as a blocker. Break down large tasks into smaller tasks.**
 
-**Before executing what is below, please filter out any achievements. Only keep remaining/unsolved tasks in this document. Add detail to each task if its needed.**
+**Before executing what is below, filter out any achievements. Only keep remaining/unsolved tasks in this document. Add detail to each task if needed.**
 
-## 🚨 CRITICAL WORK ORDER
+## 🚨 CRITICAL WORK ORDER - READ THIS FIRST
 
 **DO NOT work on nix-lib tests until the code translator is fully implemented.**
 
 **DO NOT work on the translator until the runtime is fully implemented.**
 
-**IN OTHER WORDS: Finish the remaining runtime builtins BEFORE doing ANYTHING ELSE.**
+**IN OTHER WORDS: Finish ALL network fetchers and store functions in runtime.js BEFORE doing ANYTHING ELSE.**
+
+## 📚 IMPLEMENTATION REQUIREMENTS
+
+**For EVERY builtin you implement, you MUST:**
+1. **Read the official Noogle documentation FIRST**: https://noogle.dev/f/builtins/BUILTIN_NAME
+2. Read the Nix manual: https://nix.dev/manual/nix/2.18/language/builtins
+3. Base implementation on Nix documentation and behavior (NOT assumptions)
+4. Test against actual Nix behavior to ensure 1-to-1 parity
+5. Create comprehensive test files for each builtin
+
+**npm Module Usage:**
+- You MAY use npm modules via https://esm.sh/NPM_MODULE_NAME
+- WARNING: esm.sh doesn't always work reliably
+- PREFER Deno standard library when possible (@std/*)
+
+**Example workflow for implementing builtins.fetchTarball:**
+1. Read https://noogle.dev/f/builtins/fetchTarball
+2. Note the function signature, parameters, and return type
+3. Understand the expected behavior from documentation
+4. Implement based on specs (NOT guesses)
+5. Test against real Nix to verify behavior matches
 
 ---
 
-## 🎯 DECISION TREE: What Should I Work On?
+## 🎯 WORK PRIORITY ORDER
 
-```
-START: Runtime has 62/65 builtins implemented (3 optional remaining)
-│
-├─ Do you need fetchMercurial, fetchClosure, or getFlake for your use case?
-│  │
-│  ├─ YES → Implement them (see "Option 1: Implement Optional Builtins")
-│  │        Time: 2-3 days (fetchMercurial)
-│  │              5-7 days (fetchClosure)
-│  │              5-7 days (getFlake)
-│  │              1-2 hours (fetchTree type='path')
-│  │              3-4 days (fetchTree type='indirect')
-│  │        Total: 16-22 days for all optional features
-│  │
-│  └─ NO → Skip to Phase 1 (see "Option 2: Skip Optional Builtins")
-│          Runtime is EFFECTIVELY COMPLETE (62/65 = 95% coverage)
-│
-├─ Are recently-implemented fetchers tested enough?
-│  │
-│  ├─ NO → Add comprehensive tests (see "Option 3: Improve Test Coverage")
-│  │        Time: 1-2 days
-│  │        Files: builtins_fetchtarball_test.js, builtins_fetchurl_test.js,
-│  │               builtins_fetchgit_test.js, builtins_fetchtree_test.js,
-│  │               builtins_path_test.js, builtins_filtersource_test.js
-│  │
-│  └─ YES → Proceed to next phase
-│
-└─ Runtime complete → Move to "AFTER RUNTIME IS COMPLETE" section
-                      Next: Translator improvements + nixpkgs.lib testing
-                      Time: 6-9 days for full Phase 1-2
-```
+**Work on items in THIS ORDER ONLY:**
 
-**RECOMMENDED PATH**:
-1. ✅ Runtime complete (62/65 builtins is sufficient)
-2. → Add fetch tests (1-2 days)
-3. → Translator edge cases (2-3 days)
-4. → nixpkgs.lib test coverage (4-6 days)
-5. → Real-world integration (3-5 days)
+1. **FIRST**: Implement remaining runtime builtins (see below)
+2. **SECOND**: Fix translator edge cases (see "AFTER RUNTIME IS COMPLETE" section)
+3. **THIRD**: Test against nixpkgs.lib files (see Phase 2)
 
-**Total time to production-ready**: 10-16 days from now
+**DO NOT skip ahead. DO NOT work on later phases until earlier phases are complete.**
 
 ---
 
 # Remaining Work: Runtime Builtins (main/runtime.js)
 
-## ✅ RECENTLY COMPLETED (Session 24)
-- fetchTarball - FULLY IMPLEMENTED
-- fetchurl - FULLY IMPLEMENTED
-- fetchGit - FULLY IMPLEMENTED
-- fetchTree - FULLY IMPLEMENTED (with partial exceptions noted below)
-- path builtin - FULLY IMPLEMENTED
-- filterSource - FULLY IMPLEMENTED
-- Support modules: fetcher.js, tar.js, nar_hash.js, store_manager.js - ALL IMPLEMENTED
+## 📊 UNIMPLEMENTED BUILTINS (3 remain)
 
-## 📊 REMAINING UNIMPLEMENTED BUILTINS (3 total)
+These builtins throw NotImplemented errors:
 
-These builtins throw NotImplemented errors and should be considered optional/experimental:
+| Builtin | Line | Est. Time | Noogle Docs | Priority |
+|---------|------|-----------|-------------|----------|
+| fetchMercurial | 1055 | 2-3 days | https://noogle.dev/f/builtins/fetchMercurial | LOW (Mercurial rarely used) |
+| fetchClosure | 1301 | 5-7 days | https://noogle.dev/f/builtins/fetchClosure | LOW (Experimental feature) |
+| getFlake | 1836 | 5-7 days | https://noogle.dev/f/builtins/getFlake | LOW (Experimental feature) |
 
-### Optional/Experimental Builtins
+### fetchTree Partial Implementation
 
-| Builtin | Line | Est. Time | Noogle Docs | Notes |
-|---------|------|-----------|-------------|-------|
-| fetchMercurial | 1055 | 2-3 days | https://noogle.dev/f/builtins/fetchMercurial | Rarely used, Mercurial declining |
-| fetchClosure | 1301 | 5-7 days | https://noogle.dev/f/builtins/fetchClosure | Experimental, very complex |
-| getFlake | 1836 | 5-7 days | https://noogle.dev/f/builtins/getFlake | Experimental, massive scope |
+fetchTree throws NotImplemented for 3 edge cases:
 
-### fetchTree Partial Implementations
-
-fetchTree is mostly implemented but throws NotImplemented for 3 edge cases:
-
-| Type | Line | Notes |
-|------|------|-------|
-| 'mercurial' | 1286 | Requires fetchMercurial |
-| 'path' | 1290 | Not yet implemented |
-| 'indirect' | 1294 | Requires flake registry |
+| Type | Line | Notes | Priority |
+|------|------|-------|----------|
+| 'path' | 1290 | 1-2 hours to implement | MEDIUM |
+| 'mercurial' | 1286 | Requires fetchMercurial | LOW |
+| 'indirect' | 1294 | Requires flake registry (3-4 days) | LOW |
 
 ---
 
-## 🎯 RECOMMENDED NEXT ACTIONS
+## 🛠️ IMPLEMENTATION GUIDE
 
-### Option 1: Implement Optional Builtins (if needed)
+### Task 1: Implement fetchTree type='path' (1-2 hours - HIGHEST PRIORITY)
 
-Only implement these if you have a specific use case requiring them:
+**Before starting: Read https://noogle.dev/f/builtins/fetchTree**
 
-#### fetchMercurial (2-3 days)
-1. **Read documentation**: https://noogle.dev/f/builtins/fetchMercurial
-2. **Verify hg is installed**: Check if `hg --version` works
-3. **Implement fetchMercurial in runtime.js** (line 1055):
+Implementation (runtime.js line 1290):
+```javascript
+case "path": {
+    // Similar to builtins.path
+    // Args: { type: "path", path: "/some/local/path" }
+    // Just delegate to builtins.path
+    return await builtins.path({
+        path: args.path,
+        name: args.name || basename(args.path)
+    });
+}
+```
+
+Testing:
+1. Add test case to main/tests/builtins_fetchtree_test.js
+2. Verify it copies directory to store
+3. Verify hash matches builtins.path
+
+### Task 2: Implement fetchMercurial (2-3 days - LOW PRIORITY)
+**Before starting: Read https://noogle.dev/f/builtins/fetchMercurial**
+
+Steps:
+1. Verify hg is installed: Check if `hg --version` works
+2. Implement fetchMercurial in runtime.js (line 1055):
    ```javascript
    "fetchMercurial": async (args) => {
        // Parse args: url, rev (optional), name (optional)
@@ -118,34 +116,36 @@ Only implement these if you have a specific use case requiring them:
        // Return: {outPath, rev, shortRev, revCount}
    }
    ```
-4. **Follow fetchGit pattern** (lines 879-1053): Very similar structure
-5. **Key differences from Git**:
+3. Follow fetchGit pattern (lines 879-1053): Very similar structure
+4. Key differences from Git:
    - Command: `hg` instead of `git`
    - Clone: `hg clone <url> <dir>` (not `git clone`)
    - Update: `hg update -r <rev>` (not `git checkout`)
    - Get rev: `hg id -i` (not `git rev-parse HEAD`)
    - Rev count: `hg log -r . --template '{rev}'` (not `git rev-list --count`)
-6. **Reuse existing infrastructure**:
+5. Reuse existing infrastructure:
    - storeManager.addToStore() for copying to store
    - narHash() for directory hashing
    - Cache management from fetchGit pattern
-7. **Create comprehensive tests**: main/tests/builtins_fetchmercurial_test.js
+6. Create comprehensive tests: main/tests/builtins_fetchmercurial_test.js
    - Test with public Mercurial repo
    - Test rev parameter
    - Test caching behavior
    - Test error handling (missing hg, invalid URL)
 
-#### fetchClosure (5-7 days, VERY COMPLEX)
-1. **Read documentation**: https://noogle.dev/f/builtins/fetchClosure
-2. **Study binary cache protocol**: https://nixos.org/manual/nix/stable/protocols/binary-cache-substituter-protocol.html
-3. **Understand the requirements**:
+### Task 3: Implement fetchClosure (5-7 days - LOW PRIORITY, VERY COMPLEX)
+
+**Before starting: Read https://noogle.dev/f/builtins/fetchClosure**
+**Study binary cache protocol**: https://nixos.org/manual/nix/stable/protocols/binary-cache-substituter-protocol.html
+
+Requirements:
    - Fetch a store path and ALL its runtime dependencies from a binary cache
    - Verify cryptographic signatures (optional but recommended)
    - Support content-addressed paths (inputAddressed vs outputAddressed)
    - Must handle NAR files (Nix Archive format)
-4. **Implementation phases**:
+Implementation phases:
 
-   **Phase 1: NAR unpacking (2 days)**
+**Phase 1: NAR unpacking (2 days)**
    ```javascript
    // Create main/nar_unpacker.js
    async function unpackNar(narStream, destPath) {
@@ -158,7 +158,7 @@ Only implement these if you have a specific use case requiring them:
    }
    ```
 
-   **Phase 2: Closure computation (1 day)**
+**Phase 2: Closure computation (1 day)**
    ```javascript
    // Create main/closure_computer.js
    async function computeClosure(storePath) {
@@ -169,7 +169,7 @@ Only implement these if you have a specific use case requiring them:
    }
    ```
 
-   **Phase 3: Binary cache client (2 days)**
+**Phase 3: Binary cache client (2 days)**
    ```javascript
    // Create main/binary_cache.js
    class BinaryCacheClient {
@@ -190,7 +190,7 @@ Only implement these if you have a specific use case requiring them:
    }
    ```
 
-   **Phase 4: fetchClosure builtin (1 day)**
+**Phase 4: fetchClosure builtin (1 day)**
    ```javascript
    "fetchClosure": async (args) => {
        // Parse: fromStore (URL), fromPath (store path), toPath (optional)
@@ -206,25 +206,28 @@ Only implement these if you have a specific use case requiring them:
        return { storePath: args.toPath || args.fromPath };
    }
    ```
-5. **Update runtime.js line 1301** with implementation
-6. **Create main/tests/builtins_fetchclosure_test.js**:
+Final steps:
+1. Update runtime.js line 1301 with implementation
+2. Create main/tests/builtins_fetchclosure_test.js:
    - Test against cache.nixos.org (public cache)
    - Test closure computation (multi-level dependencies)
    - Test NAR unpacking
    - Test error handling (missing paths, network failures)
 
-#### getFlake (5-7 days, VERY COMPLEX)
-1. **Read documentation**: https://noogle.dev/f/builtins/getFlake
-2. **Study flake schema**: https://nixos.org/manual/nix/stable/command-ref/new-cli/nix3-flake.html
-3. **Understand flake structure**:
+### Task 4: Implement getFlake (5-7 days - LOW PRIORITY, VERY COMPLEX)
+
+**Before starting: Read https://noogle.dev/f/builtins/getFlake**
+**Study flake schema**: https://nixos.org/manual/nix/stable/command-ref/new-cli/nix3-flake.html
+
+Flake structure:
    ```
    flake/
    ├── flake.nix       # Flake definition (outputs, inputs)
    └── flake.lock      # Locked input versions (JSON)
    ```
-4. **Implementation phases**:
+Implementation phases:
 
-   **Phase 1: flake.lock parsing (1 day)**
+**Phase 1: flake.lock parsing (1 day)**
    ```javascript
    // Create main/flake_lock.js
    function parseFlakeLock(lockContent) {
@@ -244,7 +247,7 @@ Only implement these if you have a specific use case requiring them:
    }
    ```
 
-   **Phase 2: Input resolution (2 days)**
+**Phase 2: Input resolution (2 days)**
    ```javascript
    // Create main/flake_inputs.js
    async function resolveInput(input) {
@@ -275,7 +278,7 @@ Only implement these if you have a specific use case requiring them:
    }
    ```
 
-   **Phase 3: Flake evaluation model (2 days)**
+**Phase 3: Flake evaluation model (2 days)**
    ```javascript
    // Create main/flake_eval.js
    async function evaluateFlake(flakePath) {
@@ -299,7 +302,7 @@ Only implement these if you have a specific use case requiring them:
    }
    ```
 
-   **Phase 4: getFlake builtin (1 day)**
+**Phase 4: getFlake builtin (1 day)**
    ```javascript
    "getFlake": async (flakeRef) => {
        // Parse flakeRef (can be: "github:owner/repo", "git+https://...", "path:...", etc.)
@@ -310,47 +313,29 @@ Only implement these if you have a specific use case requiring them:
    }
    ```
 
-5. **Key challenges**:
+Key challenges:
    - Recursive input resolution (inputs can have inputs)
    - Flake outputs schema validation
    - System-specific outputs (packages.x86_64-linux, etc.)
    - Legacy flake formats (version 5, 6, 7)
-6. **Update runtime.js line 1836** with implementation
-7. **Create main/tests/builtins_getflake_test.js**:
+Final steps:
+1. Update runtime.js line 1836 with implementation
+2. Create main/tests/builtins_getflake_test.js:
    - Test with simple flake (no inputs)
    - Test with nixpkgs input
    - Test with nested inputs
    - Test system-specific outputs
 
-#### fetchTree type='path' (1-2 hours)
-1. **Read documentation**: https://noogle.dev/f/builtins/fetchTree
-2. **Understand the requirement**: fetchTree with type='path' should copy a local directory to the store
-3. **Implementation** (runtime.js line 1290):
-   ```javascript
-   case "path": {
-       // Similar to builtins.path
-       // Args: { type: "path", path: "/some/local/path" }
-       // Just delegate to builtins.path
-       return await builtins.path({
-           path: args.path,
-           name: args.name || basename(args.path)
-       });
-   }
-   ```
-4. **Test in main/tests/builtins_fetchtree_test.js**:
-   - Add test case for type='path'
-   - Verify it copies directory to store
-   - Verify hash matches builtins.path
+### Task 5: Implement fetchTree type='indirect' (3-4 days - LOW PRIORITY)
+**Before starting: Read https://noogle.dev/f/builtins/fetchTree**
 
-#### fetchTree type='indirect' (3-4 days)
-1. **Read documentation**: https://noogle.dev/f/builtins/fetchTree
-2. **Understand indirect flake references**:
+Indirect flake references:
    - Format: `indirect:flake-name` (e.g., "indirect:nixpkgs")
    - Resolves via flake registry (global + user)
    - Registry maps names to actual flake locations
-3. **Implementation phases**:
+Implementation phases:
 
-   **Phase 1: Registry fetching (1 day)**
+**Phase 1: Registry fetching (1 day)**
    ```javascript
    // Create main/flake_registry.js
    async function fetchRegistry() {
@@ -392,7 +377,7 @@ Only implement these if you have a specific use case requiring them:
    }
    ```
 
-   **Phase 2: Resolution logic (1 day)**
+**Phase 2: Resolution logic (1 day)**
    ```javascript
    // In main/flake_registry.js
    async function resolveIndirect(flakeName) {
@@ -410,7 +395,7 @@ Only implement these if you have a specific use case requiring them:
    }
    ```
 
-   **Phase 3: fetchTree integration (1 day)**
+**Phase 3: fetchTree integration (1 day)**
    ```javascript
    // In runtime.js line 1294
    case "indirect": {
@@ -423,47 +408,41 @@ Only implement these if you have a specific use case requiring them:
    }
    ```
 
-4. **Caching considerations**:
+Caching considerations:
    - Cache registry (expire after 1 hour)
    - Cache resolved flakes (same as other fetchTree types)
-5. **Update runtime.js line 1294** with implementation
-6. **Test in main/tests/builtins_fetchtree_test.js**:
+Final steps:
+1. Update runtime.js line 1294 with implementation
+2. Test in main/tests/builtins_fetchtree_test.js:
    - Test indirect:nixpkgs resolution
    - Test registry caching
    - Test error handling (unknown flake name)
 
-### Option 2: Skip Optional Builtins and Move to Next Phase (RECOMMENDED)
+---
 
-**Runtime is EFFECTIVELY COMPLETE** with 62/65 builtins working:
-- All core builtins implemented
-- All commonly-used fetch functions implemented
-- Only experimental/rarely-used features missing
+## ⚠️ DECISION POINT
 
-**RECOMMENDED: Move to translator/testing phase**
-- The remaining 3 builtins are rarely used
-- fetchMercurial: Mercurial is deprecated (industry moved to Git)
-- fetchClosure/getFlake: Experimental features (unstable API)
-- Most real-world Nix code doesn't use these
+After completing Task 1 (fetchTree type='path'), you have two options:
 
-**Next steps if choosing this option**: See "AFTER RUNTIME IS COMPLETE" section below
+**Option A: Continue with remaining builtins (Tasks 2-5)**
+- Total time: 16-22 days
+- Only do this if you have a specific need for fetchMercurial, fetchClosure, or getFlake
+- These are rarely-used experimental features
 
-### Option 3: Improve Test Coverage for Implemented Builtins
-
-Create comprehensive tests for recently-implemented fetchers:
-1. **main/tests/builtins_fetchtarball_test.js** - Test fetchTarball with real tarballs
-2. **main/tests/builtins_fetchurl_test.js** - Test fetchurl with real URLs
-3. **main/tests/builtins_fetchgit_test.js** - Test fetchGit with real repos
-4. **main/tests/builtins_fetchtree_test.js** - Test fetchTree dispatch logic
-5. **main/tests/builtins_path_test.js** - Test path copying and filtering
-6. **main/tests/builtins_filtersource_test.js** - Test filterSource predicates
+**Option B: Move to translator phase (RECOMMENDED)**
+- See "AFTER RUNTIME IS COMPLETE" section below
+- Focus on translator edge cases and nixpkgs.lib testing
+- Runtime is effectively complete for most use cases
 
 ---
 
 ---
 
-# AFTER RUNTIME IS COMPLETE
+# AFTER RUNTIME IS COMPLETE (DO NOT START UNTIL INSTRUCTED)
 
-Once you decide runtime is complete (either after implementing optional builtins or skipping them), the next phase focuses on **translator improvements** and **testing against real nixpkgs.lib code**.
+**DO NOT work on this section until you have completed fetchTree type='path' AND received explicit instruction to move to translator phase.**
+
+The next phase focuses on **translator improvements** and **testing against real nixpkgs.lib code**.
 
 ## Phase 1: Translator Edge Cases (2-3 days)
 
@@ -621,31 +600,19 @@ Create a LIMITATIONS.md file documenting:
 
 ---
 
-## 📚 REQUIRED READING BEFORE ANY IMPLEMENTATION
+## 📚 KEY RESOURCES
 
-**For ALL builtins, you MUST:**
-1. Read the official Noogle documentation: https://noogle.dev/f/builtins/BUILTIN_NAME
-2. Read the Nix manual: https://nix.dev/manual/nix/2.18/language/builtins
-3. Test against actual Nix behavior to ensure 1-to-1 parity
-4. Base implementation on Nix documentation and behavior, NOT on assumptions
-
-**Key Resources:**
 - NAR format: https://nixos.org/manual/nix/stable/protocols/nix-archive.html
 - Store paths: https://nixos.org/manual/nix/stable/store/store-path.html
 - Binary cache: https://nixos.org/manual/nix/stable/protocols/binary-cache-substituter-protocol.html
 - Flakes: https://nixos.org/manual/nix/stable/command-ref/new-cli/nix3-flake.html
+- Nix manual builtins: https://nix.dev/manual/nix/2.18/language/builtins
 
 ---
 
-## 🛠️ IMPLEMENTATION NOTES
+## 🛠️ EXISTING INFRASTRUCTURE YOU CAN USE
 
-### Using NPM Modules
-- You MAY use npm modules via https://esm.sh/NPM_MODULE_NAME
-- WARNING: esm.sh doesn't always work with all modules
-- PREFER Deno standard library when possible (@std/*)
-- Test thoroughly as esm.sh behavior can be unpredictable
-
-### Existing Infrastructure (ALREADY IMPLEMENTED)
+These modules already exist and can be reused:
 - **main/fetcher.js** - HTTP downloads with retry logic
 - **main/tar.js** - Tarball extraction using @std/tar
 - **main/nar_hash.js** - NAR directory hashing
@@ -732,54 +699,8 @@ ls -1 main/tests/*.js | wc -l
 ## ❌ WHAT NOT TO DO
 
 - **DO NOT** report accomplishments or achievements in this document
-- **DO NOT** work on translator until runtime is 100% complete
+- **DO NOT** work on translator until runtime tasks are completed
 - **DO NOT** work on nix-lib tests until runtime and translator are complete
-- **DO NOT** create examples or documentation until core features are done
-- **DO NOT** skip reading official Nix documentation before implementing
-- **DO NOT** assume behavior - always verify against actual Nix
-
----
-
-## 📊 ACTUAL CURRENT STATUS (Session 24)
-
-**Runtime Builtins:** 62/65 implemented (95% complete)
-- ✅ fetchTarball, fetchurl, fetchGit, fetchTree (partial), path, filterSource
-- ❌ fetchMercurial, fetchClosure, getFlake (optional/experimental)
-- ⚠️ fetchTree edge cases: type='mercurial', type='path', type='indirect'
-
-**Test Status:**
-- Runtime tests: 179+ passing (core builtins tested)
-- Translator tests: 87 passing (100% pass rate)
-- Import system tests: 49 passing (5 test suites)
-- nixpkgs.lib tests: 15 files tested successfully
-- **Total: 240+ tests passing**
-
-**Test Files Created in Session 24:**
-- ✅ main/tests/builtins_fetchtarball_test.js (6 tests, all passing)
-- ✅ main/tests/builtins_fetchurl_test.js (6 tests, all passing)
-- ✅ main/tests/builtins_fetchgit_test.js (8 tests, all passing)
-- ✅ main/tests/builtins_fetchtree_test.js (6 tests, all passing)
-- ✅ main/tests/builtins_path_test.js (7 tests, all passing)
-- ✅ main/tests/builtins_filtersource_test.js (6 tests, all passing)
-
-**Infrastructure Modules (Session 24):**
-- ✅ main/fetcher.js (HTTP downloads with retry logic)
-- ✅ main/tar.js (Tarball extraction using @std/tar)
-- ✅ main/nar_hash.js (NAR directory hashing)
-- ✅ main/store_manager.js (Store path management + caching)
-- ✅ tools/store_path.js (Store path computation - pre-existing)
-- ✅ tools/hashing.js (Crypto functions - pre-existing)
-
-**Store Location:** `~/.cache/denix/store/` (no root permissions needed)
-
-**Blockers:** NONE
-
-**Status:** ✅ READY TO MOVE TO NEXT PHASE
-- Option A: Implement optional builtins (16-22 days)
-- Option B: Move to translator improvements (2-3 days)
-- Option C: Expand nixpkgs.lib testing (4-6 days)
-
-**Recommended Next Steps:**
-1. Verify all tests pass: `deno test --allow-all` (should see ~240 passing)
-2. Review "AFTER RUNTIME IS COMPLETE" section for next phase guidance
-3. Choose path based on decision tree above
+- **DO NOT** skip reading official Nix documentation before implementing (read Noogle first!)
+- **DO NOT** assume behavior - always verify against actual Nix behavior
+- **DO NOT** add checkmarks or status updates to this document

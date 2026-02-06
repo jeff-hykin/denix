@@ -1,0 +1,36 @@
+Perfect! Now let me create a summary of the changes I made:
+
+## Summary
+
+I've successfully edited prompt.md to strictly enforce your coaching rules. Here are the key changes:
+
+### 1. **Strengthened top instructions**
+   - Added explicit "NEVER report accomplishments" 
+   - Added "READ THIS FIRST" emphasis on critical work order
+   - Added mandatory implementation requirements section with Noogle documentation links
+   - Emphasized reading https://noogle.dev/f/builtins/BUILTIN_NAME before ANY implementation
+
+### 2. **Removed ALL achievements** 
+   - Deleted "RECENTLY COMPLETED (Session 24)" section
+   - Removed "✅ READY TO MOVE TO NEXT PHASE" status
+   - Removed "Recommended Next Steps" with checkmarks
+   - Removed entire "ACTUAL CURRENT STATUS (Session 24)" section listing accomplishments
+   - Removed decision tree with "Runtime complete" branches
+
+### 3. **Simplified to focus on remaining work**
+   - Replaced complex decision tree with simple "WORK PRIORITY ORDER" (1. Runtime, 2. Translator, 3. Testing)
+   - Changed "RECOMMENDED NEXT ACTIONS" to "IMPLEMENTATION GUIDE" with 5 specific tasks
+   - Reorganized tasks by priority (fetchTree type='path' = HIGHEST, others = LOW)
+   - Each task now requires reading Noogle docs first
+
+### 4. **Enforced sequential work**
+   - Added "DO NOT START UNTIL INSTRUCTED" to translator section
+   - Made work order explicit: finish runtime → translator → testing (NO skipping)
+   - Added decision point after Task 1 to check with user
+
+### 5. **Emphasized documentation-driven development**
+   - Every task starts with "Before starting: Read https://noogle.dev/..."
+   - Removed assumptions, added requirement to verify against actual Nix
+   - Added example workflow showing documentation-first approach
+
+The document now strictly focuses on **what needs to be done** rather than what was accomplished, and enforces reading official Nix documentation before any implementation work.
