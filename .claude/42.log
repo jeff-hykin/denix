@@ -1,0 +1,41 @@
+Perfect! All the updates are in place. Now let me create a summary of what was accomplished and what remains to be done according to prompt.md:
+
+## Summary
+
+I've completed **Priority 0: Fix Misleading Documentation** from prompt.md. Here's what was done:
+
+### Completed Tasks ✅
+
+1. **Updated README.md** with accurate numbers:
+   - Badge: Fixed test count (120+ → 170+ passing tests)
+   - Removed broken STATUS.md badge link
+   - Updated builtin count (59 → 61 implemented)
+   - Updated runtime tests (120+ → 170+)
+   - Updated translator tests (67 → 87)
+   - Added import system to features list
+   - Fixed all broken STATUS.md references → main/runtime.js
+   - Removed incorrect "Import/eval (2)" from unimplemented list (these ARE implemented!)
+   - Updated architecture section with import system files
+   - Updated total tests (180+ → 240+)
+   - Added all 8 missing test suites to translator test table
+
+2. **Deleted error_messages_test.js**: This file was actively misleading - it tested stub implementations that claimed import/scopedImport were unimplemented, when in reality they ARE fully implemented in the runtime.
+
+3. **Updated prompt.md**: Removed completed Priority 0 section and renumbered priorities.
+
+4. **Updated MEMORY.md**: Added Session 19 entry documenting the documentation cleanup.
+
+### Tests Verified ✅
+
+All tests still passing after changes (240+ tests across all suites).
+
+### Next Priority (from prompt.md)
+
+**Priority 1 - Examples Directory (2-3 days)**:
+- Create `examples/` directory structure with 10-15 Nix → JS translation examples
+- Extract examples from existing tests
+- Create examples/README.md explaining translation patterns
+- Create verify_examples.js automated verification script
+- Show key patterns: BigInt usage, scope management, lazy evaluation, string interpolation
+
+This will make the project much more accessible to users by showing concrete examples of how Nix code translates to JavaScript.

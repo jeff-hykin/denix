@@ -2,8 +2,7 @@
 
 A faithful re-implementation of Nix builtins in JavaScript for Deno.
 
-[![Status](https://img.shields.io/badge/status-complete-brightgreen)](STATUS.md)
-[![Tests](https://img.shields.io/badge/tests-120%2B%20passing-brightgreen)](#test-infrastructure)
+[![Tests](https://img.shields.io/badge/tests-170%2B%20passing-brightgreen)](#test-infrastructure)
 [![Nix](https://img.shields.io/badge/Nix-2.18-blue)](https://nix.dev/manual/nix/2.18/language/builtins)
 [![Deno](https://img.shields.io/badge/Deno-latest-blue)](https://deno.land/)
 
@@ -11,12 +10,13 @@ A faithful re-implementation of Nix builtins in JavaScript for Deno.
 
 ## Features
 
-✅ **59 fully functional** Nix 2.18 builtins
-✅ **120+ runtime tests** all passing
-✅ **67 translator tests** all passing (NEW!)
+✅ **61 fully functional** Nix 2.18 builtins
+✅ **170+ runtime tests** all passing
+✅ **87 translator tests** all passing
 ✅ **Correct derivation store paths** matching Nix exactly
 ✅ **Pure Deno** - no npm/jsr dependencies
 ✅ **Nix to JavaScript translator** - converts Nix expressions to runnable JS
+✅ **Import system** - builtins.import and builtins.scopedImport
 ✅ **Production ready** for pure Nix expressions and common nixpkgs.lib patterns
 
 ---
@@ -62,18 +62,18 @@ const jsCode = convertToJs(nixCode)
 - **Context**: `getContext`, `hasContext`, `appendContext`, `addErrorContext`, `unsafeDiscardStringContext`
 - **Flakes**: `parseFlakeRef`, `flakeRefToString`
 - **Introspection**: `functionArgs`, `genericClosure`
-- **And more**: See [STATUS.md](STATUS.md) for complete list
+- **And more**: See main/runtime.js for complete list
 
 ---
 
 ## What's Not Implemented
 
-12 functions require major infrastructure beyond the scope of a runtime:
+10 functions require major infrastructure beyond the scope of a runtime:
 
 - **Network fetchers** (6): `fetchurl`, `fetchTarball`, `fetchGit`, `fetchMercurial`, `fetchTree`, `fetchClosure`
-- **Import/eval** (2): `import`, `scopedImport` (requires Nix parser)
 - **Store operations** (2): `path`, `filterSource` (requires physical store)
 - **Flakes** (1): `getFlake` (requires network + parser + store)
+- **Path operations** (1): `toJSON` with path arguments (requires /nix/store)
 
 These would each require weeks to months of development.
 
@@ -85,16 +85,18 @@ These would each require weeks to months of development.
 denix/
 ├── main/
 │   ├── runtime.js          # Main implementation (1199 lines)
-│   ├── runtime.md          # FIXME tracking
+│   ├── import_cache.js     # Import caching system
+│   ├── import_loader.js    # File loading for imports
 │   ├── errors.js           # Error types
-│   └── tests/              # 9 test suites (120+ tests)
+│   └── tests/              # 15+ test suites (240+ tests)
 ├── tools/
 │   ├── store_path.js       # Store path computation
+│   ├── import_resolver.js  # Path resolution for imports
 │   ├── hashing.js          # Hash functions
 │   ├── json_parse.js       # BigInt JSON parser
 │   └── generic.js          # Utilities
 ├── README.md               # This file
-├── STATUS.md               # Detailed status
+├── TRANSLATOR_STATUS.md    # Translator capabilities
 └── prompt.md               # Development notes
 ```
 
@@ -123,9 +125,9 @@ Uses only Deno standard library and URL imports:
 
 ## Test Infrastructure
 
-All 180+ tests passing ✅
+All 240+ tests passing ✅
 
-### Runtime Tests (120+ tests)
+### Runtime Tests (170+ tests)
 | Suite | Tests | Coverage |
 |-------|-------|----------|
 | simple_test.js | 26 | Phase 1 core functions |
@@ -138,13 +140,20 @@ All 180+ tests passing ✅
 | flake_standalone_test.js | 20 | Flake references |
 | nix218_builtins_test.js | 7 | Nix 2.18 compliance |
 
-### Translator Tests (67 tests) NEW! ✨
+### Translator Tests (87 tests)
 | Suite | Tests | Coverage |
 |-------|-------|----------|
 | translator_test.js | 41 | Core translation features + has-attr |
 | string_interpolation_test.js | 8 | String interpolation |
 | path_interpolation_test.js | 5 | Path interpolation |
-| nixpkgs_simple_test.js | 13 | Common nixpkgs.lib patterns |
+| nixpkgs_trivial_test.js | 20 | Functions from lib.trivial |
+| nixpkgs_lib_files_test.js | 15 | Complete lib file tests |
+| import_resolver_test.js | 16 | Path resolution |
+| import_cache_test.js | 12 | Import caching |
+| import_loader_test.js | 7 | File loading |
+| import_integration_test.js | 8 | Import builtins |
+| import_e2e_test.js | 6 | End-to-end import |
+| hasattr_test.js | 7 | has-attr operator |
 
 ---
 
