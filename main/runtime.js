@@ -1299,6 +1299,13 @@ import { NixError, NotImplemented } from "./errors.js"
     Object.freeze(builtins)
 
     export const operators = {
+        ifThenElse: (condition, thenFn, elseFn)=>{
+            // Nix requires strict boolean values in if conditions
+            if (typeof condition !== "boolean") {
+                throw new NixError(`error: expected a Boolean but found ${builtins.typeOf(condition)}: ${nixRepr(condition)}`)
+            }
+            return condition ? thenFn() : elseFn()
+        },
         negative: (value)=>typeof value == "bigint"?-value:-toFloat(value),
         listConcat: (value, other)=>{
             requireList(value)

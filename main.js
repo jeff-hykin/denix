@@ -194,9 +194,11 @@ const nixNodeToJs = (node)=>{
             return `nixScope[${JSON.stringify(node.text)}]`
         }
     } else if (node.type == "integer_expression") {
-        // FIXME: check hex/oct/scientific formats
+        // Note: Nix does not support hex (0xFF) or octal (0o77) literals
+        // They parse as 0 followed by a variable name
         return `${node.text}n` // convert to BigInt
     } else if (node.type == "float_expression") {
+        // Scientific notation (1.5e10) is already supported - just pass through
         return node.text
     } else if (node.type == "parenthesized_expression") {
         // FUTURE: there could be an optimization here where if the result is atomic (ex: operators.add(1,2)) then we can skip the parentheses
@@ -249,7 +251,9 @@ const nixNodeToJs = (node)=>{
         const usedDoubleQuotes = (children[0].type == "\"")
         const hasInterpolation = children.some(each=>each.type=="interpolation")
         if (!hasInterpolation) {
-            let text = children[1].text
+            // For empty strings, there's no string_fragment child
+            const stringFragment = children.find(c => c.type === "string_fragment")
+            let text = stringFragment ? stringFragment.text : ""
             if (usedDoubleQuotes) {
                 // guarenteed that double quotes are all escaped here
                 return `"${text.replace(/(\\\\)*\\([bfvux0])/g, "$1$2")}"`
@@ -431,10 +435,13 @@ const nixNodeToJs = (node)=>{
         //     </variable_expression>
         // </if_expression>
         
-        // FIXME: make sure to handle truthy-ness correctly (empty string, empty list, etc)
-        
+        // Nix requires strict boolean values in if conditions
+        // We wrap the condition in a helper that checks it's actually a boolean
         const children = valueBasedChildren(node)
-        return `((${nixNodeToJs(children[1])}) ? (${nixNodeToJs(children[3])}) : (${nixNodeToJs(children[5])}))`
+        const condition = nixNodeToJs(children[1])
+        const thenBranch = nixNodeToJs(children[3])
+        const elseBranch = nixNodeToJs(children[5])
+        return `(operators.ifThenElse(${condition}, ()=>(${thenBranch}), ()=>(${elseBranch})))`
     } else if (node.type == "list_expression") {
         return `[${
             valueBasedChildren(node).filter(
@@ -616,8 +623,12 @@ const nixNodeToJs = (node)=>{
 
             return code
         } else {
-            // Non-rec attrset - just a plain object literal
-            const properties = []
+            // Non-rec attrset - need to handle nested paths by building a helper function
+            // We can't use plain object literal syntax for nested paths like { a.b.c = 10; }
+            // Instead, we generate code that builds the object imperatively
+
+            const simpleBindings = []
+            const nestedBindings = []
 
             for (const binding of bindings) {
                 if (binding.type === "binding") {
@@ -629,22 +640,61 @@ const nixNodeToJs = (node)=>{
 
                     if (pathParts.length === 1 && pathParts[0].type === "identifier") {
                         const key = pathParts[0].text
-                        properties.push(`${JSON.stringify(key)}: ${nixNodeToJs(value)}`)
+                        simpleBindings.push({ key, value })
                     } else {
-                        throw new NotImplemented(`Nested attribute paths in non-rec attrsets not yet supported`)
+                        // Nested path like a.b.c
+                        nestedBindings.push({ pathParts, value })
                     }
                 } else if (binding.type === "inherit") {
                     const inheritedAttrs = valueBasedChildren(binding).find(each => each.type === "inherited_attrs")
                     if (inheritedAttrs) {
                         const identifiers = valueBasedChildren(inheritedAttrs).filter(each => each.type === "identifier")
                         for (const id of identifiers) {
-                            properties.push(`${JSON.stringify(id.text)}: ${nixNodeToJs(id)}`)
+                            simpleBindings.push({ key: id.text, value: id })
                         }
                     }
                 }
             }
 
-            return `{${properties.join(", ")}}`
+            // If we only have simple bindings, use object literal syntax
+            if (nestedBindings.length === 0) {
+                const properties = simpleBindings.map(({key, value}) =>
+                    `${JSON.stringify(key)}: ${nixNodeToJs(value)}`
+                )
+                return `{${properties.join(", ")}}`
+            }
+
+            // Otherwise, build object imperatively
+            let code = `(function(){\n`
+            code += `    const obj = {};\n`
+
+            // Add simple bindings
+            for (const {key, value} of simpleBindings) {
+                code += `    obj[${JSON.stringify(key)}] = ${nixNodeToJs(value)};\n`
+            }
+
+            // Add nested bindings - need to create intermediate objects
+            for (const {pathParts, value} of nestedBindings) {
+                // Build the accessor chain, creating intermediate objects as needed
+                let accessor = 'obj'
+                for (let i = 0; i < pathParts.length - 1; i++) {
+                    const part = pathParts[i]
+                    const key = part.type === "identifier" ? part.text : nixNodeToJs(part)
+                    accessor += `[${JSON.stringify(key)}]`
+                    // Ensure intermediate object exists
+                    code += `    if (${accessor} === undefined) ${accessor} = {};\n`
+                }
+
+                // Set the final value
+                const lastPart = pathParts[pathParts.length - 1]
+                const lastKey = lastPart.type === "identifier" ? lastPart.text : nixNodeToJs(lastPart)
+                code += `    ${accessor}[${JSON.stringify(lastKey)}] = ${nixNodeToJs(value)};\n`
+            }
+
+            code += `    return obj;\n`
+            code += `})()`
+
+            return code
         }
     } else if (node.type == "function_expression") {
         // simple function:
@@ -687,19 +737,33 @@ const nixNodeToJs = (node)=>{
                 throw Error(`When handling a function, it didn't seem to be a simple function, but also didn't have <formals>. Not sure what happened:\n${node.text}`)
             }
             const formals = children[0].children.filter(each=>each.type=="formal")
-            const formalsWithDefaults = formals.filter(each=>each.children.length==1)
+            // A formal with a default has more than just the identifier
+            const formalsWithDefaults = formals.filter(each=>{
+                const formalChildren = valueBasedChildren(each)
+                return formalChildren.length > 1 // Has default if more than just identifier
+            })
 
             const defaults = formalsWithDefaults.map(each=>{
-                const children = valueBasedChildren(each.children)
-                const argName = children[0].text
-                const defaultValue = nixNodeToJs(children[2])
+                const formalChildren = valueBasedChildren(each)
+                const argName = formalChildren[0].text
+                const defaultValue = nixNodeToJs(formalChildren[2])
                 return `${JSON.stringify(argName)}: ${defaultValue},`
             }).join("")
-            
+
+            // Handle @ syntax: { a, b }@args: body
             let allArgsString = ""
-            if (children.some(each=>each.type=="@")) {
-                
+            const atIndex = children.findIndex(each=>each.type=="@")
+            if (atIndex >= 0) {
+                // The identifier after @ is the name for the full argument set
+                const allArgsName = children[atIndex + 1]
+                if (allArgsName?.type === "identifier") {
+                    allArgsString = `${JSON.stringify(allArgsName.text)}: arg,`
+                }
             }
+
+            // The body is the last child (after the ":")
+            const body = children.slice(-1)[0]
+
             return `
                 (function(arg){
                     const nixScope = {
@@ -709,13 +773,12 @@ const nixNodeToJs = (node)=>{
                         ${defaults}
                         // inherit arguments
                         ...arg,
-                        // all-args arg
-                        // "arguments": arg, //<<<intentionally does not contain default values
+                        // all-args arg (if @ syntax is used)
                         ${allArgsString}
                     }
                     runtime.scopeStack.push(nixScope)
                     try {
-                        return nixScope["namedArg1"]["something"]
+                        return ${nixNodeToJs(body)}
                     } finally {
                         runtime.scopeStack.pop()
                     }

@@ -16,6 +16,13 @@ const evalTranslated = (nixCode) => {
         scopeStack: [{}],
     }
     const operators = {
+        ifThenElse: (condition, thenFn, elseFn) => {
+            // Nix requires strict boolean values in if conditions
+            if (typeof condition !== "boolean") {
+                throw new Error(`error: expected a Boolean but found ${typeof condition}: ${condition}`)
+            }
+            return condition ? thenFn() : elseFn()
+        },
         add: (a, b) => {
             if (typeof a === 'bigint' && typeof b === 'bigint') {
                 return a + b
@@ -246,3 +253,79 @@ Deno.test("With and let combined", () => {
 })
 
 console.log("\n✅ All translator tests passed!")
+
+Deno.test("Function with default arguments", () => {
+    const nix = `({ a, b ? 10 }: a + b) { a = 5; }`
+    const result = evalTranslated(nix)
+    assertEquals(result, 15n)
+})
+
+Deno.test("Function with default - override default", () => {
+    const nix = `({ a, b ? 10 }: a + b) { a = 5; b = 3; }`
+    const result = evalTranslated(nix)
+    assertEquals(result, 8n)
+})
+
+Deno.test("Function with @ syntax", () => {
+    const nix = `({ a, b }@args: a + b + args.a) { a = 5; b = 3; }`
+    const result = evalTranslated(nix)
+    assertEquals(result, 13n)
+})
+
+Deno.test("If with non-boolean (null) throws error", () => {
+    const nix = `if null then 1 else 2`
+    try {
+        evalTranslated(nix)
+        throw new Error("Should have thrown an error")
+    } catch (e) {
+        assertEquals(e.message.includes("expected a Boolean"), true)
+    }
+})
+
+Deno.test("If with non-boolean (integer) throws error", () => {
+    const nix = `if 0 then 1 else 2`
+    try {
+        evalTranslated(nix)
+        throw new Error("Should have thrown an error")
+    } catch (e) {
+        assertEquals(e.message.includes("expected a Boolean"), true)
+    }
+})
+
+Deno.test("If with non-boolean (string) throws error", () => {
+    const nix = `if "" then 1 else 2`
+    try {
+        evalTranslated(nix)
+        throw new Error("Should have thrown an error")
+    } catch (e) {
+        assertEquals(e.message.includes("expected a Boolean"), true)
+    }
+})
+
+Deno.test("Nested attribute paths in non-rec attrset", () => {
+    const nix = `{ a.b.c = 10; a.b.d = 20; }`
+    const result = evalTranslated(nix)
+    assertEquals(result.a.b.c, 10n)
+    assertEquals(result.a.b.d, 20n)
+})
+
+Deno.test("Mixed depth nested attributes", () => {
+    const nix = `{ a.b = 10; a.c = 20; d = 30; }`
+    const result = evalTranslated(nix)
+    assertEquals(result.a.b, 10n)
+    assertEquals(result.a.c, 20n)
+    assertEquals(result.d, 30n)
+})
+
+Deno.test("Scientific notation - positive exponent", () => {
+    const nix = `1.5e10`
+    const result = evalTranslated(nix)
+    assertEquals(result, 15000000000)
+})
+
+Deno.test("Scientific notation - negative exponent", () => {
+    const nix = `2.3e-5`
+    const result = evalTranslated(nix)
+    // Use approximate equality for floating point
+    assertEquals(Math.abs(result - 0.000023) < 0.0000001, true)
+})
