@@ -1,20 +1,50 @@
 # Remaining Work: Network Fetchers & Store Operations
 
+## 🤖 FOR THE AI AGENT: YOUR CORE BEHAVIOR 🤖
+
+**YOU ARE A WORK-FOCUSED BOT. YOUR ONLY JOB IS TO TRACK AND COMPLETE REMAINING WORK.**
+
+**WHEN YOU READ THIS FILE:**
+1. **SCAN FOR ACHIEVEMENTS** - Look for ✅, "completed", "done", "working", "passing", "implemented"
+2. **DELETE ACHIEVEMENTS IMMEDIATELY** - Remove those lines/sections completely from this file
+3. **FOCUS ON GAPS** - What is NOT working? What throws NotImplemented? What needs implementation?
+4. **UPDATE THIS FILE** - Keep only remaining tasks, remove completed items
+
+**WHEN YOU COMPLETE A TASK:**
+1. **DO NOT REPORT SUCCESS** - No celebrations, no "✅ Done!", no achievement reports
+2. **DELETE THE TASK** - Remove it from this file immediately
+3. **MOVE TO NEXT TASK** - Find the next unimplemented builtin and start working
+4. **UPDATE REMAINING COUNT** - If "3 remain", complete one → change to "2 remain"
+
+**EXAMPLE CORRECT BEHAVIOR:**
+- ❌ WRONG: "I successfully implemented fetchTree! ✅ All tests passing! 🎉"
+- ✅ RIGHT: *silently deletes fetchTree from this file, moves to next task*
+
+**EXAMPLE CORRECT FILE UPDATE:**
+- Before: "3 functions remain: fetchTree, fetchMercurial, fetchClosure"
+- After completing fetchTree: "2 functions remain: fetchMercurial, fetchClosure"
+- NO MENTION of fetchTree being completed - it just disappears from the list
+
 ## 🛑 MANDATORY RULES - READ THIS FIRST 🛑
 
 **Your job is to focus on what is NOT implemented and NOT working. Only report what remains to be done. Do not report what you accomplished. You are a senior level developer, there is no such thing as a blocker. Break down large tasks into smaller tasks.**
 
 **Before executing what is below, please filter out any achievements. Only keep remaining/unsolved tasks in this document. Add detail to each task if its needed.**
 
+**IF YOU SEE CHECKBOXES (✅) - DELETE THOSE ITEMS IMMEDIATELY. They are completed work and do not belong in this document.**
+
 **CRITICAL: All implementations MUST be based on official Nix documentation and behavior:**
 - Read https://noogle.dev/f/builtins/<function_name> BEFORE writing ANY code
 - Read https://nix.dev/manual/nix/2.18/language/builtins for complete specification
 - Match Nix behavior exactly - do not guess or make assumptions
 - Test your implementation against real Nix if possible
+- EXAMPLE: When working on fetchTarball, read https://noogle.dev/f/builtins/fetchTarball FIRST
+- EXAMPLE: When working on fetchGit, read https://noogle.dev/f/builtins/fetchGit FIRST
 
 **NPM Modules (ALLOWED but with caution):**
 - ✅ You CAN use npm modules through https://esm.sh/NPM_MODULE_NAME
 - ⚠️ WARNING: Not all npm modules work through esm.sh - test first!
+- ⚠️ EXAMPLE: `import pkg from "https://esm.sh/some-package@1.0.0"`
 - ✅ Prefer Deno standard library (jsr:@std/*) when available
 - ✅ Check Deno built-in APIs before using external packages
 
@@ -50,14 +80,12 @@
 4. Understand ALL parameters, defaults, and return values
 5. THEN begin implementation
 
-## 📊 CURRENT STATUS SUMMARY
+## 📊 REMAINING WORK ONLY
 
-**Network Fetchers (7 total) - 4 implemented, 3 remain:**
+**Network Fetchers - 3 remain:**
 - ❌ fetchTree - NOT IMPLEMENTED (HIGH PRIORITY - DO THIS FIRST)
 - ❌ fetchMercurial - NOT IMPLEMENTED (MEDIUM PRIORITY)
 - ❌ fetchClosure - NOT IMPLEMENTED (DEFER - very complex)
-
-**Remaining Work:** 3 fetchers to implement (57% done so far)
 
 ## 🎯 IMPLEMENTATION PRIORITIES
 
@@ -104,13 +132,13 @@
 
 **These rules override everything else in this document:**
 
-1. **NO ACHIEVEMENTS**: Never report what you accomplished. Remove any completed items from this document immediately.
+1. **NO ACHIEVEMENTS**: Never report what you accomplished. Remove any completed items from this document immediately. IMMEDIATELY DELETE any lines that say "✅", "completed", "done", "working", or "passing".
 2. **NO CHECKBOXES**: Never add ✅ marks. If you see ✅ marks, DELETE those items - they are done.
-3. **NO BLOCKERS**: You are a senior developer. Break down hard tasks into smaller tasks (1-2 hour chunks).
-4. **DOCUMENTATION FIRST**: Always read https://noogle.dev/f/builtins/<function_name> BEFORE writing ANY code.
-5. **BASE ON NIX BEHAVIOR**: Implementations must match official Nix 2.18 documentation exactly.
-6. **NPM VIA ESM.SH**: You CAN use npm modules via https://esm.sh/PACKAGE_NAME (test first - not all work).
-7. **FOCUS ON RUNTIME**: Do NOT touch translator or tests until ALL runtime builtins are implemented.
+3. **NO BLOCKERS**: You are a senior developer. Break down hard tasks into smaller tasks (1-2 hour chunks). Never say "this is blocked by X". Instead say "Task A: implement X (1-2 hours), Task B: use X to implement Y (1-2 hours)".
+4. **DOCUMENTATION FIRST**: Always read https://noogle.dev/f/builtins/<function_name> BEFORE writing ANY code. Read the COMPLETE page, not just a quick glance. Take notes on what you learned.
+5. **BASE ON NIX BEHAVIOR**: Implementations must match official Nix 2.18+ documentation exactly. When in doubt, test against real Nix with `nix repl`.
+6. **NPM VIA ESM.SH**: You CAN use npm modules via https://esm.sh/PACKAGE_NAME (test first - not all work). EXAMPLE: `import tar from "https://esm.sh/tar@7.0.0"`
+7. **FOCUS ON RUNTIME**: Do NOT touch translator or tests until ALL runtime builtins are implemented. You are in PHASE 1 right now.
 
 ## 📚 MANDATORY: READ DOCUMENTATION BEFORE CODING 📚
 
@@ -128,11 +156,27 @@
 - Your implementation MUST match https://noogle.dev documentation exactly
 
 **Example for fetchGit:**
-1. Read: https://noogle.dev/f/builtins/fetchGit
+1. Read: https://noogle.dev/f/builtins/fetchGit (COMPLETE PAGE, not a quick glance)
 2. Read: https://nix.dev/manual/nix/2.18/language/builtins (fetchGit section)
 3. Note all parameters: url, name, rev, ref, submodules, shallow, allRefs
 4. Note all defaults: name=basename, ref="HEAD", submodules=false, etc.
 5. Study return structure: {outPath, rev, shortRev, revCount, lastModified, narHash, submodules}
+6. THEN start coding
+
+**Example for fetchTarball:**
+1. Read: https://noogle.dev/f/builtins/fetchTarball (COMPLETE PAGE)
+2. Read: https://nix.dev/manual/nix/2.18/language/builtins (fetchTarball section)
+3. Note parameters: url OR {url, sha256?}
+4. Note behavior: strips top-level directory, caches by url+sha256
+5. Study return: Path object (string-like) pointing to store
+6. THEN start coding
+
+**Example for fetchTree:**
+1. Read: https://noogle.dev/f/builtins/fetchTree (COMPLETE PAGE)
+2. Read: https://nix.dev/manual/nix/2.25/language/builtins (fetchTree section)
+3. Note: experimental feature, wraps other fetchers
+4. Note type detection: git+https://, tarball extensions, github: prefix
+5. Study delegation: which fetcher handles which URL type
 6. THEN start coding
 
 
@@ -140,14 +184,21 @@
 
 **START HERE - Do this before anything else:**
 
-### Step 0: Read Documentation (MANDATORY - 15 minutes)
+### Step 0: Read Documentation (MANDATORY - 15 minutes) ⚠️ NON-NEGOTIABLE ⚠️
 1. Go to https://noogle.dev/f/builtins/fetchTree
 2. Read the ENTIRE page (every word, every example)
 3. Go to https://nix.dev/manual/nix/2.25/language/builtins
 4. Read the fetchTree section completely
-5. Write down what you learned before coding
+5. **WRITE DOWN NOTES** on what you learned before coding:
+   - What are ALL the parameters?
+   - What are ALL the default values?
+   - What does the return value look like?
+   - What are the edge cases?
+6. If you cannot answer the above questions from memory, read the docs again
 
-**Do NOT proceed to Step 1 until you have read and understood the official documentation.**
+**⛔ DO NOT PROCEED TO STEP 1 UNTIL YOU HAVE READ AND UNDERSTOOD THE OFFICIAL DOCUMENTATION ⛔**
+
+**IF YOU START CODING WITHOUT READING THE DOCS, YOU WILL WASTE HOURS DEBUGGING INCORRECT BEHAVIOR.**
 
 ### Step 1: Implement URL Scheme Detection (1 hour)
 - Location: main/runtime.js (after fetchGit)
@@ -186,11 +237,26 @@
 import pkg from "https://esm.sh/package-name@1.0.0";
 ```
 
+**CONCRETE EXAMPLES:**
+```javascript
+// Example 1: Using simple-git for git operations
+import simpleGit from "https://esm.sh/simple-git@3.19.0";
+
+// Example 2: Using tar library for tarball handling
+import tar from "https://esm.sh/tar@7.0.0";
+
+// Example 3: Using node-fetch for HTTP requests (if needed beyond Deno fetch)
+import fetch from "https://esm.sh/node-fetch@3.3.0";
+```
+
 **Guidelines:**
 - ⚠️ Test the import first (not all npm modules work through esm.sh)
+- ⚠️ Some modules require Node.js-specific APIs that won't work in Deno
+- ⚠️ If a module fails through esm.sh, try finding a Deno-native alternative
 - ✅ Prefer Deno standard library (jsr:@std/*) when available
 - ✅ Check Deno built-in APIs (crypto, fetch, etc.) before using npm
-- ⚠️ Node-specific APIs may not work through esm.sh
+- ✅ For git operations: Consider Deno.Command to run `git` directly (most reliable)
+- ✅ For tar operations: Deno has jsr:@std/tar (USE THIS instead of npm tar)
 
 
 ## 📋 UNIMPLEMENTED BUILTINS (4 total)

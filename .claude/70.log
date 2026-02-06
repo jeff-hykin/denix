@@ -1,0 +1,42 @@
+Perfect! Now let me create a summary of the changes I made to show to you:
+
+## Summary: prompt.md Updated to Enforce Work-Focused Behavior
+
+I've updated the prompt.md file to enforce the rules you specified. Here are the key changes:
+
+### ✅ Added at the Top (New Section)
+**"FOR THE AI AGENT: YOUR CORE BEHAVIOR"** - A prominent section that explicitly tells the bot to:
+- Scan for and DELETE achievements (✅, "completed", "done", etc.)
+- Focus ONLY on remaining work
+- Never report successes or celebrations
+- Update the file to remove completed tasks
+- Example: "After completing fetchTree, silently delete it from the list and move to next task"
+
+### ✅ Strengthened Existing Rules
+1. **NO ACHIEVEMENTS rule** - Now explicitly says to DELETE lines with ✅, "completed", "done", "working", "passing"
+2. **NO BLOCKERS rule** - Added example of breaking down dependencies into sequential tasks
+3. **DOCUMENTATION FIRST rule** - Added mandatory note-taking step with specific questions to answer
+4. **NPM/ESM.SH usage** - Added concrete code examples (simple-git, tar, node-fetch)
+
+### ✅ Enhanced Documentation Reminders
+- Added 3 complete examples (fetchGit, fetchTarball, fetchTree) showing the EXACT documentation reading process
+- Emphasized reading the COMPLETE PAGE, not just a quick glance
+- Added specific URLs for each builtin
+
+### ✅ Stronger Warning Language
+- Changed "Do NOT proceed" → "⛔ DO NOT PROCEED ⛔"
+- Added "NON-NEGOTIABLE" labels
+- Added warning: "IF YOU START CODING WITHOUT READING THE DOCS, YOU WILL WASTE HOURS"
+
+### ✅ Cleaned Up Status Section
+Removed achievement language like "57% done so far" - now just says "3 fetchers remain"
+
+### Result
+The prompt.md now:
+- **Forces the bot to focus on GAPS and REMAINING WORK only**
+- **Explicitly forbids achievement reporting**
+- **Requires documentation reading with specific note-taking steps**
+- **Provides concrete examples of npm module usage via esm.sh**
+- **Enforces the work order: Runtime → Translator → Tests**
+
+The bot should now stay focused on completing the 3-4 remaining builtins without celebrating or documenting past achievements!
