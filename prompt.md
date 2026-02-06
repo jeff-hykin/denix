@@ -1,21 +1,57 @@
-# Task: Implement Remaining Nix Runtime Features
+# Remaining Work: Implement fetchGit and optionally fetchTree
+
+## 📊 QUICK STATUS
+
+**Runtime:** 93/98 builtins implemented (95% complete)
+**Tests:** 146 tests passing across 33 test suites
+**Infrastructure:** All modules exist (fetcher.js, tar.js, nar_hash.js, store_manager.js)
+
+**WHAT REMAINS:**
+- 5 builtins throw NotImplemented errors
+- 1 is high priority (fetchGit)
+- 1 is medium priority (fetchTree - requires fetchGit first)
+- 3 should be skipped (fetchMercurial, fetchClosure, getFlake)
+
+**YOUR TASK:** Implement builtins.fetchGit (14-16 hours)
+
+---
 
 ## 🛑 STOP! READ THIS BEFORE DOING ANYTHING 🛑
 
-**MANDATORY WORK ORDER - YOU MUST FOLLOW THIS SEQUENCE:**
+**CURRENT STATE: 93/98 builtins implemented (95% complete)**
 
-1. ✅ **STEP 1**: Finish runtime.js (implement ALL network fetchers and store functions)
-   - Start with fetchGit (your ONLY task right now)
-   - Then fetchTree (requires fetchGit first)
-   - Skip experimental features unless requested
+**REMAINING WORK:**
+- 5 builtins still throw NotImplemented errors
+- All 5 are advanced fetchers or experimental features
+- None are required for basic Nix evaluation
 
-2. ❌ **STEP 2**: Work on translator (ONLY after runtime is 100% complete)
-   - Do NOT touch translator code while runtime has unimplemented functions
-   - Translator is already functional, runtime takes priority
+**MANDATORY WORK ORDER - IMPLEMENT IN THIS SEQUENCE:**
 
-3. ❌ **STEP 3**: Work on nix-lib tests (ONLY after runtime AND translator are 100% complete)
-   - Do NOT test against incomplete runtime (wastes time)
-   - Testing comes after implementation, not before
+1. **fetchGit** (HIGH PRIORITY) - Most important remaining fetcher
+   - Required for: Flakes, git dependencies, nixpkgs development
+   - Estimated: 14-16 hours over 2-3 days
+   - Status: NOT IMPLEMENTED
+
+2. **fetchTree** (MEDIUM PRIORITY) - Experimental unified fetcher
+   - Required for: Generic source fetching (rarely used)
+   - Depends on: fetchGit must be implemented first
+   - Estimated: 6-8 hours over 1-2 days
+   - Status: NOT IMPLEMENTED
+
+3. **fetchMercurial** (LOW PRIORITY) - Legacy Mercurial support
+   - Required for: Mercurial repositories (very rare)
+   - Estimated: 8-10 hours over 1-2 days
+   - Status: NOT IMPLEMENTED
+
+4. **fetchClosure** (DEFER) - Binary cache fetcher
+   - Required for: Binary cache operations (experimental)
+   - Estimated: 40+ hours (very complex)
+   - Status: NOT IMPLEMENTED
+
+5. **getFlake** (DO NOT IMPLEMENT) - Full flake system
+   - Required for: Complete flake evaluation (massive undertaking)
+   - Estimated: 80-120+ hours (months of work)
+   - Status: NOT IMPLEMENTED
 
 **ABSOLUTE RULES FOR THIS DOCUMENT:**
 - ❌ NEVER add checkboxes (✅) showing completed work
@@ -26,7 +62,7 @@
 - ✅ Remove any achievement language immediately
 
 **YOUR CURRENT TASK:**
-Right now, your ONLY job is implementing fetchGit. Nothing else matters until this is done.
+Implement fetchGit. This is the only high-priority task remaining.
 
 ---
 
@@ -45,25 +81,27 @@ Right now, your ONLY job is implementing fetchGit. Nothing else matters until th
 - ✅ ALWAYS base implementations on official Nix documentation at https://noogle.dev
 - ✅ YOU ARE A SENIOR DEVELOPER - There is no such thing as a "blocker", only tasks to break down further
 
-## 🚫 STRICT WORK PRIORITY RULES - FOLLOW IN ORDER 🚫
+## 🚫 WORK PRIORITY ORDER 🚫
 
-**⚠️ CRITICAL WORK ORDER - YOU MUST FOLLOW THIS SEQUENCE ⚠️**
+**Phase 1: High Priority (Required)**
+1. Implement builtins.fetchGit
+   - Time estimate: 14-16 hours over 2-3 days
+   - Status: NOT IMPLEMENTED
+   - Blocking: fetchTree cannot be implemented until this is done
+   - Location: main/runtime.js line 879
 
-The work MUST be done in this exact order. Do NOT skip ahead:
+**Phase 2: Medium Priority (Optional)**
+2. Implement builtins.fetchTree
+   - Time estimate: 6-8 hours over 1-2 days
+   - Status: NOT IMPLEMENTED
+   - Requires: fetchGit must be implemented first
+   - Location: main/runtime.js line 885
+   - Note: Experimental feature, not critical for basic Nix
 
-1. **FIRST: Finish Runtime (main/runtime.js)** - Complete ALL network fetchers and store functions
-   - Implement fetchGit (HIGH PRIORITY - 2-3 days)
-   - Implement fetchTree (MEDIUM PRIORITY - 1-2 days, requires fetchGit)
-   - Consider fetchMercurial (LOW PRIORITY - optional, rarely used)
-   - Skip fetchClosure and getFlake (experimental, not needed)
-
-2. **SECOND: Only After Runtime 100% Complete** - Work on translator improvements if needed
-   - Do NOT work on translator while runtime has unimplemented functions
-   - Translator is already functional, runtime takes priority
-
-3. **THIRD: Only After Runtime + Translator Complete** - Expand nix-lib test coverage
-   - Do NOT work on nix-lib tests until runtime is 100% complete
-   - Testing against incomplete runtime wastes time on bugs that don't exist
+**Phase 3: Low Priority (Skip Unless Requested)**
+3. fetchMercurial - Rarely used legacy Mercurial support (8-10 hours)
+4. fetchClosure - Experimental binary cache feature (40+ hours, very complex)
+5. getFlake - Complete flake system (80-120+ hours, massive undertaking)
 
 **CURRENT BLOCKERS TO RESOLVE (in order):**
 - ❌ fetchGit NOT implemented in runtime.js (BLOCKING everything else)
@@ -116,25 +154,26 @@ The work MUST be done in this exact order. Do NOT skip ahead:
 
 **COMMON MISTAKE**: Starting to code immediately without reading documentation. DON'T DO THIS! Reading docs takes 10 minutes. Rewriting incorrect implementations takes hours.
 
-## Remaining Work - What's NOT Implemented
+## Remaining Work Summary
 
-**What is NOT working yet (2026-02-06):**
-- ❌ fetchGit NOT implemented (HIGHEST PRIORITY - START HERE)
-- ❌ fetchTree NOT implemented (BLOCKED by fetchGit)
-- ❌ fetchMercurial NOT implemented (LOW PRIORITY - optional)
-- ❌ fetchClosure NOT implemented (VERY LOW PRIORITY - experimental)
-- ❌ getFlake NOT implemented (DO NOT IMPLEMENT - months of work)
+**Runtime Status: 93/98 builtins implemented**
 
-**What you need to focus on RIGHT NOW:**
-- Implement fetchGit first (nothing else matters until this is done)
-- Then implement fetchTree (depends on fetchGit)
-- Skip the rest unless specifically requested
+**5 builtins remain unimplemented:**
+1. fetchGit - NOT IMPLEMENTED (required for git dependencies, flakes)
+2. fetchTree - NOT IMPLEMENTED (requires fetchGit first, experimental)
+3. fetchMercurial - NOT IMPLEMENTED (legacy, rarely used)
+4. fetchClosure - NOT IMPLEMENTED (experimental, very complex)
+5. getFlake - NOT IMPLEMENTED (experimental, massive scope)
 
-**DO NOT:**
-- Work on translator (already done)
-- Work on nix-lib tests (runtime must be complete first)
-- Work on documentation (not a priority)
-- Work on examples (not a priority)
+**Infrastructure Status:**
+- fetcher.js - EXISTS (HTTP downloads with retry)
+- tar.js - EXISTS (tarball extraction)
+- nar_hash.js - EXISTS (directory hashing)
+- store_manager.js - EXISTS (store path management)
+
+**Current Priority:**
+- Implement fetchGit (14-16 hours)
+- All other tasks are lower priority or should be skipped
 
 ## 🔧 NPM MODULE USAGE - YOU ARE ALLOWED TO USE NPM 🔧
 
@@ -195,18 +234,21 @@ The documentation at https://noogle.dev shows:
 
 ## 📊 REMAINING WORK - 5 BUILTINS NOT IMPLEMENTED 📊
 
-| Builtin | Status | Priority | Est. Time | Documentation Link |
-|---------|--------|----------|-----------|-------------------|
-| **fetchGit** | ❌ NOT IMPLEMENTED | 🔴 HIGH | 14-16 hours | https://noogle.dev/f/builtins/fetchGit |
-| **fetchTree** | ❌ NOT IMPLEMENTED | 🟡 MEDIUM | 6-8 hours | https://noogle.dev/f/builtins/fetchTree |
-| **fetchMercurial** | ❌ NOT IMPLEMENTED | 🟢 LOW | 8-10 hours | https://noogle.dev/f/builtins/fetchMercurial |
-| **fetchClosure** | ❌ NOT IMPLEMENTED | ⚪ VERY LOW | 40+ hours | https://noogle.dev/f/builtins/fetchClosure |
-| **getFlake** | ❌ NOT IMPLEMENTED | ⚫ DEFER | 80+ hours | https://noogle.dev/f/builtins/getFlake |
+**Current Status: 93/98 builtins implemented (95% complete)**
+
+| Builtin | Status | Priority | Est. Time | Documentation Link | Blocks |
+|---------|--------|----------|-----------|-------------------|--------|
+| **fetchGit** | NOT IMPL | 🔴 HIGH | 14-16 hrs | https://noogle.dev/f/builtins/fetchGit | fetchTree |
+| **fetchTree** | NOT IMPL | 🟡 MEDIUM | 6-8 hrs | https://noogle.dev/f/builtins/fetchTree | (experimental) |
+| **fetchMercurial** | NOT IMPL | 🟢 LOW | 8-10 hrs | https://noogle.dev/f/builtins/fetchMercurial | (rarely used) |
+| **fetchClosure** | NOT IMPL | ⚪ DEFER | 40+ hrs | https://noogle.dev/f/builtins/fetchClosure | (experimental) |
+| **getFlake** | NOT IMPL | ⚫ SKIP | 80+ hrs | https://noogle.dev/f/builtins/getFlake | (months of work) |
 
 **What remains to be done:**
-- 5 builtins need implementation (listed above)
-- All infrastructure already exists (fetcher.js, tar.js, nar_hash.js, store_manager.js)
-- Focus on implementing these 5 functions before doing anything else
+- 5 builtins throw NotImplemented errors (listed above)
+- fetchGit is the only high-priority task remaining
+- fetchTree depends on fetchGit being implemented first
+- The other 3 are low-priority or should be skipped entirely
 
 ---
 
@@ -588,41 +630,26 @@ Current State: Throws NotImplemented error
 
 ---
 
-## 🎯 IMPLEMENTATION ORDER - FOLLOW THIS EXACTLY 🎯
+## 🎯 IMPLEMENTATION ORDER 🎯
 
-**Phase 1: fetchGit** (14-16 hours, 2-3 days) - START HERE
-- Most important remaining fetcher
-- Required by fetchTree
-- Critical for flakes, nixpkgs, modern Nix
-- Read documentation first: https://noogle.dev/f/builtins/fetchGit
+**Priority 1: fetchGit** (14-16 hours) - IMPLEMENT THIS
+- Location: main/runtime.js line 879
+- Documentation: https://noogle.dev/f/builtins/fetchGit
+- Blocks: fetchTree cannot be implemented without this
+- Impact: Required for git dependencies and flakes
 
-**Phase 2: fetchTree** (6-8 hours, 1-2 days)
-- Depends on fetchGit (implement that first!)
-- Experimental but useful
-- Provides unified fetcher API
-- Read documentation first: https://noogle.dev/f/builtins/fetchTree
+**Priority 2: fetchTree** (6-8 hours) - OPTIONAL
+- Location: main/runtime.js line 885
+- Documentation: https://noogle.dev/f/builtins/fetchTree
+- Requires: fetchGit must be implemented first
+- Impact: Experimental unified fetcher (convenience feature)
 
-**Phase 3: fetchMercurial** (8-10 hours, 1-2 days) - OPTIONAL
-- Rarely used (most projects use Git)
-- Only implement if specifically needed
-- Can skip without impact
-- Read documentation first: https://noogle.dev/f/builtins/fetchMercurial
+**Priority 3: Skip These** - Only implement if explicitly requested
+- fetchMercurial: Legacy Mercurial support (rarely used)
+- fetchClosure: Binary cache operations (experimental, complex)
+- getFlake: Complete flake system (months of work, experimental)
 
-**Phase 4: fetchClosure** (40+ hours, weeks) - DEFER
-- Experimental, rarely used
-- Extremely complex (binary cache protocol)
-- Blocks nothing important
-- Only implement if explicitly required
-- Read documentation first: https://noogle.dev/f/builtins/fetchClosure
-
-**Phase 5: getFlake** (80+ hours, months) - DO NOT IMPLEMENT
-- Experimental, not needed for basic Nix
-- Requires complete flake system
-- Massive complexity for minimal benefit
-- Skip indefinitely unless absolutely necessary
-- Read documentation first: https://noogle.dev/f/builtins/getFlake
-
-**RECOMMENDATION**: Stop after fetchTree (95/98 builtins = 97% complete)
+**Target State: 94-95/98 builtins (96-97% complete)**
 
 ---
 

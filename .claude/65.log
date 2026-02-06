@@ -1,0 +1,77 @@
+Perfect! Now let me create a final summary for the user:
+
+## Summary
+
+I've reviewed the current state of the denix project and updated all documentation to reflect **only what remains to be done**.
+
+### Current Status
+
+**Runtime:** 93/98 builtins implemented (95% complete)  
+**Tests:** 146 tests passing across 33 test suites (all passing ✅)  
+**Infrastructure:** All required modules exist and are functional
+
+### What Remains Unimplemented
+
+**5 builtins throw NotImplemented errors:**
+
+1. **builtins.fetchGit** (HIGH PRIORITY)
+   - Location: main/runtime.js line 879
+   - Time: 14-16 hours
+   - Status: NOT IMPLEMENTED
+   - Blocks: fetchTree depends on this
+   - Impact: Required for git dependencies, flakes, nixpkgs development
+
+2. **builtins.fetchTree** (MEDIUM PRIORITY - Optional)
+   - Location: main/runtime.js line 885
+   - Time: 6-8 hours
+   - Status: NOT IMPLEMENTED
+   - Requires: fetchGit must be done first
+   - Impact: Experimental unified fetcher interface
+
+3. **builtins.fetchMercurial** (LOW PRIORITY - Skip)
+   - Status: NOT IMPLEMENTED
+   - Reason: Rarely used, legacy feature
+
+4. **builtins.fetchClosure** (DEFER - Skip)
+   - Status: NOT IMPLEMENTED
+   - Reason: Experimental, very complex (40+ hours)
+
+5. **builtins.getFlake** (DO NOT IMPLEMENT - Skip)
+   - Status: NOT IMPLEMENTED
+   - Reason: Massive undertaking (80-120+ hours), experimental
+
+### Documentation Updated
+
+1. **prompt.md** - Streamlined to focus on remaining work only
+   - Removed achievement language
+   - Added quick status summary
+   - Clarified priorities (fetchGit is the only high-priority task)
+   - Reduced redundancy
+
+2. **REMAINING_WORK.md** - Created comprehensive reference document
+   - Executive summary of what's left
+   - Detailed breakdown of each unimplemented builtin
+   - Implementation plans and challenges
+   - Success criteria and recommendations
+
+### Next Steps
+
+**Immediate Priority:** Implement builtins.fetchGit
+- Read documentation: https://noogle.dev/f/builtins/fetchGit
+- Follow 10-phase implementation plan in prompt.md (lines 213-339)
+- Create comprehensive test suite (13 test cases minimum)
+- Verify against real public git repositories
+
+**After fetchGit (Optional):** Implement builtins.fetchTree
+- Only if requested by user
+- Provides unified fetcher interface
+- Depends on fetchGit being complete first
+
+**Skip:** fetchMercurial, fetchClosure, getFlake (unless explicitly requested)
+
+### Files for Reference
+
+- **prompt.md** (958 lines) - Main task document with implementation details
+- **REMAINING_WORK.md** (NEW, 330 lines) - Executive summary of remaining work
+- **NEXT_STEPS.md** (316 lines) - Quick start code examples (note: focused on fetchTarball which is already done)
+- **README.md** - Project overview (already accurate)
