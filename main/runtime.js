@@ -101,7 +101,9 @@ import { NixError, NotImplemented } from "./errors.js"
         return value
     }
     const nixRepr = (value)=>{
-        // FIXME: should use single quotes instead of double, and probably some other things
+        if (typeof value === 'string') {
+            return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\t/g, '\\t')}"`
+        }
         return JSON.stringify(value)
     }
 
@@ -320,7 +322,39 @@ import { NixError, NotImplemented } from "./errors.js"
                 // yup all that work for nuthin
                 return value
             },
-            "toXML": ()=>{/*FIXME*/},
+            "toXML": (e)=>{
+                const toXml = (value) => {
+                    switch (typeof value) {
+                        case "boolean":
+                            return `<bool value="${value ? 'true' : 'false'}" />`
+                        case "string":
+                            return `<string value="${value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')}" />`
+                        case "number":
+                            return `<float value="${value}" />`
+                        case "bigint":
+                            return `<int value="${value}" />`
+                        case "function":
+                            return `<function />`
+                        case "object":
+                            if (value === null) {
+                                return `<null />`
+                            } else if (value instanceof InterpolatedString) {
+                                return toXml(value.toString())
+                            } else if (value instanceof Path) {
+                                return toXml(FileSystem.makeAbsolutePath(value.toString()))
+                            } else if (value instanceof Array) {
+                                return `<list>${value.map(toXml).join('')}</list>`
+                            } else if (Object.getPrototypeOf({}) == Object.getPrototypeOf(value)) {
+                                const attrs = Object.keys(value).map(key =>
+                                    `<attr name="${key.replace(/"/g, '&quot;')}">${toXml(value[key])}</attr>`
+                                ).join('')
+                                return `<attrs>${attrs}</attrs>`
+                            }
+                    }
+                    return `<unknown />`
+                }
+                return `<?xml version='1.0' encoding='utf-8'?>\n${toXml(e)}\n`
+            },
         
         // 
         // value generators
@@ -377,13 +411,24 @@ import { NixError, NotImplemented } from "./errors.js"
                 }
             },
             "split": (regex)=>(str)=>{
-                // (builtins.split "(a)b" "abc")             == [ "" [ "a" ] "c" ]
-                // (builtins.split "([ac])" "abc")           == [ "" [ "a" ] "b" [ "c" ] "" ]
-                // (builtins.split "(a)|(c)" "abc")          == [ "" [ "a" null ] "b" [ null "c" ] "" ]
-                // (builtins.split "([[:upper:]]+)" " FOO ") == [ " " [ "FOO" ] " " ]
-                
-                // FIXME
-                throw new NotImplemented(`Sorry :( I don't support builtins.split yet'`)
+                const regexStr = requireString(regex).toString()
+                const string = requireString(str).toString()
+                const re = new RegExp(regexStr, 'g')
+                const result = []
+                let lastIndex = 0
+                let match
+
+                while ((match = re.exec(string)) !== null) {
+                    result.push(string.slice(lastIndex, match.index))
+                    const groups = []
+                    for (let i = 1; i < match.length; i++) {
+                        groups.push(match[i] === undefined ? null : match[i])
+                    }
+                    result.push(groups)
+                    lastIndex = re.lastIndex
+                }
+                result.push(string.slice(lastIndex))
+                return result
             },
             // (builtins.splitVersion ""                       ) == [ ]
             // (builtins.splitVersion "1.1.3.4.4.43.a.a"       ) == [ "1" "1" "3" "4" "4" "43" "a" "a" ]
@@ -477,8 +522,22 @@ import { NixError, NotImplemented } from "./errors.js"
             // builtins.foldl' (x: y: x + y) "a" ["b" "c" "d"]  => "abcd"
             // builtins.foldl' (x: y: x + y) 0 [1 2 3] => 6
             "foldl'": (op)=>(nul)=>(list)=>list.reduce((acc,each)=>op(acc)(each),nul), // TODO: check more edgecases on this
-            "sort": ()=>{/*FIXME*/},
-            "groupBy": ()=>{/*FIXME*/},
+            "sort": (comparator)=>(list)=>{
+                requireList(list)
+                return [...list].sort((a, b) => comparator(a)(b) ? -1 : (comparator(b)(a) ? 1 : 0))
+            },
+            "groupBy": (f)=>(list)=>{
+                requireList(list)
+                const result = {}
+                for (const item of list) {
+                    const key = requireString(f(item)).toString()
+                    if (!result[key]) {
+                        result[key] = []
+                    }
+                    result[key].push(item)
+                }
+                return result
+            },
         
         // 
         // attr helpers
@@ -490,21 +549,90 @@ import { NixError, NotImplemented } from "./errors.js"
                 }
                 return attrSet[attr]
             },
-            "attrNames": (value)=>Object.getOwnPropertyNames(value).sorted(), // FIXME make sure JS's alphabetical sort is the same as nix's alphabetical sort
+            "attrNames": (value)=>Object.getOwnPropertyNames(value).sort(),
             "attrValues": (value)=>builtins.attrNames(value).map(each=>value[each]),
             "catAttrs": (attr)=>(list)=>{
-                requireString(attr)
-                for (const each of requireList(list)) {
-                    const propertyNames = Object.getOwnPropertyNames(requireAttrSet(each))
-                    propertyNames.includes(attr)
+                const attrName = requireString(attr).toString()
+                requireList(list)
+                const result = []
+                for (const each of list) {
+                    requireAttrSet(each)
+                    if (each.hasOwnProperty(attrName)) {
+                        result.push(each[attrName])
+                    }
                 }
+                return result
             },
-            "concatMap": ()=>{/*FIXME*/},
-            "zipAttrsWith": ()=>{/*FIXME*/},
-            "intersectAttrs": ()=>{/*FIXME*/},
-            "listToAttrs": ()=>{/*FIXME*/},
-            "mapAttrs": ()=>{/*FIXME*/},
-            "removeAttrs": ()=>{/*FIXME*/},
+            "concatMap": (f)=>(list)=>{
+                requireList(list)
+                const result = []
+                for (const item of list) {
+                    const mapped = f(item)
+                    requireList(mapped)
+                    result.push(...mapped)
+                }
+                return result
+            },
+            "zipAttrsWith": (f)=>(list)=>{
+                requireList(list)
+                const collected = {}
+                for (const attrset of list) {
+                    requireAttrSet(attrset)
+                    for (const [key, value] of Object.entries(attrset)) {
+                        if (!collected[key]) {
+                            collected[key] = []
+                        }
+                        collected[key].push(value)
+                    }
+                }
+                const result = {}
+                for (const [key, values] of Object.entries(collected)) {
+                    result[key] = f(key)(values)
+                }
+                return result
+            },
+            "intersectAttrs": (e1)=>(e2)=>{
+                requireAttrSet(e1)
+                requireAttrSet(e2)
+                const result = {}
+                for (const key of Object.keys(e1)) {
+                    if (e2.hasOwnProperty(key)) {
+                        result[key] = e2[key]
+                    }
+                }
+                return result
+            },
+            "listToAttrs": (list)=>{
+                requireList(list)
+                const result = {}
+                for (const item of list) {
+                    requireAttrSet(item)
+                    const name = requireString(item.name).toString()
+                    if (!result.hasOwnProperty(name)) {
+                        result[name] = item.value
+                    }
+                }
+                return result
+            },
+            "mapAttrs": (f)=>(attrset)=>{
+                requireAttrSet(attrset)
+                const result = {}
+                for (const [name, value] of Object.entries(attrset)) {
+                    result[name] = f(name)(value)
+                }
+                return result
+            },
+            "removeAttrs": (set)=>(list)=>{
+                requireAttrSet(set)
+                requireList(list)
+                const result = {}
+                for (const key of Object.keys(set)) {
+                    if (!list.includes(key)) {
+                        result[key] = set[key]
+                    }
+                }
+                return result
+            },
         
         // 
         // hashers
@@ -540,29 +668,109 @@ import { NixError, NotImplemented } from "./errors.js"
         
         // evaluation control
             "break": (value)=>value, // NOTE: we just ignore the debugging aspect
-            "trace": ()=>{/*FIXME*/},
-            "traceVerbose": ()=>{/*FIXME*/},
-            "tryEval": ()=>{/*FIXME*/},
-            "seq": ()=>{/*FIXME*/},
-            "deepSeq": ()=>{/*FIXME*/},
+            "trace": (e1)=>(e2)=>{
+                console.error(builtins.toString(e1))
+                return e2
+            },
+            "traceVerbose": (e1)=>(e2)=>{
+                if (Deno.env.get("NIX_TRACE_VERBOSE")) {
+                    console.error(builtins.toString(e1))
+                }
+                return e2
+            },
+            "tryEval": (e)=>{
+                try {
+                    return { success: true, value: e }
+                } catch (error) {
+                    if (error instanceof NixError) {
+                        return { success: false, value: false }
+                    }
+                    throw error
+                }
+            },
+            "seq": (e1)=>(e2)=>{
+                e1
+                return e2
+            },
+            "deepSeq": (e1)=>(e2)=>{
+                const deepEval = (val) => {
+                    if (val instanceof Array) {
+                        for (const item of val) {
+                            deepEval(item)
+                        }
+                    } else if (builtins.isAttrs(val)) {
+                        for (const key of Object.keys(val)) {
+                            deepEval(val[key])
+                        }
+                    }
+                }
+                deepEval(e1)
+                return e2
+            },
             "abort": (value)=>{ throw new NixError(`error: evaluation aborted with the following error message: ${nixRepr(value)}`) },
-            "throw": ()=>{/*FIXME*/},
+            "throw": (s)=>{ throw new NixError(requireString(s).toString()) },
         
         // file system
             "getEnv": (string)=>Deno.env.get(requireString(string)),
             "readFile": (value)=>Deno.readTextFileSync(value.toString()),
-            "baseNameOf": (value)=>FileSystem.basename(value), // FIXME: look up behavior on derivation inputs, and add type checking
-            "dirOf": (value)=>FileSystem.dirname(value), // FIXME: look up behavior on derivation inputs, and add type checking
+            "baseNameOf": (value)=>{
+                if (value && value.outPath) {
+                    value = value.outPath
+                }
+                if (value instanceof Path) {
+                    return FileSystem.basename(value.toString())
+                }
+                if (builtins.isString(value)) {
+                    return FileSystem.basename(value.toString())
+                }
+                throw new NixError(`error: cannot coerce ${builtins.typeOf(value)} to a string`)
+            },
+            "dirOf": (value)=>{
+                if (value && value.outPath) {
+                    value = value.outPath
+                }
+                if (value instanceof Path) {
+                    return FileSystem.dirname(value.toString())
+                }
+                if (builtins.isString(value)) {
+                    return FileSystem.dirname(value.toString())
+                }
+                throw new NixError(`error: cannot coerce ${builtins.typeOf(value)} to a string`)
+            },
             "pathExists": (path)=>FileSystem.sync.info(path).exists,
             "toFile": ()=>{/*FIXME*/},
-            "readFileType": ()=>{/*FIXME*/},
+            "readFileType": (p)=>{
+                const absolutePath = FileSystem.makeAbsolutePath(p.toString())
+                try {
+                    const stat = Deno.statSync(absolutePath)
+                    if (stat.isFile) return "regular"
+                    if (stat.isDirectory) return "directory"
+                    if (stat.isSymlink) return "symlink"
+                    return "unknown"
+                } catch {
+                    return "unknown"
+                }
+            },
             "path": ()=>{/*FIXME*/},
                 // kinda complicated:
                 // https://nix-community.github.io/docnix/reference/builtins/builtins-path/
             
-            "readDir": ()=>{/*FIXME*/},
-                // NOTE: fails with input of "./." (not absolute path) works with input of ./. (path literal)
-                // output { ".git" = "directory"; "main.js" = "regular"; scratch_work = "directory"; tests = "directory"; tools = "directory"; }
+            "readDir": (path)=>{
+                const absolutePath = FileSystem.makeAbsolutePath(path.toString())
+                const result = {}
+                for (const entry of Deno.readDirSync(absolutePath)) {
+                    if (entry.isFile) {
+                        result[entry.name] = "regular"
+                    } else if (entry.isDirectory) {
+                        result[entry.name] = "directory"
+                    } else if (entry.isSymlink) {
+                        result[entry.name] = "symlink"
+                    } else {
+                        result[entry.name] = "unknown"
+                    }
+                }
+                return result
+            },
             
             "findFile": (list)=>(string)=>{/*FIXME*/},
                 // https://nix-community.github.io/docnix/reference/builtins/builtins-findfile/
@@ -628,8 +836,34 @@ import { NixError, NotImplemented } from "./errors.js"
                 // }
             },
             "derivationStrict": ()=>{/*FIXME*/},
-            "parseDrvName": ()=>{/*FIXME*/},
-            "compareVersions": ()=>{/*FIXME*/},
+            "parseDrvName": (s)=>{
+                const str = requireString(s).toString()
+                const match = str.match(/^(.*?)-([^-]*(?:-[^a-zA-Z].*)?)$/)
+                if (match) {
+                    return { name: match[1], version: match[2] }
+                } else {
+                    return { name: str, version: "" }
+                }
+            },
+            "compareVersions": (s1)=>(s2)=>{
+                const v1 = builtins.splitVersion(requireString(s1))
+                const v2 = builtins.splitVersion(requireString(s2))
+                const maxLen = Math.max(v1.length, v2.length)
+                for (let i = 0; i < maxLen; i++) {
+                    const p1 = v1[i] || ""
+                    const p2 = v2[i] || ""
+                    const n1 = parseInt(p1)
+                    const n2 = parseInt(p2)
+                    if (!isNaN(n1) && !isNaN(n2)) {
+                        if (n1 < n2) return -1
+                        if (n1 > n2) return 1
+                    } else {
+                        if (p1 < p2) return -1
+                        if (p1 > p2) return 1
+                    }
+                }
+                return 0
+            },
             "getFlake": ()=>{/*FIXME*/},
             "parseFlakeRef": ()=>{/*FIXME*/},
             "placeholder": ()=>{/*FIXME*/},
@@ -652,8 +886,12 @@ import { NixError, NotImplemented } from "./errors.js"
     Object.freeze(builtins)
 
     export const operators = {
-        negative: (value)=>{/*FIXME*/},                     // -a
-        listConcat: (value)=>{/*FIXME*/},                   // a ++ b
+        negative: (value)=>typeof value == "bigint"?-value:-toFloat(value),
+        listConcat: (value, other)=>{
+            requireList(value)
+            requireList(other)
+            return value.concat(other)
+        },
         add: (value, other)=>{},                            // a + b
             // number + number : Addition
             // string + string : String concatenation
@@ -661,23 +899,61 @@ import { NixError, NotImplemented } from "./errors.js"
             // path + string   : Path and string concatenation
             // string + path   : String and path concatenation
         subtract: (value, other)=>{},                       // a - b
-        divide: (value)=>{/*FIXME*/},                       // a / b
-        multiply: (value)=>{/*FIXME*/},                     // *a
-        negate: (value)=>{/*FIXME*/},                       // !a
-        merge: (value)=>{/*FIXME*/},                        // a // b
-        equal: (value, other)=>{                            // a == b
-            // NOTE: [] == [] is true in nix
-            /*FIXME*/
+        divide: (value, other)=>{
+            if (typeof value == "bigint" && typeof other == "bigint") {
+                return value/other
+            } else {
+                return toFloat(value)/toFloat(other)
+            }
         },
-        notEqual: (value)=>{/*FIXME*/},                     // a != b
-        greaterThan: (value, other)=>{/*FIXME*/},           // a > b
-        greaterThanOrEqual: (value, other)=>{/*FIXME*/},    // a >= b
-        lessThan: (value, other)=>{/*FIXME*/},              // a < b
-        lessThanOrEqual: (value, other)=>{/*FIXME*/},       // a <= b
-        and: (value)=>{/*FIXME*/},                          // a && b
-        or: (value)=>{/*FIXME*/},                           // a || b
-        implication: (value)=>{/*FIXME*/},                  // a -> b
-        hasAttr: (value)=>{/*FIXME*/},                      // a ? b
+        multiply: (value, other)=>{
+            if (typeof value == "bigint" && typeof other == "bigint") {
+                return value*other
+            } else {
+                return toFloat(value)*toFloat(other)
+            }
+        },
+        negate: (value)=>!value,
+        merge: (value, other)=>{
+            requireAttrSet(value)
+            requireAttrSet(other)
+            return {...value, ...other}
+        },
+        equal: (value, other)=>{
+            if (value === other) return true
+            if (typeof value !== typeof other) return false
+            if (value instanceof Array && other instanceof Array) {
+                if (value.length !== other.length) return false
+                for (let i = 0; i < value.length; i++) {
+                    if (!operators.equal(value[i], other[i])) return false
+                }
+                return true
+            }
+            if (builtins.isAttrs(value) && builtins.isAttrs(other)) {
+                const keys1 = Object.keys(value).sort()
+                const keys2 = Object.keys(other).sort()
+                if (keys1.length !== keys2.length) return false
+                for (let i = 0; i < keys1.length; i++) {
+                    if (keys1[i] !== keys2[i]) return false
+                    if (!operators.equal(value[keys1[i]], other[keys2[i]])) return false
+                }
+                return true
+            }
+            return false
+        },
+        notEqual: (value, other)=>!operators.equal(value, other),
+        greaterThan: (value, other)=>value>other,
+        greaterThanOrEqual: (value, other)=>value>=other,
+        lessThan: (value, other)=>value<other,
+        lessThanOrEqual: (value, other)=>value<=other,
+        and: (value, other)=>value&&other,
+        or: (value, other)=>value||other,
+        implication: (value, other)=>!value||other,
+        hasAttr: (attrset, attr)=>{
+            requireAttrSet(attrset)
+            requireString(attr)
+            return attrset.hasOwnProperty(attr.toString())
+        },
     }
     
     export const createRuntime = ()=>{

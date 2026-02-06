@@ -1,4 +1,4 @@
-import { parse, isInteger } from "https://esm.sh/lossless-json@4.0.1"
+import { parse, isInteger } from "npm:lossless-json@4.0.1"
 
 // parse integer values into a bigint, and use a regular number otherwise
 function customNumberParser(string) {
