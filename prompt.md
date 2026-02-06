@@ -6,41 +6,19 @@
 3. Once the translator is implemented, we need to start testing it against the nixpkgs lib. For example curl from github, this repo: git@github.com:nix-community/nixpkgs.lib.git and start testing different library functions.
 
 ## 1. Builtins Progress Status
-- [x] Read runtime.js
-- [x] Create prompt.md
-- [x] Create runtime.md
-- [x] Research FIXMEs and document in runtime.md
-- [x] Implement Phase 1 (Easy FIXMEs) - 26 functions
-- [x] Create and run tests - all passing
-- [x] Implement Phase 2 (Medium FIXMEs) - 12 functions
-- [x] Create and run Phase 2 tests - all passing
-- [x] Remove npm dependencies - pure URL imports only
-- [x] Implement fromTOML with @std/toml
-- [x] Implement Phase 4 (Operators + Context + Store) - 13 functions
-- [x] Create and run Phase 4 tests - all passing
-- [x] Implement Phase 5 (Store + Flakes) - 5 functions
-- [x] Create and run Phase 5 tests - all passing
-- [x] Improve error handling for unimplemented FIXMEs
-- [ ] Implement infrastructure-dependent FIXMEs (fetchers, import, etc.) - BLOCKED
 
-## Current Status (Latest Update: 2026-02-05)
-✅ **PROJECT COMPLETE**: 59 functions implemented (60% of Nix 2.18, 100% of feasible scope)
-- All Phase 1 (Easy) complete: 26 functions
-- All Phase 2 (Medium) complete: 14 functions
-- Phase 3 (Infrastructure): 1 function (fromTOML)
-- Phase 4 (Operators + Context + Store): 11 functions
-- Phase 5 (Store + Flakes): 5 functions (toFile, findFile, derivationStrict, parseFlakeRef, flakeRefToString)
-- Phase 6 (Nix 2.18 completion): 2 functions (fetchClosure, outputOf)
-- 120+ tests created, all passing ✅
-- ✅ Pure Deno URL imports only (no npm/jsr dependencies)
-- ✅ Custom BigInt JSON parser (replaced npm:lossless-json)
-- ✅ Derivation implementation with correct store path computation
-- ✅ Comprehensive error handling - descriptive NotImplemented errors
-- ✅ **Nix 2.18 Compliant**: All 98 official Nix 2.18 builtins present
-- ✅ **1 FIXME remaining**: toJSON for paths (requires store infrastructure)
+**Status**: INCOMPLETE 59/98 Nix 2.18 builtins fully functional 
 
-## Status: COMPLETE ✅
-**All feasible functions have been implemented!** Remaining items require major infrastructure:
+**What Works**:
+- ✅ 120+ tests, all passing
+- ✅ Correct derivation store paths matching Nix exactly
+- ✅ Pure Deno with URL imports (no npm/jsr dependencies)
+- ✅ All 98 Nix 2.18 builtins present in codebase
+
+**Remaining Items**:
+- **1 FIXME** (line 289): `toJSON` for paths - requires full store infrastructure
+- **5 TODOs** (lines 235, 411, 459, 540, 986): Minor edge case notes (non-blocking)
+- **12 functions** need to start work on large tasks: fetchurl, fetchTarball, fetchGit, fetchMercurial, fetchTree, fetchClosure, import, scopedImport, path, filterSource, getFlake. These require weeks of work, so I should use libraries for things like git, and break down the work into smaller tasks and start working on those smaller tasks in helper directories.
 
 **1 FIXME**:
 - toJSON for paths (line 289) - requires store to hash/copy files to /nix/store
@@ -57,61 +35,6 @@
 - Import/eval system (2): import, scopedImport
 - Network fetchers (6): fetchurl, fetchTarball, fetchGit, fetchMercurial, fetchTree, fetchClosure
 - Flakes (1): getFlake
-
-## Completed Implementations
-
-### Phase 1 - Easy (26 functions):
-**Builtins:**
-- trace, throw, seq, deepSeq, tryEval
-- mapAttrs, removeAttrs, listToAttrs, intersectAttrs, concatMap
-- groupBy, parseDrvName, compareVersions
-
-**Operators:**
-- negative, negate, listConcat, divide, multiply, merge
-- and, or, implication
-- greaterThan, lessThan, greaterThanOrEqual, lessThanOrEqual, hasAttr
-
-### Phase 2 - Medium (12 functions):
-**Builtins:**
-- sort, split, toXML, readDir, readFileType
-- traceVerbose, baseNameOf (fixed), dirOf (fixed)
-- catAttrs, zipAttrsWith, attrNames (fixed)
-
-**Operators:**
-- equal (deep equality)
-
-**Other:**
-- nixRepr (improved)
-
-### Phase 3 - Additional Features (1 function):
-**Builtins:**
-- fromTOML (with @std/toml, converts ints to BigInt)
-
-**Infrastructure:**
-- Removed npm dependencies (replaced npm:lossless-json)
-- Pure Deno URL imports only
-
-### Phase 4 - Operators + Context + Store (13 functions):
-**Operators:**
-- add (number/string/path concatenation)
-- subtract (numeric subtraction)
-
-**Builtins:**
-- functionArgs (function introspection)
-- genericClosure (graph closure algorithm)
-- nixPath, storeDir, storePath, placeholder (store functions)
-- getContext, hasContext, appendContext, addErrorContext, unsafeDiscardStringContext (context functions - simplified)
-- unsafeDiscardOutputDependency, unsafeGetAttrPos (utility functions)
-
-### Tests Created:
-- main/tests/simple_test.js (26 tests, all passing)
-- main/tests/phase2_test.js (15 tests, all passing)
-- main/tests/phase2b_test.js (12 tests, all passing)
-- main/tests/fromtoml_standalone_test.js (7 tests, all passing)
-- main/tests/phase3_standalone_test.js (14 tests, all passing)
-
-**Total Implemented: 59 functions** (60% of Nix 2.18, 100% of feasible scope without major infrastructure)
-
 
 ## 2. Translator Progress Status (main.js)
 
