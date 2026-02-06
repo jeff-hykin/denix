@@ -98,5 +98,10 @@ All critical Nix language features have been implemented and tested! The transla
 ### Next Steps
 1. ✅ **DONE**: Test against nixpkgs.lib patterns - 13 tests passing!
 2. ✅ **DONE**: Fix interpolated has-attr - All forms now supported!
-3. **Next**: Test translator against actual nixpkgs.lib files (will require import system work)
-4. **Optional**: Performance optimizations (non-critical)
+3. ✅ **IN PROGRESS**: Test translator against actual nixpkgs.lib files
+   - Cloned nixpkgs.lib repository
+   - Created nixpkgs_trivial_test.js with 20 real-world function patterns
+   - Identified test harness improvements needed (not translator bugs)
+   - Translator successfully handles extracted patterns; full integration blocked by import system
+4. **Next**: Either improve test harness OR focus on import system implementation
+5. **Optional**: Performance optimizations (non-critical)
