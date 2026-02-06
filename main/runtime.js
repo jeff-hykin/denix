@@ -686,6 +686,9 @@ import { NixError, NotImplemented } from "./errors.js"
             "fetchTree": (args)=>{
                 throw new NotImplemented(`builtins.fetchTree is an experimental feature requiring fetch system and store implementation`)
             },
+            "fetchClosure": (args)=>{
+                throw new NotImplemented(`builtins.fetchClosure requires binary cache support and store implementation (experimental feature)`)
+            },
 
         // misc
             "import": (path)=>{
@@ -1147,6 +1150,21 @@ import { NixError, NotImplemented } from "./errors.js"
                 // Format: /1rz4g4znpzjwh1xymhjpm42vipw92pr73vdgl6xs1hycac8kf2n9
                 // For now, we generate a deterministic placeholder based on output name
                 const hash = sha256Hex(name).slice(0, 32)
+                return `/${hash}`
+            },
+            "outputOf": (derivationReference)=>(outputName)=>{
+                // Returns output path of a derivation
+                // derivationReference is a string (store path or placeholder)
+                // outputName is the output to reference (e.g., "out")
+                const drvRef = requireString(derivationReference).toString()
+                const output = requireString(outputName).toString()
+
+                // In full Nix with dynamic-derivations, this would:
+                // - Parse the derivation reference
+                // - Look up the actual derivation
+                // - Return the specified output path or placeholder
+                // For now, we return a placeholder since we don't have full store support
+                const hash = sha256Hex(drvRef + ":" + output).slice(0, 32)
                 return `/${hash}`
             },
         
