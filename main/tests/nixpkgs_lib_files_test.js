@@ -350,6 +350,149 @@ Deno.test("nixpkgs.lib file loading", async (t) => {
         console.log("✅ minfeatures.nix loaded and evaluated correctly")
     })
 
+    await t.step("load source-types.nix (requires lib.mapAttrs)", () => {
+        // source-types.nix takes { lib } and uses lib.mapAttrs
+        const filePath = join(nixpkgsLibPath, "source-types.nix")
+        const nixCode = Deno.readTextFileSync(filePath)
+
+        // Translate to JS
+        let jsCode = convertToJs(nixCode, { relativePath: filePath })
+
+        // Create runtime
+        const runtime = createRuntime()
+
+        // Remove import statements
+        if (jsCode.includes('import { createRuntime }')) {
+            jsCode = jsCode.replace(/import \{ createRuntime \}.*\n/, '')
+            jsCode = jsCode.replace(/const runtime = createRuntime\(\)\n/, '')
+        }
+
+        jsCode = jsCode.replace(/\/\*\*[\s\S]*?\*\//g, '')
+        jsCode = jsCode.trim()
+
+        // Create evaluation scope
+        const nixScope = {
+            builtins: runtime.runtime.builtins,
+            ...runtime.runtime.builtins
+        }
+
+        // Evaluate
+        const evalFunc = new Function(
+            'runtime',
+            'operators',
+            'builtins',
+            'nixScope',
+            'InterpolatedString',
+            'Path',
+            `return (${jsCode})`
+        )
+
+        const moduleFactory = evalFunc(
+            { scopeStack: [nixScope] },
+            runtime.runtime.operators,
+            runtime.runtime.builtins,
+            nixScope,
+            runtime.runtime.InterpolatedString,
+            runtime.runtime.Path
+        )
+
+        // Create lib with mapAttrs
+        const minimalLib = {
+            mapAttrs: runtime.runtime.builtins.mapAttrs
+        }
+
+        // Call module factory
+        const sourceTypes = moduleFactory({ lib: minimalLib })
+
+        // Verify structure
+        assertExists(sourceTypes)
+        assertEquals(typeof sourceTypes, "object")
+
+        // Should have the 4 source types
+        assertExists(sourceTypes.fromSource, "Should have fromSource")
+        assertExists(sourceTypes.binaryNativeCode, "Should have binaryNativeCode")
+        assertExists(sourceTypes.binaryBytecode, "Should have binaryBytecode")
+        assertExists(sourceTypes.binaryFirmware, "Should have binaryFirmware")
+
+        // Check fromSource properties
+        assertEquals(sourceTypes.fromSource.shortName, "fromSource")
+        assertEquals(sourceTypes.fromSource.isSource, true)
+
+        // Check binaryNativeCode properties
+        assertEquals(sourceTypes.binaryNativeCode.shortName, "binaryNativeCode")
+        assertEquals(sourceTypes.binaryNativeCode.isSource, false)
+
+        console.log("✅ source-types.nix loaded and evaluated correctly")
+    })
+
+    await t.step("test versions.nix major/minor/patch functions", () => {
+        // versions.nix has simple utility functions for version parsing
+        const filePath = join(nixpkgsLibPath, "versions.nix")
+        const nixCode = Deno.readTextFileSync(filePath)
+
+        let jsCode = convertToJs(nixCode, { relativePath: filePath })
+
+        const runtime = createRuntime()
+
+        if (jsCode.includes('import { createRuntime }')) {
+            jsCode = jsCode.replace(/import \{ createRuntime \}.*\n/, '')
+            jsCode = jsCode.replace(/const runtime = createRuntime\(\)\n/, '')
+        }
+
+        jsCode = jsCode.replace(/\/\*\*[\s\S]*?\*\//g, '')
+        jsCode = jsCode.trim()
+
+        const nixScope = {
+            builtins: runtime.runtime.builtins,
+            ...runtime.runtime.builtins
+        }
+
+        const evalFunc = new Function(
+            'runtime',
+            'operators',
+            'builtins',
+            'nixScope',
+            'InterpolatedString',
+            'Path',
+            `return (${jsCode})`
+        )
+
+        const moduleFactory = evalFunc(
+            { scopeStack: [nixScope] },
+            runtime.runtime.operators,
+            runtime.runtime.builtins,
+            nixScope,
+            runtime.runtime.InterpolatedString,
+            runtime.runtime.Path
+        )
+
+        const versions = moduleFactory({ lib: {} })
+
+        // Verify structure
+        assertExists(versions)
+        assertEquals(typeof versions, "object")
+
+        // Test major function
+        assertExists(versions.major)
+        assertEquals(typeof versions.major, "function")
+        assertEquals(versions.major("1.2.3"), "1")
+        assertEquals(versions.major("10.20.30"), "10")
+
+        // Test minor function
+        assertExists(versions.minor)
+        assertEquals(typeof versions.minor, "function")
+        assertEquals(versions.minor("1.2.3"), "2")
+        assertEquals(versions.minor("10.20.30"), "20")
+
+        // Test patch function
+        assertExists(versions.patch)
+        assertEquals(typeof versions.patch, "function")
+        assertEquals(versions.patch("1.2.3"), "3")
+        assertEquals(versions.patch("10.20.30"), "30")
+
+        console.log("✅ versions.nix major/minor/patch functions work")
+    })
+
     // Note: zip-int-bits.nix is skipped because it uses complex closures with asserts
     // that reference builtins at call-time, which requires more sophisticated scope
     // management than our current test harness provides. The translator works correctly,

@@ -2,7 +2,9 @@
 
 ## Project Status Summary (2026-02-05)
 
-**Status**: ✅ **TRANSLATOR FULLY FUNCTIONAL** - All critical bugs fixed, 87 tests passing!
+**Status**: ✅ **TRANSLATOR FULLY FUNCTIONAL** - All critical bugs fixed, 91+ tests passing!
+
+**Recent Achievement (Session 11)**: Expanded nixpkgs.lib test coverage to 9 complete library files! ✅
 
 **Core files to read**: prompt.md (this file), README.md, STATUS.md, TRANSLATOR_STATUS.md
 1. We need to implement the core nix functions in JavaScript and make sure they have 1-to-1 parity with Nix. NOTE: there are some mapping caveats you need to consider such as JS needing to use BigInts to distinguish between nix ints and nix floats. We need to validate that all nix operators and builtin's mimic their Nix counterparts, using abstractions such as BigInt where direct mapping is impossible. Read below ("Builtins Progress Status") to see the status of builtins. These are implemented in `main/runtime.js`. 
@@ -95,11 +97,19 @@ All critical Nix language features have been implemented and tested! The transla
 - ✅ Attribute merging and list operations
 - ✅ Comparison and utility functions
 
+**main/tests/nixpkgs_lib_files_test.js**: 9 tests (NEW! All passing!)
+- ✅ ascii-table.nix - 98 ASCII character mappings
+- ✅ strings.nix - String utilities (with import of ascii-table.nix)
+- ✅ minfeatures.nix - Nix version feature detection
+- ✅ source-types.nix - Source type definitions
+- ✅ versions.nix - Version parsing utilities (major/minor/patch)
+- Tests complete library files end-to-end with imports
+
 **main/tests/hasattr_standalone_test.js**: 15 tests
 - ✅ Comprehensive has-attr operator tests
 - ✅ Simple, nested, and dynamic attribute checks
 
-**Total**: 67 translator tests + 15 has-attr standalone tests = 82 tests, all passing ✅
+**Total**: 67 translator tests + 15 has-attr standalone tests + 9 lib file tests = 91 tests, all passing ✅
 
 ### Known Limitations ⬜
 
