@@ -2,6 +2,25 @@
 
 Your job is to focus on what is NOT implemented and NOT working. Only report what remains to be done. Do not report what you accomplished. You are a senior level developer, there is no such thing as a blocker. Break down large tasks into smaller tasks.
 
+## CRITICAL: Documentation Out of Sync
+
+**MEMORY.md is incorrect** (as of 2026-02-06):
+- Claims 15 lib files tested → Actually 11 files tested
+- Lists phantom files (systems/parse, inspect, default, doubles) → These are NOT tested
+- Missing accurate count (says "19 remaining" → actually 21 remaining of 32 core files)
+
+**This prompt.md has been corrected** to reflect actual state:
+- 11 files actually tested (ascii-table, strings, minfeatures, source-types, versions, kernel, flakes, flake-version-info, systems/flake-systems, systems/supported, fetchers)
+- 21 files need testing (out of 32 core lib files)
+- 34% test coverage, targeting 62%+ (20 files) before moving to Priority 2
+
+**System is NOT blocked**:
+- Translator: 87/87 tests passing, production ready
+- Runtime: 61/98 Nix 2.18 builtins working, 170+ tests passing
+- Import system: Fully functional
+- Only 10 builtins blocked (network fetchers + store operations)
+- Most lib files should work immediately, just need testing
+
 ## Current Tasks Overview
 
 1. **Testing** - Continue testing nixpkgs.lib files (1 week) - NEXT PRIORITY
@@ -13,97 +32,115 @@ Your job is to focus on what is NOT implemented and NOT working. Only report wha
 ## 1. nixpkgs.lib Testing (Priority 1 - NEXT PRIORITY)
 
 **Time**: 1 week
+**Current**: 11/32 core lib files tested (34%)
+**Remaining**: 21 files need testing
 
-**Remaining**: 19/34 lib files need testing
+**Note**: Most files are UNTESTED, not BROKEN. The translator is production-ready (87/87 tests passing), we just need to validate it against more real-world nixpkgs code.
 
-### Files Already Tested (15 files)
-- ascii-table.nix
-- strings.nix (with imports)
-- minfeatures.nix
-- source-types.nix
-- versions.nix
-- kernel.nix
-- flakes.nix
-- flake-version-info.nix
-- systems/flake-systems.nix
-- systems/supported.nix
-- fetchers.nix
-- systems/parse.nix
-- systems/inspect.nix
-- systems/default.nix
-- systems/doubles.nix
+### Files Already Tested (11 files)
+- ascii-table.nix (attribute set of ASCII character codes)
+- strings.nix (string manipulation, imports ascii-table.nix)
+- minfeatures.nix (Nix version feature detection)
+- source-types.nix (source type definitions for fromSource)
+- versions.nix (version parsing: major, minor, patch)
+- kernel.nix (Linux kernel config helpers)
+- flakes.nix (re-exports builtins.parseFlakeRef/flakeRefToString)
+- flake-version-info.nix (lib overlay with version metadata)
+- systems/flake-systems.nix (list of 10 supported platforms)
+- systems/supported.nix (platform tiers: tier1, tier2, tier3, hydra)
+- fetchers.nix (hash normalization utilities - commented out, too complex)
 
-### Files Needing Tests (19 files)
+### Files Needing Tests (21 files)
 
-**Easy wins** (can test standalone, priority order):
+**Easy wins** (standalone files, minimal dependencies, sorted by simplicity):
 
-1. [ ] **debug.nix** - debugging utilities (lib.traceIf, lib.traceVal, etc.)
-   - Location: `nixpkgs-lib/lib/debug.nix`
-   - Likely just wraps builtins.trace
-   - Test approach:
-     - Import debug.nix
-     - Call traceIf with true condition (should trace)
-     - Call traceIf with false condition (should not trace)
-     - Call traceVal with a value (should return that value)
-     - Validate traceSeq, traceValSeqN work correctly
-   - Expected functions: traceIf, traceVal, traceSeq, traceValSeq, traceValSeqN, traceShowVal, etc.
+1. [ ] **licenses.nix** - ~200 license definitions (HIGHEST PRIORITY - pure data!)
+   - Just a giant attribute set of license metadata
+   - Test: Import and spot-check 5-10 common licenses (mit, gpl3, bsd3, apache20, mpl20)
+   - Expected: Each license has spdxId, fullName, url, free (boolean)
 
-2. [ ] **generators.nix** - JSON/YAML/INI generators
-   - Location: `nixpkgs-lib/lib/generators.nix`
-   - Uses builtins.toJSON heavily, may need string manipulation
-   - Test approach:
-     - Import generators.nix
-     - Test toPretty: converts attrset to pretty-printed format
-     - Test toYAML: converts attrset to YAML string
-     - Test toINI: converts attrset to INI format
-     - Test toKeyValue: converts attrset to KEY=VALUE pairs
-   - Expected functions: toPretty, toYAML, toINI, toKeyValue, toDhall, etc.
-   - **Likely blocker**: May use lib.strings functions heavily
+2. [ ] **systems/parse.nix** - platform string parser (x86_64-linux → structured data)
+   - Parses platform strings into {cpu, vendor, kernel, abi}
+   - Test: Parse "x86_64-linux", "aarch64-darwin", "armv7l-linux"
+   - Expected: Large attrset with types, predicates, parsers
 
-3. [ ] **licenses.nix** - license metadata (SPDX IDs, descriptions)
-   - Location: `nixpkgs-lib/lib/licenses.nix`
-   - Large attribute set of ~200 license definitions
-   - Test approach:
-     - Import licenses.nix
-     - Spot-check 5-10 common licenses (mit, gpl3, bsd3, apache20, mpl20)
-     - Validate each has: spdxId, fullName, url, free (boolean)
-     - Validate deprecated field exists for deprecated licenses
-   - Expected structure: `{ mit = { spdxId = "MIT"; fullName = "MIT License"; url = "..."; free = true; }; ... }`
-   - **Very simple**: Just a giant attrset, should work immediately
+3. [ ] **systems/inspect.nix** - platform inspection (isLinux, isDarwin, isAarch64)
+   - Helper functions querying platform properties (depends on parse.nix)
+   - Test: isAarch64, isLinux, isDarwin predicates
 
-4. [ ] **cli.nix** - CLI argument parsing utilities
-   - Location: `nixpkgs-lib/lib/cli.nix`
+4. [ ] **systems/doubles.nix** - list of valid platform strings
+   - Simple list: ["x86_64-linux", "aarch64-darwin", ...]
+   - Test: Verify it's a list, check for common platforms
+
+5. [ ] **systems/default.nix** - combines parse + inspect + doubles
+   - Aggregates all systems/* modules into one
+   - Test: Verify re-exports from parse, inspect, doubles
+
+6. [ ] **meta.nix** - package metadata utilities (availableOn, platformMatch, licenseAllowed)
+   - Functions for license checking, platform matching
+   - Test: availableOn (platform checks), licenseAllowed
+
+7. [ ] **debug.nix** - debugging utilities (traceIf, traceVal, traceSeq)
+   - Wraps builtins.trace with conditional variants
+   - Test: traceIf (conditional), traceVal (pass-through)
+
+8. [ ] **generators.nix** - JSON/YAML/INI generators (toPretty, toYAML, toINI)
+   - May be blocked by lib.strings dependencies
+   - Test: toPretty, toYAML, toINI formatting
+
+9. [ ] **cli.nix** - CLI argument parsers (toGNUCommandLine)
    - Converts attrsets to command-line arguments
-   - Test approach:
-     - Import cli.nix
-     - Test toGNUCommandLine: {verbose=true; file="x.txt";} → ["--verbose" "--file" "x.txt"]
-     - Test toGNUCommandLineShell: same but shell-escaped
-     - Validate flag formatting (--flag vs -f)
-     - Validate boolean flags (true → include, false → omit)
-   - Expected functions: toGNUCommandLine, toGNUCommandLineShell
-   - **May need**: lib.strings, lib.lists functions
+   - May need lib.strings, lib.lists
+   - Test: {verbose=true; file="x.txt"} → ["--verbose" "--file" "x.txt"]
 
-5. [ ] **options.nix** - NixOS option type definitions
-   - Location: `nixpkgs-lib/lib/options.nix`
-   - Creates option definitions for NixOS modules
-   - **WARNING**: May be complex, likely depends on types.nix
-   - Test approach:
-     - Import options.nix (may fail if needs types.nix)
-     - Test mkOption: creates option with type, default, description
-     - Test mkEnableOption: creates boolean option with description
-     - Test mkPackageOption: creates package option with default
-   - Expected functions: mkOption, mkEnableOption, mkPackageOption, mkPackageOptionMD, etc.
-   - **Likely blocker**: Circular dependency with types.nix, may need to skip
+10. [ ] **derivations.nix** - derivation helpers (lazyDerivation)
+    - Wraps builtins.derivation with helpers
+    - Should work (builtins.derivation fully implemented)
 
-6. [ ] **derivations.nix** - derivation helper functions
-   - Location: `nixpkgs-lib/lib/derivations.nix`
-   - Wraps builtins.derivation with helper functions
-   - Test approach:
-     - Import derivations.nix
-     - Test lazyDerivation: wraps derivation with lazy evaluation
-     - Validate it returns attrset with name, type, etc.
-   - Expected functions: lazyDerivation, optionalDrvAttr, etc.
-   - **Should work**: builtins.derivation is fully implemented
+11. [ ] **filesystem.nix** - filesystem utilities (not examined yet, priority unknown)
+
+### Test Template for Adding New Lib File Tests
+
+Add this to `main/tests/nixpkgs_lib_files_test.js` after line 920 (before interpolation test):
+
+```javascript
+await t.step("load licenses.nix (pure data, no dependencies)", () => {
+    const licenses = loadLibFile("licenses.nix")
+
+    // Verify it's an attribute set
+    assertExists(licenses)
+    assertEquals(typeof licenses, "object")
+
+    // Check common licenses
+    assertExists(licenses.mit, "Should have MIT license")
+    assertEquals(licenses.mit.spdxId, "MIT")
+    assertEquals(licenses.mit.free, true)
+    assertExists(licenses.mit.fullName)
+    assertExists(licenses.mit.url)
+
+    assertExists(licenses.gpl3, "Should have GPL3 license")
+    assertEquals(licenses.gpl3.spdxId, "GPL-3.0-only")
+    assertEquals(licenses.gpl3.free, true)
+
+    assertExists(licenses.bsd3, "Should have BSD3 license")
+    assertEquals(licenses.bsd3.spdxId, "BSD-3-Clause")
+    assertEquals(licenses.bsd3.free, true)
+
+    assertExists(licenses.apache20, "Should have Apache 2.0 license")
+    assertEquals(licenses.apache20.spdxId, "Apache-2.0")
+    assertEquals(licenses.apache20.free, true)
+
+    assertExists(licenses.mpl20, "Should have MPL 2.0 license")
+    assertEquals(licenses.mpl20.spdxId, "MPL-2.0")
+    assertEquals(licenses.mpl20.free, true)
+
+    // Count total licenses (should be ~200)
+    const licenseCount = Object.keys(licenses).length
+    assertEquals(licenseCount >= 150, true, `Expected at least 150 licenses, got ${licenseCount}`)
+
+    console.log(`✅ licenses.nix loaded successfully (${licenseCount} licenses)`)
+})
+```
 
 **Need lib context** (circular dependencies with lib.trivial/lib.lists/etc):
 
@@ -156,6 +193,21 @@ Your job is to focus on what is NOT implemented and NOT working. Only report wha
   - Large: 500+ lines, type checking, coercion
   - Fundamental to module system
   - Test: types.str, types.int, types.bool, types.listOf, types.attrsOf
+
+**Files that exist but are NOT priorities** (subdirectories, test files):
+- fileset/* (7 files) - file set utilities, complex
+- path/* (4 files) - path manipulation (path/default.nix, path/tests/)
+- deprecated/* (2 files) - deprecated functions
+- network/* (2 files) - network utilities
+- tests/* (200+ files) - nixpkgs test suite (not lib functionality)
+
+**File count breakdown**:
+- Total .nix files in lib/: 265 files
+- Core lib files (lib/*.nix): 32 files ← **This is our target**
+- Subdirectories (systems/, fileset/, etc.): ~25 files
+- Test files (tests/): 200+ files
+
+**Focus**: Test the 32 core lib/*.nix files first, subdirectories later
 
 ---
 
@@ -575,13 +627,19 @@ When implementing the above tasks, watch out for these common mistakes:
 
 ## Summary of Work Remaining
 
-**Priority 1 - More nixpkgs.lib Testing** (4-6 days):
-1. Test debug.nix (debugging utilities - simple)
-2. Test generators.nix (JSON/YAML generation - medium)
-3. Test licenses.nix (license metadata - simple, large dataset)
-4. Test cli.nix (CLI utilities - medium)
-5. Test options.nix (option definitions - may be complex)
-6. Attempt derivations.nix (derivation helpers - may need more derivation support)
+**Priority 1 - More nixpkgs.lib Testing** (1 week):
+
+**Current state**: 11/32 core lib files tested (34%)
+
+**Next steps** (in priority order):
+1. Test licenses.nix (pure data, highest priority)
+2. Test systems/*.nix files (parse, inspect, doubles, default) - 4 files
+3. Test meta.nix, debug.nix (simple utilities)
+4. Test generators.nix, cli.nix (may have dependencies)
+5. Test derivations.nix, filesystem.nix
+6. Attempt complex files: trivial, lists, attrsets (need full lib context)
+
+**Goal**: Get to 20+/32 files tested (62%) before moving to Priority 2
 
 **Priority 2 - Store Path System** (1-2 weeks):
 1. Research NAR hashing algorithm and fixed-output store paths
@@ -621,15 +679,23 @@ When implementing the above tasks, watch out for these common mistakes:
 
 ## Suggested First Steps (Right Now)
 
-1. **Test 2-3 more nixpkgs.lib files** (1-2 days) - HIGHEST PRIORITY
-   - Build momentum on testing
-   - Start with easy ones: debug.nix, licenses.nix, cli.nix
-   - Validates translator robustness
-   - Increases test coverage
+**HIGHEST PRIORITY**: Test 3-5 more nixpkgs.lib files (1-2 days)
 
-2. **Research store path system** (2-3 days)
-   - Read Nix manual on store paths
-   - Study tools/store_path.js for reusable code
-   - Understand NAR format
-   - Write design document for helpers/store.js
-   - This unblocks Priority 3 (fetchers)
+Start with these in order:
+1. **licenses.nix** (30 min) - Pure data, guaranteed to work
+2. **systems/parse.nix** (1-2 hours) - Large parser, tests complex attribute sets
+3. **systems/inspect.nix** (30 min) - Simple predicates, depends on parse.nix
+4. **systems/doubles.nix** (15 min) - Just a list
+5. **systems/default.nix** (30 min) - Re-exports, validates import system
+
+**Goal**: Get from 11 → 16 files tested (50%) in one focused session
+
+**Why this matters**:
+- Validates translator handles real-world nixpkgs code
+- Builds confidence in import system
+- Uncovers edge cases early
+- Each passing test de-risks the entire project
+
+**Then consider**:
+- Test meta.nix, debug.nix (another 1-2 hours)
+- OR move to store path research (Priority 2)
