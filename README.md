@@ -12,10 +12,12 @@ A faithful re-implementation of Nix builtins in JavaScript for Deno.
 ## Features
 
 ✅ **59 fully functional** Nix 2.18 builtins
-✅ **120+ tests** all passing
+✅ **120+ runtime tests** all passing
+✅ **59 translator tests** all passing (NEW!)
 ✅ **Correct derivation store paths** matching Nix exactly
 ✅ **Pure Deno** - no npm/jsr dependencies
-✅ **Production ready** for use cases without network/import/store
+✅ **Nix to JavaScript translator** - converts Nix expressions to runnable JS
+✅ **Production ready** for pure Nix expressions and common nixpkgs.lib patterns
 
 ---
 
@@ -25,13 +27,17 @@ A faithful re-implementation of Nix builtins in JavaScript for Deno.
 # Run all tests
 deno test --allow-all main/tests/*.js
 
-# Use in your code
+# Use the runtime directly
 import { builtins, operators } from "./main/runtime.js"
-
-// Example usage
 console.log(builtins.typeOf(42n))  // "int"
 console.log(builtins.length([1, 2, 3]))  // 3n
 console.log(operators.add(5n)(3n))  // 8n
+
+# Use the translator
+import { convertToJs } from "./main.js"
+const nixCode = `let x = 42; in x * 2`
+const jsCode = convertToJs(nixCode)
+// Generates runnable JavaScript!
 ```
 
 ---
@@ -117,8 +123,9 @@ Uses only Deno standard library and URL imports:
 
 ## Test Infrastructure
 
-All 120+ tests passing ✅
+All 180+ tests passing ✅
 
+### Runtime Tests (120+ tests)
 | Suite | Tests | Coverage |
 |-------|-------|----------|
 | simple_test.js | 26 | Phase 1 core functions |
@@ -130,6 +137,14 @@ All 120+ tests passing ✅
 | phase4_standalone_test.js | 7 | Store functions |
 | flake_standalone_test.js | 20 | Flake references |
 | nix218_builtins_test.js | 7 | Nix 2.18 compliance |
+
+### Translator Tests (59 tests) NEW! ✨
+| Suite | Tests | Coverage |
+|-------|-------|----------|
+| translator_test.js | 33 | Core translation features |
+| string_interpolation_test.js | 8 | String interpolation |
+| path_interpolation_test.js | 5 | Path interpolation |
+| nixpkgs_simple_test.js | 13 | Common nixpkgs.lib patterns |
 
 ---
 
