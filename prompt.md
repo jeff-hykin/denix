@@ -22,4 +22,4 @@ Before executing what is below, please filter out any achievements. Only keep re
 
 ### Status: MAJOR ISSUES
 
-Zero examples of translated nix code. Need to run the translator and test the resulting JS against the original Nix.
+Zero examples of translated nix code. Need to run the translator (main.js) and test the resulting JS against the original Nix.
