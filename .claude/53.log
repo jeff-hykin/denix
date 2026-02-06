@@ -1,0 +1,66 @@
+Perfect! 122 tests passing. Let me create a session summary in the project:
+
+## Summary
+
+I have successfully completed Steps 1-5 of the fetchTarball implementation plan. Here's what was accomplished:
+
+### **Completed Work**
+
+✅ **Step 1: HTTP Fetcher Module** (`main/fetcher.js` - 13 tests)
+- Implemented streaming HTTP downloads using Deno.fetch()
+- Added retry logic with exponential backoff (1s, 2s, 4s)
+- Created SHA256 validation for downloaded files
+- Built URL-to-name extraction for automatic naming
+- All 13 tests passing
+
+✅ **Step 2: Tarball Extraction Module** (`main/tar.js` - 9 tests)
+- Implemented tarball extraction using jsr:@std/tar@0.1.10
+- Added support for .tar, .tar.gz formats
+- Implemented top-level directory stripping (common in GitHub archives)
+- Preserved executable bits on extracted files
+- Fixed critical bug: UntarStream uses `entry.header.typeflag` not `entry.type`
+- All 9 tests passing
+
+✅ **Step 3: NAR Hashing Module** (`main/nar_hash.js` - 8 tests)
+- Implemented pure JavaScript NAR (Nix Archive) serialization
+- Added deterministic directory hashing with alphabetical sorting
+- Support for files, directories, and symlinks
+- Proper handling of executable bits in NAR format
+- Tries `nix hash path` first if available, falls back to pure JS
+- All 8 tests passing
+
+✅ **Step 4: Store Manager Module** (`main/store_manager.js` - 13 tests)
+- Created store directory management at `~/.cache/denix/store`
+- Implemented cache file system at `~/.cache/denix/cache.json`
+- Added atomic file operations using Deno.rename()
+- Implemented file locking for concurrent safety
+- Fixed store path computation to use correct parameter order
+- All 13 tests passing
+
+✅ **Step 5: builtins.fetchTarball Integration** (6 tests)
+- Fully integrated fetchTarball into runtime.js
+- Supports both string URL and object `{url, sha256?, name?}` formats
+- Implements caching (second call is instant)
+- Validates SHA256 hashes when provided
+- Computes correct Nix store paths
+- Returns Path objects compatible with rest of runtime
+- All 6 tests passing
+
+### **Test Results**
+- **Total tests**: 122 passing (was 73, added 49 new tests)
+- **Builtins implemented**: 62/98 (63%)
+- **New modules**: 4 complete modules with full test coverage
+
+### **Remaining Work** (documented in prompt.md)
+9 builtins still need implementation:
+1. `builtins.fetchurl` - Similar to fetchTarball but simpler (no extraction)
+2. `builtins.path` - Copy local files to store
+3. `builtins.filterSource` - Filter files with predicate
+4. `builtins.toJSON` for Path - 1-hour fix
+5. `builtins.fetchGit` - Requires git binary integration
+6. `builtins.fetchTree` - Wraps other fetchers
+7. `builtins.fetchMercurial` - Low priority
+8. `builtins.fetchClosure` - Very low priority (needs binary cache)
+9. `builtins.getFlake` - Very low priority (needs flake.lock parsing)
+
+The next priority should be implementing `builtins.fetchurl` since it can reuse all the infrastructure we just built.

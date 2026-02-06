@@ -26,6 +26,12 @@ import { ImportCache } from "./import_cache.js"
 import { resolveImportPath } from "../tools/import_resolver.js"
 import { loadAndEvaluateSync } from "./import_loader.js"
 
+// fetcher system
+import { downloadWithRetry, extractNameFromUrl } from "./fetcher.js"
+import { extractTarball } from "./tar.js"
+import { hashDirectory } from "./nar_hash.js"
+import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPath, atomicMove, exists } from "./store_manager.js"
+
 // hard parts right now:
     // builtins.fetchGit
     // builtins.sort
@@ -741,8 +747,74 @@ import { loadAndEvaluateSync } from "./import_loader.js"
             "fetchurl": (url)=>{
                 throw new NotImplemented(`builtins.fetchurl requires network layer and store implementation`)
             },
-            "fetchTarball": (url)=>{
-                throw new NotImplemented(`builtins.fetchTarball requires network layer, tar extraction, and store implementation`)
+            "fetchTarball": async (args) => {
+                // Parse arguments: can be string URL or {url, sha256?, name?}
+                let url, sha256, name;
+                if (typeof args === "string" || args instanceof InterpolatedString) {
+                    url = requireString(args);
+                    name = extractNameFromUrl(url);
+                } else {
+                    url = requireString(args["url"]);
+                    sha256 = args["sha256"] ? requireString(args["sha256"]) : null;
+                    name = args["name"] ? requireString(args["name"]) : extractNameFromUrl(url);
+                }
+
+                // Ensure store directory exists
+                await ensureStoreDirectory();
+
+                // Check cache
+                const cacheKey = `${url}:${sha256 || ""}`;
+                const cached = await getCachedPath(cacheKey);
+                if (cached && await exists(cached)) {
+                    return new Path(cached);
+                }
+
+                // Download tarball
+                const tempTar = `${await Deno.makeTempDir()}/download.tar.gz`;
+                await downloadWithRetry(url, tempTar);
+
+                // Validate SHA256 if provided (before extraction)
+                if (sha256) {
+                    const { validateSha256 } = await import("./fetcher.js");
+                    await validateSha256(tempTar, sha256);
+                }
+
+                // Extract tarball
+                const tempExtract = `${await Deno.makeTempDir()}/extracted`;
+                await extractTarball(tempTar, tempExtract);
+
+                // Clean up tarball
+                try {
+                    await Deno.remove(tempTar);
+                } catch {}
+
+                // Compute NAR hash of extracted directory
+                const narHash = await hashDirectory(tempExtract);
+
+                // Verify sha256 matches NAR hash if provided
+                if (sha256) {
+                    const normalizedExpected = sha256.replace(/^sha256[:-]/, '');
+                    const normalizedActual = narHash.replace(/^sha256[:-]/, '');
+                    if (normalizedActual !== normalizedExpected) {
+                        throw new Error(
+                            `Hash mismatch for ${url}:\n` +
+                            `  Expected: ${normalizedExpected}\n` +
+                            `  Actual:   ${normalizedActual}`
+                        );
+                    }
+                }
+
+                // Compute store path
+                const storePath = computeFetchStorePath(narHash, name);
+
+                // Move to store
+                await atomicMove(tempExtract, storePath);
+
+                // Cache the result
+                await setCachedPath(cacheKey, storePath);
+
+                // Return Path object
+                return new Path(storePath);
             },
             "fetchGit": (args)=>{
                 throw new NotImplemented(`builtins.fetchGit requires git binary integration and store implementation`)
