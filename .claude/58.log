@@ -1,0 +1,33 @@
+Perfect! The prompt.md is now cleaned up. Let me create a summary for you:
+
+## Summary: prompt.md Successfully Updated ✅
+
+I've successfully updated `/Users/jeffhykin/repos/denix/prompt.md` to enforce the rules you specified. Here's what changed:
+
+### ✅ Added at the top:
+1. **MISSION STATEMENT** - Focus only on what's NOT implemented, never report achievements
+2. **CRITICAL INSTRUCTIONS** section with strict enforcement rules:
+   - Do NOT work on nix-lib tests until runtime is complete
+   - Do NOT work on translator (already complete)
+   - ONLY focus on 5 remaining runtime builtins
+3. **BEFORE YOU START - MANDATORY CHECKLIST** - Must read documentation at https://noogle.dev before coding
+
+### ❌ Removed all achievements:
+- Deleted "Recently Completed (Session 24)" section (lines 36-72)
+- Removed all ✅ checkboxes from status table
+- Removed "Completed Implementation Notes" section
+- Updated status table to show only 5 NOT IMPLEMENTED builtins
+
+### 📝 Enhanced documentation requirements:
+- Added strong emphasis on reading https://noogle.dev/f/builtins/<function_name> FIRST
+- Added mandatory checklist before starting any implementation
+- Added clear completion criteria tied to documentation verification
+- Added note about using npm modules via https://esm.sh (with testing caveat)
+
+### 🎯 Reorganized remaining work:
+- Clear priority order: fetchGit → fetchTree → fetchMercurial → fetchClosure → getFlake
+- Detailed breakdown of what needs to be done for each builtin
+- Testing checklists with [ ] unchecked boxes
+- Documentation links for every builtin
+
+The prompt now strictly enforces: **"Finish the network fetchers and store functions in runtime.js before doing ANYTHING ELSE"** and requires reading Nix documentation at https://noogle.dev before starting any implementation.
