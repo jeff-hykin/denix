@@ -1,9 +1,6 @@
 #!/usr/bin/env -S deno run --allow-all
 // Test harness for comparing Nix and JavaScript derivation outputs
 
-import { run, returnAsString, Stdout, Stderr } from "https://deno.land/x/quickr@0.6.51/main/run.js"
-import { FileSystem } from "https://deno.land/x/quickr@0.6.51/main/file_system.js"
-
 // Test result tracking
 const results = {
     passed: 0,
@@ -17,7 +14,19 @@ const results = {
  */
 async function runNix(nixExpr) {
     try {
-        const output = await run`nix eval --json --expr ${nixExpr} ${Stdout(returnAsString)}`
+        const command = new Deno.Command("nix", {
+            args: ["eval", "--json", "--expr", nixExpr],
+            stdout: "piped",
+            stderr: "piped"
+        })
+        const { success, stdout, stderr } = await command.output()
+
+        if (!success) {
+            const errorText = new TextDecoder().decode(stderr)
+            throw new Error(`Nix command failed: ${errorText}`)
+        }
+
+        const output = new TextDecoder().decode(stdout)
         return JSON.parse(output.trim())
     } catch (e) {
         throw new Error(`Nix evaluation failed: ${e.message}`)
@@ -31,10 +40,10 @@ async function runJS(jsCode) {
     try {
         // Create a temporary file with the JS code
         const tempFile = `/tmp/denix_test_${Date.now()}.js`
-        await FileSystem.write({
-            path: tempFile,
-            text: `
-import { builtins } from "${FileSystem.makeAbsolutePath("./main/runtime.js")}"
+        const runtimePath = new URL("../../runtime.js", import.meta.url).pathname
+
+        const fileContent = `
+import { builtins } from "${runtimePath}"
 
 // Wrap in async function to handle promises
 await (async () => {
@@ -47,11 +56,22 @@ await (async () => {
     console.log(JSON.stringify(finalResult, (k, v) => typeof v === 'bigint' ? Number(v) : v))
 })()
 `
+        await Deno.writeTextFile(tempFile, fileContent)
+
+        const command = new Deno.Command("deno", {
+            args: ["run", "--allow-all", tempFile],
+            stdout: "piped",
+            stderr: "piped"
         })
+        const { success, stdout, stderr } = await command.output()
+        await Deno.remove(tempFile)
 
-        const output = await run`deno run --allow-all ${tempFile} ${Stdout(returnAsString)} ${Stderr(returnAsString)}`
-        await FileSystem.remove(tempFile)
+        if (!success) {
+            const errorText = new TextDecoder().decode(stderr)
+            throw new Error(`Deno command failed: ${errorText}`)
+        }
 
+        const output = new TextDecoder().decode(stdout)
         if (!output || output.trim() === "") {
             throw new Error("No output from JS execution")
         }
