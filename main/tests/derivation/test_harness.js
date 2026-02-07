@@ -34,19 +34,28 @@ async function runJS(jsCode) {
         await FileSystem.write({
             path: tempFile,
             text: `
-import { createRuntime } from "${FileSystem.makeAbsolutePath("./main/runtime.js")}"
-const runtime = createRuntime()
-const { builtins } = runtime
+import { builtins } from "${FileSystem.makeAbsolutePath("./main/runtime.js")}"
 
-${jsCode}
+// Wrap in async function to handle promises
+await (async () => {
+    ${jsCode}
 
-// Export the result as JSON
-console.log(JSON.stringify(result, (k, v) => typeof v === 'bigint' ? Number(v) : v))
+    // Await result if it's a promise
+    const finalResult = result instanceof Promise ? await result : result
+
+    // Export the result as JSON
+    console.log(JSON.stringify(finalResult, (k, v) => typeof v === 'bigint' ? Number(v) : v))
+})()
 `
         })
 
         const output = await run`deno run --allow-all ${tempFile} ${Stdout(returnAsString)} ${Stderr(returnAsString)}`
         await FileSystem.remove(tempFile)
+
+        if (!output || output.trim() === "") {
+            throw new Error("No output from JS execution")
+        }
+
         return JSON.parse(output.trim())
     } catch (e) {
         throw new Error(`JS evaluation failed: ${e.message}`)

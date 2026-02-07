@@ -323,6 +323,9 @@ import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPa
                         } else if (value instanceof Array) {
                             const items = await Promise.all(value.map(builtins.toJSON))
                             return `[${items.join(",")}]`
+                        } else if (value.type === "derivation") {
+                            // Derivations coerce to their outPath string (Nix behavior)
+                            return JSON.stringify(value.outPath)
                         } else if (Object.getPrototypeOf({}) == Object.getPrototypeOf(value)) {
                             const keys = Object.getOwnPropertyNames(value)
                             const entries = []
