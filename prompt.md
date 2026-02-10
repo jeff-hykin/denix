@@ -1,29 +1,64 @@
 # Denix Development Guide
 
+## CRITICAL RULES (Read This First!)
+
+**Your job is to focus on what is NOT implemented and NOT working. Only report what remains to be done. Do not report what you accomplished. You are a senior level developer, there is no such thing as a blocker. Break down large tasks into smaller tasks.**
+
+### STRICT WORK ORDER (DO NOT VIOLATE):
+1. **RUNTIME FIRST**: Finish all runtime.js builtins testing (current priority)
+2. **TRANSLATOR SECOND**: Only after runtime is 80%+ tested
+3. **NIXPKGS TESTS LAST**: Only after translator is fully validated
+
+### MANDATORY IMPLEMENTATION PROCESS:
+1. **Read official Nix documentation WHILE implementing**: https://nix.dev/manual/nix/2.18/language/builtins
+2. **Test behavior in nix repl** before and during implementation
+3. **Compare your output** to nix repl output exactly
+4. **Search for examples** on https://noogle.dev
+5. **Read source code** if documentation is unclear
+
+### EXTERNAL DEPENDENCIES:
+- **Prefer**: Deno standard library (https://deno.land/std/)
+- **Allowed**: npm packages via `https://esm.sh/NPM_MODULE_NAME` (unreliable, have fallback plan)
+- **Forbidden**: Direct npm/jsr imports
+
 ## Primary Goal
 
 **Test 57 untested runtime builtins to reach 80% test coverage.**
 
 Current: 40/97 tested (41%) → Target: 77/97 tested (80%)
 
-## Core Rules
-
-1. **Focus on what's NOT done** - No achievement reporting
-2. **Runtime testing FIRST** - Don't work on translator/nixpkgs until 80% coverage
-3. **Research before coding** - Read Nix docs, test in nix repl, find examples
-4. **Break tasks down** - No blockers exist
-
-## Test Development Process
+## Test Development Process (FOLLOW THIS EXACTLY)
 
 For each untested builtin:
 
-1. **Read official docs**: https://nix.dev/manual/nix/2.18/language/builtins#builtins-FUNCTION
-2. **Test in nix repl**: Try edge cases (null, empty, wrong types)
-3. **Create test file**: `main/tests/builtins_CATEGORY_test.js`
-4. **Write 5-10 tests**: Normal cases + edge cases + error handling
-5. **Run**: `./test.sh CATEGORY`
-6. **Fix bugs**: Untested code will have bugs
-7. **Verify**: Match nix repl output exactly
+1. **Read official docs FIRST**: https://nix.dev/manual/nix/2.18/language/builtins#builtins-FUNCTION
+   - Understand all parameters, types, return values
+   - Note any special behaviors or edge cases mentioned
+
+2. **Test in nix repl EXTENSIVELY**:
+   ```bash
+   nix repl
+   nix-repl> builtins.FUNCTION arg1 arg2
+   ```
+   - Try normal cases
+   - Try edge cases (null, empty, wrong types)
+   - Document exact outputs
+
+3. **Search for examples**: https://noogle.dev (see real-world usage)
+
+4. **Create test file**: `main/tests/builtins_CATEGORY_test.js`
+   - Use template below
+   - Write 5-10 tests minimum per function
+
+5. **Run tests**: `./test.sh CATEGORY`
+
+6. **Fix bugs found**: Compare test output to nix repl
+   - If output differs, fix runtime.js implementation
+   - Re-read Nix docs to understand correct behavior
+
+7. **Verify exact match**: Your output must match nix repl exactly
+
+**DO NOT SKIP STEP 1 AND 2!** Implementation based on assumptions will be wrong.
 
 ## Testing Priorities (57 untested builtins)
 
@@ -161,22 +196,10 @@ Deno.test("builtins.FUNCTION - error case", () => {
 
 ## Current Project State
 
-### What's Working ✅
-- Translator: 100% (87/87 tests passing)
-- Runtime: 97/97 builtins implemented
-- Import system: Full working
-- Derivations: Basic working (12 tests passing)
-- Fetchers: All working (fetchGit, fetchTarball, fetchurl, fetchTree)
-- Infrastructure: fetcher.js, tar.js, nar_hash.js, store_manager.js
-
 ### What Needs Work ⚠️
-- Testing: Only 40/97 builtins tested (41% coverage)
-- Goal: 77/97 tested (80% coverage = 37 more tests needed)
-
-### Known Fixed Issues
-- ✅ concatLists - variable name typo fixed
-- ✅ isAttrs - null check added
-- ✅ head - returns element not array
+- **Testing**: Only 40/97 builtins tested (41% coverage)
+- **Goal**: 77/97 tested (80% coverage = 37 more tests needed)
+- **Work remaining**: Tasks 1-6 below (22-31 hours to 80% coverage)
 
 ## Project Structure
 
@@ -213,8 +236,30 @@ denix/
 - **Examples**: https://noogle.dev
 - **Test locally**: `nix repl`
 
+## Common Mistakes to Avoid
+
+1. **Reporting achievements**: "I completed X" → Just move to next task
+2. **Working on translator before runtime tests**: Runtime must be 80%+ tested first
+3. **Skipping documentation**: Always read https://nix.dev/manual/nix/2.18/language/builtins#builtins-FUNCTION
+4. **Not testing in nix repl**: You must verify expected behavior first
+5. **Saying "blocked"**: Break the task down into smaller steps
+6. **Adding TODOs without plans**: If unsure how to implement, research and create sub-tasks
+
+## Self-Check Questions (Ask Yourself)
+
+- [ ] Am I working on runtime tests? (If no, why not? Runtime comes first!)
+- [ ] Did I read the Nix docs for this function? (Required before coding)
+- [ ] Did I test in nix repl? (Required before writing tests)
+- [ ] Am I reporting what's NOT done? (Not what IS done)
+- [ ] Did I break down any "blockers"? (No blockers exist)
+
 ## Next Immediate Action
 
 **Create main/tests/builtins_types_test.js** (Task 1, 3-4 hours)
 
-Test 9 type checking functions with 50+ test cases total.
+BEFORE starting:
+1. Read https://nix.dev/manual/nix/2.18/language/builtins#builtins-typeOf
+2. Test each function in nix repl with edge cases
+3. Document expected outputs
+
+Then write 50+ test cases for 9 type checking functions.

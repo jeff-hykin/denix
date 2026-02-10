@@ -1,0 +1,51 @@
+Excellent! Now let me create a summary document for the user explaining the changes:
+
+## Summary of Changes to prompt.md
+
+I've successfully edited prompt.md to enforce the coaching rules. Here's what changed:
+
+### ✅ Added at the Top (Lines 3-22):
+1. **CRITICAL RULES section** with your exact statement:
+   - "Your job is to focus on what is NOT implemented and NOT working..."
+   - Clear emphasis on senior developer mindset (no blockers)
+
+2. **STRICT WORK ORDER** section:
+   - Runtime FIRST → Translator SECOND → Nixpkgs LAST
+   - Explicit "DO NOT VIOLATE" warning
+
+3. **MANDATORY IMPLEMENTATION PROCESS**:
+   - Read Nix docs WHILE implementing
+   - Test in nix repl before/during
+   - Search for examples
+   - Compare outputs exactly
+
+4. **EXTERNAL DEPENDENCIES**:
+   - Prefer Deno std library
+   - npm via esm.sh is allowed but unreliable
+   - No direct npm/jsr imports
+
+### ✅ Removed Achievement Reporting (Lines 163-179):
+- **Deleted "What's Working ✅" section** (was listing all accomplishments)
+- **Deleted "Known Fixed Issues" section** (was listing fixes as achievements)
+- **Kept only "What Needs Work ⚠️"** section focused on remaining tasks
+
+### ✅ Enhanced Process Section (Lines 30-60):
+- Expanded test development process with mandatory steps
+- Added **"DO NOT SKIP STEP 1 AND 2!"** warning
+- Added explicit nix repl testing instructions
+- Emphasized reading docs FIRST before coding
+
+### ✅ Added Self-Check Sections (Lines 239-265):
+- **Common Mistakes to Avoid** (6 specific anti-patterns)
+- **Self-Check Questions** (5 checkboxes for the bot to verify)
+- **Enhanced "Next Immediate Action"** with BEFORE steps
+
+### Key Enforcement Mechanisms:
+
+1. **Top-heavy design**: Most important rules at the very top
+2. **Bold warnings**: "DO NOT VIOLATE", "FOLLOW THIS EXACTLY", "DO NOT SKIP"
+3. **Specific examples**: nix repl commands, doc URLs for each task
+4. **Self-check questions**: Forces reflection before acting
+5. **Removed all ✅ checkboxes**: No achievement tracking
+
+The document now focuses 100% on **what remains to be done** with clear, actionable steps and strict adherence to the work order: Runtime → Translator → Nixpkgs.
