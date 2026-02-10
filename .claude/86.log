@@ -1,0 +1,41 @@
+Perfect! Now let me create a concise summary of what I've done:
+
+I've reviewed the current state of the Denix project and updated the documentation to accurately reflect what remains to be done:
+
+## Key Findings
+
+**Good news:** The project is in much better shape than prompt.md indicated!
+- ✅ Derivation tests are PASSING (12/12), not failing
+- ✅ The derivation bug fix was already applied
+- ✅ 240+ tests passing overall
+- ✅ 95% of runtime complete (62/65 builtins)
+
+## Updated Documentation
+
+**prompt.md** (now 427 lines):
+- Removed incorrect "critical bug" section about derivation store paths
+- Added accurate "What's Working" vs "What's NOT Working" breakdown
+- Added QUICK DECISION GUIDE at top showing immediate next steps
+- Enhanced Priority 1 with specific derivation edge case test breakdown
+- Corrected flaky network test status (has graceful error handling)
+
+**MEMORY.md**:
+- Updated current status to reflect derivation tests passing
+- Added Session 28 entry documenting this review
+- Corrected next priority to derivation edge cases
+
+## What Actually Remains
+
+**Priority 1: Derivation Edge Cases** (2-3 hours)
+- Test multiple outputs, passthru/meta attrs, string context propagation
+
+**Priority 2: Optional Builtins** (DECISION NEEDED - 16-22 days OR skip)
+- fetchMercurial, fetchClosure, getFlake (rarely used, experimental)
+
+**Priority 3: Translator Edge Cases** (12-17 hours)
+- Pattern matching, string escapes, path literals, operator precedence
+
+**Priority 4: nixpkgs.lib Testing** (4-6 days)
+- Expand from 10/41 files to 21+ files (50%+ coverage)
+
+The recommended path is: Priority 1 → Skip Priority 2 → Priority 3 → Priority 4 (6-8 days total to production-ready).
