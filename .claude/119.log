@@ -1,0 +1,50 @@
+Perfect! Now let me create a final summary document showing the accurate state:
+
+## Summary
+
+I've completed a comprehensive analysis of the Denix runtime test coverage and updated all documentation with accurate details about what remains to be done.
+
+### Key Findings (Session 36):
+
+**Test Coverage Status:**
+- **40/109 builtins tested** (37% coverage) ✅
+- **62/109 builtins untested** (57% remaining) - NOT 69 as previously thought
+- **Corrected from Session 35:** 7 functions were counted as untested but are actually:
+  - Already tested: seq, deepSeq, functionArgs, parseFlakeRef, flakeRefToString
+  - Constants (no tests needed): langVersion, nixVersion
+
+**Critical Discovery - Type Checking Has ZERO Tests:**
+- All 10 type checking functions (isNull, isBool, isInt, isFloat, isString, isList, isPath, isAttrs, isFunction, typeOf) have NO comprehensive tests
+- This is the HIGHEST priority gap - type checking is fundamental
+
+**Updated Documentation:**
+
+1. **prompt.md** - Added comprehensive details:
+   - Created Task 0 (Type Checking) - must be done FIRST
+   - Added `nix repl` examples for ALL 10 tasks showing expected behavior
+   - Listed all edge cases and minimum test requirements
+   - Added "Next Immediate Action" section for quick start
+   - Added "Quick Reference" showing what each test file should contain
+   - Updated time estimates: 21-30 hours to reach 80% coverage (Tasks 0-5)
+
+2. **MEMORY.md** - Updated current status:
+   - Corrected untested count to 62 (not 69)
+   - Added Session 36 entry documenting all changes
+   - Updated immediate action requirements
+
+**Path to 80% Coverage:**
+- **Phase 1** (Tasks 0-2): 26 functions, 11-16 hours → 61% coverage
+- **Phase 2** (Tasks 3-5): 24 functions, 10-14 hours → 83% coverage ✅ TARGET
+- **Total: 50 functions, 21-30 hours remaining**
+
+**10 Test Files Needed (all must be created from scratch):**
+1. `builtins_type_checking_test.js` - 10 functions, 50+ tests
+2. `builtins_lists_comprehensive_test.js` - 10 functions, 70+ tests
+3. `builtins_attrs_comprehensive_test.js` - 6 functions, 50+ tests
+4. `builtins_strings_comprehensive_test.js` - 5 functions, 30+ tests
+5. `builtins_math_comprehensive_test.js` - 8 functions, 30+ tests
+6. `builtins_paths_comprehensive_test.js` - 11 functions, 40+ tests
+7-10. Optional files for 90%+ coverage
+
+**Next Immediate Step:**
+Create `main/tests/builtins_type_checking_test.js` with 50+ tests for the 10 type checking functions. This is the foundation - everything else builds on knowing types work correctly.
