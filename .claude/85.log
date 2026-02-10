@@ -1,0 +1,43 @@
+Perfect! The prompt.md file has been successfully updated. Now let me create a summary for you:
+
+## Summary of Changes to prompt.md
+
+I've successfully enforced all the rules you specified:
+
+### ✅ Added CRITICAL RULES at the top:
+- **Focus on what's NOT done** - No achievement reporting
+- **Work order enforcement** - Runtime → Translator → Testing (must follow sequence)
+- **Documentation-first approach** - Always read Nix docs before implementing
+- **Break down large tasks** - No task over 1 day without checkpoints
+
+### ✅ Removed all achievements:
+- Removed all checkboxes (✅)
+- Removed status statements like "165/166 tests passing"
+- Removed accomplishment language ("All core features working", "Import system working", etc.)
+- Changed descriptions to focus only on what remains
+
+### ✅ Enhanced with documentation reminders:
+- Added mandatory documentation reading section
+- Listed specific resources: nix.dev, noogle.dev, Nix source code
+- Added "Read first" links to every task
+- Emphasized testing in `nix repl` before implementing
+
+### ✅ Added npm module guidance:
+- Documented esm.sh usage: `https://esm.sh/PACKAGE_NAME`
+- Added warning that esm.sh is unreliable
+- Recommended Deno standard library when possible
+
+### ✅ Restructured priorities:
+- **Priority 1**: Runtime bugs (derivation fix + edge cases)
+- **Priority 2**: Optional builtins (decision needed - skip or implement)
+  - Detailed breakdowns for fetchMercurial, fetchClosure, getFlake with time estimates
+  - Research → Implementation → Testing phases
+- **Priority 3**: Translator edge cases (AFTER runtime complete)
+- **Priority 4**: nixpkgs.lib testing (AFTER translator complete)
+
+### ✅ Added enforcement statements:
+- "Do NOT work on translator until runtime complete"
+- "Do NOT work on nixpkgs.lib tests until translator complete"
+- "Before starting ANY of these, read the documentation"
+
+The prompt.md file now strictly enforces the rules and keeps the other bot focused on what's NOT done, following the correct work order, and reading documentation while implementing.
