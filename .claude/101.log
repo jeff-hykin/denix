@@ -1,0 +1,34 @@
+Perfect! The prompt.md now clearly outlines what remains to be done. Let me create a summary of what I've clarified:
+
+## Summary
+
+I've reviewed and updated **prompt.md** to accurately reflect the current state of the Denix project:
+
+### Key Findings:
+
+1. **Runtime is 100% feature complete** - All 97 Nix 2.18 builtins ARE implemented (verified in runtime.js lines 175-650)
+2. **Only 26% tested** - 28/97 functions have tests, 69 are completely untested
+3. **All critical functions exist** - map, filter, all, any, hasAttr, getAttr, isNull, typeOf, sub, mul, etc. all have implementations
+
+### Updates Made to prompt.md:
+
+1. **Removed outdated "OLD TEST FILES" section** - Those files don't exist anymore
+2. **Removed achievement markers** (✅/🎉) per the CRITICAL RULES
+3. **Clarified current work order** - Focus is on testing, not implementation
+4. **Added "CURRENT TEST FILE STATUS"** section showing what exists vs what's missing
+5. **Added practical example** showing how to verify in nix repl and write tests
+6. **Clarified what "testing" means** - Verifying correct behavior, edge cases, error handling
+
+### What Remains to Be Done:
+
+**Priority 0 (22-32 hours):** Test 46 critical builtins across 6 categories:
+- Task 0.1: Type checking (10 functions, 50+ tests, 4-6 hours)
+- Task 0.2: List operations (12 functions, 70+ tests, 6-8 hours) - **map, filter, all, any untested**
+- Task 0.3: Attrset operations (8 functions, 50+ tests, 4-6 hours) - **hasAttr, getAttr untested**
+- Task 0.4: String operations (3 functions, 30+ tests, 3-4 hours)
+- Task 0.5: Math & comparison (5 functions, 30+ tests, 2-3 hours)
+- Task 0.6: Control flow (8 functions, 35+ tests, 2-3 hours)
+
+**Next immediate step:** Create `main/tests/builtins_types_test.js` and test all 10 type checking functions (4-6 hours).
+
+The documentation is now accurate, actionable, and free of achievement language. All files to create are clearly listed with time estimates and test requirements.

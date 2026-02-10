@@ -4,13 +4,11 @@
 
 **Your job is to focus on what is NOT implemented and NOT working. Only report what remains to be done. Do not report accomplishments or add achievement markers (✅/🎉). You are a senior level developer - there is no such thing as a blocker. Break down large tasks into smaller tasks.**
 
-**MANDATORY WORK ORDER (DO NOT DEVIATE):**
-1. **FIRST**: Complete runtime.js (all network fetchers + store functions)
-2. **SECOND**: Complete translator (main.js)
-3. **THIRD**: Test nixpkgs.lib files
+**CURRENT WORK ORDER:**
+1. **Runtime testing** - Test the 69 untested builtins (Priority 0 tasks 0.1-0.6) - THIS IS THE WORK
+2. **AFTER testing complete:** nixpkgs.lib testing - Test 26 remaining library files (Priority 3)
 
-**DO NOT work on translator until runtime is 100% complete.**
-**DO NOT work on nix-lib tests until translator is 100% complete.**
+**What's blocking progress:** 74% of runtime builtins are untested (69/97 functions). Runtime has code but no verification it works correctly.
 
 ## MANDATORY IMPLEMENTATION PROCESS
 
@@ -28,6 +26,12 @@
 **Test coverage: 26%** (28/97 builtins tested, 69 untested)
 
 **What this means:** Runtime has code but NO VERIFICATION that it works correctly.
+
+**All functions ARE implemented** - checked lines 175-650 in runtime.js. They exist and have code. Testing verifies:
+1. Functions return correct values for normal inputs
+2. Functions handle edge cases correctly (empty lists, null, negative numbers)
+3. Functions throw correct errors for invalid inputs
+4. Functions match Nix 2.18 behavior exactly (verify in nix repl first)
 
 ## Remaining Work Breakdown
 
@@ -80,6 +84,41 @@ Deno.test("builtins.isNull - returns false for non-null", () => {
 
 **Required tests:** 5-10 tests per function (50+ total tests)
 **File to create:** `main/tests/builtins_types_test.js`
+
+**Example test implementation:**
+```bash
+# Step 1: Verify in nix repl
+$ nix repl
+nix-repl> builtins.isNull null
+true
+nix-repl> builtins.isNull 5
+false
+nix-repl> builtins.isNull "hello"
+false
+```
+
+```javascript
+// Step 2: Write test matching nix behavior
+Deno.test("builtins.isNull - returns true for null", () => {
+    assertEquals(builtins.isNull(null), true)
+})
+
+Deno.test("builtins.isNull - returns false for integer", () => {
+    assertEquals(builtins.isNull(5n), false)
+})
+
+Deno.test("builtins.isNull - returns false for string", () => {
+    assertEquals(builtins.isNull("hello"), false)
+})
+```
+
+**Testing workflow:**
+1. Open terminal: `nix repl` (verify expected behavior)
+2. Create test file: `main/tests/builtins_types_test.js`
+3. Write tests matching nix repl behavior exactly
+4. Run: `deno test --allow-all main/tests/builtins_types_test.js`
+5. Fix any failures (implementation bugs in runtime.js)
+6. Run full suite: `./test.sh` to ensure no regressions
 
 ### Task 0.2: List Operations (6-8 hours) - CRITICAL PRIORITY
 
@@ -213,15 +252,19 @@ Deno.test("builtins.isNull - returns false for non-null", () => {
 
 ---
 
-## OLD TEST FILES NEEDING ATTENTION
+## CURRENT TEST FILE STATUS
 
-**These files exist but use wrong format (console.log instead of Deno.test):**
-- `main/tests/builtins_list.js` - Only tests groupBy, needs conversion
-- `main/tests/builtins_attrs.js` - Only tests mapAttrs, needs conversion
-- `main/tests/builtins_eval_control.js` - Tests trace/throw, needs conversion
-- `main/tests/builtins_version.js` - Needs conversion
+**Existing test file:** `main/tests/builtins_core_test.js` (18 tests)
+- Has tests: groupBy, mapAttrs, listToAttrs, intersectAttrs, removeAttrs, concatMap
+- Has tests: compareVersions, parseDrvName
+- Has tests: trace, throw, tryEval, seq, deepSeq
+- **Missing tests:** map, filter, all, any, hasAttr, getAttr, type checking (isNull, isBool, isInt, etc.)
 
-**Action needed:** Convert to proper Deno.test format or delete if redundant
+**26 test files exist, ~179+ runtime tests passing**
+- Fetch operations: Well covered (fetchGit, fetchTarball, fetchurl, fetchTree, path, filterSource)
+- Import system: Well covered (5 test files)
+- Derivations: Basic tests only (12 tests, edge cases missing)
+- Core operations: Minimal coverage (18 tests in builtins_core_test.js, but critical gaps remain)
 
 ### Priority 1: Derivation Edge Cases (2-4 hours)
 
