@@ -172,10 +172,10 @@ await testDerivation(
         builder: "/bin/sh"
     });
     const result = builtins.toJSON({
-        hasName: builtins.hasAttr({name: "name"}, drv),
-        hasOutPath: builtins.hasAttr({name: "outPath"}, drv),
-        hasDrvPath: builtins.hasAttr({name: "drvPath"}, drv),
-        hasType: builtins.hasAttr({name: "type"}, drv),
+        hasName: builtins.hasAttr("name")(drv),
+        hasOutPath: builtins.hasAttr("outPath")(drv),
+        hasDrvPath: builtins.hasAttr("drvPath")(drv),
+        hasType: builtins.hasAttr("type")(drv),
         typeValue: drv.type
     })`
 )

@@ -12,27 +12,23 @@ const NIX_BASE32_ALPHABET = "0123456789abcdfghijklmnpqrsvwxyz"
  * Based on: https://bernsteinbear.com/blog/nix-by-hand/
  */
 export function encodeBase32(bytes) {
-    // Nix encodes in REVERSE byte order
-    const reversedBytes = Array.from(bytes).reverse()
+    // Nix base32 algorithm (see: https://github.com/kolloch/nix-base32)
+    // Process 5-bit chunks in reverse order from total bit length
 
+    const len = Math.floor((bytes.length * 8 - 1) / 5) + 1
     let result = ""
-    let bits = 0
-    let bitCount = 0
 
-    for (const byte of reversedBytes) {
-        bits = (bits << 8) | byte
-        bitCount += 8
+    for (let n = len - 1; n >= 0; n--) {
+        const b = n * 5  // bit position
+        const i = Math.floor(b / 8)  // byte index
+        const j = b % 8  // bit offset within byte
 
-        while (bitCount >= 5) {
-            bitCount -= 5
-            const index = (bits >> bitCount) & 0x1f
-            result += NIX_BASE32_ALPHABET[index]
-        }
-    }
+        // Extract 5 bits spanning potentially two bytes
+        const v1 = (bytes[i] >> j) & 0xff
+        const v2 = (i + 1 < bytes.length) ? ((bytes[i + 1] << (8 - j)) & 0xff) : 0
+        const v = (v1 | v2) & 0x1f  // combine and mask to 5 bits
 
-    if (bitCount > 0) {
-        const index = (bits << (5 - bitCount)) & 0x1f
-        result += NIX_BASE32_ALPHABET[index]
+        result += NIX_BASE32_ALPHABET[v]
     }
 
     return result
@@ -95,7 +91,9 @@ export function serializeDerivation(drv) {
     // Helper to serialize key-value pairs
     const serializeEnv = (env) => {
         const pairs = Object.entries(env)
-            .sort(([a], [b]) => a.localeCompare(b))
+            // Use lexicographic (byte-wise) sort, not locale-aware sort
+            // Nix uses strcmp which compares ASCII values directly
+            .sort(([a], [b]) => a < b ? -1 : a > b ? 1 : 0)
             .map(([k, v]) => `(${JSON.stringify(k)},${JSON.stringify(v)})`)
         return "[" + pairs.join(",") + "]"
     }

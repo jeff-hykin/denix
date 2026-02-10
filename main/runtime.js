@@ -9,7 +9,7 @@ import { lazyMap } from "../tools/lazy_array.js"
 // Removed prex dependency due to WASM initialization issues
 // Replaced with custom POSIX regex converter below
 import { parse as tomlParse } from "https://deno.land/std@0.224.0/toml/mod.ts"
-import { serializeDerivation, computeDrvPath, computeOutputPath } from "../tools/store_path.js"
+import { serializeDerivation, computeDrvPath, computeOutputPath, encodeBase32 } from "../tools/store_path.js"
 
 // core stuff
 import { NixError, NotImplemented } from "./errors.js"
@@ -326,7 +326,8 @@ import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPa
                             // Derivations have toString() functions that would cause errors
                             return JSON.stringify(value.outPath)
                         } else if (Object.getPrototypeOf({}) == Object.getPrototypeOf(value)) {
-                            const keys = Object.getOwnPropertyNames(value)
+                            // Nix sorts object keys alphabetically (lexicographic order)
+                            const keys = Object.getOwnPropertyNames(value).sort()
                             const entries = []
                             for (const each of keys) {
                                 const jsonValue = await builtins.toJSON(value[each])
@@ -1758,15 +1759,25 @@ import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPa
                 env.builder = builder
                 env.system = system
 
-                // CRITICAL: Add empty output placeholders to env BEFORE hash computation
-                // Nix includes these in the ATerm serialization that gets hashed
+                // CRITICAL: Nix adds "outputs" env var with space-separated output names
+                // This is required for multi-output derivations
+                if (outputNames.length > 1 || (outputNames.length === 1 && outputNames[0] !== "out")) {
+                    env.outputs = outputNames.join(" ")
+                }
+
+                // CRITICAL: For non-fixed-output derivations, Nix uses EMPTY STRINGS
+                // during hash computation (both in outputs array AND env vars)
+                // Placeholders are only used at runtime during execution, not during hash computation
                 for (const outputName of outputNames) {
                     env[outputName] = ""
                 }
 
-                // Create derivation structure for serialization (phase 1: empty output paths)
+                // Create derivation structure for serialization (phase 1: empty output paths in outputs array)
+                // NOTE: For non-fixed-output derivations, outputs array uses "" not placeholders!
+                // CRITICAL: Outputs must be sorted alphabetically (Nix requirement)
+                const sortedOutputNames = [...outputNames].sort()
                 const drvStructure = {
-                    outputs: outputNames.map(o => [o, "", "", ""]),
+                    outputs: sortedOutputNames.map(o => [o, "", "", ""]),
                     inputDrvs: [],
                     inputSrcs: [],
                     system: system,
@@ -1775,7 +1786,7 @@ import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPa
                     env: { ...env }
                 }
 
-                // Serialize to compute paths (with empty output paths in env)
+                // Serialize to compute paths (with empty output paths)
                 const drvSerializedForHash = serializeDerivation(drvStructure)
                 const storeDir = "/nix/store"
 
@@ -1788,7 +1799,8 @@ import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPa
                 }
 
                 // Update derivation structure with actual output paths for final .drv
-                drvStructure.outputs = outputNames.map(o => [o, outputPaths[o], "", ""])
+                // Use sorted output names to match Nix's ordering
+                drvStructure.outputs = sortedOutputNames.map(o => [o, outputPaths[o], "", ""])
                 drvStructure.env = env
 
                 // Now compute drvPath from the complete serialization (with filled paths!)
@@ -1915,11 +1927,15 @@ import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPa
             "placeholder": (outputName)=>{
                 const name = requireString(outputName).toString()
                 // Returns a placeholder string for use in derivation env vars
-                // The actual hash is computed during build
-                // Format: /1rz4g4znpzjwh1xymhjpm42vipw92pr73vdgl6xs1hycac8kf2n9
-                // For now, we generate a deterministic placeholder based on output name
-                const hash = sha256Hex(name).slice(0, 32)
-                return `/${hash}`
+                // Nix algorithm: hash "nix-output:{name}" then encode full 32 bytes
+                const clearText = `nix-output:${name}`
+                const digest = sha256Hex(clearText)
+
+                // Convert hex to bytes (32 bytes)
+                const digestBytes = new Uint8Array(digest.match(/.{2}/g).map(b => parseInt(b, 16)))
+
+                // Encode in Nix base32 and prepend with "/"
+                return "/" + encodeBase32(digestBytes)
             },
             "outputOf": (derivationReference)=>(outputName)=>{
                 // Returns output path of a derivation
