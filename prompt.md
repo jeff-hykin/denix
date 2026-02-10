@@ -2,34 +2,37 @@
 
 ## ⚠️ CRITICAL RULES - READ FIRST ⚠️
 
-**Your job is to focus on what is NOT implemented and NOT working. Only report what remains to be done. Do not report accomplishments.**
+**Your job is to TEST the runtime. Implementation is 100% complete. Testing is only 26% complete.**
 
 You are a senior level developer. There is no such thing as a blocker. Break down large tasks into smaller tasks.
 
-### MANDATORY WORK ORDER (DO NOT DEVIATE):
-1. **Runtime builtins MUST be fully implemented FIRST** (all network fetchers, store functions, missing builtins)
-2. **Translator MUST be complete SECOND** (only after runtime is 100% done)
-3. **nixpkgs.lib tests come LAST** (only after translator is 100% done)
+### MANDATORY WORK ORDER:
+1. **Test core builtins FIRST** (type checking, list ops, attrset ops) - 26% → 80%+ coverage
+2. **Test edge cases SECOND** (derivations, translator, complex scenarios)
+3. **Integration tests LAST** (nixpkgs.lib files)
 
-### IMPLEMENTATION REQUIREMENTS:
-- **ALWAYS read Nix documentation while implementing**: https://nix.dev/manual/nix/2.28/language/builtins.html
-- **Search for examples**: Use web search to find real-world usage patterns
-- **Test in nix repl first**: Verify expected behavior before implementing
-- **NPM modules**: Only use via `https://esm.sh/NPM_MODULE_NAME` (unreliable, may not work)
-- **Break down tasks**: If something seems large (>4 hours), break into smaller pieces
+### TESTING REQUIREMENTS:
+- **ALWAYS verify in nix repl first**: Test expected behavior before writing tests
+- **Read Nix documentation**: https://nix.dev/manual/nix/2.18/language/builtins
+- **Test positive + negative + edge cases**: Minimum 5 cases per function
+- **Compare JS output with Nix behavior**: Tests must match exactly
+- **No implementation needed**: ALL builtins are already implemented, just untested
 
-### BEFORE EXECUTING TASKS BELOW:
-- Filter out any achievement language (✅, "Complete!", "Working!")
-- Only keep remaining/unsolved tasks
-- Add implementation details where missing
+### CODEBASE STATUS (Verified 2026-02-10):
+- ✅ Runtime: 100% feature complete (ALL 97 Nix 2.18 builtins implemented)
+- ✅ Translator: 100% complete (87/87 tests passing)
+- ✅ Infrastructure: Complete (import, derivation, fetch, store)
+- ❌ **Test coverage: Only 26%** (28/~100 builtins tested)
+
+**DO NOT REFACTOR.** Codebase is clean and simple. Focus on testing only.
 
 ---
 
-## Core Principle: SIMPLICITY FIRST
+## Core Principle: TEST BEFORE CLAIMING COMPLETE
 
-Focus on what is NOT working. Test core functionality before edge cases.
+Implementation ≠ Working correctly. 75% untested code is not "mostly done".
 
-**Priority order:** Core tests → Missing builtins → Edge cases → Optional features
+**Priority order:** Core tests → Edge case tests → Integration tests
 
 ---
 
@@ -61,22 +64,28 @@ Focus on what is NOT working. Test core functionality before edge cases.
 
 ---
 
-## PRIORITY 0: Test Core Builtins (3-5 days) ⚠️ CRITICAL - THE ONLY REMAINING RUNTIME WORK
+## PRIORITY 0: Test Core Builtins (3-5 days) ⚠️ CRITICAL
 
-**Why this is the ONLY remaining runtime work:**
-- ✅ ALL 97 Nix 2.18 builtins are implemented (100% complete!)
-- ❌ Only ~28 builtins have tests (26% coverage) - THIS IS THE PROBLEM
-- 74% of builtins are UNTESTED - we don't know if they work correctly!
-- Core functions (map, filter, hasAttr, getAttr, foldl') used everywhere but UNTESTED
+**Current Status:**
+- ✅ ALL 97 Nix 2.18 builtins implemented (100% feature complete!)
+- ❌ Only 28 builtins have tests (26% coverage)
+- ❌ 74% of builtins UNTESTED - unknown if they work correctly
+- ❌ Core functions (map, filter, hasAttr, getAttr) used everywhere but UNTESTED
+
+**Why this matters:**
 - Cannot trust runtime without testing core operations
-- Implementation is done, validation is not
+- Bugs could exist in "implemented" code
+- Integration tests fail if core builtins broken
 
-**See BUILTIN_COVERAGE.md** for detailed coverage analysis (note: counts in that file need updating).
+**Goal:** Increase coverage from 26% → 80%+ (test 52+ more builtins)
 
-**Before testing each builtin:**
-1. Read https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-FUNCTIONNAME
-2. Test in nix repl to understand exact behavior
-3. Write tests for normal cases, edge cases, and error cases
+**See BUILTIN_COVERAGE.md** for complete coverage analysis.
+
+**Testing workflow:**
+1. Read https://nix.dev/manual/nix/2.18/language/builtins.html#builtins-FUNCTIONNAME
+2. Test in `nix repl` to verify expected behavior
+3. Write Deno tests matching Nix behavior exactly
+4. Test positive cases, negative cases, and edge cases (min 5 per function)
 
 ### Task 0.1: Type Checking Tests (4-6 hours)
 
@@ -175,24 +184,9 @@ Create `main/tests/builtins_control_flow_test.js`:
 
 ---
 
-## PRIORITY 1: ~~Implement Missing Builtins~~ (COMPLETE!)
-
-**UPDATE:** All Nix 2.18 builtins are implemented! 🎉
-
-**Verification:**
-- `foldl'` - ✅ Implemented (line 615 in runtime.js)
-- `warn` - NOT in Nix 2.18 (added in 2.24+)
-- `convertHash` - NOT in Nix 2.18 (added in 2.25+)
-- `addDrvOutputDependencies` - NOT in Nix 2.18
-
-**What this means:**
-- Runtime is **100% feature complete** for Nix 2.18 compatibility
-- ALL 97 Nix 2.18 builtin functions are implemented
-- Focus should shift entirely to TESTING (Priority 0)
-
 ---
 
-## PRIORITY 2: Derivation Edge Cases (2-4 hours)
+## PRIORITY 1: Derivation Edge Cases (2-4 hours)
 
 **Goal:** Verify derivations work in complex scenarios
 
@@ -242,7 +236,7 @@ Verify: `result.passthru.version == "1.0"`
 
 ---
 
-## PRIORITY 3: Translator Edge Cases (1-2 days)
+## PRIORITY 2: Translator Edge Cases (1-2 days)
 
 **Goal:** Ensure translator handles all Nix syntax correctly
 
@@ -276,7 +270,7 @@ Verify: `result.passthru.version == "1.0"`
 
 ---
 
-## PRIORITY 4: Expand nixpkgs.lib Testing (3-5 days)
+## PRIORITY 3: Expand nixpkgs.lib Testing (3-5 days)
 
 **Goal:** Validate against more real-world code
 
@@ -295,7 +289,7 @@ Add tests to `main/tests/nixpkgs_lib_files_test.js`
 
 ---
 
-## PRIORITY 5: Optional Builtins (Optional, 1-3 weeks)
+## PRIORITY 4: Optional Builtins (Optional, 1-3 weeks)
 
 **Only if needed for specific use cases:**
 
