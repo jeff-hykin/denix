@@ -1,0 +1,56 @@
+Perfect! The documentation is now accurate and comprehensive. Let me create a summary of what I've done:
+
+## Summary
+
+I've updated the Denix project documentation with **verified accurate counts** of what remains to be done for runtime testing:
+
+### Key Findings (Using Explore Agent Analysis)
+
+**Actual Runtime Status:**
+- **102 function builtins** implemented (not 109 as previously thought)
+- **42 builtins tested** (40% coverage, not 37%)
+- **60 builtins untested** (60% of runtime needs tests)
+
+### What I Updated
+
+**1. prompt.md (456 lines total):**
+- Corrected all builtin counts across 6 tasks
+- Added comprehensive **nix repl test examples** for each task showing expected behavior
+- Added **edge cases and error conditions** for each function
+- Added "Quick Reference" table showing which test files exist vs need to be created
+- Updated time estimates: **21-28 hours to reach 80% coverage**
+
+**2. MEMORY.md:**
+- Updated Session 37 entry with verified counts
+- Corrected from 109 → 102 function builtins
+- Corrected from 40 tested (37%) → 42 tested (40%)
+- Updated task breakdown with accurate function counts
+
+### 6 Test Files That Need To Be Created
+
+| Priority | Test File | Functions | Time | Status |
+|----------|-----------|-----------|------|--------|
+| **⚡ Task 1** | `builtins_type_checking_test.js` | 10 type functions | 3-4h | **DOES NOT EXIST** |
+| **⚡ Task 2** | `builtins_lists_comprehensive_test.js` | 8 list functions | 5-7h | **DOES NOT EXIST** |
+| **⚡ Task 3** | `builtins_attrs_comprehensive_test.js` | 5 attrset functions | 3-5h | **DOES NOT EXIST** |
+| Task 4 | `builtins_strings_comprehensive_test.js` | 6 string functions | 3-4h | **DOES NOT EXIST** |
+| Task 5 | `builtins_math_comprehensive_test.js` | 8 math functions | 3-4h | **DOES NOT EXIST** |
+| Task 6 | `builtins_paths_comprehensive_test.js` | 10 path functions | 4-6h | **DOES NOT EXIST** |
+
+Each task in prompt.md now includes:
+- Complete list of functions to test
+- nix repl commands showing expected behavior
+- Critical edge cases to verify
+- Minimum test count requirements
+- Step-by-step testing process
+
+### Next Immediate Action
+
+**Create `main/tests/builtins_type_checking_test.js`** (3-4 hours):
+1. Open `nix repl` and test each type function
+2. Note exact behavior (e.g., `isInt 42` → true, `isInt 42.0` → false)
+3. Create Deno test file matching Nix behavior exactly
+4. Run tests and fix any bugs in runtime.js
+5. Verify all 50+ tests pass
+
+The documentation now provides **complete, actionable guidance** with no guesswork needed.
