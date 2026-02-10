@@ -1,0 +1,51 @@
+Perfect! Now let me create a brief summary message for the user:
+
+## Summary
+
+I've updated **prompt.md** with comprehensive, actionable guidance for the remaining work. The document is now **824 lines** with extensive detail.
+
+### Key Updates Made:
+
+**1. Accurate Current State (Session 33 verified):**
+- Runtime: 100% feature complete (all 97 Nix 2.18 builtins implemented)
+- Test coverage: 41% (40/97 tested, 57 untested)
+- All known bugs: FIXED ✅
+- Target: 80%+ coverage for production-ready status
+
+**2. Clear Task Breakdown (Tasks 1-10):**
+- **Priority table** showing coverage progression
+- **Detailed task descriptions** with:
+  - Exact functions to test
+  - Expected behavior examples from nix repl
+  - Edge cases to cover
+  - Time estimates per task
+  - Specific test file names
+
+**3. Path to 80% Coverage (22-31 hours):**
+- Task 1: Type Checking (9 functions, 3-4h) → 51%
+- Task 2: List Operations (12 functions, 6-8h) → 63%
+- Task 3: Attrset Operations (8 functions, 4-6h) → 71%
+- Task 4: String Operations (3 functions, 3-4h) → 74%
+- Task 5: Math & Comparison (5 functions, 2-3h) → 79%
+- Task 6: Path/File Operations (8 functions, 4-6h) → 88% ✅
+
+**4. Comprehensive Test Template:**
+- Step-by-step process
+- Complete example test file
+- Common pitfalls to avoid
+- Success criteria
+
+**5. Final Summary Section:**
+- Current state
+- What needs to be done
+- Why it's important
+- How to start
+- Success criteria
+
+### What Remains:
+
+**ONLY testing work:** Create 9-11 test files covering 57 untested builtins.
+
+**NO implementation work needed** - Runtime is 100% feature complete.
+
+The document now provides everything needed to reach 80%+ test coverage and achieve production-ready status.
