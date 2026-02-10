@@ -1,0 +1,51 @@
+Perfect! Now let me create a summary document of my findings for the user:
+
+## Summary
+
+I've analyzed the current state of the Denix runtime and corrected the documentation in `prompt.md`. Here's what remains to be done:
+
+### Key Corrections Made (Session 40)
+
+**Test Coverage is BETTER than claimed:**
+- **Actual: 60/110 builtins tested (54.5% coverage)**
+- Previous claim: 56/109 tested (51.4%)
+- **4 more functions are tested than Session 39 claimed**
+- **50 untested** (not 53)
+
+**Derivation Tests:**
+- **9/10 tests FAILING** (not 8/10)
+- 2 bugs identified with clear fixes:
+  1. Store path hash mismatch (empty output placeholders needed)
+  2. toJSON crashes on derivations (function type check before derivation check)
+
+**Test Coverage by Category:**
+- ✅ **100% coverage:** Type checking (10/10 functions)
+- ✅ **83% coverage:** Fetch operations (5/6)
+- ✅ **75% coverage:** Attrset operations (9/12)
+- ⚠️ **0% coverage:** Context operations (0/6)
+- ⚠️ **0% coverage:** Store/config operations (0/5)
+- ⚠️ **25% coverage:** Math & bitwise (2/8)
+
+### Updated Priorities in prompt.md
+
+**Priority 0 (1-2h):** Fix 2 derivation bugs
+**Priority 1 (2-3h):** Test 5 math/bitwise functions (ceil, floor, bitAnd, bitOr, bitXor)
+**Priority 2 (1-2h):** Test 3 attrset functions (attrNames, attrValues, catAttrs)
+**Priority 3 (2-3h):** Test 5 string functions (toString, split, concatStringsSep, baseNameOf, dirOf)
+**Priority 4 (3-4h):** Test 11 context/store functions (0% coverage areas)
+**Priority 5 (3-4h):** Test 10 remaining high-value functions
+
+**Total time to 75% coverage:** 11-16 hours (Priorities 0-3)
+**Total time to 80% coverage:** 17-24 hours (Priorities 0-5)
+
+### What's in prompt.md Now
+
+- ✅ Corrected test coverage statistics
+- ✅ Accurate function counts per priority
+- ✅ Clear nix repl test examples for each function
+- ✅ Removed incorrect claims (sub/mul are operators, already tested)
+- ✅ Identified which functions ARE tested vs NOT tested
+- ✅ Added complete appendix of all 50 untested builtins
+- ✅ Realistic time estimates based on actual work remaining
+
+The documentation now reflects the ACTUAL current state, not an outdated or pessimistic view.

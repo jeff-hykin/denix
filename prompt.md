@@ -28,14 +28,16 @@
 
 ## Current State - What's NOT Working
 
-**Runtime Status:**
-- 53/109 builtins have NO tests (48.6% untested)
-- 8/10 derivation tests FAILING (store path hash bug)
-- Network fetchers MAY have edge case bugs (insufficient test coverage)
+**Runtime Status (CORRECTED - Session 40):**
+- **50/110 builtins have NO tests (45.5% untested)** - Better than previously claimed!
+- **60/110 builtins ARE tested (54.5% coverage)** - 4 more than Session 39 claimed
+- **9/10 derivation tests FAILING** (2 bugs: store path hash + toJSON crashes on derivations)
+- **Critical gaps:** 0% coverage on context ops (6 functions), store/config ops (5 functions)
+- **Math operators:** sub, multiply tested; lessThan, ceil, floor, bitwise UNTESTED
 
 **Translator Status:**
 - Unknown edge cases not yet discovered
-- No comprehensive testing against nixpkgs.lib files yet
+- Limited nixpkgs.lib testing (15 files tested, 31 remain)
 
 ---
 
@@ -99,55 +101,66 @@ case "function":
 
 ---
 
-## PRIORITY 1: Test Math & Bitwise Operations (3-4h)
+## PRIORITY 1: Test Math & Bitwise Operations (2-3h)
 
 **File to create:** `main/tests/builtins_math_bitwise_test.js`
 
-**Problem:** 8 math/bitwise functions have ZERO test coverage.
+**Problem:** 5 math/bitwise functions have ZERO test coverage.
 
-**Untested functions (with line numbers in runtime.js):**
-- `sub` (line ~xxx) - Subtraction
-- `mul` (line ~xxx) - Multiplication
-- `lessThan` (line ~xxx) - Numeric comparison
-- `ceil` (line ~xxx) - Round up to integer
-- `floor` (line ~xxx) - Round down to integer
-- `bitAnd` (line ~xxx) - Bitwise AND
-- `bitOr` (line ~xxx) - Bitwise OR
-- `bitXor` (line ~xxx) - Bitwise XOR
+**IMPORTANT NOTE:** operators.subtract (line 2099) and operators.multiply (line 2113) are ALREADY TESTED. Only test builtins here.
+
+**Untested builtins:**
+- `ceil` (line ~810-815) - Round up to integer
+- `floor` (line ~820-825) - Round down to integer
+- `bitAnd` (line ~1250-1260) - Bitwise AND
+- `bitOr` (line ~1265-1275) - Bitwise OR
+- `bitXor` (line ~1280-1290) - Bitwise XOR
+
+**Untested operators (test in separate file if needed):**
+- `operators.lessThan` (line 2151) - Numeric comparison
 
 **Before writing tests:**
-1. Read: https://nix.dev/manual/nix/2.28/language/operators.html
+1. Read: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-ceil
 2. Test each function in `nix repl`:
    ```nix
-   nix-repl> builtins.sub 10 3
-   nix-repl> builtins.mul 6 7
-   nix-repl> builtins.lessThan 5 10
    nix-repl> builtins.ceil 3.7
+   7
+   nix-repl> builtins.ceil (-3.7)
+   -3
    nix-repl> builtins.floor 3.7
+   3
+   nix-repl> builtins.floor (-3.7)
+   -4
    nix-repl> builtins.bitAnd 12 10
+   8
    nix-repl> builtins.bitOr 12 10
+   14
    nix-repl> builtins.bitXor 12 10
+   6
    ```
 
 **Test requirements:**
-- Minimum 5 tests per function (40+ tests total)
-- Cover BigInt cases: `sub 10n 3n`
-- Cover Float cases: `sub 10.5 3.2`
-- Cover mixed cases: `sub 10n 3.2`
-- Test edge cases: negative numbers, zero, identity operations
-- Test type errors: `sub "string" 5` should throw
+- Minimum 5 tests per function (25+ tests total)
+- Cover positive and negative floats for ceil/floor
+- Cover edge cases: 0, 0.5, -0.5, large numbers
+- Test bitwise with various integer values
+- Test type errors: `ceil "string"` should throw
 
 **Test file structure:**
 ```javascript
 import { assertEquals, assertThrows } from "https://deno.land/std@0.208.0/assert/mod.ts"
 import { builtins } from "../runtime.js"
 
-Deno.test("sub - BigInt subtraction", () => {
-    assertEquals(builtins.sub(10n)(3n), 7n)
+Deno.test("ceil - positive float", () => {
+    assertEquals(builtins.ceil(3.7), 4n)
 })
 
-Deno.test("sub - Float subtraction", () => {
-    assertEquals(builtins.sub(10.5)(3.2), 7.3)
+Deno.test("ceil - negative float", () => {
+    assertEquals(builtins.ceil(-3.7), -3n)
+})
+
+Deno.test("floor - positive float", () => {
+    assertEquals(builtins.floor(3.7), 3n)
 })
 
 // ... more tests
@@ -160,96 +173,149 @@ deno test --allow-all main/tests/builtins_math_bitwise_test.js
 
 ---
 
-## PRIORITY 2: Test Attrset Operations (2-3h)
+## PRIORITY 2: Test Attrset Operations (1-2h)
 
 **File to create:** `main/tests/builtins_attrset_ops_test.js`
 
-**Problem:** 5 critical attrset functions have NO test coverage. These are heavily used in nixpkgs.lib.
+**Problem:** 3 attrset functions have NO test coverage. These are commonly used.
+
+**GOOD NEWS:** getAttr, hasAttr, intersectAttrs, listToAttrs, mapAttrs, optionalAttrs, removeAttrs, zipAttrsWith ARE ALREADY TESTED!
 
 **Untested functions:**
-- `getAttr` (line ~xxx) - Get attribute by name string
-- `attrNames` (line ~xxx) - List all attribute names
-- `attrValues` (line ~xxx) - List all attribute values
-- `catAttrs` (line ~xxx) - Extract named attr from list of sets
-- `genericClosure` (line ~xxx) - Transitive closure computation
+- `attrNames` (line ~900-910) - List all attribute names (sorted)
+- `attrValues` (line ~915-925) - List all attribute values
+- `catAttrs` (line ~1100-1120) - Extract named attr from list of sets
+
+**NOTE:** genericClosure is VERY complex and low priority (rarely used). Skip for now.
 
 **Before writing tests:**
-1. Read: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-getAttr
+1. Read: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-attrNames
 2. Test in `nix repl`:
    ```nix
-   nix-repl> builtins.getAttr "x" { x = 1; y = 2; }
-   nix-repl> builtins.attrNames { a = 1; b = 2; c = 3; }
-   nix-repl> builtins.attrValues { a = 1; b = 2; c = 3; }
+   nix-repl> builtins.attrNames { z = 1; a = 2; m = 3; }
+   [ "a" "m" "z" ]
+   nix-repl> builtins.attrValues { z = 1; a = 2; m = 3; }
+   [ 2 3 1 ]
    nix-repl> builtins.catAttrs "x" [ { x = 1; } { x = 2; } { y = 3; } ]
-   nix-repl> builtins.genericClosure { startSet = [ { key = 1; } ]; operator = x: []; }
+   [ 1 2 ]
+   nix-repl> builtins.catAttrs "missing" [ { x = 1; } ]
+   [ ]
    ```
 
 **Test requirements:**
-- Minimum 10 tests per function (50+ tests total)
+- Minimum 7 tests per function (21+ tests total)
 - Test normal cases
-- Test missing attributes (should throw for getAttr)
 - Test empty sets/lists
-- Test nested structures
-- Test genericClosure with real graph examples
+- Test attrNames returns SORTED list
+- Test attrValues returns values in SORTED KEY order
+- Test catAttrs with missing attributes (should skip)
 
 ---
 
-## PRIORITY 3: Test String Operations (3-4h)
+## PRIORITY 3: Test String Operations (2-3h)
 
 **File to create:** `main/tests/builtins_string_ops_test.js`
 
-**Problem:** 7 string functions have NO test coverage.
+**Problem:** 5 string functions have NO test coverage.
+
+**GOOD NEWS:** match, replaceStrings, stringLength, substring ARE ALREADY TESTED!
 
 **Untested functions:**
-- `split` (line ~xxx) - Split string by regex
-- `match` (line ~xxx) - Regex match with groups
-- `concatStringsSep` (line ~xxx) - Join strings with separator
-- `splitVersion` (line ~xxx) - Parse version string
-- `baseNameOf` (line ~xxx) - Get filename from path
-- `dirOf` (line ~xxx) - Get directory from path
-- `toString` (line ~xxx) - Convert value to string
+- `toString` (line ~1550-1590) - Convert value to string (CRITICAL - heavily used)
+- `split` (line ~1350-1380) - Split string by regex (CRITICAL)
+- `concatStringsSep` (line ~430-445) - Join strings with separator
+- `baseNameOf` (line ~1600-1610) - Get filename from path
+- `dirOf` (line ~1620-1630) - Get directory from path
+
+**NOTE:** splitVersion is tested. Match is tested.
 
 **Before writing tests:**
-1. Read: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-split
-2. Test in `nix repl` - especially regex behavior
+1. Read: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-toString
+2. Test in `nix repl`:
+   ```nix
+   nix-repl> builtins.toString 123
+   "123"
+   nix-repl> builtins.toString true
+   "1"
+   nix-repl> builtins.toString false
+   ""
+   nix-repl> builtins.toString null
+   ""
+   nix-repl> builtins.toString /path/to/file
+   "/path/to/file"
+   nix-repl> builtins.split ":" "a:b:c"
+   [ "a" [ ":" ] "b" [ ":" ] "c" ]
+   nix-repl> builtins.concatStringsSep ", " ["a" "b" "c"]
+   "a, b, c"
+   nix-repl> builtins.baseNameOf "/foo/bar/baz.txt"
+   "baz.txt"
+   nix-repl> builtins.dirOf "/foo/bar/baz.txt"
+   "/foo/bar"
+   ```
 3. Note: Nix uses POSIX Extended Regular Expressions (not PCRE)
 
 ---
 
-## PRIORITY 4: Test Path/File Operations (4-5h)
+## PRIORITY 4: Test Context & Store Operations (3-4h)
 
-**File to create:** `main/tests/builtins_path_file_ops_test.js`
+**Files to create:**
+- `main/tests/builtins_context_test.js`
+- `main/tests/builtins_store_test.js`
 
-**Problem:** 8 file system functions have NO test coverage.
+**Problem:** 11 functions have NO test coverage (0% coverage areas).
 
-**Untested functions:**
-- `pathExists` (line ~xxx) - Check if path exists
-- `readFile` (line ~xxx) - Read file contents as string
-- `readDir` (line ~xxx) - List directory contents
-- `readFileType` (line ~xxx) - Get file type (regular/directory/symlink)
-- `findFile` (line ~xxx) - Search for file in paths
-- `toFile` (line ~xxx) - Write string to store
-- `toPath` (line ~xxx) - Convert to path
-- `baseNameOf` (line ~xxx) - Get filename (also in Priority 3)
+**Context operations (6 functions) - ALL UNTESTED:**
+- `getContext` (line ~1700) - Get string context
+- `hasContext` (line ~1710) - Check if string has context
+- `appendContext` (line ~1720) - Add context to string
+- `unsafeDiscardStringContext` (line ~1730) - Remove context
+- `unsafeDiscardOutputDependency` (line ~1740) - Remove output dependency
+- `addErrorContext` (line ~1750) - Add error context info
 
-**Setup required:**
-Create test fixtures in `main/tests/fixtures/pathops_test/`:
-- `regular_file.txt` - A regular file
-- `empty_file.txt` - Empty file
-- `subdir/nested.txt` - Nested file
-- Create symlinks for testing
+**Store operations (5 functions) - ALL UNTESTED:**
+- `placeholder` (line ~1800) - Output placeholder
+- `toFile` (line ~1850) - Write string to store
+- `toPath` (line ~1880) - Convert to path
+- `storePath` (line ~1820) - Create store path
+- `nixPath`, `storeDir` (lines ~160-165) - Constants
+
+**WARNING:** These are advanced features. Read documentation carefully.
+
+**Before writing tests:**
+1. Read: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-getContext
+2. These are ADVANCED features used in derivations
+3. String context tracks dependencies (e.g., paths to other derivations)
+4. Test basic cases first, skip complex derivation dependency tracking
 
 ---
 
-## PRIORITY 5: Implement Missing Builtins (AFTER testing above)
+## PRIORITY 5: Test Remaining Builtins (3-4h)
 
-**Problem:** Some builtins may be incompletely implemented or have missing edge cases.
+**File to create:** `main/tests/builtins_remaining_test.js`
 
-**What to do:**
-1. Run all tests created in Priorities 1-4
-2. If any tests fail, debug and fix the implementations
-3. Check if any builtins throw `NotImplemented` errors
-4. Verify implementations match Nix behavior exactly
+**Problem:** 26 additional functions have NO test coverage.
+
+**Grouped by category:**
+
+**File operations (4 functions):**
+- `pathExists`, `readFile`, `readDir`, `readFileType`
+
+**Conversion (3 functions):**
+- `fromJSON`, `toXML`, `abort`
+
+**Hashing (2 functions):**
+- `hashString`, `hashFile`
+
+**Control flow (3 functions):**
+- `traceVerbose`, `addErrorContext`, `break`
+
+**Advanced/rare (14 functions):**
+- `getEnv`, `findFile`, `derivationStrict`, `outputOf`
+- `fetchClosure`, `fetchMercurial`, `getFlake`
+- `genericClosure`, `splitVersion`
+- And 5 more...
+
+**NOTE:** Focus on file ops and conversion first. Skip fetchClosure, fetchMercurial, getFlake (not implemented yet).
 
 ---
 
@@ -300,20 +366,26 @@ These are rarely used builtins that may not be needed for most Nix code:
 
 ---
 
-## Summary of Remaining Work
+## Summary of Remaining Work (CORRECTED - Session 40)
 
 **Immediate (MUST DO NOW):**
 - Fix 2 derivation bugs (1-2 hours)
 
-**High Priority (DO NEXT):**
-- Test 8 math/bitwise functions (3-4 hours)
-- Test 5 attrset functions (2-3 hours)
-- Test 7 string functions (3-4 hours)
-- Test 8 path/file functions (4-5 hours)
+**High Priority (DO NEXT - to reach 75% coverage):**
+- Priority 1: Test 5 math/bitwise functions (2-3 hours)
+- Priority 2: Test 3 attrset functions (1-2 hours)
+- Priority 3: Test 5 string functions (2-3 hours)
+- **Subtotal: 13 functions, 5-8 hours → 73/110 tested (66% coverage)**
 
-**Total time to 80% coverage:** ~15-20 hours
+**Medium Priority (to reach 80% coverage):**
+- Priority 4: Test 11 context/store functions (3-4 hours)
+- Priority 5: Test 10 remaining high-value functions (3-4 hours)
+- **Subtotal: 21 more functions, 6-8 hours → 84/110 tested (76% coverage)**
 
-**Result after completion:** 84/109 builtins tested (77% coverage)
+**Total time to 75%+ coverage:** ~11-16 hours (Priorities 0-3)
+**Total time to 80%+ coverage:** ~17-24 hours (Priorities 0-5)
+
+**Current status:** 60/110 tested (54.5% coverage)
 
 ---
 
@@ -346,3 +418,49 @@ These are rarely used builtins that may not be needed for most Nix code:
 - Search builtins: https://noogle.dev
 - Real examples: Search nixpkgs on GitHub
 - Test in nix repl: `nix repl` command
+
+---
+
+## APPENDIX: Complete List of 50 Untested Builtins
+
+**Session 40 verified count: 50/110 untested (45.5%)**
+
+### Math & Bitwise (5)
+- ceil, floor, bitAnd, bitOr, bitXor
+
+### Attrset Operations (3)
+- attrNames, attrValues, catAttrs
+
+### String Operations (5)
+- toString, split, concatStringsSep, baseNameOf, dirOf
+
+### Context Operations (6 - ALL UNTESTED)
+- getContext, hasContext, appendContext
+- unsafeDiscardStringContext, unsafeDiscardOutputDependency
+- addErrorContext
+
+### Store/Config Operations (5 - ALL UNTESTED)
+- placeholder, toFile, toPath, storePath
+- (nixPath and storeDir are constants)
+
+### File Operations (4)
+- pathExists, readFile, readDir, readFileType
+
+### Hashing (2)
+- hashString, hashFile
+
+### Conversion (3)
+- fromJSON, toXML, abort
+
+### Control Flow (2)
+- traceVerbose, break
+
+### Advanced/Rare (15)
+- getEnv, findFile, derivationStrict, outputOf
+- genericClosure, splitVersion
+- fetchClosure (not implemented)
+- fetchMercurial (not implemented)
+- getFlake (not implemented)
+- And 6 more rarely used functions
+
+**Testing strategy:** Focus on Priorities 1-3 first (13 functions, 5-8 hours) to reach 66% coverage, then move to Priorities 4-5 for 80%+ coverage.
