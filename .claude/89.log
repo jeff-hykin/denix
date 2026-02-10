@@ -1,0 +1,106 @@
+Perfect! Now let me create a final summary. The prompt.md has been comprehensively enhanced with actionable details. Let me write the completion message:
+
+I've comprehensively enhanced prompt.md with detailed implementation guidance. Here's what was added:
+
+## Document Growth
+- **Before:** 427 lines
+- **After:** 1534 lines
+- **Added:** 1107 lines of detailed implementation guidance
+
+## Key Enhancements
+
+### 1. QUICK START Section (NEW)
+- 2-3 day roadmap with specific daily tasks
+- Clear next steps: Derivation tests → Translator patterns → nixpkgs.lib files
+
+### 2. Priority 1: Derivation Edge Cases (EXPANDED)
+- 6 detailed test scenarios with code examples
+- Step-by-step implementation for each test case
+- Time estimates per scenario
+- NOTE: String context skipped (too complex, not critical)
+
+### 3. Priority 2: Optional Builtins (MASSIVELY EXPANDED)
+
+**fetchMercurial (2.1):**
+- 4 implementation phases with code templates
+- Dependencies and requirements documented
+- Complete code template provided
+
+**fetchClosure (2.2):**
+- Binary cache protocol explained in detail
+- 5 implementation phases (research, NAR extraction, path rewriting, testing)
+- Warning: VERY COMPLEX (5-7 days), consider skipping
+
+**getFlake (2.3):**
+- Flake system architecture explained
+- 5 implementation phases (ref parsing, registry, lock files, evaluation, testing)
+- Warning: MOST COMPLEX (5-7 days), consider skipping
+
+**fetchTree edge cases (2.4):**
+- Corrected: type='path' already works!
+- Only 2 types missing: 'indirect' and 'mercurial'
+- Reduced estimate: 2-3 hours (not 3-4)
+
+### 4. Priority 3: Translator Edge Cases (EXPANDED)
+
+**Pattern Matching (3.1):**
+- 6 concrete test cases with expected outputs
+- Nested destructuring, multiple @-patterns, ellipsis combinations
+
+**String Escapes (3.2):**
+- 6 test scenarios covering all escape types
+- Multi-line strings, interpolation, path literals
+
+**Operator Precedence (3.4):**
+- Complete precedence table (14 levels)
+- 6 test categories with 20+ test cases
+
+### 5. Priority 4: nixpkgs.lib Testing (COMPLETELY RESTRUCTURED)
+
+**3-Tier Breakdown:**
+- **Tier 1 (Simple):** meta, debug, filesystem, generators (1-2 days)
+- **Tier 2 (Medium):** asserts, lists, attrsets, derivations (2-3 days)
+- **Tier 3 (Complex):** cli, options, modules (2-3 days)
+
+**For each file:**
+- Complexity rating
+- Dependencies listed
+- Key functions to test
+- Time estimate
+- Testing approach
+
+### 6. NEW Sections
+
+**TESTING STRATEGY:**
+- How to test new features (4-step process)
+- Test coverage goals
+- 3 common test patterns with code
+
+**TROUBLESHOOTING GUIDE:**
+- 6 common issues with fixes
+- 4 debugging tools
+- Real examples from previous sessions
+
+**SUMMARY OF REMAINING WORK:**
+- Clear priority order
+- 3 completion options (3-32 days)
+- Recommended 2-week path
+- Skip recommendations
+
+## What Remains To Be Done
+
+**Immediate (Priority 1):**
+- Derivation edge case tests (2-3 hours)
+
+**Recommended (Priority 3+4):**
+- Translator edge cases (2-3 days)
+- nixpkgs.lib testing Tier 1+2 (3-5 days)
+
+**Optional (Priority 2):**
+- fetchMercurial (2-3 days)
+- fetchClosure (5-7 days, VERY COMPLEX)
+- getFlake (5-7 days, VERY COMPLEX)
+
+**Estimated completion:** 3-10 days for production-ready system (without optional builtins)
+
+The prompt.md now provides concrete, actionable guidance for every remaining task with code examples, time estimates, and implementation strategies.
