@@ -1,12 +1,38 @@
+# CRITICAL RULES - READ FIRST
+
+**Your job is to focus on what is NOT implemented and NOT working. Only report what remains to be done. Do not report what you accomplished. You are a senior level developer, there is no such thing as a blocker. Break down large tasks into smaller tasks.**
+
+## MANDATORY WORK ORDER (Violating this wastes time!)
+1. **Runtime must be fully tested FIRST** (currently 38.5% tested - UNACCEPTABLE)
+2. **Do NOT work on translator until runtime is 80%+ tested**
+3. **Do NOT work on nixpkgs.lib tests until runtime is complete**
+4. **If you find yourself doing something else, STOP and return to runtime testing**
+
+## IMPLEMENTATION REQUIREMENTS
+
+### ALWAYS Read Documentation While Working
+- **Primary source**: https://nix.dev/manual/nix/2.18/language/builtins.html
+- **Search tool**: https://noogle.dev (search for builtin name)
+- **Examples**: Search GitHub for `filename:*.nix "builtins.FUNCTION_NAME"`
+- **Verify in nix repl**: Test every function you're working on to see exact behavior
+- **When implementing network fetchers**: Read the full documentation page for fetchGit, fetchTarball, etc.
+- **When stuck**: Search for "nix builtins.FUNCTION_NAME" - don't guess behavior
+
+### Technical Requirements
+- **Test behavior in nix repl BEFORE writing tests**: Document exact outputs
+- **Use npm modules ONLY through esm.sh**: `import X from "https://esm.sh/PACKAGE_NAME"` (unreliable, may not always work)
+- **Break down large tasks**: No task should take more than 4 hours without a checkpoint
+- **If you discover a bug**: Fix it immediately, test the fix, report what was wrong
+
+---
+
 # FOCUS: Runtime Testing (38.5% → 80% Coverage)
 
-## CRITICAL STATUS
+## CURRENT STATUS (What's NOT Done)
 
-**Runtime**: 109/109 implemented ✅ | 42/109 tested (38.5%) ❌ UNACCEPTABLE
-**Translator**: 87/87 tests passing ✅ PRODUCTION READY
-**Derivations**: 12+ tests passing ✅ WORKING
-**Import System**: 49 tests passing ✅ WORKING
-**Fetch System**: 97 tests passing ✅ WORKING
+**Runtime Testing**: 42/109 tested (38.5%) - NEED 45 MORE TESTS FOR 80%
+**Untested Functions**: 67 functions have ZERO or insufficient tests (see list below)
+**Missing Test Files**: 6 comprehensive test files must be created
 
 **YOUR MISSION**: Create 6 test files for 55 untested builtins (24-33 hours)
 
@@ -227,9 +253,17 @@ nix repl
 ## TESTING PROCESS (MANDATORY)
 
 ### Before Writing ANY Test:
-1. **Read Nix 2.18 docs**: https://nix.dev/manual/nix/2.18/language/builtins
+1. **Read Nix 2.18 docs FIRST**: https://nix.dev/manual/nix/2.18/language/builtins
+   - Read the entire section for each builtin you're testing
+   - Understand the expected behavior, arguments, and return types
+   - Note any special cases or error conditions mentioned
 2. **Test in nix repl**: Verify exact behavior with edge cases
-3. **Find examples**: https://noogle.dev or GitHub nixpkgs
+   - Run multiple test cases in nix repl
+   - Document the EXACT output you see
+   - Test error cases and boundary conditions
+3. **Find examples**: https://noogle.dev or GitHub nixpkgs search
+   - See how real Nix code uses these functions
+   - Find edge cases you might have missed
 4. **Document expected outputs**: Write comments with nix repl results
 
 ### Test File Template:
@@ -289,19 +323,21 @@ Deno.test("getAttr - throws on missing attribute", () => {
 
 ## WHAT NOT TO DO
 
-❌ **Don't implement new features** - Runtime is 100% feature complete for Nix 2.18
-❌ **Don't refactor working code** - Translator is production ready
-❌ **Don't optimize performance** - It's already fast (1-2 second test suite)
+❌ **Don't implement new features** - Runtime has all 109 builtins
+❌ **Don't refactor working code** - Focus on testing untested code
+❌ **Don't optimize performance** - Not the priority
 ❌ **Don't add documentation** - Focus on tests only
-❌ **Don't clean up code** - Already done (removed 3 unused functions)
-❌ **Don't work on translator** - Wait until runtime is 80% tested
-❌ **Don't work on nixpkgs tests** - Wait until runtime is 80% tested
+❌ **Don't clean up code** - Focus on testing
+❌ **Don't work on translator** - BLOCKED until runtime is 80% tested
+❌ **Don't work on nixpkgs tests** - BLOCKED until runtime is 80% tested
+❌ **Don't report achievements** - Only report what remains to be done
+❌ **Don't say "no blockers"** - Break down tasks into smaller steps instead
 
 ---
 
 ## CURRENT FILE STATUS
 
-### Test Files That Exist ✅
+### Test Files That Already Exist (DO NOT CREATE THESE)
 1. `builtins_core_test.js` - Core builtins (seq, deepSeq, abort, etc.)
 2. `builtins_fetch*.js` (6 files) - Network fetchers (97 tests)
 3. `builtins_path_test.js` - Path builtin
@@ -321,9 +357,9 @@ Deno.test("getAttr - throws on missing attribute", () => {
 17. `nixpkgs_lib_files_test.js` - Full lib files
 18. `derivation/*.js` (3 files) - Derivation system (12+ tests)
 
-**Total**: 25 standard test files + 3 derivation files = 28 files
+**Total existing**: 28 test files
 
-### Test Files Needed ❌
+### Test Files That MUST Be Created
 1. `builtins_type_checking_test.js` - 10 functions, 3-4h 🔥
 2. `builtins_lists_comprehensive_test.js` - 12 functions, 6-8h 🔥
 3. `builtins_attrs_comprehensive_test.js` - 7 functions, 4-6h 🔥
@@ -462,11 +498,21 @@ Deno.test("getAttr - throws on missing attribute", () => {
 
 ## REMEMBER
 
-1. **Test first, fix bugs second** - Untested code has bugs
-2. **Use nix repl** - Verify behavior before writing tests
+1. **Read Nix docs while implementing** - https://nix.dev/manual/nix/2.18/language/builtins
+2. **Test in nix repl first** - Document exact behavior before coding
 3. **Minimum 5 tests per function** - Normal + edge + error cases
-4. **Break down large tasks** - One function at a time if needed
-5. **No blockers exist** - Research → implement → test → fix
-6. **Runtime is 100% feature complete** - Only testing remains
+4. **Break down large tasks** - Checkpoint every 3-4 hours
+5. **If stuck, search for documentation** - noogle.dev, GitHub, official docs
+6. **npm packages ONLY via esm.sh** - May not work, be prepared for alternatives
+7. **Focus on what's NOT done** - Don't report achievements
 
-**START WITH TASK 1** (Type Checking, 3-4 hours) 🔥
+**NEXT IMMEDIATE TASK**: Create `main/tests/builtins_type_checking_test.js` (10 functions, 3-4 hours)
+
+### Task 1 Breakdown (Type Checking):
+1. Read https://nix.dev/manual/nix/2.18/language/builtins (search for isNull, isBool, typeOf)
+2. Test each function in nix repl with 5-10 different inputs
+3. Create test file with template structure
+4. Write 5+ tests per function (50+ total tests)
+5. Run tests: `./test.sh types`
+6. Fix any bugs discovered
+7. Report what bugs were found and fixed (not "success")

@@ -1,0 +1,48 @@
+Excellent! The prompt.md is now properly structured. Let me create a brief summary document for you:
+
+## Summary of Changes to prompt.md
+
+I've successfully enforced the rules you requested by editing prompt.md:
+
+### ✅ Changes Made:
+
+1. **Added Critical Rules Section at Top** - Now the first thing the bot sees:
+   - Focus on what's NOT done (no achievements)
+   - Break down large tasks
+   - No such thing as a blocker
+
+2. **Added Mandatory Work Order Section**:
+   - Runtime testing MUST be done first (currently 38.5% - unacceptable)
+   - DO NOT work on translator until runtime is 80%+ tested
+   - DO NOT work on nixpkgs tests until runtime is complete
+   - Added warning: "If you find yourself doing something else, STOP"
+
+3. **Enhanced Documentation Requirements**:
+   - "ALWAYS Read Documentation While Working" section
+   - Links to nix.dev, noogle.dev, GitHub search patterns
+   - Emphasis on testing in nix repl FIRST
+   - Reminder about esm.sh for npm modules
+
+4. **Removed Achievement Language**:
+   - Changed "✅ Test Files That Exist" → "Test Files That Already Exist (DO NOT CREATE THESE)"
+   - Changed "❌ Test Files Needed" → "Test Files That MUST Be Created"
+   - Removed "PRODUCTION READY" and other achievement markers
+   - Focused status section on "What's NOT Done"
+
+5. **Added "WHAT NOT TO DO" Section**:
+   - Clear list of blocked activities
+   - "Don't report achievements" explicitly stated
+
+6. **Enhanced REMEMBER Section**:
+   - Added step-by-step breakdown for Task 1
+   - "Report what bugs were found and fixed (not 'success')"
+   - Emphasis on reading docs while working
+
+### The prompt.md now:
+- Enforces the work order (runtime → translator → nix-lib)
+- Requires documentation reading before implementing
+- Reminds about esm.sh for npm packages
+- Focuses entirely on remaining work, not achievements
+- Provides clear task breakdown with checkpoints
+
+The bot should now stay focused on runtime testing and follow the proper implementation process!
