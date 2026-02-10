@@ -1,7 +1,6 @@
 // Test builtins.path
 import { assertEquals, assertRejects, assert, assertStringIncludes } from "jsr:@std/assert"
 import { createRuntime } from "../runtime.js"
-import { FileSystem } from "https://deno.land/x/quickr@0.6.51/main/file_system.js"
 
 const runtime = createRuntime()
 const builtins = runtime.scopeStack[0].builtins

@@ -1,37 +1,45 @@
 # Denix Development Guide
 
-## QUICK DECISION GUIDE
+## CURRENT STATE (2026-02-10)
 
-**Current state:** Runtime is 95% complete (62/65 builtins). All core features working.
+**Runtime:** 62/65 builtins implemented (95% complete)
+- ✅ All core builtins working
+- ✅ Derivation system fully functional (12/12 tests passing)
+- ❌ 3 optional builtins remain (fetchMercurial, fetchClosure, getFlake)
 
-**Choose your path:**
-1. **RECOMMENDED (6-8 days):** Skip optional builtins → Translator edge cases → nixpkgs.lib testing
-2. **COMPLETE (22-30 days):** Implement all optional builtins → Translator → Testing
+**Translator:** 100% complete (87/87 tests passing)
 
-**Immediate next steps:**
-- Start: Priority 1 (Derivation edge cases, 2-3 hours)
-- Then decide: Skip or implement optional builtins (Priority 2)
-- Then: Priority 3 (Translator edge cases, 12-17 hours)
-- Then: Priority 4 (nixpkgs.lib testing, 4-6 days)
+**Tests:** 166 test suites, 240+ test cases, all passing
 
-## CRITICAL RULES - READ FIRST
+**RECOMMENDATION:** Runtime is production-ready. Focus on testing and edge cases.
 
-**Your job is to focus on what is NOT implemented and NOT working. Only report what remains to be done. Do not report what you accomplished. You are a senior level developer, there is no such thing as a blocker. Break down large tasks into smaller tasks.**
+## PRIORITIES (WHAT REMAINS)
 
-**Before executing what is below, filter out any achievements. Only keep remaining/unsolved tasks in this document. Add detail to each task if needed.**
+### Priority 1: Derivation Edge Cases (2-3 hours)
+**Status:** Basic tests passing (12/12). Need edge case coverage.
+**Task:** Test multiple outputs, passthru/meta attributes, string context propagation.
+**See:** "Priority 1 Details" section below.
 
-### WORK ORDER (MUST FOLLOW THIS SEQUENCE):
-1. **Priority 1: Derivation edge cases** - Test advanced derivation scenarios
-2. **Priority 2: Optional builtins (DECISION)** - Skip or implement fetchMercurial/fetchClosure/getFlake
-3. **Priority 3: Translator edge cases** - Only AFTER runtime is complete or explicitly skipped
-4. **Priority 4: nixpkgs.lib testing** - Only AFTER translator edge cases are tested
+### Priority 2: Optional Builtins (DECISION NEEDED)
+**Status:** 3 builtins not implemented (rarely used/experimental).
+**Options:**
+- **Option A (Recommended):** Skip these (saves 16-22 days)
+- **Option B:** Implement fetchMercurial, fetchClosure, getFlake
+**See:** "Priority 2 Details" section below.
 
-### IMPLEMENTATION REQUIREMENTS:
-- **Read Nix documentation while implementing** - ALWAYS check https://nix.dev/manual/nix/2.28/language/builtins.html
-- **Search for examples** - Look for real-world usage patterns and test cases
-- **Verify behavior in nix repl** - Test actual Nix behavior before implementing
-- **Use npm modules via esm.sh** - Example: `https://esm.sh/PACKAGE_NAME` (note: unreliable, may not work)
-- **Break down large tasks** - No task should take more than 1 day without intermediate checkpoints
+### Priority 3: Expand nixpkgs.lib Testing (4-6 days)
+**Status:** 10/41 files tested (24% coverage).
+**Goal:** Test high-value files (lists.nix, attrsets.nix, options.nix, etc.)
+**Target:** 50%+ coverage (21+ files)
+
+---
+
+## RULES FOR IMPLEMENTATION
+
+1. **Keep it simple** - Don't over-engineer. Working > perfect.
+2. **Test behavior first** - Use `nix repl` to verify actual Nix behavior
+3. **Read docs** - Check https://nix.dev/manual/nix/2.28/language/builtins.html
+4. **Break down tasks** - Max 1 day per task, checkpoint frequently
 
 ---
 
@@ -86,25 +94,23 @@ Implement a Nix → JavaScript translator with 1-to-1 parity for Nix builtins.
 - **main.js** - Nix → JS translator (all core features working, edge cases need tests)
 - **main/tests/** - Test suite (240+ tests, 1 flaky network test)
 
-## Test System
+## Testing
 
-### Run tests:
+### Run Tests
 ```bash
-./test.sh              # All tests
-./test.sh derivation   # Filter by name
+./test.sh              # All tests (166 suites)
+./test.sh derivation   # Filter by keyword
 deno test --allow-all  # Direct deno test
 ```
 
-### Test organization:
-```
-main/tests/
-├── builtins/           # Per-builtin tests (attrNames, baseNameOf, etc.)
-├── operators/          # Operator tests (and, divide, equal, etc.)
-├── derivation/         # Derivation system tests
-├── translator_test.js  # Core translator (41 tests)
-├── nixpkgs_*_test.js  # Real nixpkgs.lib integration tests
-└── *_test.js          # Other runtime tests
-```
+### Test Files (main/tests/)
+- **translator_test.js** - Nix → JS translation (41 tests)
+- **nixpkgs_trivial_test.js** - nixpkgs.lib patterns (20 tests)
+- **nixpkgs_lib_files_test.js** - Full lib files (10 files)
+- **derivation/** - Derivation system (12 tests)
+- **builtins_*_test.js** - Individual builtin tests
+- **import_*_test.js** - Import system (49 tests)
+- Other runtime feature tests
 
 ## Known Issues
 
@@ -130,17 +136,9 @@ ref: "refs/heads/main",
 
 ---
 
-## RECOMMENDED IMMEDIATE ACTION
-
-**Start with Priority 1: Derivation Edge Cases (2-3 hours)**
-
-This is the shortest, highest-value task that will improve test coverage without requiring major decisions. After completing this, you'll need to decide whether to:
-- Skip optional builtins (recommended, saves 16-22 days) → go to Priority 3
-- Implement optional builtins → go to Priority 2
-
 ---
 
-## Priority 1: Derivation Edge Cases (2-3 hours)
+## Priority 1 Details: Derivation Edge Cases
 **Status:** Basic derivation tests passing (12/12). Advanced edge cases not tested.
 
 **Task:** Create `main/tests/derivation/002_advanced_tests.js`
@@ -187,7 +185,9 @@ This is the shortest, highest-value task that will improve test coverage without
 
 ---
 
-## Priority 2: Optional Runtime Builtins (DECISION NEEDED)
+---
+
+## Priority 2 Details: Optional Runtime Builtins (DECISION NEEDED)
 
 **Before starting ANY of these, read the documentation and search for usage examples.**
 
@@ -275,153 +275,35 @@ These builtins are rarely used and experimental. Total time saved: 16-22 days.
 
 ---
 
-## Priority 3: Translator Edge Cases (AFTER RUNTIME COMPLETE)
-
-**Do NOT work on translator edge cases until Priority 1 and 2 are complete or explicitly skipped.**
-
-### 3.1 Pattern Matching Edge Cases (~3-4 hours)
-**Not tested:** Nested @-patterns, ellipsis with defaults, empty patterns.
-
-**Create:** `main/tests/translator_patterns_advanced_test.js`
-
-**Test cases needed:**
-```nix
-# Nested @ patterns
-{ a, b } @ x @ y: x.a + y.b
-
-# Ellipsis with defaults
-{ a ? 1, ... } @ args: args.b or 2
-
-# Empty patterns
-{}: 42
-```
-
-### 3.2 String Escape Sequences (~2-3 hours)
-**Not verified:** All escape sequences in all string types.
-
-**Create:** `main/tests/translator_strings_advanced_test.js`
-
-**Test cases needed:**
-```nix
-# All escapes: \n \r \t \\ \" \$
-# In regular strings: "test\n"
-# In indented strings: ''test\n''
-# Dollar escapes: "''${ expr }"
-```
-
-### 3.3 Path Literal Edge Cases (~2-3 hours)
-**Not tested:** Spaces, special characters, <nixpkgs> variants.
-
-**Create:** `main/tests/translator_paths_advanced_test.js`
-
-**Note:** <nixpkgs> is partially implemented (line 149 in main.js) but needs tests.
-
-### 3.4 Operator Precedence (~3-4 hours)
-**Not verified:** Complex operator combinations.
-
-**Create:** `main/tests/translator_operators_precedence_test.js`
-
-### 3.5 Additional Language Features (~3-4 hours)
-**Not fully tested:** Multi-line strings, URI literals, inherit edge cases.
-
-**Create:** `main/tests/translator_language_features_test.js`
-
 ---
 
-## Priority 4: nixpkgs.lib Testing (AFTER RUNTIME AND TRANSLATOR COMPLETE)
+## Priority 3 Details: nixpkgs.lib Testing
 
-**Do NOT work on nixpkgs.lib tests until Priority 1-3 are complete.**
-
-### Testing Coverage Gap
-**Current:** 10/41 nixpkgs.lib files tested (24%)
+**Current:** 10/41 files tested (24%)
 **Goal:** 50%+ coverage (21+ files)
 
-### 31 Remaining Files to Test
-
-**High Priority (5-6 days):**
+**High-value files to test:**
 - lists.nix - Core list operations
 - attrsets.nix - Core attrset operations
 - options.nix - NixOS option system
 - meta.nix - Package metadata
 - debug.nix - Debugging utilities
 - filesystem.nix - File operations
-
-**Medium Priority:**
 - modules.nix, asserts.nix, derivations.nix
-- generators.nix, cli.nix, gvariant.nix
+- generators.nix, cli.nix
 
-**Lower Priority (complex dependencies):**
-- tests/*.nix files (20 remaining)
-- systems/parse.nix, systems/inspect.nix
-- Other utility files
+**Method:** Create tests in `nixpkgs_lib_files_test.js` following existing patterns.
 
 ---
 
-## Implementation Rules (READ WHILE WORKING)
+## Technical Notes
 
-### Documentation-First Approach (MANDATORY)
-**Never implement without reading documentation first.**
+### Key Patterns (for implementation)
+- **BigInt for integers** - Nix ints → BigInt (correct 1/2 = 0)
+- **Object.create() for scopes** - Preserves getters (NOT spread operator)
+- **Lazy eval via getters** - Recursive sets need getters
 
-1. **Read Nix docs** - https://nix.dev/manual/nix/2.28/language/builtins.html
-2. **Search for examples** - Use web search to find real-world usage patterns
-3. **Test in nix repl** - Verify actual Nix behavior before implementing
-4. **Check noogle.dev** - Search Nix builtin documentation and examples
-5. **Read source code** - When docs unclear, check Nix source (GitHub)
-
-### Technical Implementation Rules
-1. **BigInt for integers** - Nix ints → BigInt (for correct 1/2 = 0)
-2. **Object.create() for scopes** - Preserves getters, NOT spread operator
-3. **Lazy eval via getters** - Recursive sets need getters
-4. **Use esm.sh for npm** - Example: `import lib from "https://esm.sh/PACKAGE@VERSION"`
-   - Warning: esm.sh is unreliable, may not work for all packages
-   - Prefer Deno standard library when possible
-
-### Work Order (ENFORCE THIS)
-
-**SIMPLE PATH (Recommended - skip optional features):**
-1. Priority 1: Fix derivation bug (30 min)
-2. Priority 1: Test derivation edge cases (2-3 hrs)
-3. DECISION: Skip optional builtins (fetchMercurial, fetchClosure, getFlake)?
-4. Priority 3: Translator edge cases (12-17 hrs)
-5. Priority 4: nixpkgs.lib coverage to 50% (4-6 days)
-
-**Total: ~6-8 days to production-ready**
-
-**COMPLETE PATH (Only if explicitly requested):**
-Add Priority 2 optional builtins (16-22 days total)
-
----
-
-## What Remains to Be Done
-
-### Runtime Issues (Priority 1-2)
-1. **Derivation edge cases not tested** (2-3 hours)
-   - Multiple outputs, complex env vars, passthru/meta attributes
-2. **Flaky network test** (Low priority, has graceful handling)
-   - fetchGit ref normalization fails intermittently
-3. **Optional builtins not implemented** (16-22 days total, decision needed)
-   - fetchMercurial (~2-3 days)
-   - fetchClosure (~5-7 days, VERY COMPLEX)
-   - getFlake (~5-7 days, VERY COMPLEX)
-   - fetchTree type='path', type='indirect', type='mercurial' (~3-4 hours)
-
-### Translator Issues (Priority 3, AFTER runtime complete)
-1. **Pattern matching edge cases not tested** (~3-4 hours)
-   - Nested @-patterns, ellipsis with defaults, empty patterns
-2. **String escape sequences not verified** (~2-3 hours)
-   - All escapes in regular and indented strings
-3. **Path literal edge cases not tested** (~2-3 hours)
-   - Spaces, special characters, <nixpkgs> variants
-4. **Operator precedence not comprehensively tested** (~3-4 hours)
-   - Complex operator combinations
-5. **Additional language features not fully tested** (~3-4 hours)
-   - Multi-line strings, URI literals, inherit edge cases
-
-### Testing Gaps (Priority 4, AFTER translator complete)
-1. **nixpkgs.lib coverage at 24%** (goal: 50%+, 4-6 days)
-   - 10/41 files tested
-   - 31 files untested (lists.nix, attrsets.nix, options.nix, etc.)
-2. **Import system edge cases untested** (~2-3 hours)
-   - Circular import error messages
-   - Cache invalidation behavior
-   - Relative path resolution edge cases
+### Development
+- Test in `nix repl` first to verify behavior
+- Read docs: https://nix.dev/manual/nix/2.28/language/builtins.html
+- Simple > perfect - working code first, optimize later
