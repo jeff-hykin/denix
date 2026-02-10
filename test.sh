@@ -3,6 +3,7 @@
 #
 # Usage:
 #   ./test.sh                    # Run all tests
+#   ./test.sh core               # Run core builtin tests
 #   ./test.sh runtime            # Run runtime builtin tests
 #   ./test.sh translator         # Run translator tests
 #   ./test.sh derivation         # Run derivation tests
@@ -15,6 +16,10 @@ case "$1" in
     "")
         echo "Running all tests..."
         deno test --allow-all
+        ;;
+    core)
+        echo "Running core builtin tests..."
+        deno test --allow-all main/tests/builtins_core_test.js
         ;;
     runtime|builtins)
         echo "Running runtime builtin tests..."
