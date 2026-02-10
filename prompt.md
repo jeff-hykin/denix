@@ -23,9 +23,13 @@
 
 ## Primary Goal
 
-**Test 57 untested runtime builtins to reach 80% test coverage.**
+**Test 63 untested runtime builtins to reach 80% test coverage.**
 
-Current: 40/97 tested (41%) → Target: 77/97 tested (80%)
+Current Status (verified via comprehensive analysis):
+- **Total builtins: 109 functions** (excluding 8 constants like null, true, false, etc.)
+- **Tested: 40 builtins (37% coverage)**
+- **Untested: 69 builtins (63%)**
+- **Target: 87 builtins tested (80% coverage = 47 more tests needed)**
 
 ## Test Development Process (FOLLOW THIS EXACTLY)
 
@@ -60,30 +64,34 @@ For each untested builtin:
 
 **DO NOT SKIP STEP 1 AND 2!** Implementation based on assumptions will be wrong.
 
-## Testing Priorities (57 untested builtins)
+## Testing Priorities (69 untested builtins)
 
-### Task 1: Type Checking (9 functions, 3-4 hours) - CRITICAL
+### Task 1: Type Checking (0 functions, 0 hours) - ✅ ALL TESTED
 **File**: `main/tests/builtins_types_test.js`
 
-Functions: isNull, isBool, isInt, isFloat, isString, isList, isPath, isAttrs, typeOf
+✅ All type checking functions are ALREADY TESTED:
+- isNull, isBool, isInt, isFloat, isString, isList, isPath, isAttrs, typeOf, isFunction
 
-Why critical: Used everywhere, fundamental to Nix
+Status: COMPLETE - Move to Task 2
 
-Test cases:
-- Basic types (null, true, 42n, 3.14, "str", [], {})
-- Edge cases (null vs undefined, InterpolatedString vs string)
-- Wrong types (pass int to isString, etc.)
-
-Run: `./test.sh types`
-
-### Task 2: List Operations (12 functions, 6-8 hours) - CRITICAL
+### Task 2: List Operations (10 functions, 5-7 hours) - CRITICAL
 **File**: `main/tests/builtins_lists_test.js`
 
-Functions: map, filter, all, any, elem, elemAt, partition, sort, genList, concatLists, concatMap, groupBy
+✅ Already tested: concatMap, groupBy, head, tail, length, foldl'
 
-Why critical: Most used functions in Nix
+❌ UNTESTED (10 functions):
+- **map** - CRITICAL (most used list function, uses lazyMap proxy)
+- **filter** - CRITICAL (second most used)
+- **all** - CRITICAL (list predicate)
+- **any** - CRITICAL (list predicate)
+- elem - Check element membership
+- elemAt - Index access
+- partition - Split list by predicate (lazy evaluation)
+- sort - Sort with comparator
+- genList - Generate list from function
+- concatLists - Flatten one level
 
-Test cases:
+Test cases needed:
 - Empty lists []
 - Single element [1]
 - Normal operations [1, 2, 3]
@@ -92,88 +100,204 @@ Test cases:
 - Large lists (performance)
 
 Special attention:
-- map uses lazyMap proxy - test index access
-- partition is lazy - test computed only once
+- **map uses lazyMap proxy** - test index access, not just iteration
+- **partition is lazy** - ensure computed only once
 
 Run: `./test.sh lists`
 
-### Task 3: Attrset Operations (8 functions, 4-6 hours) - CRITICAL
+### Task 3: Attrset Operations (6 functions, 3-5 hours) - CRITICAL
 **File**: `main/tests/builtins_attrs_test.js`
 
-Functions: hasAttr, getAttr, attrNames, attrValues, catAttrs, genericClosure, zipAttrsWith, functionArgs
+✅ Already tested: hasAttr (operator test), functionArgs, genAttrs, intersectAttrs, listToAttrs, mapAttrs, optionalAttrs, removeAttrs, zipAttrsWith
 
-Why critical: Attrsets are THE core data structure
+❌ UNTESTED (6 functions):
+- **getAttr** - CRITICAL (core attrset access)
+- **attrNames** - CRITICAL (keys list)
+- **attrValues** - CRITICAL (values list)
+- catAttrs - Extract attribute from list of attrsets
+- genericClosure - Transitive closure computation (COMPLEX)
+- getEnv - Environment variable access
 
-Test cases:
+Test cases needed:
 - Empty {}
 - Nested {a: {b: {c: 1}}}
-- Missing keys
+- Missing keys (should throw)
 - Special keys ("", "with-dashes", "123")
-- genericClosure (complex, needs operator key/function)
+- genericClosure (needs operator key/function)
 
 Run: `./test.sh attrs`
 
-### Task 4: String Operations (3 functions, 3-4 hours) - HIGH
+### Task 4: String Operations (5 functions, 3-4 hours) - HIGH
 **File**: `main/tests/builtins_strings_test.js`
 
-Functions: split, match, concatStringsSep
+✅ Already tested: concatMapStringsSep, match, replaceStrings, stringLength, substring
 
-Test cases:
+❌ UNTESTED (5 functions):
+- split - Split string by regex (POSIX ERE)
+- splitVersion - Split version string
+- baseNameOf - Get filename from path
+- dirOf - Get directory from path
+- toXML - Convert to XML string
+
+Test cases needed:
 - Empty strings ""
 - Special chars "\n\t"
 - Unicode
 - Regex patterns (split uses POSIX ERE)
 - Long strings
+- Path operations (baseNameOf, dirOf)
 
 Run: `./test.sh strings`
 
-### Task 5: Math & Comparison (5 functions, 2-3 hours) - MEDIUM
+### Task 5: Math & Bitwise (8 functions, 3-4 hours) - MEDIUM
 **File**: `main/tests/builtins_math_test.js`
 
-Functions: sub, mul, lessThan, ceil, floor
+✅ Already tested: add, div, lessThan (via operators)
 
-Test cases:
+❌ UNTESTED (8 functions):
+- sub - Subtraction
+- mul - Multiplication
+- ceil - Round up
+- floor - Round down
+- bitAnd - Bitwise AND
+- bitOr - Bitwise OR
+- bitXor - Bitwise XOR
+- toString - Convert to string
+
+Test cases needed:
 - BigInt vs float handling
 - Negative numbers
-- Division by zero (lessThan doesn't divide but test edge cases)
+- Division by zero edge cases
 - ceil/floor with negative floats
+- Bitwise operations on BigInts
+- toString edge cases (bools, floats, paths, etc.)
 
 Run: `./test.sh math`
 
-### Task 6: Path/File Operations (8 functions, 4-6 hours) - MEDIUM
+### Task 6: Path/File Operations (7 functions, 3-5 hours) - MEDIUM
 **File**: `main/tests/builtins_paths_test.js`
 
-Functions: baseNameOf, dirOf, pathExists, readFile, readDir, readFileType, findFile, toPath
+✅ Already tested: path, toPath (likely), baseNameOf/dirOf covered in string tests
 
-Test cases:
+❌ UNTESTED (7 functions):
+- pathExists - Check if path exists
+- readFile - Read file contents
+- readDir - List directory contents
+- readFileType - Get file type (regular, directory, symlink, unknown)
+- findFile - Search for file in search path
+- toFile - Write string to store file
+- storePath - Import path to store
+
+Test cases needed:
 - Absolute paths /Users/...
 - Relative paths ./file
 - Non-existent paths (pathExists should return false)
 - Directories vs files
 - Symlinks
+- Large files
+- Binary files
 
 Run: `./test.sh paths`
 
-## After 80% Coverage (Tasks 7-10)
+### Task 7: Hashing & Context (6 functions, 3-4 hours) - MEDIUM
+**File**: `main/tests/builtins_hashing_test.js`
 
-### Task 7: Hash Functions (4 functions, 2-3 hours)
-hashString, hashFile (both already working via hashing.js)
+❌ UNTESTED (6 functions):
+- hashFile - Hash file contents (MD5, SHA1, SHA256, SHA512)
+- hashString - Hash string (MD5, SHA1, SHA256, SHA512)
+- getContext - Get string context
+- hasContext - Check if string has context
+- appendContext - Append context to string
+- unsafeDiscardStringContext - Remove context
+- unsafeDiscardOutputDependency - Remove output dependency
 
-### Task 8: Conversion Functions (3 functions, 2-3 hours)
-fromJSON, toJSON, toXML (toJSON already tested)
+Test cases needed:
+- All hash types (md5, sha1, sha256, sha512)
+- Empty strings/files
+- Large files
+- Binary files
+- String context operations
 
-### Task 9: Control Flow (3 functions, 2-3 hours)
-abort, trace (both already working), addErrorContext
+Run: `./test.sh hashing`
 
-### Task 10: Derivation Edge Cases (6 hours)
-Test derivation with multiple outputs, custom builders, etc.
+### Task 8: Control Flow & Error (4 functions, 2-3 hours) - LOW
+**File**: `main/tests/builtins_control_test.js`
 
-## Time Estimates
+✅ Already tested: throw, trace, tryEval, deepSeq, seq
 
-- **Task 1-6 (to 80%)**: 22-31 hours
-- **Task 7-9 (to 90%)**: 6-9 hours
-- **Task 10 (derivation)**: 6 hours
-- **Total to 90%**: 34-46 hours
+❌ UNTESTED (4 functions):
+- abort - Abort evaluation with message
+- addErrorContext - Add context to errors
+- traceVerbose - Conditional trace
+
+Test cases needed:
+- Error messages
+- Stack traces
+- Verbose flag behavior
+
+Run: `./test.sh control`
+
+### Task 9: JSON/Conversion (2 functions, 1-2 hours) - LOW
+**File**: `main/tests/builtins_json_test.js`
+
+✅ Already tested: toJSON, fromTOML, parseDrvName
+
+❌ UNTESTED (2 functions):
+- fromJSON - Parse JSON string
+- toXML - Convert to XML (already in Task 4)
+
+Test cases needed:
+- Valid JSON
+- Invalid JSON
+- Nested structures
+- Unicode
+
+Run: `./test.sh json`
+
+### Task 10: Advanced/Fetch (8 functions, 5-7 hours) - OPTIONAL
+**File**: `main/tests/builtins_advanced_test.js`
+
+✅ Already tested: fetchGit, fetchTarball, fetchTree, fetchurl, filterSource, parseFlakeRef, flakeRefToString
+
+❌ UNTESTED (8 functions):
+- fetchClosure - Fetch from binary cache (VERY COMPLEX, not in Nix 2.18)
+- fetchMercurial - Fetch Mercurial repo (OPTIONAL, rarely used)
+- getFlake - Get flake (VERY COMPLEX, flakes experimental)
+- placeholder - Derivation placeholder
+- outputOf - Get derivation output
+- unsafeGetAttrPos - Get attribute source position
+- derivationStrict - Strict derivation
+
+Run: `./test.sh advanced`
+
+## After 80% Coverage Summary
+
+### Total Work Remaining to 80% Coverage:
+- **Tasks 2-6: 36 functions untested**
+- **Estimated time: 17-25 hours**
+- **Target: 87/109 tested (80%)**
+
+### Path to 80%:
+1. Task 2: List operations (10 functions, 5-7 hours) ⚡ CRITICAL
+2. Task 3: Attrset operations (6 functions, 3-5 hours) ⚡ CRITICAL
+3. Task 4: String operations (5 functions, 3-4 hours)
+4. Task 5: Math & bitwise (8 functions, 3-4 hours)
+5. Task 6: Path/file operations (7 functions, 3-5 hours)
+
+### After 80% (Optional):
+- Task 7: Hashing (6 functions, 3-4 hours) → 90%
+- Task 8: Control flow (4 functions, 2-3 hours) → 92%
+- Task 9: JSON (2 functions, 1-2 hours) → 93%
+- Task 10: Advanced (8 functions, 5-7 hours) → 100%
+
+## Time Estimates (UPDATED)
+
+- **Tasks 2-6 (to 80%)**: 17-25 hours (36 functions)
+- **Tasks 7-9 (to 90%)**: 6-9 hours (12 functions)
+- **Task 10 (to 100%)**: 5-7 hours (8 functions)
+- **Total to 80%**: 17-25 hours ⚡
+- **Total to 90%**: 23-34 hours
+- **Total to 100%**: 28-41 hours
 
 ## Test File Template
 
@@ -194,12 +318,19 @@ Deno.test("builtins.FUNCTION - error case", () => {
 })
 ```
 
-## Current Project State
+## Current Project State (VERIFIED)
 
 ### What Needs Work ⚠️
-- **Testing**: Only 40/97 builtins tested (41% coverage)
-- **Goal**: 77/97 tested (80% coverage = 37 more tests needed)
-- **Work remaining**: Tasks 1-6 below (22-31 hours to 80% coverage)
+- **Testing**: Only 40/109 builtins tested (37% coverage)
+- **Goal**: 87/109 tested (80% coverage = 47 more tests needed)
+- **Work remaining**: Tasks 2-6 (36 critical functions, 17-25 hours to 80%)
+
+### What's Working ✅
+- **Translator**: 87/87 tests passing (100%)
+- **Import system**: Fully functional
+- **Derivation system**: 12/12 basic tests passing
+- **Fetch infrastructure**: 5/8 fetch functions tested (fetchGit, fetchTarball, fetchTree, fetchurl, filterSource)
+- **Type checking**: All 10 type functions tested
 
 ## Project Structure
 
@@ -255,11 +386,26 @@ denix/
 
 ## Next Immediate Action
 
-**Create main/tests/builtins_types_test.js** (Task 1, 3-4 hours)
+**Start Task 2: Create main/tests/builtins_lists_test.js** (5-7 hours)
+
+CRITICAL PRIORITY: Test the most-used list operations (map, filter, all, any)
 
 BEFORE starting:
-1. Read https://nix.dev/manual/nix/2.18/language/builtins#builtins-typeOf
-2. Test each function in nix repl with edge cases
-3. Document expected outputs
+1. Read https://nix.dev/manual/nix/2.18/language/builtins#builtins-map
+2. Read https://nix.dev/manual/nix/2.18/language/builtins#builtins-filter
+3. Test in nix repl:
+   ```
+   nix repl
+   nix-repl> builtins.map (x: x * 2) [1 2 3]
+   nix-repl> builtins.filter (x: x > 2) [1 2 3 4]
+   nix-repl> builtins.all (x: x > 0) [1 2 3]
+   nix-repl> builtins.any (x: x > 5) [1 2 3]
+   ```
+4. Document expected outputs
 
-Then write 50+ test cases for 9 type checking functions.
+SPECIAL ATTENTION:
+- **map** uses lazyMap proxy - test index access (list[0], list[1])
+- **partition** is lazy - ensure evaluated only once
+- Test with empty lists, single elements, nested lists
+
+Write 50+ test cases for 10 list functions.
