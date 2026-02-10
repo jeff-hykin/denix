@@ -1,0 +1,51 @@
+Perfect! Now let me create a summary for you:
+
+## Summary of Changes to prompt.md
+
+I've successfully enforced the rules you specified:
+
+### ✅ Changes Made:
+
+1. **Added a prominent "STOP! READ THIS FIRST" section** at the very top with 7 critical rules, including:
+   - Focus ONLY on what is NOT done
+   - Remove all checkboxes (✅) and completed items
+   - Follow work order strictly: Runtime → Translator → nixpkgs tests
+   - Read documentation BEFORE and WHILE implementing
+   - Test EVERY builtin in `nix repl` before writing code
+
+2. **Enhanced the documentation reading requirements** with:
+   - Explicit "MANDATORY: READ DOCUMENTATION" section
+   - Step-by-step workflow example for implementing builtins.fetchClosure
+   - Links to nix.dev, noogle.dev, and GitHub search
+   - Instructions to read Nix source code if needed
+
+3. **Removed all achievement checkboxes** (✅ DONE) from lines 379-381:
+   - Deleted "✅ DONE: Test 5 math/bitwise functions"
+   - Deleted "✅ DONE: Test 3 attrset functions"
+   - Deleted "✅ DONE: Test 5 string functions"
+   - Removed "4 hours completed" from time estimate
+
+4. **Removed "✨ NEW" badges** from the test file list (lines 163-165)
+
+5. **Enhanced npm module section** with:
+   - Explicit example: `import tar from "https://esm.sh/tar@7.0.0"`
+   - Warning that esm.sh is unreliable
+   - Preference for Deno standard library
+
+6. **Added mandatory preparation section** before Phase 4 with explicit steps:
+   - Open documentation in browser
+   - Read docs for EACH function
+   - Test in nix repl with multiple inputs
+   - Write down exact outputs
+   - Search GitHub for examples
+
+### Result:
+
+The prompt.md file now strongly enforces:
+- **No achievements or completions** - only remaining work
+- **Mandatory documentation reading** - with specific URLs and workflow
+- **Strict work order** - Runtime → Translator → nixpkgs tests
+- **Breaking down tasks** - no blockers exist
+- **Using esm.sh for npm** - with warnings about reliability
+
+The other bot should now have much clearer guidance and stronger enforcement of the rules!

@@ -4,41 +4,98 @@
 
 ---
 
+## 🚨 STOP! READ THIS FIRST 🚨
+
+**YOU MUST FOLLOW THESE RULES:**
+
+1. **Focus ONLY on what is NOT done** - Do not report accomplishments or achievements
+2. **Remove all checkboxes (✅) and completed items** from this document when you edit it
+3. **Follow the work order strictly:** Runtime → Translator → nixpkgs tests
+4. **Read documentation BEFORE and WHILE implementing** - Never guess behavior
+5. **Test EVERY builtin in `nix repl` before writing code** - Match exact behavior
+6. **No blockers exist** - You are a senior developer, break large tasks into small tasks
+7. **Use https://esm.sh/MODULE_NAME for npm** (unreliable, prefer Deno std library)
+
+**If you find achievements/completions in this document:** Remove them immediately and add detail to remaining tasks instead.
+
+---
+
 ## ⚠️ CRITICAL RULES - READ BEFORE WORKING
 
 **Your job is to focus on what is NOT implemented and NOT working. Only report what remains to be done. Do not report what you accomplished. You are a senior level developer, there is no such thing as a blocker. Break down large tasks into smaller tasks.**
+
+**BEFORE DOING ANYTHING ELSE:**
+- Filter out achievements from this document
+- Remove completed checkboxes (✅)
+- Only keep remaining/unsolved tasks
+- Add detail to tasks if needed
 
 **WORK ORDER (MUST FOLLOW THIS SEQUENCE):**
 1. **FIRST: Runtime builtins** - Finish ALL network fetchers and store functions in runtime.js
 2. **SECOND: Translator** - Only work on translator after runtime is fully implemented
 3. **THIRD: nixpkgs.lib tests** - Only work on nixpkgs tests after translator is complete
 
-**ALWAYS READ DOCUMENTATION WHILE IMPLEMENTING:**
-1. Before implementing any builtin, read its official documentation at https://nix.dev/manual/nix/2.28/language/builtins.html
-2. Search for additional documentation on noogle.dev and GitHub
-3. Test actual Nix behavior in `nix repl` before writing any code
-4. Compare your implementation against real Nix behavior
-5. Never guess behavior - verify everything against documentation and nix repl
+**MANDATORY: READ DOCUMENTATION BEFORE AND DURING ALL WORK**
+
+You MUST read the official Nix documentation while working. This is NOT optional:
+
+1. **Before starting any builtin:** Read https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-FUNCTIONNAME
+2. **While implementing:** Keep the documentation open and refer to it constantly
+3. **Test in nix repl:** Verify EVERY behavior in `nix repl` before writing code
+4. **Search for examples:** Look for real usage in nixpkgs on GitHub
+5. **Search noogle.dev:** Find additional documentation and examples
+6. **NEVER guess behavior:** If you're unsure, test it in nix repl or read the source code
+
+**Example workflow for implementing builtins.fetchClosure:**
+```bash
+# Step 1: Read official docs
+https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchClosure
+
+# Step 2: Search for more documentation
+Google: "nix fetchClosure documentation"
+Visit: noogle.dev and search "fetchClosure"
+
+# Step 3: Test in nix repl
+nix repl
+nix-repl> builtins.fetchClosure { ... }
+
+# Step 4: Search for real examples
+GitHub search: "repo:NixOS/nixpkgs fetchClosure"
+
+# Step 5: Read Nix source if needed
+https://github.com/NixOS/nix/blob/master/src/libexpr/primops.cc
+```
 
 **NPM MODULES:**
 - You CAN use npm modules via https://esm.sh/NPM_MODULE_NAME
+- Example: `import tar from "https://esm.sh/tar@7.0.0"`
 - WARNING: esm.sh is unreliable and doesn't always work
-- Prefer Deno standard library when possible
-- Only use npm as a last resort
+- Prefer Deno standard library (@std/*) when possible
+- Only use npm as a last resort for specialized functionality
 
 ---
 
 ## Current Status
 
-**Test Results:** ✅ 413 tests passing (100% pass rate)
-**Runtime Coverage:** 65/109 builtins tested (59.6%), 44 untested (40.4%)
-**Next Goal:** 80% coverage (88/109 tested) - need 23 more builtins tested
+**Test Results:** 413 tests passing (100% pass rate)
+**Runtime Coverage:** 65/109 builtins tested (59.6%), **44 untested (40.4%)**
+**Next Goal:** 80% coverage (88/109 tested) - **need 23 more builtins tested**
 
 ## Priority 1: Test Remaining Builtins (44 untested, 8-12 hours to 80%)
 
 **DO THIS NEXT: Phase 4 - Context & Store (11 functions, 3-4 hours)**
 
-BEFORE STARTING: Read documentation:
+⚠️ **MANDATORY PREPARATION - DO NOT SKIP:**
+
+Before writing ANY code, you MUST:
+1. Open https://nix.dev/manual/nix/2.28/language/builtins.html in your browser
+2. Read the documentation for EACH function you plan to test
+3. Open `nix repl` and test EACH function with multiple inputs
+4. Write down the EXACT outputs from nix repl
+5. Search GitHub for real nixpkgs usage examples
+6. ONLY THEN start writing tests
+
+**DOCUMENTATION LINKS TO READ:**
 - String context docs: https://nix.dev/manual/nix/2.28/language/string-context.html
 - getContext: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-getContext
 - hasContext: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-hasContext
@@ -160,9 +217,9 @@ If your test doesn't match nix repl behavior:
 - `builtins_core_test.js` - Core functions (12 functions)
 - `builtins_type_checking_test.js` - Type checking (10 functions)
 - `builtins_lists_comprehensive_test.js` - List operations (13 functions)
-- `builtins_math_bitwise_test.js` - Math & bitwise (5 functions) ✨ NEW
-- `builtins_attrset_ops_test.js` - Attrset operations (3 functions) ✨ NEW
-- `builtins_string_ops_test.js` - String operations (5 functions) ✨ NEW
+- `builtins_math_bitwise_test.js` - Math & bitwise (5 functions)
+- `builtins_attrset_ops_test.js` - Attrset operations (3 functions)
+- `builtins_string_ops_test.js` - String operations (5 functions)
 - `builtins_path_test.js` - Path operations
 - `builtins_filtersource_test.js` - filterSource
 - `builtins_tojson_path_test.js` - toJSON
@@ -376,12 +433,9 @@ The following areas have tests, but this does NOT mean you should work on them. 
 **Unimplemented builtins:** 4 optional builtins (fetchMercurial, fetchClosure, getFlake, fetchTree edge cases)
 
 **Immediate tasks (in order):**
-1. ✅ DONE: Test 5 math/bitwise functions - builtins_math_bitwise_test.js (24 tests)
-2. ✅ DONE: Test 3 attrset functions - builtins_attrset_ops_test.js (15 tests)
-3. ✅ DONE: Test 5 string functions - builtins_string_ops_test.js (25 tests)
-4. Test 11 context/store functions (3-4 hours) - CREATE FILES: builtins_context_test.js, builtins_store_test.js
-5. Test 33 remaining functions (4-5 hours) - CREATE FILE: builtins_remaining_test.js
+1. Test 11 context/store functions (3-4 hours) - CREATE FILES: builtins_context_test.js, builtins_store_test.js
+2. Test 33 remaining functions (4-5 hours) - CREATE FILE: builtins_remaining_test.js
 
-**Time estimate to 80% coverage:** ~8-12 hours remaining (4 hours completed)
+**Time estimate to 80% coverage:** ~8-12 hours remaining
 
 **Remember:** Follow the work order. Runtime → Translator → nixpkgs tests. Read documentation before implementing.
