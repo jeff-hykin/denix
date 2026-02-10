@@ -6,6 +6,28 @@ Your job is to focus on what is NOT implemented and NOT working. Only report wha
 
 Before executing what is below, please filter out any achievements. Only keep remaining/unsolved tasks in this document. Add detail to each task if needed.
 
+## 📊 Current State Summary
+
+**Runtime (main/runtime.js):**
+- 62/65 Nix 2.18 builtins implemented (95%)
+- ❌ **Critical bug:** Derivation store paths incorrect (fix ready, 30 min)
+- ❌ **Missing:** 3 optional builtins (fetchMercurial, fetchClosure, getFlake) - rarely used
+- ⚠️ **Edge cases:** Many builtins lack comprehensive edge case tests
+
+**Translator (main.js):**
+- ✅ All core language features working
+- ✅ 87/87 translator tests passing
+- ⚠️ **Edge cases:** Pattern matching, string escapes, path literals, operator precedence need comprehensive testing
+
+**Testing:**
+- ✅ 170+ runtime tests passing
+- ✅ 87 translator tests passing
+- ✅ 10/41 nixpkgs.lib files tested (24%)
+- ❌ **Derivation tests:** 1/10 passing (store path bug)
+- ⚠️ **Coverage:** Need to expand to 50%+ of nixpkgs.lib
+
+**Immediate blocker:** Derivation store path bug (30 min fix)
+
 ### WORK ORDER (MUST FOLLOW THIS SEQUENCE)
 1. **Runtime (main/runtime.js)** - Finish remaining builtins and fix bugs
 2. **Translator (main.js)** - Fix edge cases
@@ -68,7 +90,39 @@ deno test --allow-all main/tests/derivation/001_basic_tests.js
 
 **Expected behavior:**
 - Test "Basic derivation with no inputs" should compute exact path: `/nix/store/d62izaahds46siwr2b7k7q3gan6vw4p0-test`
-- Test 009 may still fail due to function serialization issue (investigate separately)
+- After fix, should pass 9/10 tests
+- Test 009 currently fails due to incorrect JS code in test file (not a runtime bug):
+  - Line 175-179 in 001_basic_tests.js incorrectly call `builtins.hasAttr({name: "name"}, drv)`
+  - Should be `builtins.hasAttr("name")(drv)` (curried form)
+  - This is a test file bug, not a runtime or translator bug
+  - Can be fixed by correcting the test JS code to use proper curried calls
+
+---
+
+### Priority 1.2: Test Derivation Edge Cases (~2-3 hours)
+
+After fixing the store path bug, additional derivation edge cases need testing:
+
+**Missing test coverage:**
+- Multiple outputs: `outputs = ["out" "dev" "doc"];`
+- Complex environment variables (nested attrsets, lists, paths)
+- Derivation dependencies (inputDrvs)
+- Source dependencies (inputSrcs)
+- passAsFile attribute
+- impureEnvVars attribute
+- Fixed-output derivations (outputHash, outputHashAlgo, outputHashMode)
+- Structured attributes (__structuredAttrs = true)
+
+**Where to add tests:**
+- Create `main/tests/derivation/002_advanced_tests.js`
+- Or expand existing `001_basic_tests.js` with more test cases
+
+**How to verify:**
+1. Test each case in `nix repl` to get expected behavior
+2. Compare with JS runtime output
+3. Ensure store paths match exactly
+
+**Time estimate:** 2-3 hours
 
 ---
 
@@ -163,32 +217,89 @@ deno test --allow-all main/tests/derivation/001_basic_tests.js
 
 ---
 
+### Priority 2.5: Runtime Builtin Edge Cases Testing (~3-5 hours)
+
+**What's missing:** Comprehensive edge case tests for implemented builtins. Many builtins have basic tests but lack edge case coverage.
+
+**Builtins needing more edge case tests:**
+
+1. **String operations:**
+   - `substring`: Negative indices, out-of-bounds, BigInt vs Number handling
+   - `split`: Empty string, regex edge cases, capturing groups
+   - `match`: Complex regex patterns, null results, escaping
+   - `concatStringsSep`: Empty lists, null values, non-string coercion
+
+2. **List operations:**
+   - `sort`: Stability (equal elements maintain order?), custom comparators edge cases
+   - `groupBy`: Empty lists, null/undefined keys, duplicate keys
+   - `foldl'`: Empty lists, error propagation, promise handling
+   - `concatMap`: Nested lists, empty results
+
+3. **Attrset operations:**
+   - `mapAttrs`: Nested attrsets, functions as values, promise handling
+   - `filterAttrs`: Functions as values, order preservation
+   - `catAttrs`: Missing attributes, nested attrsets
+   - `zipAttrsWith`: Conflicting types, empty attrsets
+
+4. **Type checking:**
+   - `typeOf`: All edge cases (what does Nix return for unusual values?)
+   - Type coercion edge cases across all builtins
+
+5. **Path operations:**
+   - `path`: Symlinks, permissions, recursive with large trees
+   - `filterSource`: Edge cases with filters, paths with special characters
+   - Path interpolation with store paths
+
+6. **Import system:**
+   - Circular import detection (tested but may need more cases)
+   - Import caching across different relative paths to same file
+   - Import of .json files with complex structures
+   - Error messages for missing files
+
+**How to test:**
+1. Read Nix documentation for each builtin's edge cases
+2. Test in `nix repl` to confirm expected behavior
+3. Add tests to relevant `main/tests/builtins/` subdirectories
+4. Compare runtime.js output with Nix output
+
+**Time estimate:** 3-5 hours (incremental, can be done alongside other work)
+
+---
+
 ### Priority 3: Translator Edge Cases (main.js)
 
 **DO NOT START until Priority 1 and 2 are resolved (or decision made to skip optional builtins)**
 
 **What's NOT fully tested:**
 
-#### Task 3.1: Advanced Pattern Matching Edge Cases
+#### Task 3.1: Advanced Pattern Matching Edge Cases (~2-3 hours)
 
 **Missing test coverage:**
-- Nested `@` patterns: `f = { a, b } @ x @ y: ...` (double capture)
+- Nested `@` patterns: `f = { a, b } @ x @ y: ...` (double capture - does Nix even support this?)
 - Ellipsis with specific defaults: `{ a ? 1, b ? 2, ... }: ...`
 - Mixed pattern styles: `{ a, b ? 2 } @ args: ...`
 - Empty patterns: `{}: ...` and `{ ... }: ...`
+- Pattern matching with inherit: `{ inherit a b; c ? 3; }: ...`
+- Nested destructuring: `{ a: { b, c }, d }: ...` (if Nix supports this)
 
 **How to verify:**
-1. Test in `nix repl` to confirm expected behavior
+1. Test each pattern in `nix repl` to confirm Nix behavior/syntax
 2. Add tests to `main/tests/translator_test.js`
 3. Ensure translated JS matches Nix evaluation
+4. If pattern is invalid in Nix, document why it's not needed
 
-#### Task 3.2: String Escape Sequences Verification
+**Current status:** Basic patterns work, but exotic combinations untested
+
+**Time estimate:** 2-3 hours
+
+#### Task 3.2: String Escape Sequences Verification (~1-2 hours)
 
 **Missing comprehensive tests:**
 - All escape sequences: `\n`, `\t`, `\r`, `\\`, `\"`, `\$`, `\${`
-- Unicode escapes (if Nix supports them)
+- Unicode escapes (if Nix supports them - check in nix repl)
 - Invalid escape sequences (should error or pass through)
-- Escapes in interpolated strings vs regular strings
+- Escapes in interpolated strings vs regular strings vs multi-line strings
+- Escape sequences in paths (if different behavior)
 
 **How to verify:**
 ```nix
@@ -197,50 +308,140 @@ deno test --allow-all main/tests/derivation/001_basic_tests.js
 "\t"   # tab
 "\\n"  # literal backslash-n
 "\${"  # literal ${
+"\x41" # hex escape (if supported)
+"\u0041" # unicode escape (if supported)
 ```
 
-#### Task 3.3: Path Literals Edge Cases
+**Where to add tests:**
+- Create `main/tests/string_escapes_test.js`
+- Test both Nix and JS output match
+
+**Current status:** Basic escapes work (used in ascii-table.nix tests), but comprehensive edge cases untested
+
+**Time estimate:** 1-2 hours
+
+#### Task 3.3: Path Literals Edge Cases (~2-3 hours)
 
 **Known partial implementation:**
-- Line 149 in `main.js` has `<nixpkgs>` partial support
-- Not clear if all path edge cases are handled
+- Line 149 in `main.js` has `<nixpkgs>` partial support (only for NIX_PATH lookup)
+- Basic path literals work (./relative, /absolute)
+- Path interpolation works
 
 **Missing test coverage:**
-- Path with spaces: `./path with spaces/file.nix`
+- Path with spaces: `./path with spaces/file.nix` (check if Nix allows this)
 - Path with special characters: `./path-with-dashes/file_with_underscores.nix`
-- Path concatenation: `./path + "/subdir"`
-- Home directory paths: `~/path` (if Nix supports)
-- Search paths: `<nixpkgs>`, `<nixpkgs/lib>`, etc.
+- Path concatenation: `./path + "/subdir"` (check if works, or if requires string conversion)
+- Home directory paths: `~/path` (check if Nix supports this syntax)
+- Search paths: `<nixpkgs>`, `<nixpkgs/lib>`, etc. (needs NIX_PATH resolution)
+- Relative vs absolute path behavior differences
+- Path normalization (../ handling)
 
-#### Task 3.4: Operator Precedence Verification
-
-**Need comprehensive test suite:**
-Create tests covering all operator combinations:
-- Arithmetic: `1 + 2 * 3` vs `(1 + 2) * 3`
-- Comparison chains: `1 < 2 && 2 < 3`
-- Boolean logic: `!true || false && true`
-- String concatenation: `"a" + "b" + "c"`
-- Has-attr: `a ? b && c ? d` vs `(a ? b) && (c ? d)`
-- Update: `a // b // c` (left-to-right or right-to-left?)
+**<nixpkgs> implementation status:**
+- Line 149 in main.js looks up NIX_PATH environment variable
+- Splits by `:` and checks each path
+- Returns first match
+- May not handle all edge cases (multiple colons, empty entries, etc.)
 
 **How to verify:**
-1. Test each case in `nix repl`
-2. Compare with JavaScript translation output
-3. Document any differences
+```nix
+# Test in nix repl with various paths
+./test
+/tmp/test
+<nixpkgs>
+./path/../other
+```
 
-#### Task 3.5: Additional Language Features
+**Where to add tests:**
+- Expand `main/tests/path_interpolation_test.js`
+- Or create `main/tests/path_literals_test.js`
+
+**Time estimate:** 2-3 hours
+
+#### Task 3.4: Operator Precedence Verification (~3-4 hours)
+
+**Need comprehensive test suite:**
+Create tests covering all operator combinations to ensure precedence matches Nix exactly:
+
+**Operators by precedence (need to verify in Nix docs):**
+1. Function application (highest precedence)
+2. Unary: `-`, `!`
+3. Has-attr: `?`
+4. Arithmetic: `*`, `/`
+5. Arithmetic: `+`, `-`
+6. String concat: `+` (same as addition?)
+7. List concat: `++`
+8. Update: `//`
+9. Comparison: `<`, `>`, `<=`, `>=`
+10. Equality: `==`, `!=`
+11. Logical AND: `&&`
+12. Logical OR: `||`
+13. Implication: `->`
+14. Let, if, with (lowest precedence)
+
+**Test cases needed:**
+- Arithmetic: `1 + 2 * 3` (should be 7, not 9)
+- Comparison chains: `1 < 2 && 2 < 3` (should be true)
+- Boolean logic: `!true || false && true` (operator precedence: ! > && > ||)
+- String concatenation: `"a" + "b" + "c"` (left-to-right)
+- Has-attr: `a ? b && c ? d` (? binds tighter than &&)
+- Update: `a // b // c` (left-to-right: `(a // b) // c`)
+- Mixed: `1 + 2 < 3 * 4` (arithmetic before comparison)
+- Function application: `f x + 1` (should be `(f x) + 1`, not `f (x + 1)`)
+
+**How to verify:**
+1. Read Nix language reference for operator precedence table
+2. Test each case in `nix repl`
+3. Compare with JavaScript translation output
+4. Create `main/tests/operator_precedence_test.js`
+
+**Current status:** Basic operators work, but complex precedence combinations untested
+
+**Time estimate:** 3-4 hours
+
+#### Task 3.5: Additional Language Features (~4-5 hours)
 
 **Not exhaustively tested:**
-- Multi-line strings (indented strings): `'' ... ''`
-  - Indentation stripping behavior
-  - Escape sequences in multi-line strings
-  - Interpolation in multi-line strings
-- URI literals: `https://example.com` (if these are first-class in Nix)
-- `inherit` edge cases:
-  - `inherit (expr) a b c;`
-  - `inherit a b c;` in different contexts
-  - Scoping behavior with inherit
-- Comments preservation (not critical, but nice to have)
+
+**Multi-line strings (indented strings): `'' ... ''`**
+- Indentation stripping behavior (removes common leading whitespace)
+- Escape sequences in multi-line strings: `''$`, `'''`, `''\n`, `''\t`, `''${`
+- Interpolation in multi-line strings: `'' text ${expr} more ''`
+- Mixing tabs and spaces in indentation
+- Empty lines and trailing whitespace handling
+- Line ending normalization (CRLF vs LF)
+
+**URI literals:**
+- Check if Nix has first-class URI syntax: `https://example.com`
+- Or if URIs are just strings that happen to look like URLs
+- Test in `nix repl`: `https://example.com` (does it parse as special syntax?)
+
+**`inherit` edge cases:**
+- `inherit (expr) a b c;` - inherit from specific attrset
+- `inherit a b c;` - inherit from outer scope
+- Scoping behavior: what scope does `inherit` look up?
+- Using inherit in different contexts: let, rec sets, non-rec sets, function defaults
+- Inheriting non-existent attributes (should error)
+- `inherit` with same attribute name defined elsewhere in same attrset
+
+**`with` expression edge cases:**
+- Nested `with` expressions: `with a; with b; expr`
+- Shadowing behavior: `with { x = 1; }; x + (let x = 2; in x)`
+- Error handling: `with null; expr` (should error)
+- Performance with large attrsets
+
+**Function definition edge cases:**
+- Currying: `a: b: c: body` (multiple parameters)
+- Mix of destructuring and simple params: Not allowed? Or `{a}: b: body`?
+
+**Where to test:**
+- Expand existing tests or create new test files
+- Multi-line strings: `main/tests/string_interpolation_test.js` or new file
+- Inherit: Add to `main/tests/translator_test.js`
+- With: Add to `main/tests/translator_test.js`
+
+**Current status:** Basic features work, but edge cases and complex combinations untested
+
+**Time estimate:** 4-5 hours
 
 ---
 
@@ -359,9 +560,44 @@ deno run --allow-all main/tests/derivation/standalone_test.js
 
 ## 🎯 Immediate Next Steps
 
-1. **Fix derivation store path bug** (~30 minutes) - Add output names to env before first hash
-2. **Decide on optional builtins** - Are fetchMercurial, fetchClosure, getFlake needed?
-3. **If skipping optional builtins:** Move to translator edge cases (Priority 3)
-4. **Expand nixpkgs.lib testing** (Priority 4) - Target 50% coverage
+**MUST follow this order (per WORK ORDER at top):**
 
-**Recommendation:** Fix derivation bug first, then skip optional builtins (rarely used) and focus on translator polish + testing expansion.
+1. **Priority 1.1: Fix derivation store path bug** (~30 minutes)
+   - Add 3 lines of code after line 1756 in runtime.js
+   - Should fix 8 failing tests immediately
+   - Also fix test 009 JS code (test file bug, not runtime bug)
+
+2. **Priority 1.2: Test derivation edge cases** (~2-3 hours)
+   - Multiple outputs, fixed-output derivations, structured attrs
+   - Create `main/tests/derivation/002_advanced_tests.js`
+
+3. **Priority 2: Decide on optional builtins** - Are they needed?
+   - fetchMercurial (2-3 days)
+   - fetchClosure (5-7 days, VERY COMPLEX)
+   - getFlake (5-7 days, VERY COMPLEX)
+   - fetchTree edge cases (4-6 hours)
+   - **Recommendation:** Skip these (rarely used), move to translator
+
+4. **Priority 2.5: Runtime builtin edge case testing** (~3-5 hours)
+   - Test string, list, attrset, path operations with edge cases
+   - Incremental work, can be done alongside other tasks
+
+5. **Priority 3: Translator edge cases** (~12-17 hours total)
+   - Pattern matching (2-3h)
+   - String escapes (1-2h)
+   - Path literals (2-3h)
+   - Operator precedence (3-4h)
+   - Additional features (4-5h)
+
+6. **Priority 4: Expand nixpkgs.lib testing** (4-6 days)
+   - Target 50% coverage (20/41 files)
+   - Focus on high-value targets first (lists, attrsets, options)
+
+**Recommended path:** 1.1 → 1.2 → Skip Priority 2 → 2.5 → 3 → 4
+
+**Total estimated time (if skipping Priority 2):**
+- Priority 1: 2.5-3.5 hours
+- Priority 2.5: 3-5 hours
+- Priority 3: 12-17 hours
+- Priority 4: 4-6 days
+- **Grand total:** ~6-8 days of focused work to reach production-ready translator + comprehensive testing

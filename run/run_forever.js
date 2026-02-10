@@ -8,7 +8,7 @@ const $$ = (...args)=>$(...args).noThrow()
 // await $$`false`.text("combined")
 // await $$`echo`.stdinText("yes\n")
 
-let increment = 82
+let increment = 83
 while (true) {
     console.log(`increment: ${increment}`)
 

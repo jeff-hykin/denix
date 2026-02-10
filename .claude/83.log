@@ -1,0 +1,52 @@
+Good! The file went from 368 lines to 603 lines - I've added substantial detail about what needs to be done. Let me create a quick summary of what I've added to the prompt.md:
+
+## Summary of Changes to prompt.md
+
+I've expanded and clarified the prompt.md file with detailed information about what remains to be done:
+
+### Added Sections:
+
+1. **Current State Summary** (lines 7-28) - Quick overview of project status showing:
+   - Runtime: 62/65 builtins (derivation bug blocking)
+   - Translator: Core features work, edge cases need testing
+   - Testing: 24% nixpkgs.lib coverage, needs expansion
+
+2. **Priority 1.2: Test Derivation Edge Cases** (~2-3 hours) - Details about missing derivation test coverage for:
+   - Multiple outputs
+   - Complex env vars
+   - Fixed-output derivations
+   - Structured attributes
+
+3. **Priority 2.5: Runtime Builtin Edge Cases Testing** (~3-5 hours) - Comprehensive list of builtins needing edge case tests:
+   - String operations (substring, split, match, etc.)
+   - List operations (sort, groupBy, foldl', etc.)
+   - Attrset operations (mapAttrs, filterAttrs, etc.)
+   - Path operations
+   - Import system edge cases
+
+4. **Enhanced Priority 3 tasks** with time estimates and specific details:
+   - Task 3.1: Pattern matching edge cases (2-3h)
+   - Task 3.2: String escape sequences (1-2h)
+   - Task 3.3: Path literals edge cases (2-3h)
+   - Task 3.4: Operator precedence verification (3-4h)
+   - Task 3.5: Additional language features (4-5h)
+
+5. **Updated Immediate Next Steps** with:
+   - Clear ordering (must follow WORK ORDER)
+   - Time estimates for each priority
+   - Recommended path through the work
+   - Grand total: ~6-8 days to production-ready
+
+6. **Clarified test 009 issue** - It's a test file bug (incorrect JS code), not a runtime bug
+
+### Key Improvements:
+
+- All tasks now have time estimates
+- Added "How to verify" sections with specific commands
+- Added "Where to add tests" guidance
+- Listed specific edge cases for each feature
+- Provided code examples and test patterns
+- Clarified what's blocking vs what's optional
+- Made priorities actionable with concrete next steps
+
+The prompt.md now serves as a comprehensive development roadmap with ~603 lines of detailed guidance for completing the Denix project.
