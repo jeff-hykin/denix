@@ -4,11 +4,17 @@
 
 **Your job is to focus on what is NOT implemented and NOT working. Only report what remains to be done. Do not report accomplishments or add achievement markers (✅/🎉). You are a senior level developer - there is no such thing as a blocker. Break down large tasks into smaller tasks.**
 
-**CURRENT WORK ORDER:**
-1. **Runtime testing** - Test the 69 untested builtins (Priority 0 tasks 0.1-0.6) - THIS IS THE WORK
-2. **AFTER testing complete:** nixpkgs.lib testing - Test 26 remaining library files (Priority 3)
+**THE ONLY REMAINING WORK: TESTING**
 
-**What's blocking progress:** 74% of runtime builtins are untested (69/97 functions). Runtime has code but no verification it works correctly.
+1. **Priority 0: Core builtin testing** - Test 69 untested builtins (Tasks 0.1-0.6) - START HERE
+2. **Priority 1: Edge case testing** - Derivations, translator patterns (After Priority 0)
+3. **Priority 2: nixpkgs.lib expansion** - Test 31 remaining library files (After Priority 1)
+
+**Current Status:**
+- Runtime: 100% implemented (all 97 Nix 2.18 builtins exist)
+- Tests: 26% coverage (28/97 builtins tested, 69 untested)
+- Translator: 100% working (87/87 tests passing)
+- Derivations: WORKING (12/12 tests passing) - NOT a blocker
 
 ## MANDATORY IMPLEMENTATION PROCESS
 

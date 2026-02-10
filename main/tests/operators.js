@@ -1,115 +1,154 @@
+import { assertEquals } from "https://deno.land/std@0.208.0/assert/mod.ts"
 import { operators, builtins } from "../runtime.js"
 
-const assertEquals = (actual, expected, msg) => {
-    // BigInt-safe serialization
-    const serialize = (val) => {
-        if (typeof val === 'bigint') return val.toString() + 'n'
-        if (Array.isArray(val)) return JSON.stringify(val)
-        if (typeof val === 'object' && val !== null) return JSON.stringify(val)
-        return JSON.stringify(val)
-    }
-    const actualStr = serialize(actual)
-    const expectedStr = serialize(expected)
-    if (actualStr !== expectedStr) {
-        throw new Error(`${msg}\n  Expected: ${expectedStr}\n  Actual: ${actualStr}`)
-    }
-}
+Deno.test("operators.negative - negates bigint", () => {
+    assertEquals(operators.negative(5n), -5n)
+})
 
-console.log("Testing operators.negative...")
-{
-    assertEquals(operators.negative(5n), -5n, "negative should negate bigint")
-    assertEquals(operators.negative(5.5), -5.5, "negative should negate float")
-}
+Deno.test("operators.negative - negates float", () => {
+    assertEquals(operators.negative(5.5), -5.5)
+})
 
-console.log("Testing operators.negate...")
-{
-    assertEquals(operators.negate(true), false, "negate should invert true")
-    assertEquals(operators.negate(false), true, "negate should invert false")
-}
+Deno.test("operators.negate - inverts true", () => {
+    assertEquals(operators.negate(true), false)
+})
 
-console.log("Testing operators.listConcat...")
-{
+Deno.test("operators.negate - inverts false", () => {
+    assertEquals(operators.negate(false), true)
+})
+
+Deno.test("operators.listConcat - concatenates lists", () => {
     const result = operators.listConcat([1, 2], [3, 4])
-    assertEquals(result, [1, 2, 3, 4], "listConcat should concatenate lists")
-}
+    assertEquals(result, [1, 2, 3, 4])
+})
 
-console.log("Testing operators.divide...")
-{
-    assertEquals(operators.divide(10n, 2n), 5n, "divide should divide bigints")
-    assertEquals(operators.divide(10.0, 2.0), 5.0, "divide should divide floats")
-}
+Deno.test("operators.divide - divides bigints", () => {
+    assertEquals(operators.divide(10n, 2n), 5n)
+})
 
-console.log("Testing operators.multiply...")
-{
-    assertEquals(operators.multiply(5n, 3n), 15n, "multiply should multiply bigints")
-    assertEquals(operators.multiply(2.5, 4.0), 10.0, "multiply should multiply floats")
-}
+Deno.test("operators.divide - divides floats", () => {
+    assertEquals(operators.divide(10.0, 2.0), 5.0)
+})
 
-console.log("Testing operators.merge...")
-{
+Deno.test("operators.multiply - multiplies bigints", () => {
+    assertEquals(operators.multiply(5n, 3n), 15n)
+})
+
+Deno.test("operators.multiply - multiplies floats", () => {
+    assertEquals(operators.multiply(2.5, 4.0), 10.0)
+})
+
+Deno.test("operators.merge - merges attrsets (right wins)", () => {
     const a = { x: 1, y: 2 }
     const b = { y: 20, z: 30 }
     const result = operators.merge(a, b)
-    assertEquals(result, { x: 1, y: 20, z: 30 }, "merge should merge attrsets, right wins")
-}
+    assertEquals(result.x, 1)
+    assertEquals(result.y, 20)
+    assertEquals(result.z, 30)
+})
 
-console.log("Testing operators.and...")
-{
-    assertEquals(operators.and(true, true), true, "and should work with true/true")
-    assertEquals(operators.and(true, false), false, "and should work with true/false")
-    assertEquals(operators.and(false, true), false, "and should work with false/true")
-    assertEquals(operators.and(false, false), false, "and should work with false/false")
-}
+Deno.test("operators.and - true && true", () => {
+    assertEquals(operators.and(true, true), true)
+})
 
-console.log("Testing operators.or...")
-{
-    assertEquals(operators.or(true, true), true, "or should work with true/true")
-    assertEquals(operators.or(true, false), true, "or should work with true/false")
-    assertEquals(operators.or(false, true), true, "or should work with false/true")
-    assertEquals(operators.or(false, false), false, "or should work with false/false")
-}
+Deno.test("operators.and - true && false", () => {
+    assertEquals(operators.and(true, false), false)
+})
 
-console.log("Testing operators.implication...")
-{
-    assertEquals(operators.implication(false, false), true, "false -> false = true")
-    assertEquals(operators.implication(false, true), true, "false -> true = true")
-    assertEquals(operators.implication(true, false), false, "true -> false = false")
-    assertEquals(operators.implication(true, true), true, "true -> true = true")
-}
+Deno.test("operators.and - false && true", () => {
+    assertEquals(operators.and(false, true), false)
+})
 
-console.log("Testing operators.greaterThan...")
-{
-    assertEquals(operators.greaterThan(5, 3), true, "5 > 3")
-    assertEquals(operators.greaterThan(3, 5), false, "3 > 5")
-    assertEquals(operators.greaterThan(5, 5), false, "5 > 5")
-}
+Deno.test("operators.and - false && false", () => {
+    assertEquals(operators.and(false, false), false)
+})
 
-console.log("Testing operators.lessThan...")
-{
-    assertEquals(operators.lessThan(3, 5), true, "3 < 5")
-    assertEquals(operators.lessThan(5, 3), false, "5 < 3")
-    assertEquals(operators.lessThan(5, 5), false, "5 < 5")
-}
+Deno.test("operators.or - true || true", () => {
+    assertEquals(operators.or(true, true), true)
+})
 
-console.log("Testing operators.greaterThanOrEqual...")
-{
-    assertEquals(operators.greaterThanOrEqual(5, 3), true, "5 >= 3")
-    assertEquals(operators.greaterThanOrEqual(5, 5), true, "5 >= 5")
-    assertEquals(operators.greaterThanOrEqual(3, 5), false, "3 >= 5")
-}
+Deno.test("operators.or - true || false", () => {
+    assertEquals(operators.or(true, false), true)
+})
 
-console.log("Testing operators.lessThanOrEqual...")
-{
-    assertEquals(operators.lessThanOrEqual(3, 5), true, "3 <= 5")
-    assertEquals(operators.lessThanOrEqual(5, 5), true, "5 <= 5")
-    assertEquals(operators.lessThanOrEqual(5, 3), false, "5 <= 3")
-}
+Deno.test("operators.or - false || true", () => {
+    assertEquals(operators.or(false, true), true)
+})
 
-console.log("Testing operators.hasAttr...")
-{
+Deno.test("operators.or - false || false", () => {
+    assertEquals(operators.or(false, false), false)
+})
+
+Deno.test("operators.implication - false -> false", () => {
+    assertEquals(operators.implication(false, false), true)
+})
+
+Deno.test("operators.implication - false -> true", () => {
+    assertEquals(operators.implication(false, true), true)
+})
+
+Deno.test("operators.implication - true -> false", () => {
+    assertEquals(operators.implication(true, false), false)
+})
+
+Deno.test("operators.implication - true -> true", () => {
+    assertEquals(operators.implication(true, true), true)
+})
+
+Deno.test("operators.greaterThan - 5 > 3", () => {
+    assertEquals(operators.greaterThan(5, 3), true)
+})
+
+Deno.test("operators.greaterThan - 3 > 5", () => {
+    assertEquals(operators.greaterThan(3, 5), false)
+})
+
+Deno.test("operators.greaterThan - 5 > 5", () => {
+    assertEquals(operators.greaterThan(5, 5), false)
+})
+
+Deno.test("operators.lessThan - 3 < 5", () => {
+    assertEquals(operators.lessThan(3, 5), true)
+})
+
+Deno.test("operators.lessThan - 5 < 3", () => {
+    assertEquals(operators.lessThan(5, 3), false)
+})
+
+Deno.test("operators.lessThan - 5 < 5", () => {
+    assertEquals(operators.lessThan(5, 5), false)
+})
+
+Deno.test("operators.greaterThanOrEqual - 5 >= 3", () => {
+    assertEquals(operators.greaterThanOrEqual(5, 3), true)
+})
+
+Deno.test("operators.greaterThanOrEqual - 5 >= 5", () => {
+    assertEquals(operators.greaterThanOrEqual(5, 5), true)
+})
+
+Deno.test("operators.greaterThanOrEqual - 3 >= 5", () => {
+    assertEquals(operators.greaterThanOrEqual(3, 5), false)
+})
+
+Deno.test("operators.lessThanOrEqual - 3 <= 5", () => {
+    assertEquals(operators.lessThanOrEqual(3, 5), true)
+})
+
+Deno.test("operators.lessThanOrEqual - 5 <= 5", () => {
+    assertEquals(operators.lessThanOrEqual(5, 5), true)
+})
+
+Deno.test("operators.lessThanOrEqual - 5 <= 3", () => {
+    assertEquals(operators.lessThanOrEqual(5, 3), false)
+})
+
+Deno.test("operators.hasAttr - finds existing attr", () => {
     const obj = { x: 1, y: 2 }
-    assertEquals(operators.hasAttr(obj, "x"), true, "hasAttr should find existing attr")
-    assertEquals(operators.hasAttr(obj, "z"), false, "hasAttr should not find missing attr")
-}
+    assertEquals(operators.hasAttr(obj, "x"), true)
+})
 
-console.log("✓ All operator tests passed")
+Deno.test("operators.hasAttr - missing attr returns false", () => {
+    const obj = { x: 1, y: 2 }
+    assertEquals(operators.hasAttr(obj, "z"), false)
+})

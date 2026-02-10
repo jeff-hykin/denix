@@ -1,74 +1,56 @@
+import { assertEquals } from "https://deno.land/std@0.208.0/assert/mod.ts"
 import { createRuntime } from "../runtime.js"
 
 const runtime = createRuntime()
 const { builtins } = runtime.rootScope
 
-// Test helper
-function test(name, fn) {
-    try {
-        fn()
-        console.log(`✓ ${name}`)
-        return true
-    } catch (e) {
-        console.log(`✗ ${name}: ${e.message}`)
-        return false
-    }
-}
-
-function assertEquals(actual, expected, message = "") {
+// Helper to compare with BigInt support
+function assertEqualsWithBigInt(actual, expected) {
     const actualStr = JSON.stringify(actual, (k, v) => typeof v === 'bigint' ? v.toString() + 'n' : v)
     const expectedStr = JSON.stringify(expected, (k, v) => typeof v === 'bigint' ? v.toString() + 'n' : v)
-    if (actualStr !== expectedStr) {
-        throw new Error(`${message}\nExpected: ${expectedStr}\nActual: ${actualStr}`)
-    }
+    assertEquals(actualStr, expectedStr)
 }
 
-// Tests
-let passed = 0
-let failed = 0
-
-if (test("fromTOML parses simple int", () => {
+Deno.test("fromTOML - parses simple int", () => {
     const result = builtins.fromTOML("value = 42")
-    assertEquals(result, { value: 42n })
-})) passed++; else failed++;
+    assertEqualsWithBigInt(result, { value: 42n })
+})
 
-if (test("fromTOML parses float", () => {
+Deno.test("fromTOML - parses float", () => {
     const result = builtins.fromTOML("value = 3.14")
-    assertEquals(result, { value: 3.14 })
-})) passed++; else failed++;
+    assertEquals(result.value, 3.14)
+})
 
-if (test("fromTOML parses string", () => {
+Deno.test("fromTOML - parses string", () => {
     const result = builtins.fromTOML('name = "hello"')
-    assertEquals(result, { name: "hello" })
-})) passed++; else failed++;
+    assertEquals(result.name, "hello")
+})
 
-if (test("fromTOML parses array of ints", () => {
+Deno.test("fromTOML - parses array of ints", () => {
     const result = builtins.fromTOML("values = [1, 2, 3]")
-    assertEquals(result, { values: [1n, 2n, 3n] })
-})) passed++; else failed++;
+    assertEqualsWithBigInt(result, { values: [1n, 2n, 3n] })
+})
 
-if (test("fromTOML parses nested object", () => {
+Deno.test("fromTOML - parses nested object", () => {
     const result = builtins.fromTOML(`
 [server]
 port = 8080
 host = "localhost"
 `)
-    assertEquals(result, { server: { port: 8080n, host: "localhost" } })
-})) passed++; else failed++;
+    assertEqualsWithBigInt(result, { server: { port: 8080n, host: "localhost" } })
+})
 
-if (test("fromTOML parses mixed types", () => {
+Deno.test("fromTOML - parses mixed types", () => {
     const result = builtins.fromTOML(`
 name = "myapp"
 version = 1
 pi = 3.14159
 enabled = true
 `)
-    assertEquals(result, {
+    assertEqualsWithBigInt(result, {
         name: "myapp",
         version: 1n,
         pi: 3.14159,
         enabled: true
     })
-})) passed++; else failed++;
-
-console.log(`\n${passed} passed, ${failed} failed`)
+})

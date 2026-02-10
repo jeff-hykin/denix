@@ -21,36 +21,32 @@
 
 ## Test Organization
 
-### Category 1: Runtime Builtin Tests (13 files)
+### Category 1: Runtime Builtin Tests (10 files)
 
 Tests for `main/runtime.js` builtins implementation.
 
 | File | What It Tests | Status |
 |------|---------------|--------|
-| `builtins_attrs.js` | attrset operations (hasAttr, getAttr, etc.) | ✅ |
-| `builtins_eval_control.js` | eval, tryEval, seq | ✅ |
+| `builtins_core_test.js` | Core builtins (groupBy, mapAttrs, trace, throw, etc.) | ✅ |
 | `builtins_fetchgit_test.js` | fetchGit builtin (network) | ✅ |
 | `builtins_fetchtarball_test.js` | fetchTarball builtin (network) | ✅ |
 | `builtins_fetchtree_test.js` | fetchTree builtin (network) | ✅ |
 | `builtins_fetchurl_test.js` | fetchurl builtin (network) | ✅ |
 | `builtins_filtersource_test.js` | filterSource builtin | ✅ |
-| `builtins_list.js` | list operations (map, filter, head, tail) | ✅ |
 | `builtins_path_test.js` | path builtin | ✅ |
 | `builtins_tojson_path_test.js` | toJSON and path handling | ✅ |
-| `builtins_version.js` | version comparison builtins | ✅ |
-| `nix218_builtins_test.js` | Validates all Nix 2.18 builtins exist | ✅ |
 | `fromtoml_test.js` | fromTOML parser | ✅ |
+| `operators.js` | Operator functions (negative, negate, divide, merge, etc.) | ✅ |
 
-**Run:** `./test.sh runtime`
+**Run:** `./test.sh runtime` or `./test.sh core`
 
-### Category 2: Translator Tests (5 files)
+### Category 2: Translator Tests (4 files)
 
 Tests for `main.js` Nix → JavaScript translator.
 
 | File | What It Tests | Status |
 |------|---------------|--------|
 | `translator_test.js` | Core translator (87 tests) | ✅ |
-| `operators.js` | Operator translation | ✅ |
 | `hasattr_test.js` | has-attr pattern translation | ✅ |
 | `string_interpolation_test.js` | String interpolation | ✅ |
 | `path_interpolation_test.js` | Path interpolation | ✅ |
