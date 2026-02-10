@@ -85,8 +85,8 @@
 
 **CRITICAL BUGS (BLOCKING):**
 - 🚨 **Derivation tests:** 7/10 tests FAILING (test 003-009)
-  - Hash mismatches: Tests 003-008 (serialization format wrong)
-  - toJSON error: Test 009 (dual hasAttr implementations conflict)
+  - Hash mismatches: Tests 003-008 (ATerm serialization format differs from Nix)
+  - Test code bug: Test 009 (incorrect test translation - easy 15 min fix)
   - **THIS BLOCKS PRODUCTION USE** - derivations are core functionality
 
 **Runtime:** 35/109 builtins UNTESTED (32.1% NOT tested)
@@ -104,7 +104,10 @@
 - High-value files NOT tested: lists.nix, attrsets.nix, options.nix
 - Only 10 simple files currently tested
 
-**Immediate Next Task:** Fix derivation bugs (2-4 hours) - HIGHEST PRIORITY
+**Immediate Next Task:**
+1. Fix test 009 (15 min) - Change hasAttr calls in test code ✅ Easy win
+2. Fix builtins.placeholder (30-45 min) - Implement correct placeholder algorithm ✅ Solution found!
+3. Verify all 10 derivation tests pass → ~1 hour total to fix ALL derivation bugs!
 
 ---
 
@@ -117,63 +120,166 @@ Run: `./test.sh derivation` → Shows 7/10 tests failing
 1. **hasAttr dual implementation** - Two incompatible APIs exist
 2. **ATerm serialization mismatch** - Hash computation differs from Nix
 
-### Task 0.1: Fix hasAttr Dual Implementation (30 min) ⚡
+### Task 0.1: Fix Test 009 - Incorrect Test Code (15 min) ⚡
 
-**Problem:** Two incompatible implementations of `hasAttr` exist:
-- Builtin version (line 639): `hasAttr(attr)(attrSet)` - curried, attr first
-- Operators version (lines 2169-2173): `hasAttr(attrSet, attr)` - uncurried, attrset first
+**Problem:** Test 009 (line 175 in 001_basic_tests.js) has incorrect JavaScript translation:
+- Test calls: `builtins.hasAttr({name: "name"}, drv)`
+- This passes an object `{name: "name"}` as first argument
+- But `builtins.hasAttr` is curried: `hasAttr(attr)(attrSet)`
+- Should be: `builtins.hasAttr("name")(drv)`
 
-**Impact:** Test 009 calls `builtins.hasAttr({name: "name"}, drv)` which:
-1. Uses builtin API with operators calling convention
-2. Returns a function instead of boolean
-3. Causes toJSON to throw "cannot convert a function to JSON"
+**Impact:**
+1. Calling `hasAttr({name: "name"})` returns a function (waiting for second call)
+2. That function gets passed to toJSON
+3. toJSON throws "cannot convert a function to JSON"
 
 **Fix:**
-1. Read Nix docs: `builtins.hasAttr` is curried: `builtins.hasAttr "name" obj`
-2. Keep builtin version as-is (correct)
-3. Make operators.hasAttr call the builtin OR document the difference clearly
-4. Update any code using the wrong API
+1. Edit `main/tests/derivation/001_basic_tests.js` lines 175-178
+2. Change all 4 hasAttr calls from `builtins.hasAttr({name: "X"}, drv)` to `builtins.hasAttr("X")(drv)`
+3. Test should pass immediately after fix
 
 **Files to modify:**
-- `main/runtime.js` line 2169-2173 (operators.hasAttr)
-- Search codebase for `operators.hasAttr` usage
-- Verify test 009 passes after fix
+- `main/tests/derivation/001_basic_tests.js` lines 175-178
+
+**Note:** The builtin implementation is CORRECT (curried). The test code is WRONG.
 
 ---
 
-### Task 0.2: Fix Derivation Serialization (2-3 hours) ⚡⚡
+### Task 0.2: Fix builtins.placeholder Implementation (30-45 min) ⚡⚡
 
 **Problem:** Tests 003-008 produce wrong output path hashes. The ATerm serialization format doesn't match Nix exactly.
 
+Example mismatch (test 003):
+- Expected: `/nix/store/9gfq1d96jqxmvkzj0ihsc2yxgnys7x21-test-outputs`
+- Got: `/nix/store/d8w3khwy1wyq3plw9hfxyz8fqmkkd24r-test-outputs`
+
 **MANDATORY FIRST STEP:** Read Nix documentation on derivations:
 - https://nix.dev/manual/nix/2.28/language/derivations
-- Search for "ATerm" in Nix source code
-- Read how Nix serializes derivations for hashing
+- https://nix.dev/manual/nix/2.28/protocols/store-path
+- Search for "ATerm" and "Derive" in Nix source code: https://github.com/NixOS/nix/blob/master/src/libstore/derivations.cc
 
-**Investigation steps:**
-1. Test in nix repl what exact ATerm format Nix produces:
+**Root Cause Investigation:**
+
+The hash mismatch means our ATerm serialization format differs from Nix. The derivation is serialized to ATerm format BEFORE hashing to compute output paths.
+
+**Debugging steps:**
+
+1. **Create a minimal test derivation and inspect Nix's .drv file:**
    ```bash
-   nix-instantiate --eval --strict -E '
-     let drv = derivation {
-       name = "test-outputs";
-       system = "x86_64-linux";
-       builder = "/bin/sh";
-       outputs = ["out" "dev"];
-     }; in builtins.readFile drv.drvPath
-   '
+   nix-build --expr 'derivation { name = "test-outputs"; system = "x86_64-linux"; builder = "/bin/sh"; outputs = ["out" "dev"]; }' --show-trace
+   # Find the .drv file path in the output, then:
+   cat /nix/store/...test-outputs.drv
+   ```
+   This shows the EXACT ATerm format Nix uses.
+
+2. **Add debug logging to our code to compare:**
+   In `main/runtime.js` line ~1779, add:
+   ```javascript
+   console.log("Our ATerm:", drvSerializedForHash)
+   ```
+   Run test 003 and compare our output with Nix's .drv file.
+
+3. **Common ATerm format issues to check:**
+   - **Output format:** Should be `("out","<path>","","")` not `["out","<path>","",""]`
+   - **Environment variable sorting:** Must be alphabetically sorted by key
+   - **String escaping:** Special chars in env var values must be escaped
+   - **Output names in env:** For multiple outputs, MUST include all output names as empty strings BEFORE computing hash
+     - For `outputs = ["out" "dev"]`, env must have `out = ""` and `dev = ""` when computing paths
+   - **Builder args format:** Must be list of strings in correct format
+   - **Input derivations format:** Currently empty `[]` but format must match Nix
+
+4. **Verify empty output placeholders are correct:**
+   Lines 1763-1765 in runtime.js add `env[outputName] = ""` for each output.
+   Our format looks correct: `Derive([("out","","","")],[],[],"x86_64-linux","/bin/sh",[],[("builder","/bin/sh"),("name","test"),("out",""),("system","x86_64-linux")])`
+
+   **CRITICAL DISCOVERY:** The issue is that Nix does NOT use empty strings for output paths during hashing!
+
+   **The Root Cause:**
+   - We use: `env[outputName] = ""` (empty string)
+   - Nix uses: `env[outputName] = builtins.placeholder(outputName)` (special hash-based placeholder)
+
+   **Nix's placeholder algorithm:**
+   ```javascript
+   function placeholder(output_name) {
+       const clear_text = `nix-output:${output_name}`
+       const digest = sha256(clear_text)  // SHA256 hash
+       return nixbase32_encode(digest)     // Encode in Nix base-32
+   }
+   ```
+   Example: `placeholder("out")` → something like `iyh8f5s9vq6n...` (32 chars)
+
+   **What Nix does (CORRECT):**
+   1. Build ATerm with output paths set to PLACEHOLDERS: `env.out = placeholder("out")`
+   2. Hash that ATerm to compute output paths
+   3. Replace placeholders with actual computed paths in final .drv
+
+   **What we're doing (WRONG):**
+   1. Build ATerm with empty strings: `env.out = ""`
+   2. Hash that (WRONG - different hash than Nix!)
+   3. Get different output paths than Nix
+
+   **THE FIX:**
+
+   **Step 1: Fix `builtins.placeholder` (line 1915-1923 in runtime.js)**
+
+   Current WRONG implementation:
+   ```javascript
+   "placeholder": (outputName)=>{
+       const name = requireString(outputName).toString()
+       const hash = sha256Hex(name).slice(0, 32)
+       return `/${hash}`
+   }
    ```
 
-2. Compare with our serializeDerivation output
-3. Common issues in ATerm format:
-   - Sorting of environment variables
-   - Escaping of special characters
-   - Output placeholder format
-   - Missing or extra attributes
+   Correct implementation (import encodeBase32 from store_path.js):
+   ```javascript
+   "placeholder": (outputName)=>{
+       const name = requireString(outputName).toString()
+       const clearText = `nix-output:${name}`
+       const digest = sha256Hex(clearText)
+       const digestBytes = new Uint8Array(digest.match(/.{2}/g).map(b => parseInt(b, 16)))
+       const compressed = new Uint8Array(20)
+       for (let i = 0; i < digestBytes.length; i++) {
+           compressed[i % 20] ^= digestBytes[i]
+       }
+       return encodeBase32(compressed)  // Returns the placeholder WITHOUT leading slash!
+   }
+   ```
 
-**Files to check:**
+   **Step 2: Use placeholder in derivation (line 1764 in runtime.js)**
+
+   Change from:
+   ```javascript
+   env[outputName] = ""
+   ```
+
+   To:
+   ```javascript
+   env[outputName] = builtins.placeholder(outputName)
+   ```
+
+   **Step 3: Run tests**
+   After fix: `./test.sh derivation` should show 9/10 passing (test 009 still needs fix)
+
+   **References:**
+   - [Store Derivation and Deriving Path - Nix 2.28.1](https://nix.dev/manual/nix/2.28/store/derivation/)
+   - [Store Derivation and Deriving Path - Nix 2.30.3](https://nix.dev/manual/nix/2.30/store/derivation/)
+   - [Derivation outputs in a content-addressed world - Tweag](https://www.tweag.io/blog/2021-02-17-derivation-outputs-and-output-paths/)
+
+**Files to modify:**
 - `main/runtime.js` lines 1730-1795 (derivation implementation)
+  - Check order of env var operations
+  - Verify all env vars are added before serialization
 - `tools/store_path.js` lines 89-117 (serializeDerivation)
-- `tools/store_path.js` lines 123-134 (computeOutputPath)
+  - Check ATerm format matches Nix exactly
+  - Verify parentheses vs brackets
+  - Verify string escaping
+
+**Testing approach:**
+1. Fix one test at a time (start with test 003 - simplest)
+2. Add console.log to compare our ATerm vs Nix's ATerm
+3. Fix format differences until hash matches
+4. Verify fix works for all tests 003-008
 
 **Validation:**
 Run `./test.sh derivation` after each change. All 10 tests must pass.
@@ -517,4 +623,4 @@ Zero npm/jsr dependencies, only Deno standard library + esm.sh
 - Translator 100% passing
 - Import system 100% passing
 
-**Total time to production-ready: 5-9 hours** (fix derivations + reach 80% test coverage)
+**Total time to production-ready: 4-6 hours** (fix derivations in 1 hour + reach 80% test coverage in 3-5 hours)
