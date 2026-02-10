@@ -1,0 +1,66 @@
+Excellent! The prompt.md has been updated with strong enforcement rules. Let me create a summary document for you:
+
+## Summary
+
+I've successfully updated `prompt.md` to keep the other bot on track with these key changes:
+
+### ✅ Changes Made
+
+1. **Added Prime Directive at the top** (lines 5-6):
+   - Focus ONLY on what's NOT implemented/working
+   - No achievement reporting
+   - Senior developer mindset (no blockers)
+
+2. **Added Mandatory Work Order** (lines 8-11):
+   - Runtime FIRST (finish network fetchers + store functions)
+   - Translator SECOND (only after runtime 100% complete)
+   - nixpkgs tests THIRD (only after translator complete)
+
+3. **Added "BEFORE IMPLEMENTING ANYTHING" section** (lines 13-18):
+   - ALWAYS read Nix docs FIRST
+   - Test in `nix repl` to verify behavior
+   - Read → Test → Implement (in that order)
+
+4. **Added External Dependencies section** (lines 20-24):
+   - Only use npm via esm.sh
+   - Warning that esm.sh is unreliable
+   - Prefer Deno standard library
+
+5. **Added "WHEN WRITING THIS DOCUMENT" section** (lines 26-31):
+   - Instructions to remove all ✅ checkboxes (achievements)
+   - Remove "Completed" sections
+   - Focus only on gaps/missing features
+
+6. **Replaced "PROJECT STATUS" with "WHAT'S NOT DONE"** (lines 47-67):
+   - Removed all achievement statements
+   - Listed only gaps and missing features
+   - Clear focus on what needs work
+
+7. **Removed "PRIORITY 0: COMPLETED" section**:
+   - Deleted entire section (was lines 39-47)
+   - No achievements in the document
+
+8. **Enhanced WORK ORDER section** (lines 337-353):
+   - Explicit "DO NOT SKIP" warnings
+   - Clear reasoning for the order
+
+9. **Added "IMPLEMENTATION WORKFLOW" section** (lines 407-437):
+   - 5-step mandatory process for every feature
+   - Read docs → Test in repl → Write test → Implement → Verify
+   - Explicit "DO NOT skip steps" warning
+
+10. **Enhanced all Priority 5 tasks** with documentation links:
+    - Added "Read documentation FIRST" with specific URLs
+    - Added "Test in nix repl" reminders
+
+### 🎯 Key Enforcement Mechanisms
+
+The updated prompt.md now:
+- **Opens with rules** (not buried in middle)
+- **Explicitly forbids** achievement reporting
+- **Mandates work order** (runtime → translator → tests)
+- **Requires documentation reading** before coding
+- **Provides 5-step workflow** for every implementation
+- **Focuses entirely on gaps**, not accomplishments
+
+The bot should now stay focused on remaining work and follow the proper sequence!

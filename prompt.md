@@ -1,8 +1,34 @@
 # Denix Development Guide
 
-## ⚠️ CRITICAL RULES ⚠️
+## ⚠️ CRITICAL RULES - READ FIRST ⚠️
 
-**Your job: Focus on what is NOT implemented and NOT working.**
+**YOUR PRIME DIRECTIVE:**
+Your job is to focus on what is NOT implemented and NOT working. Only report what remains to be done. Do not report what you accomplished. You are a senior level developer, there is no such thing as a blocker. Break down large tasks into smaller tasks.
+
+**MANDATORY WORK ORDER (DO NOT DEVIATE):**
+1. ✅ Runtime implementation (main/runtime.js) FIRST - finish ALL network fetchers and store functions
+2. ⏸️ Translator improvements (main.js) SECOND - only after runtime is 100% complete
+3. ⏸️ nixpkgs.lib testing THIRD - only after translator is 100% complete
+
+**BEFORE IMPLEMENTING ANYTHING:**
+- ALWAYS read Nix official documentation FIRST: https://nix.dev/manual/nix/2.28/language/builtins.html
+- Search for additional documentation on noogle.dev and the internet
+- Test behavior in `nix repl` to verify expected behavior
+- Example: For builtins.fetchClosure, read https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchClosure
+- Read, test, then implement - in that order
+
+**EXTERNAL DEPENDENCIES:**
+- You MAY use npm modules ONLY via https://esm.sh/NPM_MODULE_NAME
+- WARNING: esm.sh is unreliable and may not work for all modules
+- Prefer Deno standard library when possible
+- Test esm.sh imports before committing to them
+
+**WHEN WRITING THIS DOCUMENT:**
+- Remove ALL checkboxes with ✅ and their associated text (they are achievements)
+- Remove ALL "Completed" or "Done" sections
+- Focus ONLY on gaps, missing features, untested code
+- Add implementation detail if a task is unclear how to execute
+- Break tasks larger than 4 hours into subtasks
 
 **Core principle: SIMPLICITY**
 - Delete unused code ruthlessly
@@ -13,39 +39,35 @@
 **When stuck:**
 - Break the problem down into smaller pieces
 - There are no blockers - only tasks that need more breakdown
-- Read Nix documentation: https://nix.dev/manual/nix/2.28/language/builtins.html
+- Read documentation FIRST, then implement
 - Test in `nix repl` before implementing
 
 ---
 
-## PROJECT STATUS
+## WHAT'S NOT DONE (CURRENT GAPS)
 
 **Goal:** Nix → JavaScript translator with 1-to-1 parity for Nix builtins
 
-**Current state:**
-- ✅ Runtime: 62/65 builtins (95% complete, 3 optional remain)
-- ✅ Translator: 87/87 tests passing (core features complete)
-- ✅ Import system: Fully working
-- ✅ Derivations: Basic functionality working
-- ⚠️ Testing: Significant coverage gaps
-- ⚠️ Edge cases: Many not tested
+**Runtime gaps (main/runtime.js):**
+- 3 optional builtins not implemented: fetchMercurial, fetchClosure, getFlake
+- fetchTree: types 'indirect', 'mercurial', 'path' not implemented
+- Unknown: Which of the "62 implemented" builtins actually have tests? (needs audit)
+- Derivations: Edge cases not tested (multiple outputs, passthru, meta, complex env)
 
-**Test status:**
-- ~240+ tests passing
-- See TESTING.md for detailed breakdown
+**Translator gaps (main.js):**
+- Nested pattern matching edge cases not tested
+- String escape sequences not comprehensively tested
+- Path literal edge cases not tested
+- Operator precedence not comprehensively tested
+- Multi-line strings may have edge cases
 
----
-
-## PRIORITY 0: Testing Infrastructure (COMPLETED ✅)
-
-**Status:** COMPLETED 2026-02-10
-- ✅ Fixed operators.js BigInt serialization bug
-- ✅ Enhanced test.sh with categories (runtime, translator, derivation, import, infra, integration)
-- ✅ Created TESTING.md documentation
-- ✅ Removed dead code (tools/git.js)
-- ✅ Created SIMPLIFICATION_PLAN.md
+**Testing gaps:**
+- Only 10/41 nixpkgs.lib files tested (24% coverage)
+- Need builtin coverage matrix to know what's actually tested
+- Many edge cases lack tests
 
 ---
+
 
 ## PRIORITY 1: Derivation Validation (2-4 hours)
 
@@ -304,13 +326,17 @@ For each file:
 ### Task 5.1: fetchMercurial (2-3 days)
 
 **If you need Mercurial support:**
+- Read documentation FIRST: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchMercurial
+- Test in `nix repl` to understand behavior
 - Similar to fetchGit but for Mercurial repos
-- Need `hg` command or isomorphic-hg library
+- Need `hg` command or isomorphic-hg library (via esm.sh)
 - Low priority: Mercurial usage declining
 
 ### Task 5.2: fetchClosure (5-7 days)
 
 **VERY COMPLEX - only if needed:**
+- Read documentation FIRST: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchClosure
+- Search for NAR format documentation
 - Fetches closures from binary caches
 - Requires NAR format understanding
 - Requires binary cache protocol (cache.nixos.org)
@@ -319,6 +345,8 @@ For each file:
 ### Task 5.3: getFlake (5-7 days)
 
 **VERY COMPLEX - only if needed:**
+- Read documentation FIRST: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-getFlake
+- Search for flake system documentation
 - Full flake system implementation
 - Flake lockfile parsing
 - Flake input resolution
@@ -327,30 +355,28 @@ For each file:
 ### Task 5.4: fetchTree type='indirect' (3-4 days)
 
 **Advanced fetchTree types:**
+- Read documentation FIRST: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchTree
+- Test each type in `nix repl`
 - type='indirect': Flake registry lookups
 - type='path': Local directory (may already work)
 - type='mercurial': Mercurial repos
 
 ---
 
-## WORK ORDER
+## WORK ORDER - DO NOT SKIP PRIORITIES
 
-**DO NOT skip priorities!**
+**YOU MUST COMPLETE IN THIS ORDER:**
 
-1. ✅ Priority 0: Testing infrastructure (COMPLETED)
-2. **Priority 1:** Derivation validation (2-4 hours) ← **START HERE**
-3. **Priority 2:** Runtime builtin audit (1-2 days)
-4. **Priority 3:** Translator edge cases (1-2 days)
-5. **Priority 4:** nixpkgs.lib testing (3-5 days)
-6. **Priority 5:** Optional builtins (only if needed)
+1. **Priority 1:** Derivation validation (2-4 hours) ← **START HERE**
+2. **Priority 2:** Runtime builtin audit (1-2 days)
+3. **Priority 3:** Translator edge cases (1-2 days) - **ONLY AFTER RUNTIME AUDIT COMPLETE**
+4. **Priority 4:** nixpkgs.lib testing (3-5 days) - **ONLY AFTER TRANSLATOR COMPLETE**
+5. **Priority 5:** Optional builtins (only if needed)
 
-**After Priority 1-4 (estimated 1-2 weeks):**
-- Runtime will be comprehensively tested
-- Translator will handle all edge cases
-- nixpkgs.lib coverage will be 60%+
-- Ready for production use
-
-**Optional Priority 5:** Only implement if you need those specific features.
+**Why this order:**
+- Can't trust translator until runtime is fully tested
+- Can't trust nixpkgs tests until translator handles all edge cases
+- Foundation must be solid before building on top
 
 ---
 
@@ -402,32 +428,73 @@ See `TESTING.md` for comprehensive testing guide.
 
 ---
 
+## IMPLEMENTATION WORKFLOW (MANDATORY)
+
+**For EVERY builtin/feature you implement, follow these steps:**
+
+1. **READ DOCUMENTATION FIRST**
+   - Start at: https://nix.dev/manual/nix/2.28/language/builtins.html
+   - Search noogle.dev for examples: https://noogle.dev/
+   - Search the internet for additional context
+   - Example: For builtins.fetchClosure, read the full docs before coding
+
+2. **TEST IN NIX REPL**
+   - Open `nix repl` in terminal
+   - Test the behavior with various inputs
+   - Understand edge cases and error conditions
+   - Document expected vs actual behavior
+
+3. **WRITE TEST FIRST**
+   - Create test file with expected behavior from step 2
+   - Use examples from documentation
+   - Test edge cases you discovered
+
+4. **IMPLEMENT**
+   - Write the actual implementation
+   - Reference your test results from step 2
+   - Keep it simple - match Nix behavior exactly
+
+5. **VERIFY**
+   - Run your test
+   - Compare output with `nix repl` behavior
+   - Fix any discrepancies
+
+**DO NOT skip steps. DO NOT implement without documentation.**
+
 ## GETTING HELP
 
 - **Nix manual:** https://nix.dev/manual/nix/2.28/language/builtins.html
 - **Nix builtins search:** https://noogle.dev/
 - **Test in nix repl:** `nix repl` → test behavior
 - **No blockers:** Break problems down further
+- **External modules:** Only via https://esm.sh/NPM_MODULE_NAME (may be unreliable)
 
 ---
 
-## NEXT STEPS
+## IMMEDIATE NEXT ACTIONS
 
-**Right now (2-4 hours):**
-1. Read this prompt.md fully
-2. Run `./test.sh derivation` - verify what works
-3. Start Priority 1: Create `main/tests/derivation/002_advanced_tests.js`
-4. Add 5 test cases (multiple outputs, complex env, passthru, meta, edge cases)
+**Step 1 (RIGHT NOW - 15 min):**
+1. Read this prompt.md fully - understand work order
+2. Run `./test.sh derivation` to see current state
+3. Read `main/tests/derivation/001_basic_tests.js` to understand what's tested
 
-**Tomorrow (4-8 hours):**
-5. Priority 2: Create `BUILTIN_COVERAGE.md` with all 65 builtins
-6. Identify which builtins have NO tests
-7. Add tests for high-priority untested builtins
+**Step 2 (TODAY - 2-4 hours):**
+4. Create `main/tests/derivation/002_advanced_tests.js`
+5. Add test case 1: Multiple outputs - test in `nix repl` first
+6. Add test case 2: Complex environment variables - test in `nix repl` first
+7. Add test case 3: Passthru attributes
+8. Add test case 4: Meta attributes
+9. Add test case 5: Edge cases (empty args, long names, special chars)
 
-**This week (3-5 days total):**
-8. Finish Priority 1-2
-9. Start Priority 3 or 4 based on needs
+**Step 3 (TOMORROW - 4-8 hours):**
+10. Read Nix 2.18 builtins documentation: https://nix.dev/manual/nix/2.28/language/builtins.html
+11. Create `BUILTIN_COVERAGE.md` listing all 65 builtins
+12. For each builtin: mark if implemented, mark if tested, note which test file
+13. Identify gaps - which builtins have code but NO tests
 
-**This month:**
-10. Complete Priority 1-4
-11. Consider Priority 5 if needed
+**Step 4 (THIS WEEK - 2-3 days):**
+14. Add tests for high-priority untested builtins
+15. Fix any bugs found during testing
+16. Complete Priority 2 runtime audit
+
+**DO NOT PROCEED TO PRIORITY 3 OR 4 UNTIL PRIORITY 1-2 COMPLETE**
