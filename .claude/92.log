@@ -1,0 +1,59 @@
+Perfect! The document is now comprehensive and actionable. Let me create one final summary document showing what was updated:
+
+I've completed a comprehensive audit of the Denix runtime and significantly enhanced the prompt.md documentation. Here's what remains to be done:
+
+## Key Discoveries
+
+**Actual Runtime Status:**
+- **108 out of 115** Nix builtins implemented (94%), not the previously reported 62/65
+- Nix 2.18/2.28 has 115 builtins total
+- 7 builtins are missing, split into two categories:
+  - **4 simple builtins** (2-3 hours to implement): `foldl'`, `warn`, `convertHash`, `addDrvOutputDependencies`
+  - **3 complex builtins** (already stubbed, experimental): `fetchMercurial`, `fetchClosure`, `getFlake`
+
+**Critical Gap Identified:**
+- **Test coverage is unknown** - we don't know which of the 108 implemented builtins actually have tests
+- Missing test files: no `builtins_string_test.js`, `builtins_hash_test.js`, `builtins_type_test.js`, `builtins_fold_test.js`
+
+## Updated Documentation
+
+**prompt.md expanded from 427 → 785 lines** with:
+
+1. **Priority 0 (NEW)**: Implement 4 missing simple builtins
+   - Exact line numbers where to add code (after line 574, 1354)
+   - Complete implementation code for each builtin
+   - Specific test case requirements (5+ tests per builtin)
+   - Links to Nix documentation
+
+2. **Priority 2 (ENHANCED)**: Runtime builtin audit process
+   - Step-by-step guide to create BUILTIN_COVERAGE.md
+   - How to check if builtins are tested (grep patterns)
+   - Priority ordering for adding missing tests
+   - Detailed workflow: read docs → test in nix repl → write tests → verify
+
+3. **Quick Status section** at the top for rapid orientation
+
+4. **Immediate Next Actions** updated with concrete steps
+
+## What Remains To Be Done (Priority Order)
+
+**Priority 0** (2-3 hours) - START HERE:
+1. Implement `foldl'` - list folding operation
+2. Implement `warn` - warning messages
+3. Implement `convertHash` - hash format conversion
+4. Research `addDrvOutputDependencies` (may not be needed for Nix 2.18)
+
+**Priority 1** (2-4 hours):
+- Test derivation edge cases: multiple outputs, passthru, meta attributes
+
+**Priority 2** (1-2 days):
+- Create BUILTIN_COVERAGE.md matrix (all 115 builtins)
+- Add missing tests for untested builtins (string ops, hash ops, type checking)
+
+**Priority 3** (1-2 days):
+- Translator edge cases (pattern matching, string escapes, operator precedence)
+
+**Priority 4** (3-5 days):
+- Expand nixpkgs.lib testing from 10/41 files to 25/41 files
+
+The documentation now provides clear, actionable guidance with no achievement reporting - only gaps and what needs to be done.

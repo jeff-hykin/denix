@@ -44,15 +44,41 @@ Your job is to focus on what is NOT implemented and NOT working. Only report wha
 
 ---
 
+## QUICK STATUS (Updated 2026-02-10)
+
+**Runtime Completeness:**
+- 108 / 115 builtins implemented (94%)
+- 7 missing: 4 simple (foldl', warn, convertHash, addDrvOutputDependencies), 3 complex (fetchMercurial, fetchClosure, getFlake)
+- Unknown test coverage - needs audit
+
+**What needs immediate work:**
+1. Implement 4 simple missing builtins (2-3 hours)
+2. Create builtin test coverage matrix (3-4 hours)
+3. Add tests for untested builtins (1-2 days)
+4. Validate derivation edge cases (2-4 hours)
+
+**After runtime is solid:**
+5. Translator edge case testing
+6. Expand nixpkgs.lib testing
+
+---
+
 ## WHAT'S NOT DONE (CURRENT GAPS)
 
 **Goal:** Nix → JavaScript translator with 1-to-1 parity for Nix builtins
 
 **Runtime gaps (main/runtime.js):**
-- 3 optional builtins not implemented: fetchMercurial, fetchClosure, getFlake
-- fetchTree: types 'indirect', 'mercurial', 'path' not implemented
-- Unknown: Which of the "62 implemented" builtins actually have tests? (needs audit)
-- Derivations: Edge cases not tested (multiple outputs, passthru, meta, complex env)
+- **7 builtins not implemented** (out of 115 total Nix 2.18/2.28 builtins):
+  - `addDrvOutputDependencies` - no stub (added in Nix 2.24+, may not be needed for 2.18)
+  - `convertHash` - no stub (hash format conversion)
+  - `foldl` - no stub (list folding, should be `foldl'` with strict evaluation)
+  - `warn` - no stub (warning messages)
+  - `fetchMercurial` - stub exists, throws NotImplemented (requires hg binary)
+  - `fetchClosure` - stub exists, throws NotImplemented (requires binary cache, experimental)
+  - `getFlake` - stub exists, throws NotImplemented (requires flake system, experimental)
+- **fetchTree partial**: types 'indirect' and 'mercurial' throw NotImplemented
+- **Builtin test coverage unknown**: Need audit matrix showing which builtins have tests
+- **Derivations**: Edge cases not tested (multiple outputs, passthru, meta, complex env)
 
 **Translator gaps (main.js):**
 - Nested pattern matching edge cases not tested
@@ -65,6 +91,106 @@ Your job is to focus on what is NOT implemented and NOT working. Only report wha
 - Only 10/41 nixpkgs.lib files tested (24% coverage)
 - Need builtin coverage matrix to know what's actually tested
 - Many edge cases lack tests
+
+---
+
+## PRIORITY 0: Implement Missing Simple Builtins (2-3 hours)
+
+**Goal:** Implement the 4 missing builtins that have no stub
+
+**Why this is Priority 0:**
+- Quick wins - all are straightforward functions
+- Brings runtime closer to 100% builtin coverage
+- `foldl'` and `warn` are commonly used in nixpkgs
+
+### Task 0.1: Implement `foldl'` (30 min)
+
+**Read documentation FIRST:**
+- https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-foldl'
+- Test in `nix repl`: `builtins.foldl' (acc: x: acc + x) 0 [1 2 3 4]`
+
+**Location:** Add in `main/runtime.js` after line 574 (after `"tail"`)
+
+**Implementation:**
+```javascript
+"foldl'": (op) => (nul) => (list) => {
+    requireList(list);
+    let acc = nul;
+    for (const elem of list) {
+        acc = op(acc)(elem);
+        // Note: The ' means strict evaluation - we evaluate acc at each step
+        // JavaScript is already strict, so no special handling needed
+    }
+    return acc;
+},
+```
+
+**Test:** Create `main/tests/builtins_fold_test.js` with at least 5 test cases:
+1. Sum numbers: `foldl' (acc: x: acc + x) 0 [1 2 3 4]` → 10
+2. Build list: `foldl' (acc: x: acc ++ [x]) [] [1 2 3]` → [1,2,3]
+3. Empty list: `foldl' (acc: x: acc + x) 5 []` → 5
+4. String concat: `foldl' (acc: x: acc + x) "" ["a" "b" "c"]` → "abc"
+5. Complex operation: nested function calls
+
+### Task 0.2: Implement `warn` (20 min)
+
+**Read documentation FIRST:**
+- https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-warn
+- Test in `nix repl`: `builtins.warn "deprecated" "value"`
+
+**Location:** Add in `main/runtime.js` after line 1354 (after `"traceVerbose"`)
+
+**Implementation:**
+```javascript
+"warn": (msg) => (value) => {
+    // Note: Nix prints warnings to stderr with "warning: " prefix
+    console.error(`warning: ${requireString(msg).toString()}`);
+    return value;
+},
+```
+
+**Test:** Add to `main/tests/builtins_eval_control.js`:
+1. Basic warning: `warn "deprecated" "value"` → returns "value", prints warning
+2. Warning with interpolation: `warn "deprecated: ${x}" y`
+3. Multiple warns: nested warn calls
+
+### Task 0.3: Implement `convertHash` (45 min)
+
+**Read documentation FIRST:**
+- https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-convertHash
+- Test in `nix repl` with various formats
+
+**Implementation:**
+```javascript
+"convertHash": (args) => {
+    // Converts hash from one format to another
+    // args: { hash: "...", toHashFormat: "base16"|"nix32"|"base32"|"base64" }
+    // Uses existing hash utilities in tools/hashing.js
+    const hash = requireString(args.hash).toString();
+    const toFormat = requireString(args.toHashFormat).toString();
+
+    // Need to detect input format, decode, then re-encode
+    // Use nix32Encode/nix32Decode from tools/store_path.js
+    throw new Error("TODO: implement hash format conversion");
+},
+```
+
+**Research needed:**
+1. What hash formats does Nix support? (base16, nix32, base32, base64, sri)
+2. How to detect input format?
+3. Existing code in tools/store_path.js for nix32?
+
+**Test:** Create `main/tests/builtins_hash_convert_test.js`
+
+### Task 0.4: Research `addDrvOutputDependencies` (15 min)
+
+**Check if this is needed:**
+- This builtin was added in Nix 2.24+ (we target 2.18)
+- Research: Is it in Nix 2.18? Check Nix changelog
+- If NOT in 2.18: Document as "not needed for 2.18 compatibility"
+- If in 2.18: Add to implementation list
+
+**Action:** Read Nix changelog, update BUILTIN_COVERAGE.md
 
 ---
 
@@ -145,46 +271,177 @@ derivation {
 
 ## PRIORITY 2: Runtime Builtin Audit (1-2 days)
 
-**Goal:** Verify all 62 "implemented" builtins actually work
+**Goal:** Verify all 108 implemented builtins (out of 115 total) actually work
 
 **Why this is Priority 2:**
-- Can't trust "62/65 implemented" without verification
+- Can't trust implementation without verification
 - Some builtins may have tests, some may not
-- Need comprehensive test coverage matrix
+- Need comprehensive test coverage matrix to identify gaps
 
-### Task 2.1: Create Builtin Coverage Matrix (2-3 hours)
+**What "tested" means:**
+A builtin is "tested" if there exists at least one test that:
+1. Calls the builtin directly (e.g., `builtins.add(1n)(2n)`)
+2. Verifies the output matches expected behavior
+3. Would fail if the builtin was broken or removed
 
-Create `BUILTIN_COVERAGE.md`:
+**Where to look for tests:**
+- `main/tests/builtins_*.js` - Direct builtin tests
+- `main/tests/operators_test.js` - Operator tests (add, sub, mul, div, etc.)
+- `main/tests/translator_test.js` - Some builtins called indirectly
+- `main/tests/nixpkgs_*.js` - Integration tests (may use builtins)
 
-```markdown
-# Nix 2.18 Builtin Coverage
+**Known test file gaps (no file exists):**
+- No `builtins_string_test.js` - string operations NOT directly tested
+  - `concatStringsSep`, `replaceStrings`, `split`, `match`, `stringLength`, `substring` need tests
+- No `builtins_hash_test.js` - hash operations NOT tested
+  - `hashString`, `hashFile` implemented but not tested
+- No `builtins_type_test.js` - type checking may not be directly tested
+  - `isNull`, `isBool`, `isInt`, `isFloat`, `isString`, `isList`, `isAttrs`, `isFunction`, `typeOf`
+- No `builtins_fold_test.js` - folding operations not tested (foldl' not yet implemented)
 
-| Builtin | Implemented | Tested | Test File | Notes |
-|---------|-------------|--------|-----------|-------|
-| add | ✅ | ✅ | operators.js | |
-| addErrorContext | ✅ | ❌ | - | No test |
-| all | ✅ | ✅ | builtins_list.js | |
-| any | ✅ | ✅ | builtins_list.js | |
-... (all 65 builtins)
+### Task 2.1: Create Builtin Coverage Matrix (3-4 hours)
+
+**Create `BUILTIN_COVERAGE.md` with this process:**
+
+**Step 1: Generate builtin list (15 min)**
+```bash
+# Extract all builtins from runtime.js
+grep -E '^\s*"[a-zA-Z][a-zA-Z0-9]*":\s*' main/runtime.js | \
+  sed 's/.*"\([a-zA-Z][a-zA-Z0-9]*\)".*/\1/' | sort -u > /tmp/implemented.txt
+
+# Create the Nix 2.18 official list
+cat > /tmp/nix_2_18_builtins.txt << 'EOF'
+[paste the 115 builtins from Nix docs]
+EOF
 ```
 
-**Steps:**
-1. List all 65 Nix 2.18 builtins from https://nix.dev/manual/nix/2.28/language/builtins.html
-2. Check runtime.js for implementation (search `"<builtin>":`)
-3. Search test files for usage (grep)
-4. Mark implemented vs tested vs missing
+**Step 2: Check each builtin (2-3 hours)**
 
-### Task 2.2: Add Missing Builtin Tests (varies)
+For each builtin in `/tmp/nix_2_18_builtins.txt`:
+1. Check if in `/tmp/implemented.txt` → mark as ✅ Implemented or ❌ Missing
+2. Search all test files: `grep -r "builtins\.<name>\|runtime\.<name>" main/tests/`
+3. If found in tests → mark as ✅ Tested, note which file(s)
+4. If not found → mark as ❌ Untested
 
-For each untested builtin:
-1. Test in `nix repl` to understand behavior
-2. Add test to appropriate test file
-3. Verify implementation matches Nix behavior
+**Step 3: Create markdown table**
+
+```markdown
+# Nix 2.18 Builtin Coverage (115 total)
+
+Status: 108/115 implemented, X/115 tested
+
+## Summary by Category
+
+### Type Checking (9 builtins)
+| Builtin | Implemented | Tested | Test File | Notes |
+|---------|-------------|--------|-----------|-------|
+| isNull | ✅ | ✅ | builtins_type.js | |
+| isBool | ✅ | ✅ | builtins_type.js | |
+| isInt | ✅ | ✅ | builtins_type.js | |
+| isFloat | ✅ | ✅ | builtins_type.js | |
+| isString | ✅ | ✅ | builtins_type.js | |
+| isList | ✅ | ✅ | builtins_type.js | |
+| isAttrs | ✅ | ✅ | builtins_type.js | |
+| isFunction | ✅ | ✅ | builtins_type.js | |
+| typeOf | ✅ | ✅ | builtins_type.js | |
+
+### Arithmetic (8 builtins)
+| Builtin | Implemented | Tested | Test File | Notes |
+|---------|-------------|--------|-----------|-------|
+| add | ✅ | ✅ | operators_test.js | |
+| sub | ✅ | ✅ | operators_test.js | |
+| mul | ✅ | ✅ | operators_test.js | |
+| div | ✅ | ✅ | operators_test.js | |
+| ceil | ✅ | ? | ? | Need to check |
+| floor | ✅ | ? | ? | Need to check |
+| lessThan | ✅ | ✅ | operators_test.js | |
+
+... [continue for all categories]
+
+### String Operations (12 builtins)
+### List Operations (15 builtins)
+### Attrset Operations (14 builtins)
+### File Operations (9 builtins)
+### Network Fetchers (7 builtins)
+### Derivations (4 builtins)
+### Evaluation Control (7 builtins)
+### Hash/Encoding (4 builtins)
+### Misc (26 builtins)
+
+## Untested Builtins (Priority Order)
+
+**High Priority (commonly used):**
+- [ ] concatStringsSep - string joining
+- [ ] replaceStrings - string replacement
+- [ ] ...
+
+**Medium Priority (utility functions):**
+- [ ] ...
+
+**Low Priority (rarely used):**
+- [ ] ...
+```
+
+**Automation option:** Create a script to help:
+```javascript
+// tools/generate_coverage.js
+const builtins = [...]; // from Nix docs
+const implemented = new Set([...]); // from runtime.js
+// grep through test files and generate markdown
+```
+
+### Task 2.2: Add Missing Builtin Tests (varies, 1-2 days)
+
+**For each untested builtin, follow this workflow:**
+
+**Step 1: Read documentation (5-10 min)**
+- https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-<name>
+- Read the full description, parameters, return value
+- Note any special behavior or edge cases
+
+**Step 2: Test in `nix repl` (5-10 min)**
+```nix
+nix repl
+nix-repl> builtins.<name> arg1 arg2 ...
+# Try various inputs:
+# - Normal cases
+# - Edge cases (empty, null, long inputs)
+# - Error cases (wrong types)
+```
+
+**Step 3: Write test cases (15-30 min)**
+- Create or add to appropriate test file
+- Minimum 3 test cases per builtin:
+  1. Basic usage (most common case)
+  2. Edge case (empty/null/boundary)
+  3. Type validation (should throw for wrong types)
+- For complex builtins: 5-10 test cases
+
+**Step 4: Verify implementation (5-15 min)**
+- Run test: `./test.sh`
+- If fails: Compare our output with `nix repl` output
+- Fix implementation if needed
+- Document any intentional differences (rare)
 
 **Priority order:**
-- High: String functions, list functions, attrset functions
-- Medium: Type functions, comparison functions
-- Low: Advanced features (seq, deepSeq, etc.)
+
+**High Priority (commonly used, add first):**
+- String: `concatStringsSep`, `replaceStrings`, `split`, `match`, `splitVersion`
+- List: `genList`, `sort`, `groupBy`, `partition`, `foldl'` (new!)
+- Attrset: `mapAttrs`, `zipAttrsWith`, `removeAttrs`, `listToAttrs`
+- File: `baseNameOf`, `dirOf`, `pathExists`, `readFile`, `readDir`
+
+**Medium Priority (utility, add if time):**
+- Type checking: Should already be tested, verify
+- Comparison: `compareVersions`, `lessThan`
+- Encoding: `toJSON`, `fromJSON`, `toXML`, `fromTOML`
+- Hash: `hashString`, `hashFile`
+
+**Low Priority (advanced/rare, defer):**
+- `seq`, `deepSeq` - evaluation control
+- `addErrorContext` - debugging
+- `unsafeDiscardStringContext` - advanced string context
+- `unsafeGetAttrPos` - introspection
 
 ---
 
@@ -367,11 +624,12 @@ For each file:
 
 **YOU MUST COMPLETE IN THIS ORDER:**
 
-1. **Priority 1:** Derivation validation (2-4 hours) ← **START HERE**
-2. **Priority 2:** Runtime builtin audit (1-2 days)
-3. **Priority 3:** Translator edge cases (1-2 days) - **ONLY AFTER RUNTIME AUDIT COMPLETE**
-4. **Priority 4:** nixpkgs.lib testing (3-5 days) - **ONLY AFTER TRANSLATOR COMPLETE**
-5. **Priority 5:** Optional builtins (only if needed)
+1. **Priority 0:** Implement missing simple builtins (2-3 hours) ← **START HERE**
+2. **Priority 1:** Derivation validation (2-4 hours)
+3. **Priority 2:** Runtime builtin audit (1-2 days)
+4. **Priority 3:** Translator edge cases (1-2 days) - **ONLY AFTER RUNTIME AUDIT COMPLETE**
+5. **Priority 4:** nixpkgs.lib testing (3-5 days) - **ONLY AFTER TRANSLATOR COMPLETE**
+6. **Priority 5:** Optional builtins (only if needed)
 
 **Why this order:**
 - Can't trust translator until runtime is fully tested
@@ -399,13 +657,21 @@ See `TESTING.md` for comprehensive testing guide.
 
 ## KNOWN ISSUES
 
-### Not Implemented (3 builtins)
-- fetchMercurial (optional)
-- fetchClosure (optional, experimental)
-- getFlake (optional, experimental)
+### Not Implemented (7 builtins out of 115 total)
+
+**Missing completely (no stub):**
+- `addDrvOutputDependencies` - may not exist in Nix 2.18, needs research
+- `convertHash` - hash format conversion (should implement)
+- `foldl'` - strict left fold (commonly used, should implement)
+- `warn` - warning messages (commonly used, should implement)
+
+**Stubbed but throw NotImplemented:**
+- `fetchMercurial` - requires hg binary (optional, rarely used)
+- `fetchClosure` - requires binary cache (experimental, rarely used)
+- `getFlake` - requires flake system (experimental, rarely used)
 
 ### Partial Implementation
-- fetchTree: types 'indirect', 'mercurial' not implemented
+- `fetchTree`: types 'indirect' and 'mercurial' throw NotImplemented
 
 ### Network Tests
 - fetchGit ref normalization: Flaky (uses "master" instead of "main")
@@ -473,28 +739,47 @@ See `TESTING.md` for comprehensive testing guide.
 
 ## IMMEDIATE NEXT ACTIONS
 
-**Step 1 (RIGHT NOW - 15 min):**
-1. Read this prompt.md fully - understand work order
-2. Run `./test.sh derivation` to see current state
-3. Read `main/tests/derivation/001_basic_tests.js` to understand what's tested
+**Step 1 (RIGHT NOW - 30 min):**
+1. Test `foldl'` behavior in `nix repl`:
+   ```nix
+   builtins.foldl' (acc: x: acc + x) 0 [1 2 3 4]
+   builtins.foldl' (acc: x: acc ++ [x]) [] [1 2 3]
+   ```
+2. Implement `foldl'` in runtime.js (after line 575)
+3. Create `main/tests/builtins_fold_test.js` with 5+ test cases
+4. Run `./test.sh` to verify
 
-**Step 2 (TODAY - 2-4 hours):**
-4. Create `main/tests/derivation/002_advanced_tests.js`
-5. Add test case 1: Multiple outputs - test in `nix repl` first
-6. Add test case 2: Complex environment variables - test in `nix repl` first
-7. Add test case 3: Passthru attributes
-8. Add test case 4: Meta attributes
-9. Add test case 5: Edge cases (empty args, long names, special chars)
+**Step 2 (NEXT 20 min):**
+5. Test `warn` behavior in `nix repl`:
+   ```nix
+   builtins.warn "this is deprecated" "value"
+   ```
+6. Implement `warn` in runtime.js (after `trace`)
+7. Add test to `main/tests/builtins_eval_control.js`
+8. Run `./test.sh` to verify
 
-**Step 3 (TOMORROW - 4-8 hours):**
-10. Read Nix 2.18 builtins documentation: https://nix.dev/manual/nix/2.28/language/builtins.html
-11. Create `BUILTIN_COVERAGE.md` listing all 65 builtins
-12. For each builtin: mark if implemented, mark if tested, note which test file
-13. Identify gaps - which builtins have code but NO tests
+**Step 3 (NEXT 45 min):**
+9. Research `convertHash` - test in `nix repl`:
+   ```nix
+   builtins.convertHash { hash = "sha256-..."; toHashFormat = "base16"; }
+   ```
+10. Research Nix hash formats (base16, nix32, base32, base64, sri)
+11. Check tools/store_path.js for existing hash utilities
+12. Implement or stub `convertHash` based on research
 
-**Step 4 (THIS WEEK - 2-3 days):**
-14. Add tests for high-priority untested builtins
-15. Fix any bugs found during testing
-16. Complete Priority 2 runtime audit
+**Step 4 (NEXT 15 min):**
+13. Research `addDrvOutputDependencies` - is it in Nix 2.18?
+14. Check Nix 2.18 vs 2.24 changelog
+15. Document findings
 
-**DO NOT PROCEED TO PRIORITY 3 OR 4 UNTIL PRIORITY 1-2 COMPLETE**
+**Step 5 (NEXT 2-4 hours - Priority 1):**
+16. Run `./test.sh derivation` to see current state
+17. Create `main/tests/derivation/002_advanced_tests.js`
+18. Test multiple outputs, passthru, meta, edge cases (see Priority 1 section)
+
+**Step 6 (TOMORROW - 4-8 hours - Priority 2):**
+19. Create `BUILTIN_COVERAGE.md` with all 115 builtins
+20. Audit which builtins have tests vs just implementation
+21. Add tests for untested builtins
+
+**DO NOT PROCEED TO PRIORITY 3 OR 4 UNTIL PRIORITY 0-2 COMPLETE**
