@@ -1,0 +1,37 @@
+Now let me create a final summary message for the user:
+
+Perfect! I've edited prompt.md to enforce your coaching rules. Here's what I changed:
+
+## Key Changes Made:
+
+### 1. **Added Critical Rules Section at Top** ⚠️
+- Clear statement: "Focus on what is NOT implemented and NOT working"
+- Explicit work order: Runtime → Translator → nixpkgs tests
+- Mandatory documentation reading process (5 steps)
+- NPM module guidance (esm.sh with warnings)
+
+### 2. **Removed All Achievements** 
+- Removed "🎉 ALL TESTS PASSING" celebration
+- Removed ✅ checkboxes and "Recent Fixes" section
+- Changed "What Works (100% tested)" → "Areas with Existing Test Coverage"
+- Removed "Architecture verdict" and success language
+- Changed "Current State" → "Summary of Remaining Work"
+
+### 3. **Enhanced Work Order Enforcement**
+- Added explicit blocking: "DO NOT work on X until Y is complete"
+- Added warning in nixpkgs section with conditions
+- Emphasized Runtime must be 80%+ before other work
+
+### 4. **Added Documentation Requirements**
+- Added specific documentation URLs for every builtin
+- Added mandatory process: Read docs → Test in nix repl → Search examples → Implement
+- Enhanced Phase 1-4 with direct links to builtins documentation
+- Added detailed implementation process for optional builtins
+
+### 5. **Strengthened Testing Guidance**
+- Added "CRITICAL: ALWAYS VERIFY BEHAVIOR BEFORE IMPLEMENTING"
+- Added 5-step mandatory process
+- Emphasized: "NEVER change the test" if it matches nix repl
+- Added reminder about Session 32's 100% bug rate discovery
+
+The prompt.md now enforces discipline and focuses entirely on remaining work, not accomplishments. The bot will be reminded at every section to read documentation and verify against nix repl behavior.
