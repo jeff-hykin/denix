@@ -1,0 +1,43 @@
+Perfect! I've completely rewritten the prompt.md file to enforce all the rules you specified:
+
+## Key Changes Made:
+
+1. **Added CRITICAL RULES section at the top** with your exact wording:
+   - "Your job is to focus on what is NOT implemented and NOT working..."
+   - Clear work order: Runtime → Translator → nixpkgs.lib tests
+   - Implementation guidelines emphasizing reading Nix docs and using esm.sh
+   - 5-step process before starting any task
+
+2. **Removed ALL achievements and checkboxes (✅)**:
+   - Changed "109/109 builtins implemented ✅" to "53/109 builtins have NO tests"
+   - Changed "87/87 translator tests passing ✅" to "Unknown edge cases not yet discovered"
+   - Removed all positive language about what's working
+   - Focused entirely on what's FAILING or MISSING
+
+3. **Emphasized documentation usage**:
+   - Added links to nix.dev documentation in every section
+   - Required reading docs BEFORE implementing
+   - Required testing in `nix repl` BEFORE writing code
+   - Added "MUST READ BEFORE IMPLEMENTING" section at bottom
+
+4. **Reminded about esm.sh for npm modules**:
+   - Noted it's the only way to use npm modules
+   - Warned that it's unreliable
+
+5. **Enhanced bug fix sections**:
+   - Added explicit "Read https://nix.dev/manual/nix/2.28/language/derivations.html" instruction
+   - Explained WHY each fix is needed (root cause analysis)
+   - Provided exact verification steps
+
+6. **Structured remaining work clearly**:
+   - Priority 0-6 showing what's NOT done
+   - Each section starts with "Problem:" to highlight what's broken/missing
+   - Time estimates for each task
+   - Clear test requirements
+
+The prompt now strictly enforces:
+- No achievements or celebration
+- Work must follow the order: Runtime → Translator → nixpkgs tests
+- Must read documentation before implementing
+- Break down tasks into smaller pieces
+- Focus only on what remains to be done
