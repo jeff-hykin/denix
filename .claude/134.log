@@ -1,0 +1,52 @@
+Perfect! Now let me create a summary of what remains to be done:
+
+## Summary - What Remains to Be Done
+
+I've completed a comprehensive analysis of the Denix project and updated all documentation with accurate information about remaining work.
+
+### Key Findings
+
+**GOOD NEWS**: Test coverage is **51.4%** (56/109 builtins tested), not the 38.5% reported in Session 38. Many functions were already tested via integration tests.
+
+**Verified Status:**
+- ✅ Type checking (10 functions) - ALREADY TESTED in `builtins_type_checking_test.js`
+- ✅ List operations (13 functions) - ALREADY TESTED in `builtins_lists_comprehensive_test.js`  
+- ✅ Core operations (12 functions) - ALREADY TESTED in `builtins_core_test.js`
+- ✅ Fetch infrastructure (6 functions) - ALREADY TESTED
+- ✅ Import system (2 functions) - ALREADY TESTED
+
+### What Needs Testing (53 untested builtins, 12-16 hours to 80% coverage)
+
+**PRIORITY TASKS (26 critical functions):**
+
+1. **Task 3: Math & Bitwise Operations** (8 functions, 3-4 hours)
+   - File: `main/tests/builtins_math_comprehensive_test.js` (DOES NOT EXIST)
+   - Functions: sub, mul, lessThan, ceil, floor, bitAnd, bitOr, bitXor
+
+2. **Task 4: Attrset Operations** (5 functions, 2-3 hours)
+   - File: `main/tests/builtins_attrs_operations_test.js` (DOES NOT EXIST)
+   - Functions: getAttr, attrNames, attrValues, catAttrs, genericClosure
+
+3. **Task 5: String Operations** (5 functions, 3-4 hours)
+   - File: `main/tests/builtins_strings_operations_test.js` (DOES NOT EXIST)
+   - Functions: split, splitVersion, baseNameOf, dirOf, toString, match, concatStringsSep
+
+4. **Task 6: Path/File Operations** (8 functions, 4-5 hours)
+   - File: `main/tests/builtins_paths_operations_test.js` (DOES NOT EXIST)
+   - Functions: pathExists, readFile, readDir, readFileType, findFile, toFile, toPath
+
+**Lower Priority** (27 functions): Store functions, context functions, conversions, control flow, advanced features
+
+### Documentation Updated
+
+- ✅ **prompt.md**: Updated with accurate task list (Tasks 3-6), removed completed work
+- ✅ **MEMORY.md**: Updated with verified test coverage (51.4%), corrected estimates (12-16 hours to 80%)
+- ✅ Added Session 39 entry documenting findings
+
+### Next Immediate Step
+
+Start **Task 3** (Math & Bitwise Operations):
+1. Test each function in `nix repl` first
+2. Create `main/tests/builtins_math_comprehensive_test.js`
+3. Write 5-10 tests per function (normal + edge cases + errors)
+4. Run: `deno test --allow-all main/tests/builtins_math_comprehensive_test.js`

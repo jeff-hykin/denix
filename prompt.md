@@ -48,24 +48,58 @@
 
 ---
 
-## Next 5 Test Files (18-25 hours)
+## Next 4 Test Files (12-16 hours) - REVISED PRIORITIES
 
-### Task 3: Attrset Operations (7 functions, 4-6h) ⚡ START HERE IF PRIORITY 0 COMPLETE
-**File**: `main/tests/builtins_attrs_comprehensive_test.js` (DOES NOT EXIST)
+### Task 3: Math & Bitwise (8 functions, 3-4h) ⚡ START HERE IF PRIORITY 0 COMPLETE
+**File**: `main/tests/builtins_math_comprehensive_test.js` (DOES NOT EXIST)
+
+**BEFORE WRITING TESTS**:
+1. Read https://nix.dev/manual/nix/2.18/language/builtins.html#builtins-bitAnd
+2. Test in `nix repl` - verify BigInt vs Float behavior
+3. Document edge cases: negative numbers, zero, overflow, mixed types
+
+Untested functions (8):
+- `sub` - Subtraction (BigInt and Float)
+- `mul` - Multiplication (BigInt and Float)
+- `lessThan` - Comparison operator (<)
+- `ceil` - Round up to integer
+- `floor` - Round down to integer
+- `bitAnd` - Bitwise AND
+- `bitOr` - Bitwise OR
+- `bitXor` - Bitwise XOR
+
+Test in nix repl first:
+```bash
+nix repl
+> builtins.sub 10 3                # 7
+> builtins.sub 10.5 3.2            # 7.3
+> builtins.mul 5 6                 # 30
+> builtins.lessThan 5 10           # true
+> builtins.ceil 3.2                # 4
+> builtins.floor 3.8               # 3
+> builtins.bitAnd 5 3              # 1
+> builtins.bitOr 5 3               # 7
+> builtins.bitXor 5 3              # 6
+```
+
+**Run**: `deno test --allow-all main/tests/builtins_math_comprehensive_test.js`
+
+---
+
+### Task 4: Attrset Operations (5 functions, 2-3h)
+**File**: `main/tests/builtins_attrs_operations_test.js` (DOES NOT EXIST)
 
 **BEFORE WRITING TESTS**:
 1. Read https://nix.dev/manual/nix/2.18/language/builtins.html#builtins-getAttr
 2. Test EACH function in `nix repl` and document outputs
 3. Read runtime.js implementations (lines 820-849) to understand current behavior
 
-Untested functions:
-- `getAttr` (line 830) - Get attribute, error if missing
-- `attrNames` (line 820) - Return sorted list of keys
-- `attrValues` (line 825) - Return values in attrNames order
-- `catAttrs` (line 838) - Extract attr from list of sets
-- `genericClosure` (line 849) - Transitive closure with cycle handling
-- `hasAttr` - Partially tested in hasattr_test.js
-- `genAttrs` (line 843) - Generate attrset from list
+Untested functions (5):
+- `getAttr` - Get attribute, error if missing
+- `attrNames` - Return sorted list of keys
+- `attrValues` - Return values in attrNames order
+- `catAttrs` - Extract attr from list of sets
+- `genericClosure` - Transitive closure with cycle handling
 
 Test in nix repl first:
 ```bash
@@ -75,52 +109,71 @@ nix repl
 > builtins.attrNames {z=3; a=1; m=2;}       # ["a" "m" "z"] (sorted!)
 > builtins.attrValues {z=3; a=1; m=2;}      # [1 2 3]
 > builtins.catAttrs "x" [{x=1;} {x=2; y=3;}]  # [1 2]
-> builtins.catAttrs "missing" [{x=1;}]       # []
 ```
 
-**Run**: `./test.sh attrs`
+**Run**: `deno test --allow-all main/tests/builtins_attrs_operations_test.js`
 
 ---
 
-### Task 4: String Operations (8 functions, 4-5h)
-**File**: `main/tests/builtins_strings_comprehensive_test.js` (DOES NOT EXIST)
+### Task 5: String Operations (5 functions, 3-4h)
+**File**: `main/tests/builtins_strings_operations_test.js` (DOES NOT EXIST)
 
 **BEFORE WRITING TESTS**:
 1. Read https://nix.dev/manual/nix/2.18/language/builtins.html#builtins-split
 2. Test EACH function in `nix repl` - string functions have many edge cases
-3. Document behavior with: empty strings, special characters, unicode, null bytes
+3. Document behavior with: empty strings, special characters, unicode
 
-Untested functions: split, splitVersion, baseNameOf, dirOf, toString, match, concatStringsSep, replaceStrings
+Untested functions (5):
+- `split` - Split string by regex (returns alternating list)
+- `splitVersion` - Split version string by dots/dashes
+- `baseNameOf` - Get filename from path
+- `dirOf` - Get directory from path
+- `toString` - Convert to string
+- `match` - Match regex and return captures
+- `concatStringsSep` - Join strings with separator
 
-**Run**: `./test.sh strings`
+Test in nix repl first:
+```bash
+nix repl
+> builtins.split "a" "banana"              # ["b" ["a"] "n" ["a"] "n" ["a"] ""]
+> builtins.splitVersion "1.2.3-beta"      # ["1" "2" "3" "beta"]
+> builtins.baseNameOf "/path/to/file.txt" # "file.txt"
+> builtins.dirOf "/path/to/file.txt"      # "/path/to"
+> builtins.toString 123                    # "123"
+> builtins.match "([a-z]+)([0-9]+)" "abc123"  # ["abc" "123"]
+```
+
+**Run**: `deno test --allow-all main/tests/builtins_strings_operations_test.js`
 
 ---
 
-### Task 5: Math & Bitwise (8 functions, 3-4h)
-**File**: `main/tests/builtins_math_comprehensive_test.js` (DOES NOT EXIST)
-
-**BEFORE WRITING TESTS**:
-1. Read https://nix.dev/manual/nix/2.18/language/builtins.html#builtins-bitAnd
-2. Test in `nix repl` - verify BigInt vs Float behavior
-3. Document edge cases: negative numbers, zero, overflow, mixed types
-
-Untested functions: sub, mul, lessThan, ceil, floor, bitAnd, bitOr, bitXor
-
-**Run**: `./test.sh math`
-
----
-
-### Task 6: Path/File Operations (10 functions, 4-6h)
-**File**: `main/tests/builtins_paths_comprehensive_test.js` (DOES NOT EXIST)
+### Task 6: Path/File Operations (8 functions, 4-5h)
+**File**: `main/tests/builtins_paths_operations_test.js` (DOES NOT EXIST)
 
 **BEFORE WRITING TESTS**:
 1. Read https://nix.dev/manual/nix/2.18/language/builtins.html#builtins-pathExists
 2. Test in `nix repl` - path functions interact with filesystem
 3. Document behavior: missing files, permissions, symlinks, relative vs absolute paths
 
-Untested functions: pathExists, readFile, readDir, readFileType, findFile, toFile, storePath, storeDir, nixPath, placeholder
+Untested functions (8):
+- `pathExists` - Check if path exists
+- `readFile` - Read file contents as string
+- `readDir` - Read directory entries
+- `readFileType` - Get file type (regular/directory/symlink)
+- `findFile` - Find file in search path
+- `toFile` - Create file in store
+- `toPath` - Convert string to path
 
-**Run**: `./test.sh paths`
+Test in nix repl first:
+```bash
+nix repl
+> builtins.pathExists ./README.md         # true
+> builtins.readFile ./test.txt            # "file contents"
+> builtins.readDir ./main                 # {name = "directory"; }
+> builtins.readFileType ./README.md       # "regular"
+```
+
+**Run**: `deno test --allow-all main/tests/builtins_paths_operations_test.js`
 
 ---
 
@@ -155,22 +208,39 @@ Deno.test("functionName - error case", () => {
 ./test.sh <pattern>    # Match test name
 ```
 
-## Complete Untested List (35 functions remaining)
+## Complete Untested List (53 functions remaining - VERIFIED)
 
-**Attrset Operations (7)** - ⚠️ Task 3
-- getAttr, attrNames, attrValues, catAttrs, genericClosure, hasAttr, genAttrs
+**CRITICAL: Already Tested But Missing From Docs:**
+- ✅ `map`, `filter`, `all`, `any`, `elem`, `partition`, `sort`, `zipAttrsWith` - Already tested in builtins_lists_comprehensive_test.js!
+- ✅ `hasAttr` - Already tested in hasattr_test.js!
+- ✅ `replaceStrings` - Already tested in import_e2e_test.js!
 
-**String Operations (8)** - ⚠️ Task 4
-- split, splitVersion, baseNameOf, dirOf, toString, match, concatStringsSep, replaceStrings
-
-**Math & Bitwise (8)** - ⚠️ Task 5
+**Math & Bitwise (8)** - ⚠️ Task 3 (REVISED - 3-4 hours)
 - sub, mul, lessThan, ceil, floor, bitAnd, bitOr, bitXor
 
-**Path/File Operations (10)** - ⚠️ Task 6
-- pathExists, readFile, readDir, readFileType, findFile, toFile, storePath, storeDir, nixPath, placeholder
+**Attrset Operations (5)** - ⚠️ Task 4 (REVISED - 2-3 hours)
+- getAttr, attrNames, attrValues, catAttrs, genericClosure
 
-**Additional Untested (12)** - Lower priority (complete after Tasks 3-6)
-- compareVersions, parseDrvName, hashString, hashFile, toXML, fromJSON, toJSON, addErrorContext, unsafeGetAttrPos, unsafeDiscardStringContext, getContext, appendContext
+**String Operations (5)** - ⚠️ Task 5 (REVISED - 3-4 hours)
+- split, splitVersion, baseNameOf, dirOf, toString, match, concatStringsSep
+
+**Path/File Operations (8)** - ⚠️ Task 6 (4-5 hours)
+- pathExists, readFile, readDir, readFileType, findFile, toFile, toPath
+
+**Store/Path Functions (4)** - Lower priority (2-3 hours)
+- storePath, storeDir, placeholder, outputOf
+
+**Type/Context Functions (5)** - Lower priority (2-3 hours)
+- getContext, hasContext, unsafeDiscardStringContext, appendContext, unsafeGetAttrPos
+
+**Conversion Functions (3)** - Lower priority (2-3 hours)
+- fromJSON, toXML, getEnv
+
+**Control Flow (4)** - Lower priority (2-3 hours)
+- abort, addErrorContext, break, traceVerbose
+
+**Advanced/Rare Functions (11)** - Optional (6-8 hours)
+- derivation, derivationStrict, fetchClosure, fetchMercurial, getFlake, hashFile, hashString, nixPath, unsafeDiscardOutputDependency
 
 **BEFORE implementing ANY of these**: Read https://nix.dev/manual/nix/2.18/language/builtins.html and search for examples/documentation online
 
@@ -179,11 +249,11 @@ Deno.test("functionName - error case", () => {
 ## Current Status
 
 - **Implemented**: 109/109 builtins (100%)
-- **Tested**: 52/109 builtins (47.7%)
+- **Tested**: 56/109 builtins (51.4%) ✓ Better than Session 38 estimate
 - **Target**: 87/109 builtins (80%)
-- **Need**: 35 more tests
+- **Need**: 31 more tests (was 35)
 
-**Time to 80%**: 18-25 hours (Tasks 3-6)
+**Time to 80%**: 15-21 hours (Tasks 3-6)
 
 ---
 
