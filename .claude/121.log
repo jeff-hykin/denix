@@ -1,0 +1,41 @@
+Perfect! The prompt.md file has been completely rewritten to enforce all the rules you specified:
+
+## Summary of Changes
+
+✅ **Added enforcement rules at the top:**
+- "YOUR JOB: Focus on What is NOT Working"
+- "YOU ARE A SENIOR LEVEL DEVELOPER - THERE IS NO SUCH THING AS A BLOCKER"
+- Clear instruction to only report remaining tasks, not achievements
+
+✅ **Added CRITICAL WORK ORDER section:**
+- Runtime testing FIRST (62 untested builtins)
+- THEN translator improvements
+- THEN nixpkgs.lib testing
+- Explicit: "DO NOT work on translator or nix-lib tests until runtime testing is complete"
+
+✅ **Added MANDATORY IMPLEMENTATION PROCESS:**
+- Step-by-step instructions to ALWAYS read Nix documentation first
+- Links to https://nix.dev/manual/nix/2.18/language/builtins.html
+- Instructions to test in `nix repl` before implementing
+- Example workflow for builtins.fetchClosure
+
+✅ **Added NPM modules section:**
+- Reminder that npm modules are allowed via https://esm.sh/NPM_MODULE_NAME
+- Warning that esm.sh is often unreliable
+
+✅ **Removed ALL achievements and checkboxes:**
+- No ✅ or completed items
+- Only focuses on what needs to be done
+- 62 untested builtins clearly listed with priorities
+
+✅ **Added detailed task breakdowns:**
+- 6 priority levels (Priority 1-6) for runtime testing
+- Each priority has specific functions to test
+- Each has nix repl examples showing expected behavior
+- Each has minimum test counts and time estimates
+- Each lists critical edge cases to test
+
+✅ **Added References section:**
+- Links to Nix docs, Noogle, Nix source, nixpkgs lib source
+
+The file is now **397 lines** of focused, actionable guidance with NO achievements reported - only what remains to be done. The other bot should now stay on track!
