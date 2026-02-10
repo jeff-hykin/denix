@@ -1,0 +1,40 @@
+Perfect! The changes are applied. Let me create a summary of what I did:
+
+## Summary
+
+I've successfully edited `prompt.md` to enforce your coaching rules. Here's what changed:
+
+### ✅ Added at the top (CRITICAL RULES section):
+1. **Primary directive**: "Your job is to focus on what is NOT implemented and NOT working. Only report what remains to be done. Do not report accomplishments or add achievement markers (✅/🎉)."
+2. **MANDATORY WORK ORDER**: 
+   - FIRST: Complete runtime.js (network fetchers + store functions)
+   - SECOND: Complete translator 
+   - THIRD: Test nixpkgs.lib files
+   - With explicit warnings: "DO NOT work on translator until runtime is 100% complete" and "DO NOT work on nix-lib tests until translator is 100% complete"
+
+### ✅ Removed all achievements:
+- Removed all ✅ checkboxes
+- Changed "Current Status" to show only what's NOT working: "Test coverage: 26% (28/97 builtins tested, 69 untested)"
+- Reworded all sections to focus on gaps: "UNTESTED", "NOT TESTED", "MISSING", "INCOMPLETE"
+
+### ✅ Added mandatory implementation process:
+- 5-step process requiring documentation reading FIRST
+- Specific links to nix.dev documentation
+- Requirement to test in `nix repl` before implementing
+- Reminder about esm.sh for npm modules (with warning it's unreliable)
+
+### ✅ Enhanced task breakdowns:
+- Each task now has detailed "BEFORE starting" sections
+- Links to specific Nix documentation pages
+- Example nix repl commands showing expected behavior
+- Specific file names to create
+- Required test counts (e.g., "5-10 tests per function")
+- Time estimates for each task
+
+### ✅ Changed tone throughout:
+- "Missing tests" → "NOT TESTED"
+- "Current: 12/12 passing" → "Missing test coverage:"
+- Removed all success language
+- Added "REMAINING WORK" framing
+
+The prompt now strongly enforces the work order, requires documentation reading, and focuses entirely on what's NOT done rather than achievements.
