@@ -33,24 +33,20 @@ case "$1" in
             echo "⚠️  File not yet created: main/tests/builtins_lists_comprehensive_test.js"
         ;;
     attrs|attrsets)
-        echo "Running attrset tests (Task 2)..."
-        deno test --allow-all main/tests/builtins_attrs_ops_test.js 2>/dev/null || \
-            echo "⚠️  File not yet created: main/tests/builtins_attrs_ops_test.js"
+        echo "Running attrset tests..."
+        deno test --allow-all main/tests/builtins_attrset_ops_test.js
         ;;
     strings)
-        echo "Running string operation tests (Task 3)..."
-        deno test --allow-all main/tests/builtins_strings_ops_test.js 2>/dev/null || \
-            echo "⚠️  File not yet created: main/tests/builtins_strings_ops_test.js"
+        echo "Running string operation tests..."
+        deno test --allow-all main/tests/builtins_string_ops_test.js
         ;;
     math)
-        echo "Running math operation tests (Task 1)..."
-        deno test --allow-all main/tests/builtins_math_test.js 2>/dev/null || \
-            echo "⚠️  File not yet created: main/tests/builtins_math_test.js"
+        echo "Running math operation tests..."
+        deno test --allow-all main/tests/builtins_math_bitwise_test.js
         ;;
     paths)
-        echo "Running path/file tests (Task 4)..."
-        deno test --allow-all main/tests/builtins_paths_ops_test.js 2>/dev/null || \
-            echo "⚠️  File not yet created: main/tests/builtins_paths_ops_test.js"
+        echo "Running path/file tests..."
+        deno test --allow-all main/tests/builtins_path_test.js
         ;;
     core)
         echo "Running core builtin tests..."

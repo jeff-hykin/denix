@@ -1,0 +1,25 @@
+# Claude logs and state
+.claude/
+
+# Deno cache (if local)
+.deno/
+
+# Editor temporary files
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Test coverage output (if added later)
+coverage/
+
+# Build artifacts (if any)
+dist/
+build/
+
+# Local development files
+.vscode/
+.idea/
+
+# OS files
+Thumbs.db
