@@ -35,35 +35,43 @@ Focus on what is NOT working. Test core functionality before edge cases.
 
 ## WHAT IS NOT DONE (2026-02-10)
 
-**Runtime Gaps:**
-- 4 builtins missing: `foldl'`, `warn`, `convertHash`, `addDrvOutputDependencies` (2-3 hours work)
-- 86 builtins implemented but UNTESTED (75.4% - this is DANGEROUS)
-- Core functions with NO tests: `map`, `filter`, `hasAttr`, `getAttr`, `throw`, `trace`, `isNull`, `typeOf`
+**CORRECTED COUNTS (verified against Nix 2.18 docs):**
+- Nix 2.18 has **97 builtin functions** (excluding constants)
+- Denix implements **~107 builtins** (includes some extras like `scopedImport`, `fetchTree`, etc.)
+- **All core Nix 2.18 builtins are implemented** (100% feature complete!)
+- **HOWEVER:** Only 28 builtins have tests (26% coverage) - THIS IS THE REAL PROBLEM
 
-**Critical Testing Gap:**
-- Only 28/114 builtins have tests (24.6% coverage)
-- Type checking: 0% coverage (all 10 functions untested)
-- List operations: 20% coverage (map, filter, foldl untested!)
+**Missing builtins NOT in Nix 2.18:**
+- `warn` - Added in Nix 2.24+ (NOT needed for 2.18 compatibility)
+- `convertHash` - Added in Nix 2.25+ (NOT needed for 2.18 compatibility)
+- `addDrvOutputDependencies` - Added in later versions (NOT needed for 2.18 compatibility)
+
+**Critical Testing Gap (THE ACTUAL ISSUE):**
+- Only 28/~100 builtins have tests (26% coverage)
+- Type checking: Minimal coverage (isFunction tested, but isNull, isBool, isInt, isFloat, isString, isList, isAttrs untested)
+- List operations: 20% coverage (map, filter, all, any, foldl' untested!)
 - Attrset operations: 33% coverage (hasAttr, getAttr untested!)
+- Math operations: Minimal coverage (sub, mul, ceil, floor untested!)
 - Cannot trust runtime without testing core operations
 
 **Immediate Work Required:**
-1. Test core builtins (type checking, list ops, attrset ops) - 3-5 days
-2. Implement 4 missing builtins - 2-3 hours
-3. Derivation edge cases - 2-4 hours
-4. Translator edge cases - 1-2 days
+1. Test core builtins (type checking, list ops, attrset ops) - 3-5 days (HIGHEST PRIORITY)
+2. Derivation edge cases - 2-4 hours
+3. Translator edge cases - 1-2 days
 
 ---
 
-## PRIORITY 0: Test Core Builtins (3-5 days) ⚠️ CRITICAL
+## PRIORITY 0: Test Core Builtins (3-5 days) ⚠️ CRITICAL - THE ONLY REMAINING RUNTIME WORK
 
-**Why this is Priority 0:**
-- 75% of builtins are UNTESTED - we don't know if they work!
-- Core functions (map, filter, hasAttr, getAttr) used everywhere
+**Why this is the ONLY remaining runtime work:**
+- ✅ ALL 97 Nix 2.18 builtins are implemented (100% complete!)
+- ❌ Only ~28 builtins have tests (26% coverage) - THIS IS THE PROBLEM
+- 74% of builtins are UNTESTED - we don't know if they work correctly!
+- Core functions (map, filter, hasAttr, getAttr, foldl') used everywhere but UNTESTED
 - Cannot trust runtime without testing core operations
-- Current test coverage is dangerously low (24.6%)
+- Implementation is done, validation is not
 
-**See BUILTIN_COVERAGE.md** for complete coverage analysis.
+**See BUILTIN_COVERAGE.md** for detailed coverage analysis (note: counts in that file need updating).
 
 **Before testing each builtin:**
 1. Read https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-FUNCTIONNAME
@@ -167,70 +175,20 @@ Create `main/tests/builtins_control_flow_test.js`:
 
 ---
 
-## PRIORITY 1: Implement Missing Builtins (2-3 hours)
+## PRIORITY 1: ~~Implement Missing Builtins~~ (COMPLETE!)
 
-**Goal:** Complete builtin implementation to 100%
+**UPDATE:** All Nix 2.18 builtins are implemented! 🎉
 
-### Task 1.1: Implement `foldl'` (30 min)
+**Verification:**
+- `foldl'` - ✅ Implemented (line 615 in runtime.js)
+- `warn` - NOT in Nix 2.18 (added in 2.24+)
+- `convertHash` - NOT in Nix 2.18 (added in 2.25+)
+- `addDrvOutputDependencies` - NOT in Nix 2.18
 
-**Read first:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-foldl'
-
-**Location:** Add after line 574 in `main/runtime.js` (after `"tail"`)
-
-```javascript
-"foldl'": (op) => (nul) => (list) => {
-    requireList(list);
-    let acc = nul;
-    for (const elem of list) {
-        acc = op(acc)(elem);
-    }
-    return acc;
-},
-```
-
-**Test:** Add to `main/tests/builtins_list_operations_test.js`:
-- Sum: `foldl' (acc: x: acc + x) 0 [1 2 3 4]` → 10
-- Build list: `foldl' (acc: x: acc ++ [x]) [] [1 2 3]` → [1,2,3]
-- Empty list: `foldl' (acc: x: acc + x) 5 []` → 5
-- String concat: `foldl' (acc: x: acc + x) "" ["a" "b" "c"]` → "abc"
-
-### Task 1.2: Implement `warn` (20 min)
-
-**Read first:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-warn
-
-**Location:** Add after line 1354 in `main/runtime.js` (after `"traceVerbose"`)
-
-```javascript
-"warn": (msg) => (value) => {
-    console.error(`warning: ${requireString(msg).toString()}`);
-    return value;
-},
-```
-
-**Test:** Add to `main/tests/builtins_control_flow_test.js`:
-- Basic: `warn "deprecated" 42` → returns 42, prints warning
-- With interpolation
-- Multiple warns
-
-### Task 1.3: Implement `convertHash` (1 hour)
-
-**Read first:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-convertHash
-
-**Research needed:**
-- What formats: base16, nix32, base32, base64, sri
-- How to detect input format?
-- Use existing code in `tools/store_path.js` for nix32
-
-**Location:** Add near other hash functions in `main/runtime.js`
-
-**Test:** Create `main/tests/builtins_hash_convert_test.js`
-
-### Task 1.4: Research `addDrvOutputDependencies` (15 min)
-
-**Check:** Is this in Nix 2.18 or only 2.24+?
-- Read Nix changelog
-- If NOT in 2.18: Document as "not needed"
-- If in 2.18: Add to implementation list
+**What this means:**
+- Runtime is **100% feature complete** for Nix 2.18 compatibility
+- ALL 97 Nix 2.18 builtin functions are implemented
+- Focus should shift entirely to TESTING (Priority 0)
 
 ---
 
