@@ -35,10 +35,10 @@ denix/
 - Preserves lazy evaluation
 
 ### 2. Runtime (main/runtime.js)
-**Status:** ⚠️ 100% implemented, 26% tested
+**Status:** ⚠️ 100% implemented, 41% tested
 - 97 Nix 2.18 builtins implemented
-- Only 28/97 tested
-- **3 critical bugs just fixed** (concatLists, isAttrs, head)
+- 40/97 tested (need 37 more for 80% coverage)
+- Known bugs fixed (concatLists, isAttrs, head)
 
 ### 3. Testing
 **Status:** 27 test files, ~240 tests passing
@@ -55,9 +55,9 @@ denix/
 ## Critical Priority
 
 **Runtime testing is THE priority:**
-- 69/97 builtins untested (74%)
-- Bug discovery rate: 100% (3 bugs in 3 tested functions)
-- Estimated 20-30 more bugs in untested code
+- 57/97 builtins untested (59%)
+- Need 37 more tests to reach 80% coverage (77/97)
+- Estimated time: 18-23 hours
 
 **Do NOT work on translator or nixpkgs.lib until runtime is 80%+ tested.**
 

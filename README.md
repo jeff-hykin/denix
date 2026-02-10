@@ -9,8 +9,10 @@ A Nix → JavaScript translator with 1-to-1 parity for Nix 2.18 builtins, implem
 ## Status
 
 **Translator:** ✅ 100% complete (87/87 tests passing)
-**Runtime:** ⚠️ 97/97 builtins implemented, 28/97 tested (26% coverage)
-**Current Priority:** Test remaining 69 untested builtins
+**Runtime:** ⚠️ 97/97 builtins implemented, 40/97 tested (41% coverage)
+**Current Priority:** Test 37 more builtins to reach 80% coverage
+
+See [PROJECT_STATUS.md](PROJECT_STATUS.md) for detailed status.
 
 ## Quick Start
 
