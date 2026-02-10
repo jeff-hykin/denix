@@ -9,9 +9,9 @@ A Nix → JavaScript translator with 1-to-1 parity for Nix 2.18 builtins, implem
 ## Status
 
 **Translator:** ✅ 100% complete (87/87 tests passing)
-**Runtime:** ⚠️ 109 builtins implemented, 56 tested (51% coverage)
-**Critical Issue:** 🐛 8/10 derivation tests failing - [see fixes](prompt.md#-priority-0-fix-derivation-bugs-1-2h---critical)
-**Goal:** 80% test coverage (87/109 builtins)
+**Runtime:** ✅ 109 builtins implemented, 74 tested (67.9% coverage)
+**Derivations:** ✅ All derivation tests passing (10/10)
+**Goal:** 80% test coverage (88/109 builtins)
 
 ## Quick Start
 
@@ -33,7 +33,7 @@ deno test --allow-all
 
 - ✅ **109 Nix builtins** - All Nix 2.18 builtins implemented
 - ✅ **Import system** - `builtins.import` and `builtins.scopedImport` fully working
-- ⚠️ **Derivations** - Basic derivation support (2/10 tests passing, bugs identified)
+- ✅ **Derivations** - Full derivation support (10/10 tests passing)
 - ✅ **Network fetchers** - fetchGit, fetchTarball, fetchurl, fetchTree, path, filterSource
 - ✅ **Pure Deno** - Zero npm/jsr dependencies, only URL imports
 
@@ -80,7 +80,7 @@ denix/
 ├── main.js                 # Nix → JS translator
 ├── main/
 │   ├── runtime.js          # 109 Nix builtins + operators
-│   └── tests/              # Test suite (28 files, 240+ tests)
+│   └── tests/              # Test suite (33 files, 413+ tests)
 ├── tools/                  # Utilities (hashing, store paths)
 ├── test.sh                 # Test runner
 ├── prompt.md               # Current priorities
@@ -89,10 +89,10 @@ denix/
 
 ## Testing
 
-**Current coverage:** 240+ tests passing
-- Runtime tests: ~170+
+**Current coverage:** 413+ tests passing
+- Runtime tests: ~260+
 - Translator tests: 87
-- Integration tests: ~30+
+- Integration tests: ~66+
 
 **Test categories:**
 1. Runtime builtins (builtins_*_test.js)
@@ -104,10 +104,10 @@ denix/
 
 ## Implementation Status
 
-### Implemented Builtins (97/97)
+### Implemented Builtins (109/109)
 
 ✅ All Nix 2.18 builtins implemented
-⚠️ Only 40/97 tested (41% coverage)
+✅ 74/109 tested (67.9% coverage)
 
 **Categories:**
 - Type checking: isNull, isBool, isInt, isFloat, isString, isList, isAttrs, isPath, isFunction, typeOf
@@ -125,18 +125,14 @@ See [main/runtime.js](main/runtime.js) for complete implementation.
 
 ## Known Issues
 
-**Critical (must fix first):**
-- 🐛 Derivation store path hash mismatch (8 tests failing)
-- 🐛 toJSON crashes on derivation objects (1 test failing)
-
 **Testing needed:**
-- 53/109 builtins have no tests yet (49% untested)
-- Priority: Fix bugs → Math ops → Attrset ops → String ops → Path ops
+- 35/109 builtins have no tests yet (32% untested)
+- Priority: File ops (6) → Math ops (2) → Misc conversion (6) → Advanced features (21)
 
 ## Development Priority
 
-**Immediate:** Fix 2 derivation bugs (1-2h) - [see prompt.md](prompt.md#-priority-0-fix-derivation-bugs-1-2h---critical)
-**Next:** Add tests for 31 critical builtins (12-16h total)
+**Immediate:** Add tests for 14 high-priority builtins (3-5h) to reach 80% coverage
+**Next:** Add tests for remaining 21 medium-priority builtins (8-12h)
 
 See [prompt.md](prompt.md) for detailed tasks.
 

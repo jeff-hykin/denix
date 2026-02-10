@@ -46,16 +46,17 @@ Implements all 109 Nix 2.18 builtins:
 ### 4. Tools (tools/)
 
 **Core Utilities:**
-- `hashing.js` - SHA256, MD5, SHA1, SHA512
+- `hashing.js` - SHA256, MD5, SHA1, SHA512, MD5 implementation
+- `sha1.js` - SHA1 implementation
+- `sha_helpers.js` - SHA helper utilities
 - `store_path.js` - Nix store path computation
 - `import_resolver.js` - Path resolution for imports
 - `parsing.js` - Nix parser wrapper
-- `analysis.js` - Scope stack management
 - `lazy_array.js` - Lazy list evaluation (lazyMap)
 - `json_parse.js` - JSON with BigInt support
 - `generic.js` - Type conversion helpers
 
-### 5. Testing (main/tests/ - 27 files)
+### 5. Testing (main/tests/ - 33 files)
 
 **Test Categories:**
 1. Runtime builtins - Test individual builtins
@@ -146,10 +147,12 @@ denix/
 │   └── tests/                   # All tests (27 files)
 ├── tools/
 │   ├── hashing.js               # Hash functions
+│   ├── sha1.js                  # SHA1 implementation
+│   ├── sha_helpers.js           # SHA helper utilities
+│   ├── md5.js                   # MD5 implementation
 │   ├── store_path.js            # Store path computation
 │   ├── import_resolver.js       # Path resolution
 │   ├── parsing.js               # Parser wrapper
-│   ├── analysis.js              # Scope tracking
 │   ├── lazy_array.js            # Lazy lists
 │   ├── json_parse.js            # JSON + BigInt
 │   └── generic.js               # Utilities
