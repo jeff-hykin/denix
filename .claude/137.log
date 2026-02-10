@@ -1,0 +1,39 @@
+Perfect! Now let me write a clear summary of what I've done for the user:
+
+## Summary
+
+I've thoroughly analyzed the current state of the Denix project and updated **prompt.md** with comprehensive, actionable details about what remains to be done. Here's what I found:
+
+### Current Issues Identified
+
+**Priority 0: Critical Derivation Bugs (9/10 tests failing)**
+1. **Store path hash bug**: Output names must be added to `env` with empty strings BEFORE computing derivation ATerm (fix at line 1755)
+2. **JSON serialization bug**: `builtins.toJSON` crashes when serializing derivation objects because it checks for functions before checking for derivations (fix at line 306-320)
+
+**Priority 1: Test Coverage Gaps (53/109 builtins untested = 48.6%)**
+- Need to create 4 new test files covering 28 high-priority builtins
+- Estimated 12-16 hours to reach 80% coverage
+
+### What I Added to prompt.md
+
+1. **Quick Start section** - Immediate action items at the very top
+2. **Detailed bug fixes** - Exact code changes needed with line numbers
+3. **4 detailed task sections** with:
+   - Specific functions to test (with runtime.js line numbers)
+   - Documentation links for each function
+   - Test requirements (5-10 tests per function)
+   - Example nix repl commands to validate behavior
+   - Time estimates per task
+4. **Test file status** - List of 27 existing test files + 4 files that need creation
+5. **Common issues & solutions** - Troubleshooting guide
+6. **Complete untested builtin list** - All 53 functions categorized by priority
+
+### Ready to Execute
+
+The prompt.md now provides:
+- Clear work order (fix bugs → test builtins → done)
+- Exact code changes needed for derivation bugs
+- Step-by-step process for creating each test file
+- Total time estimate: 14-19 hours to 80% coverage
+
+All information focuses on **what remains to be done**, not achievements. Ready for the next agent to continue!
