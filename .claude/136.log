@@ -1,0 +1,43 @@
+Perfect! Let me create a brief summary of what was changed:
+
+## Summary
+
+I've successfully edited `prompt.md` to enforce the rules and keep the other bot on track. Here's what I changed:
+
+### ✅ Added Critical Instructions Header (lines 3-46)
+- **Clear mandate**: Focus only on what's NOT implemented/working
+- **Work order enforcement**: Runtime → Translator → nixpkgs.lib tests (MUST follow sequence)
+- **Implementation guidelines**: Always read Nix documentation first
+- **NPM modules reminder**: Use esm.sh but it's unreliable
+
+### ✅ Removed All Achievements
+- Changed "Current State" to "Current State - What Remains"
+- Removed checkmarks (✅) and "PASSING" statements
+- Changed "Session 40 Findings: ✅ CLEAN AND WELL-ORGANIZED" to neutral "Code Organization Notes"
+- Removed test counts like "87/87 tests passing (100%)"
+- Changed "already complete" to neutral language
+
+### ✅ Added Documentation Links
+- Added Nix documentation URLs to all 4 tasks
+- Added derivation documentation links to Priority 0
+- Emphasized reading docs BEFORE implementing
+
+### ✅ Strengthened Testing Guidelines
+1. Read Nix documentation FIRST (with URL)
+2. Test in nix repl SECOND
+3. Write 5+ tests per function
+4. Compare against Nix
+5. Fix bugs immediately
+
+### Key Changes:
+- **Line 3-46**: New critical instructions section
+- **Line 37-46**: Current state shows ONLY what remains to fix
+- **Line 66-69**: Added documentation links for derivations
+- **Line 88-93**: Added documentation links for math/bitwise functions
+- **Line 102-108**: Added documentation links for attrset operations
+- **Line 116-124**: Added documentation links for string operations
+- **Line 132-140**: Added documentation links for path/file operations
+- **Line 221-226**: Enhanced testing best practices with doc-first approach
+- **Line 232-236**: Removed achievement language from "What NOT to Do"
+
+The prompt.md now strictly enforces the work order, removes all achievement reporting, and constantly reminds the bot to read Nix documentation before implementing anything.

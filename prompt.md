@@ -1,13 +1,49 @@
 # Denix Development Priorities
 
-**Last Updated:** 2026-02-10 (Session 40 - Architecture Review)
+## CRITICAL INSTRUCTIONS - READ FIRST
 
-## Current State
+**Your job is to focus on what is NOT implemented and NOT working. Only report what remains to be done. Do not report what you accomplished. You are a senior level developer, there is no such thing as a blocker. Break down large tasks into smaller tasks.**
 
-- **Runtime:** 109/109 builtins implemented (100%)
-- **Tests:** 56/109 tested (51.4% coverage)
-- **Derivations:** Working but 9/10 extended tests failing (store path computation bug)
-- **Translator:** 87/87 tests passing (100%)
+**Before executing what is below, please filter out any achievements. Only keep remaining/unsolved tasks in this document. Add detail to each task if needed.**
+
+### MANDATORY WORK ORDER - DO NOT DEVIATE
+
+1. **FIRST: Finish Runtime** (network fetchers + store functions in runtime.js)
+2. **SECOND: Finish Translator** (only after runtime is complete)
+3. **THIRD: Test nixpkgs.lib files** (only after translator is complete)
+
+**DO NOT work on translator until runtime is fully implemented.**
+**DO NOT work on nixpkgs.lib tests until translator is fully implemented.**
+
+### IMPLEMENTATION GUIDELINES
+
+**Always Read Documentation While Implementing:**
+1. **Before starting ANY builtin**, read official Nix documentation:
+   - Primary: https://nix.dev/manual/nix/2.28/language/builtins.html
+   - Search: Use web search for "nix builtins.FUNCTION_NAME" for examples
+2. **Test in nix repl first** - Document exact Nix behavior before coding
+3. **Compare outputs** - Your implementation must match Nix exactly
+4. **Read existing code** - Check how similar builtins are implemented
+5. **Test incrementally** - Write tests as you implement, not after
+
+**NPM Modules:**
+- You are allowed to use npm modules via https://esm.sh/NPM_MODULE_NAME
+- WARNING: esm.sh is unreliable and doesn't always work
+- Prefer Deno standard library when possible
+- Always test esm.sh imports before relying on them
+
+---
+
+## Current State - What Remains
+
+**Runtime Issues:**
+- 53/109 builtins untested (48.6% have no test coverage)
+- Derivation store path computation bug (9/10 extended tests failing)
+
+**What Works:**
+- Translator: Complete
+- Import system: Complete
+- Basic derivations: Working (but see bug above)
 
 ## Priority 0: Fix Derivation Store Paths (CRITICAL - 1-2h)
 
@@ -17,15 +53,20 @@
 
 **Test:** Run `deno run --allow-all main/tests/derivation/001_basic_tests.js`
 
-**Expected Results:**
-- Test 001-002: PASSING ✓ (simple cases work)
-- Test 003-010: FAILING ✗ (store path hashes don't match Nix)
+**Current Results:**
+- Test 001-002: Simple cases work
+- Test 003-010: Store path hashes don't match Nix (NEEDS FIX)
 
 **Fix Required:** See MEMORY.md Session 27 notes - need to add empty output placeholders to env before computing derivation ATerm.
 
 **File to Fix:** `main/runtime.js` around line 1756-1778 (derivation function)
 
 **Verification:** All 10 tests should pass after fix.
+
+**Documentation to Read:**
+- https://nix.dev/manual/nix/2.28/language/derivations
+- https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-derivation
+- Search: "nix derivation store path computation" for implementation details
 
 ---
 
@@ -49,6 +90,12 @@ Functions:
 - `bitOr` - Bitwise OR
 - `bitXor` - Bitwise XOR
 
+**Documentation:**
+- https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-sub
+- https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-mul
+- https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-ceil
+- https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-bitAnd
+
 **Test in nix repl first:**
 ```bash
 nix repl
@@ -62,6 +109,13 @@ nix repl
 
 Create: `main/tests/builtins_attrs_ops_test.js`
 
+**Documentation:**
+- https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-getAttr
+- https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-attrNames
+- https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-attrValues
+- https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-catAttrs
+- https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-genericClosure
+
 Functions:
 - `getAttr` - Get attribute (throws if missing)
 - `attrNames` - Sorted list of keys
@@ -72,6 +126,15 @@ Functions:
 ### Task 3: String Operations (5 functions, 3-4h)
 
 Create: `main/tests/builtins_strings_ops_test.js`
+
+**Documentation:**
+- https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-split
+- https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-splitVersion
+- https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-baseNameOf
+- https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-dirOf
+- https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-toString
+- https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-match
+- https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-concatStringsSep
 
 Functions:
 - `split` - Split by regex (alternating list)
@@ -85,6 +148,15 @@ Functions:
 ### Task 4: Path/File Operations (8 functions, 4-5h)
 
 Create: `main/tests/builtins_paths_ops_test.js`
+
+**Documentation:**
+- https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-pathExists
+- https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-readFile
+- https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-readDir
+- https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-readFileType
+- https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-findFile
+- https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-toFile
+- https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-toPath
 
 Functions:
 - `pathExists` - Check if path exists
@@ -109,9 +181,9 @@ Functions:
 
 # Run specific groups
 ./test.sh derivation    # Derivation tests
-./test.sh types         # Type checking (already complete)
-./test.sh lists         # List operations (already complete)
-./test.sh core          # Core builtins
+./test.sh types         # Type checking tests
+./test.sh lists         # List operations tests
+./test.sh core          # Core builtins tests
 
 # Run specific test file
 deno test --allow-all main/tests/builtins_math_test.js
@@ -146,53 +218,48 @@ Deno.test("functionName - error case", () => {
 
 ## Testing Best Practices
 
-1. **Test in nix repl FIRST** - Document exact Nix behavior
-2. **5+ tests per function** - Normal + edge cases + errors
-3. **Compare against Nix** - Run same code in nix repl to verify
-4. **Test BigInt vs Float** - Many functions handle both
-5. **Fix bugs immediately** - Don't skip failing tests
+1. **Read Nix documentation FIRST** - https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-FUNCTION_NAME
+2. **Test in nix repl SECOND** - Document exact Nix behavior before coding
+3. **Write 5+ tests per function** - Normal + edge cases + errors
+4. **Compare against Nix** - Run same code in nix repl to verify outputs match
+5. **Test BigInt vs Float** - Many functions handle both types
+6. **Fix bugs immediately** - Don't skip failing tests, fix them now
 
 ---
 
 ## What NOT to Do
 
-- ❌ Don't refactor working code
-- ❌ Don't add features (runtime is complete)
-- ❌ Don't work on translator (already 100%)
-- ❌ Don't work on nixpkgs tests yet
-- ❌ Don't split files or reorganize structure
+- ❌ Don't refactor code unnecessarily
+- ❌ Don't add features beyond what's documented in tasks
+- ❌ Don't work on translator until runtime is complete
+- ❌ Don't work on nixpkgs tests until translator is complete
+- ❌ Don't split files or reorganize structure without explicit instruction
 
 ---
 
-## Documentation Files
+## Reference Documentation Files
 
 - **README.md** - User-facing overview
 - **ARCHITECTURE.md** - Technical design details
-- **ARCHITECTURE_CLEANUP_ANALYSIS.md** - Codebase assessment (Session 40)
+- **MEMORY.md** - Session history and project memory
 - **test.sh** - Test runner with categories
 
 ---
 
-## Key Files
+## Key Files to Modify
 
-- `main/runtime.js` - 109 builtins (lines 164-2063)
-- `main.js` - Nix → JS translator (87/87 tests passing)
-- `main/tests/` - 27 test files, 290+ tests
+- `main/runtime.js` - Builtin implementations (lines 164-2063)
+- `main.js` - Nix → JS translator
+- `main/tests/` - Test files directory (create new test files here)
 - `tools/` - Utilities (hashing, store paths, etc.)
 
 ---
 
-## Session 40 Findings (Architecture Review)
+## Code Organization Notes
 
-**Codebase Status:** ✅ CLEAN AND WELL-ORGANIZED
-
-- 50 JavaScript files, all necessary
-- No dead code found
-- No duplicate implementations
-- Clear separation of concerns
-- Excellent test organization via test.sh
-
-**No refactoring needed** - Focus on EXECUTION (testing + bug fixes)
+- 50 JavaScript files exist in the codebase
+- Test organization handled via test.sh script
+- Focus should be on execution (testing + bug fixes), not refactoring
 
 ---
 
