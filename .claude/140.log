@@ -1,0 +1,43 @@
+Perfect! Now let me write the final summary in the prompt.md:
+
+I've reviewed the current state and updated `prompt.md` with accurate information about what remains to be done.
+
+## Current State
+
+**Test Coverage:** 56/109 builtins tested (51.4%) across 30 test files with ~381 individual tests
+
+**Blocking Issues:**
+- 🐛 9/10 derivation tests failing due to 2 bugs (Priority 0)
+
+## What Remains - Organized by Priority
+
+### PRIORITY 0: Fix 2 Derivation Bugs (1-2 hours)
+1. **Store path hash mismatch** - Need to add output names to `env` object with empty strings BEFORE computing hash (currently added after)
+2. **toJSON crash on derivations** - Derivation check happens too late, needs to be before function type check
+
+### PRIORITIES 1-4: Test 28 Untested Functions (12-16 hours)
+Created detailed test plans with:
+- Exact validation commands using `nix repl`
+- Complete test file templates with 50-80 tests per category
+- Edge cases and quirks documented
+- Expected behaviors from actual Nix
+
+1. **Math/Bitwise Ops** (8 functions, 3-4h): sub, mul, lessThan, ceil, floor, bitAnd, bitOr, bitXor
+2. **Attrset Ops** (5 functions, 2-3h): getAttr, attrNames, attrValues, catAttrs, genericClosure
+3. **String Ops** (7 functions, 3-4h): split, match, concatStringsSep, splitVersion, baseNameOf, dirOf, toString
+4. **Path/File Ops** (8 functions, 4-5h): pathExists, readFile, readDir, readFileType, findFile, toFile, toPath
+
+**Result after completing all 4 priorities:** 84/109 tested (77% coverage), ~3 more functions needed for 80%
+
+## Key Updates Made
+
+- ✅ Added comprehensive bug fix instructions with code snippets
+- ✅ Added validation commands from `nix repl` for every function  
+- ✅ Included complete test file templates with 50-80 tests each
+- ✅ Documented Nix quirks (e.g., `toString(false)` → `""`, split format with sublists)
+- ✅ Created fixture setup instructions for path operations
+- ✅ Added "Quick Reference" showing all 53 untested builtins categorized
+- ✅ Listed all 56 already-tested builtins to avoid duplicate work
+- ✅ Accurate time estimates based on complexity
+
+The prompt.md now contains everything needed to complete the remaining work systematically!
