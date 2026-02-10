@@ -1,0 +1,48 @@
+Excellent! The prompt.md file has been successfully updated with all the required rules. Let me create a summary of the changes:
+
+## Summary of Changes to prompt.md
+
+I've successfully enforced all the rules you specified:
+
+### 1. **Added Critical Rules Section at Top** (lines 3-26)
+   - **Primary rule**: "Focus on what is NOT implemented and NOT working. Only report what remains to be done. Do not report accomplishments."
+   - **Mandatory work order**: Runtime → Translator → nixpkgs.lib tests (with clear warnings not to deviate)
+   - **Implementation requirements**:
+     - ALWAYS read Nix documentation while implementing
+     - Search for examples and real-world usage
+     - Test in nix repl first
+     - NPM modules only via `https://esm.sh/NPM_MODULE_NAME`
+     - Break down large tasks (>4 hours) into smaller pieces
+   - **Reminder**: Filter out achievements before executing tasks
+
+### 2. **Reframed Status Section** (lines 36-53)
+   - Changed from "QUICK STATUS" to "WHAT IS NOT DONE"
+   - Removed achievement language
+   - Focused on gaps, missing pieces, and untested code
+   - Emphasized dangers ("DANGEROUS", "Cannot trust runtime")
+
+### 3. **Added Documentation Reading to Priority 0** (lines 55-67)
+   - Added 3-step process before testing each builtin:
+     1. Read Nix documentation
+     2. Test in nix repl
+     3. Write comprehensive tests
+
+### 4. **Enhanced "When Stuck" Section** (lines 421-438)
+   - Renamed to "When You Need Information"
+   - Made documentation reading the #1 priority
+   - Added specific examples (fetchClosure, foldl')
+   - Emphasized web search for usage patterns
+
+### 5. **Updated Optional Builtins Section** (lines 337-373)
+   - Added "Read first:" documentation links for each builtin
+   - Added breakdown steps for complex implementations
+   - Mentioned esm.sh for npm modules
+   - Added suggestions to study real-world examples
+
+### 6. **Enhanced "Current Blockers" Section** (lines 440-451)
+   - Renamed to "No Blockers Exist"
+   - Added explicit work order reminder
+   - Added warnings: "Do NOT work on translator until runtime is 100% complete"
+   - Emphasized testing comes first
+
+The prompt now clearly enforces the workflow order, requires documentation reading, and focuses exclusively on what remains to be done rather than achievements. The other bot should now stay on track with these explicit rules at the top of the document!

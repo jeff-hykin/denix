@@ -1,25 +1,53 @@
 # Denix Development Guide
 
+## ⚠️ CRITICAL RULES - READ FIRST ⚠️
+
+**Your job is to focus on what is NOT implemented and NOT working. Only report what remains to be done. Do not report accomplishments.**
+
+You are a senior level developer. There is no such thing as a blocker. Break down large tasks into smaller tasks.
+
+### MANDATORY WORK ORDER (DO NOT DEVIATE):
+1. **Runtime builtins MUST be fully implemented FIRST** (all network fetchers, store functions, missing builtins)
+2. **Translator MUST be complete SECOND** (only after runtime is 100% done)
+3. **nixpkgs.lib tests come LAST** (only after translator is 100% done)
+
+### IMPLEMENTATION REQUIREMENTS:
+- **ALWAYS read Nix documentation while implementing**: https://nix.dev/manual/nix/2.28/language/builtins.html
+- **Search for examples**: Use web search to find real-world usage patterns
+- **Test in nix repl first**: Verify expected behavior before implementing
+- **NPM modules**: Only use via `https://esm.sh/NPM_MODULE_NAME` (unreliable, may not work)
+- **Break down tasks**: If something seems large (>4 hours), break into smaller pieces
+
+### BEFORE EXECUTING TASKS BELOW:
+- Filter out any achievement language (✅, "Complete!", "Working!")
+- Only keep remaining/unsolved tasks
+- Add implementation details where missing
+
+---
+
 ## Core Principle: SIMPLICITY FIRST
 
-**Your job:** Focus on what is NOT working. Delete unnecessary code. Test core functionality before edge cases.
+Focus on what is NOT working. Test core functionality before edge cases.
 
 **Priority order:** Core tests → Missing builtins → Edge cases → Optional features
 
 ---
 
-## QUICK STATUS (2026-02-10)
+## WHAT IS NOT DONE (2026-02-10)
 
-**Runtime Implementation:**
-- 114/118 builtins implemented (96.6%)
-- 4 missing: `foldl'`, `warn`, `convertHash`, `addDrvOutputDependencies`
+**Runtime Gaps:**
+- 4 builtins missing: `foldl'`, `warn`, `convertHash`, `addDrvOutputDependencies` (2-3 hours work)
+- 86 builtins implemented but UNTESTED (75.4% - this is DANGEROUS)
+- Core functions with NO tests: `map`, `filter`, `hasAttr`, `getAttr`, `throw`, `trace`, `isNull`, `typeOf`
 
-**Test Coverage (CRITICAL GAP):**
+**Critical Testing Gap:**
 - Only 28/114 builtins have tests (24.6% coverage)
-- 86 builtins implemented but UNTESTED (75.4%)
-- Core functions like `map`, `filter`, `hasAttr`, `getAttr` have NO tests!
+- Type checking: 0% coverage (all 10 functions untested)
+- List operations: 20% coverage (map, filter, foldl untested!)
+- Attrset operations: 33% coverage (hasAttr, getAttr untested!)
+- Cannot trust runtime without testing core operations
 
-**What needs immediate work:**
+**Immediate Work Required:**
 1. Test core builtins (type checking, list ops, attrset ops) - 3-5 days
 2. Implement 4 missing builtins - 2-3 hours
 3. Derivation edge cases - 2-4 hours
@@ -29,15 +57,18 @@
 
 ## PRIORITY 0: Test Core Builtins (3-5 days) ⚠️ CRITICAL
 
-**Goal:** Verify fundamental builtins work correctly before building on them
-
 **Why this is Priority 0:**
 - 75% of builtins are UNTESTED - we don't know if they work!
 - Core functions (map, filter, hasAttr, getAttr) used everywhere
-- Can't trust runtime without testing core operations
-- Current test coverage is dangerously low
+- Cannot trust runtime without testing core operations
+- Current test coverage is dangerously low (24.6%)
 
-See **BUILTIN_COVERAGE.md** for complete coverage analysis.
+**See BUILTIN_COVERAGE.md** for complete coverage analysis.
+
+**Before testing each builtin:**
+1. Read https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-FUNCTIONNAME
+2. Test in nix repl to understand exact behavior
+3. Write tests for normal cases, edge cases, and error cases
 
 ### Task 0.1: Type Checking Tests (4-6 hours)
 
@@ -311,23 +342,37 @@ Add tests to `main/tests/nixpkgs_lib_files_test.js`
 **Only if needed for specific use cases:**
 
 ### fetchMercurial (2-3 days)
-- Requires `hg` binary
+**Read first:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchMercurial
+
+- Requires `hg` binary or npm mercurial module via `https://esm.sh/mercurial` (if exists)
 - Similar to fetchGit but for Mercurial
 - Rarely used
+- Break down: Research hg → Clone repo → Hash computation → Store integration
 
 ### fetchClosure (5-7 days) - COMPLEX
-- Requires binary cache access
+**Read first:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchClosure
+
+- Requires binary cache access (cache.nixos.org)
 - Experimental feature
 - Very complex implementation
+- Break down: NAR download → Signature verification → Store import → Closure resolution
+- May need npm modules via esm.sh for signature verification
 
 ### getFlake (5-7 days) - VERY COMPLEX
-- Requires full flake system
+**Read first:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-getFlake
+
+- Requires full flake system (lock files, inputs, outputs)
 - Experimental feature
 - Large scope
+- Break down: Parse flake.nix → Resolve inputs → Fetch inputs → Evaluate outputs
+- Study real flake.nix files in nixpkgs for patterns
 
 ### fetchTree type='indirect' (3-4 days)
-- Flake registry lookups
+**Read first:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchTree
+
+- Flake registry lookups (github:owner/repo → actual URL)
 - Complex resolution logic
+- Break down: Parse registry → Resolve indirection → Call fetchTree with resolved URL
 
 ---
 
@@ -390,18 +435,30 @@ new InterpolatedString(["Hello ", ""], [name])
 
 ---
 
-## When Stuck
+## When You Need Information
 
-1. **Break down the task** - No task is too big to break into pieces
-2. **Read documentation** - https://nix.dev/manual/nix/2.28/language/builtins.html
-3. **Test in nix repl** - Verify expected behavior before implementing
-4. **Write tests first** - Know what success looks like
-5. **Start simple** - Core cases before edge cases
+1. **ALWAYS read Nix documentation FIRST**: https://nix.dev/manual/nix/2.28/language/builtins.html
+   - For `builtins.fetchClosure`, read https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchClosure
+   - For `builtins.foldl'`, read https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-foldl'
+   - Search web for additional examples and usage patterns
+2. **Search for real-world usage**: Use web search to find how others use the builtin
+3. **Test in nix repl**: Verify expected behavior before implementing in JavaScript
+4. **Break down the task**: No task is too big to break into 1-2 hour pieces
+5. **Write tests first**: Know what success looks like before coding
+6. **Start simple**: Core cases before edge cases
 
 ---
 
-## Current Blockers
+## No Blockers Exist
 
-**None!** All tasks can be started immediately.
+All tasks can be started immediately. Break down large tasks into 1-2 hour pieces.
 
-The biggest issue is test coverage, not implementation. We need to verify that the 114 implemented builtins actually work correctly before building more features on top of them.
+**Remember the work order:**
+1. Runtime (Priority 0-2) - Test and complete all builtins
+2. Translator (Priority 3) - Handle edge cases
+3. nixpkgs.lib (Priority 4) - Expand test coverage
+
+**Do NOT work on translator until runtime is 100% complete.**
+**Do NOT work on nixpkgs.lib tests until translator is 100% complete.**
+
+The biggest issue is test coverage (24.6%), not implementation. Testing comes first.
