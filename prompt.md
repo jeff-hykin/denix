@@ -1,145 +1,84 @@
 # Denix Development Guide
 
-## CURRENT STATE (2026-02-10)
+## ⚠️ CRITICAL RULES - READ FIRST ⚠️
 
-**Runtime:** 62/65 builtins implemented (95% complete)
-- ✅ All core builtins working
-- ✅ Derivation system fully functional (12/12 tests passing)
-- ❌ 3 optional builtins remain (fetchMercurial, fetchClosure, getFlake)
+**Your job is to focus on what is NOT implemented and NOT working. Only report what remains to be done. Do not report what you accomplished. You are a senior level developer, there is no such thing as a blocker. Break down large tasks into smaller tasks.**
 
-**Translator:** 100% complete (87/87 tests passing)
+**WORK ORDER (MUST FOLLOW STRICTLY):**
+1. **Runtime first** - Finish all network fetchers and store functions in runtime.js
+2. **Translator second** - Only work on translator AFTER runtime is 100% complete
+3. **Tests third** - Only work on nix-lib tests AFTER translator is 100% complete
 
-**Tests:** 166 test suites, 240+ test cases, all passing
+**IMPLEMENTATION REQUIREMENTS:**
+- **ALWAYS read Nix documentation WHILE implementing**: https://nix.dev/manual/nix/2.28/language/builtins.html
+- **Search for real-world examples** of the builtin you're implementing
+- **Test behavior in `nix repl`** before implementing in JavaScript
+- **Use npm modules ONLY via esm.sh**: `import pkg from "https://esm.sh/PACKAGE_NAME"` (but esm.sh is unreliable)
+- **Break down large tasks** into sub-tasks (max 1 day per sub-task)
+- **No blockers exist** - if stuck, break the problem down further
 
-**RECOMMENDATION:** Runtime is production-ready. Focus on testing and edge cases.
-
-## PRIORITIES (WHAT REMAINS)
-
-### Priority 1: Derivation Edge Cases (2-3 hours)
-**Status:** Basic tests passing (12/12). Need edge case coverage.
-**Task:** Test multiple outputs, passthru/meta attributes, string context propagation.
-**See:** "Priority 1 Details" section below.
-
-### Priority 2: Optional Builtins (DECISION NEEDED)
-**Status:** 3 builtins not implemented (rarely used/experimental).
-**Options:**
-- **Option A (Recommended):** Skip these (saves 16-22 days)
-- **Option B:** Implement fetchMercurial, fetchClosure, getFlake
-**See:** "Priority 2 Details" section below.
-
-### Priority 3: Expand nixpkgs.lib Testing (4-6 days)
-**Status:** 10/41 files tested (24% coverage).
-**Goal:** Test high-value files (lists.nix, attrsets.nix, options.nix, etc.)
-**Target:** 50%+ coverage (21+ files)
+**If a plan is missing for how to implement remaining features, create intermediate steps and make them Priority 0.**
 
 ---
 
-## RULES FOR IMPLEMENTATION
+## WHAT REMAINS TO BE DONE
 
-1. **Keep it simple** - Don't over-engineer. Working > perfect.
-2. **Test behavior first** - Use `nix repl` to verify actual Nix behavior
-3. **Read docs** - Check https://nix.dev/manual/nix/2.28/language/builtins.html
-4. **Break down tasks** - Max 1 day per task, checkpoint frequently
+### Runtime (main/runtime.js) - 3 BUILTINS NOT IMPLEMENTED
 
----
+**Remaining work:**
+- fetchMercurial (optional, rarely used) - see Priority 2.1
+- fetchClosure (optional, experimental) - see Priority 2.2
+- getFlake (optional, experimental) - see Priority 2.3
 
-## Project Goal
-Implement a Nix → JavaScript translator with 1-to-1 parity for Nix builtins.
+**Edge cases NOT implemented:**
+- fetchTree types: 'path', 'indirect', 'mercurial' - see Priority 2.4
 
-## Current Status
+### Translator (main.js) - EDGE CASES NOT TESTED
 
-### What's Working (95% Complete)
-- **Runtime (62/65 builtins):**
-  - ✅ All math operators (add, sub, mul, div, etc.)
-  - ✅ All comparison operators (equal, lessThan, etc.)
-  - ✅ All list operations (map, filter, fold, etc.)
-  - ✅ All string operations (concatStrings, substring, etc.)
-  - ✅ All attrset operations (hasAttr, getAttr, mapAttrs, etc.)
-  - ✅ Import system (import, scopedImport with caching)
-  - ✅ Derivation system (derivation with store paths)
-  - ✅ All network fetchers (fetchGit, fetchTarball, fetchurl, fetchTree, path, filterSource)
-  - ✅ Type checking (isInt, isFloat, isString, etc.)
-  - ✅ Path operations (baseNameOf, dirOf, etc.)
-  - ✅ JSON/TOML parsing (fromJSON, toJSON, fromTOML)
+**Edge cases need verification:**
+- Nested destructuring patterns with @-syntax
+- All string escape sequences (\t, \n, \r, \\, \", \$, etc.)
+- Path literal edge cases (whitespace, special chars)
+- Operator precedence comprehensive tests
+- Multi-line string handling
+- URI literals
 
-- **Translator (87/87 tests):**
-  - ✅ All expressions (let, with, if, assert, function, etc.)
-  - ✅ All operators (arithmetic, comparison, logical, etc.)
-  - ✅ All patterns (destructuring, @-syntax, defaults, etc.)
-  - ✅ String interpolation and paths
-  - ✅ Recursive attribute sets
-  - ✅ Has-attr expressions
+### Testing - LOW COVERAGE
 
-- **Tests (240+ passing):**
-  - ✅ 41 translator tests
-  - ✅ 179+ runtime builtin tests
-  - ✅ 20 nixpkgs trivial.nix pattern tests
-  - ✅ 10 nixpkgs.lib file integration tests
-  - ⚠️ 1 flaky network test (has graceful error handling)
+**nixpkgs.lib testing:**
+- Only 10/41 files tested (24% coverage)
+- Target: 50%+ coverage (21+ files)
+- High-value files NOT tested: lists.nix, attrsets.nix, options.nix, meta.nix, debug.nix, filesystem.nix
 
-### What's NOT Working (5% Remaining)
-- **Runtime:**
-  - ❌ fetchMercurial (optional, rarely used)
-  - ❌ fetchClosure (optional, experimental)
-  - ❌ getFlake (optional, experimental)
-  - ⚠️ fetchTree types: 'path', 'indirect', 'mercurial' (edge cases)
+**Derivation edge cases NOT tested:**
+- Multiple outputs (outputs = ["out" "dev" "doc"])
+- Passthru attributes preservation
+- Meta attributes preservation
+- String context propagation
+- Edge cases: empty args, long names, special chars
 
-- **Testing:**
-  - ⚠️ Derivation edge cases not tested (multiple outputs, passthru, meta)
-  - ⚠️ Translator edge cases not tested (nested patterns, all escapes, etc.)
-  - ⚠️ nixpkgs.lib coverage at 24% (10/41 files tested)
+**Import system edge cases NOT tested:**
+- Circular import detection completeness
+- Cache invalidation behavior
+- Relative vs absolute path edge cases
 
-## Core Files
-- **main/runtime.js** - Nix builtins implementation (62/65 working, 3 optional remain)
-- **main.js** - Nix → JS translator (all core features working, edge cases need tests)
-- **main/tests/** - Test suite (240+ tests, 1 flaky network test)
-
-## Testing
-
-### Run Tests
-```bash
-./test.sh              # All tests (166 suites)
-./test.sh derivation   # Filter by keyword
-deno test --allow-all  # Direct deno test
-```
-
-### Test Files (main/tests/)
-- **translator_test.js** - Nix → JS translation (41 tests)
-- **nixpkgs_trivial_test.js** - nixpkgs.lib patterns (20 tests)
-- **nixpkgs_lib_files_test.js** - Full lib files (10 files)
-- **derivation/** - Derivation system (12 tests)
-- **builtins_*_test.js** - Individual builtin tests
-- **import_*_test.js** - Import system (49 tests)
-- Other runtime feature tests
-
-## Known Issues
-
-### ⚠️ Flaky Network Test (5 min fix, optional)
-**Problem:** `fetchGit - ref normalization` test fails intermittently because octocat/Hello-World uses "main" branch, not "master".
-
-**Location:** `main/tests/builtins_fetchgit_test.js` line 183-201
-
-**Impact:** Test already has error handling, skips gracefully. Does not block development.
-
-**Fix (5 minutes):**
-```javascript
-// Change line 189 and 197 from:
-ref: "master",
-ref: "refs/heads/master",
-
-// To:
-ref: "main",
-ref: "refs/heads/main",
-```
-
-**Alternative:** Leave as-is (acceptable for network-dependent tests)
+**Network test issues:**
+- 1 flaky test: fetchGit ref normalization (uses "master" not "main")
 
 ---
 
+## PROJECT OVERVIEW
+
+**Goal:** Implement Nix → JavaScript translator with 1-to-1 parity for Nix builtins.
+
+**Current state:**
+- Runtime: 62/65 builtins (3 optional remain)
+- Translator: 87/87 core tests passing (edge cases need tests)
+- Total tests: 240+ passing (coverage gaps remain)
+
 ---
 
-## Priority 1 Details: Derivation Edge Cases
-**Status:** Basic derivation tests passing (12/12). Advanced edge cases not tested.
+## PRIORITY 1: Derivation Edge Cases (2-3 hours)
 
 **Task:** Create `main/tests/derivation/002_advanced_tests.js`
 
@@ -149,7 +88,7 @@ ref: "refs/heads/main",
    ```nix
    derivation {
      outputs = [ "out" "dev" "doc" ];
-     # ... verify each output has unique store path
+     # verify each output has unique store path
    }
    ```
 
@@ -161,149 +100,275 @@ ref: "refs/heads/main",
 3. **Passthru attributes** (15 min)
    ```nix
    derivation { ... } // { passthru = { foo = "bar"; }; }
-   # Verify passthru attributes preserved but not in store path
+   # Verify passthru preserved but not in store path
    ```
 
 4. **Meta attributes** (15 min)
    ```nix
    derivation { ... } // { meta = { description = "..."; }; }
-   # Verify meta attributes preserved
    ```
 
 5. **String context propagation** (30 min)
-   - When derivation paths are used in strings
-   - Verify context is maintained through operations
+   - When derivation paths used in strings
+   - Context maintained through operations
    - Test with builtins.unsafeDiscardStringContext
 
 6. **Edge cases** (30 min)
    - Empty args array
    - Very long derivation names
    - Special characters in name
-   - Derivations with no outputs specified (should default to ["out"])
+   - No outputs specified (should default to ["out"])
 
 **Read first:** https://nix.dev/manual/nix/2.28/language/derivations.html
 
 ---
 
----
+## PRIORITY 2: Optional Runtime Builtins (16-22 DAYS TOTAL)
 
-## Priority 2 Details: Optional Runtime Builtins (DECISION NEEDED)
+**DECISION NEEDED:** These are rarely used. Consider skipping to save 16-22 days.
 
-**Before starting ANY of these, read the documentation and search for usage examples.**
+### 2.1 builtins.fetchMercurial (~2-3 days)
 
-### Option A: Skip These (Recommended)
-These builtins are rarely used and experimental. Total time saved: 16-22 days.
+**Status:** NOT IMPLEMENTED
 
-### Option B: Implement All (Only if explicitly requested)
+**Read while working:**
+- https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchMercurial
+- Search: "Mercurial hg clone examples"
+- Test in `nix repl`: `builtins.fetchMercurial { url = "..."; rev = "..."; }`
 
-#### 2.1 builtins.fetchMercurial (~2-3 days)
-**Read first:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchMercurial
+**Implementation steps:**
+1. Read Nix docs for fetchMercurial signature and behavior (30 min)
+2. Research `hg` CLI usage and Mercurial repo structure (1-2 hours)
+3. Create `main/tests/builtins/fetchMercurial_test.js` with basic tests (2-3 hours)
+4. Implement in `main/runtime.js` similar to fetchGit but using `hg clone` (1 day)
+5. Handle authentication, caching, error cases (4-6 hours)
+6. Add integration tests with real repositories (2-3 hours)
 
-**Not implemented:** Full implementation needed (similar to fetchGit).
+**Dependencies:** Requires `hg` (Mercurial) CLI in PATH
 
-**Steps:**
-1. Read Nix documentation for fetchMercurial signature and behavior
-2. Search for `hg` CLI usage examples and Mercurial repository structure
-3. Create `main/tests/builtins/fetchMercurial_test.js` with basic tests
-4. Implement in `main/runtime.js` (similar to fetchGit but using `hg clone`)
-5. Handle authentication, caching, and error cases
-6. Add integration tests with real repositories
+### 2.2 builtins.fetchClosure (~5-7 days) - VERY COMPLEX
 
-**Dependencies:** Requires `hg` (Mercurial) CLI available in PATH.
+**Status:** NOT IMPLEMENTED
 
-#### 2.2 builtins.fetchClosure (~5-7 days) - VERY COMPLEX
-**Read first:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchClosure
+**Read while working:**
+- https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchClosure
+- https://nix.dev/manual/nix/2.28/protocols/binary-cache
+- Search: "Nix binary cache narinfo format"
+- Search: "Ed25519 signature verification JavaScript"
 
-**Not implemented:** Binary cache download system, store path verification, signature checking.
+**What's missing:**
+- Binary cache download system
+- Store path verification
+- Signature checking (Ed25519)
+- NAR file extraction
 
-**Steps:**
+**Implementation steps:**
 1. **Research phase (1-2 days):**
    - Read Nix documentation thoroughly
-   - Study binary cache protocol (https://nix.dev/manual/nix/2.28/protocols/binary-cache)
+   - Study binary cache protocol
    - Examine narinfo file format
-   - Understand signature verification (Ed25519)
+   - Understand signature verification
+
 2. **Implementation phase (3-4 days):**
    - Create `tools/binary_cache.js` for cache downloads
-   - Implement NAR file extraction (extend existing `main/nar_hash.js`)
+   - Implement NAR file extraction (extend `main/nar_hash.js`)
    - Add signature verification using Web Crypto API or esm.sh library
    - Update store manager for binary cache integration
+
 3. **Testing phase (1-2 days):**
    - Create `main/tests/builtins/fetchClosure_test.js`
    - Test with cache.nixos.org
    - Test signature verification
    - Test error handling
 
-**Dependencies:** Requires understanding of NAR format, binary cache protocol, signature verification.
+### 2.3 builtins.getFlake (~5-7 days) - VERY COMPLEX
 
-#### 2.3 builtins.getFlake (~5-7 days) - VERY COMPLEX
-**Read first:** https://nix.dev/manual/nix/2.28/command-ref/new-cli/nix3-flake.html
+**Status:** NOT IMPLEMENTED
 
-**Not implemented:** Flake lock file parsing, flake registry, input resolution, output schema.
+**Read while working:**
+- https://nix.dev/manual/nix/2.28/command-ref/new-cli/nix3-flake.html
+- Search: "Nix flake.lock schema"
+- Search: "Nix flake registry protocol"
+- Test in `nix repl`: `builtins.getFlake "github:nixos/nixpkgs"`
 
-**Steps:**
+**What's missing:**
+- Flake lock file parsing
+- Flake registry support
+- Input resolution system
+- Output schema generation
+
+**Implementation steps:**
 1. **Research phase (2-3 days):**
    - Read flake documentation comprehensively
    - Study `flake.lock` JSON schema
    - Understand flake inputs/outputs structure
    - Examine registry protocol
+
 2. **Implementation phase (2-3 days):**
    - Create `tools/flake_parser.js` for flake.nix parsing
    - Create `tools/flake_lock.js` for lock file handling
    - Implement input resolution (fetchTree integration)
    - Build output schema generator
+
 3. **Testing phase (1-2 days):**
    - Create `main/tests/builtins/getFlake_test.js`
    - Test with real flakes (nixpkgs, flake-utils)
    - Test lock file generation/update
    - Test error handling
 
-**Dependencies:** Requires fetchTree working, complex JSON schema handling.
+### 2.4 builtins.fetchTree Edge Cases (~3-4 hours)
 
-#### 2.4 builtins.fetchTree Edge Cases (~3-4 hours)
-**Read first:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchTree
+**Status:** Partial implementation - missing 3 types
 
-**Not implemented:**
+**Read while working:**
+- https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchTree
+- Test each type in `nix repl`
+
+**Missing types:**
 - `type = "path"` - Local directory copy
 - `type = "indirect"` - Flake registry lookup
 - `type = "mercurial"` - Mercurial repositories
 
+**Implementation steps:**
+1. Read documentation for each type (30 min)
+2. Implement `type = "path"` - simplest, just copy to store (1 hour)
+3. Implement `type = "indirect"` - requires flake registry (1 hour)
+4. Implement `type = "mercurial"` - requires fetchMercurial first (1 hour)
+
+---
+
+## PRIORITY 3: Translator Edge Cases (2-3 days)
+
+**Status:** Core features working, edge cases NOT tested
+
+### 3.1 Advanced Pattern Matching (1 day)
+
+**What's NOT tested:**
+- Deeply nested destructuring: `{ a: { b: { c } } }`
+- Multiple @-bindings: `{ x, y } @ args @ outer`
+- Ellipsis with defaults: `{ a ? 1, ... } @ args`
+- Pattern matching in nested let bindings
+
 **Steps:**
-1. Read documentation for each type
-2. Implement `type = "path"` (simplest - just copy directory to store)
-3. Implement `type = "indirect"` (requires flake registry support)
-4. Implement `type = "mercurial"` (requires fetchMercurial first)
+1. Create `main/tests/translator_patterns_advanced_test.js`
+2. Test each pattern type in isolation
+3. Test combinations of patterns
+4. Verify error messages for invalid patterns
+
+### 3.2 String Escape Sequences (4-6 hours)
+
+**What's NOT tested:**
+- All escape sequences: `\t`, `\n`, `\r`, `\\`, `\"`, `\$`
+- Invalid escape sequences (should error)
+- Escapes in interpolated strings
+- Escapes in multi-line strings
+
+**Steps:**
+1. Add tests to `main/tests/translator_test.js`
+2. Test each escape in plain strings
+3. Test escapes in interpolated strings
+4. Test escapes in multi-line strings ('' ... '')
+
+### 3.3 Path Literal Edge Cases (4-6 hours)
+
+**What's NOT tested:**
+- Paths with spaces (should error or quote)
+- Paths with special characters
+- Relative vs absolute path behavior
+- Path concatenation edge cases
+- `<nixpkgs>` lookup behavior (partially implemented)
+
+**Steps:**
+1. Test in `nix repl` to verify Nix behavior
+2. Add tests for each edge case
+3. Fix translator if behavior doesn't match
+
+### 3.4 Operator Precedence (4-6 hours)
+
+**What's NOT tested:**
+- Complex precedence: `a + b * c - d / e`
+- Logical operators: `a && b || c`
+- Comparison chains: `a < b < c`
+- Has-attr in expressions: `x.y or z && a.b`
+
+**Steps:**
+1. Create comprehensive precedence test table
+2. Test each combination in `nix repl`
+3. Add tests to translator_test.js
+4. Fix any precedence bugs found
+
+### 3.5 Additional Language Features (4-6 hours)
+
+**What's NOT fully tested:**
+- Multi-line strings ('' ... '') with indentation
+- URI literals (http://example.com)
+- Inherit expressions in all contexts
+- Comments in complex expressions
 
 ---
 
+## PRIORITY 4: nixpkgs.lib Testing (4-6 days)
+
+**Status:** 10/41 files tested (24%)
+**Target:** 50%+ coverage (21+ files)
+
+**High-value files NOT tested:**
+1. lists.nix - Core list operations
+2. attrsets.nix - Core attrset operations
+3. options.nix - NixOS option system
+4. meta.nix - Package metadata
+5. debug.nix - Debugging utilities
+6. filesystem.nix - File operations
+7. modules.nix - Module system
+8. asserts.nix - Assertion utilities
+9. derivations.nix - Derivation helpers
+10. generators.nix - Code generators
+11. cli.nix - CLI utilities
+
+**Implementation:**
+- Create tests in `main/tests/nixpkgs_lib_files_test.js`
+- Follow existing patterns from tested files
+- Start with simpler files (meta, debug)
+- Progress to complex files (modules, options)
+
 ---
 
-## Priority 3 Details: nixpkgs.lib Testing
+## TECHNICAL DETAILS
 
-**Current:** 10/41 files tested (24%)
-**Goal:** 50%+ coverage (21+ files)
-
-**High-value files to test:**
-- lists.nix - Core list operations
-- attrsets.nix - Core attrset operations
-- options.nix - NixOS option system
-- meta.nix - Package metadata
-- debug.nix - Debugging utilities
-- filesystem.nix - File operations
-- modules.nix, asserts.nix, derivations.nix
-- generators.nix, cli.nix
-
-**Method:** Create tests in `nixpkgs_lib_files_test.js` following existing patterns.
-
----
-
-## Technical Notes
-
-### Key Patterns (for implementation)
+### Key Patterns
 - **BigInt for integers** - Nix ints → BigInt (correct 1/2 = 0)
 - **Object.create() for scopes** - Preserves getters (NOT spread operator)
 - **Lazy eval via getters** - Recursive sets need getters
 
-### Development
-- Test in `nix repl` first to verify behavior
-- Read docs: https://nix.dev/manual/nix/2.28/language/builtins.html
-- Simple > perfect - working code first, optimize later
+### Development Commands
+```bash
+./test.sh              # All tests
+./test.sh keyword      # Filter by keyword
+deno test --allow-all  # Direct deno test
+nix repl               # Test Nix behavior
+```
+
+### Core Files
+- **main/runtime.js** - Nix builtins (62/65, 3 remain)
+- **main.js** - Nix → JS translator (edge cases need tests)
+- **main/tests/** - Test suites (coverage gaps remain)
+
+---
+
+## KNOWN ISSUES
+
+### Flaky Network Test (5 min fix, optional)
+
+**Problem:** fetchGit test fails because octocat/Hello-World uses "main" not "master"
+
+**Location:** `main/tests/builtins_fetchgit_test.js` line 183-201
+
+**Fix:**
+```javascript
+// Change lines 189 and 197 from:
+ref: "master",
+// To:
+ref: "main",
+```
+
+**Status:** Has graceful error handling, does not block development

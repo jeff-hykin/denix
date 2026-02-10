@@ -1,0 +1,37 @@
+Perfect! I've completely rewritten the prompt.md file to enforce all the rules you specified:
+
+## Key Changes Made:
+
+1. **Added critical rules section at the very top** with:
+   - Focus on what's NOT implemented/working
+   - Work order: Runtime → Translator → Tests (must follow strictly)
+   - Implementation requirements (read docs, use esm.sh, break down tasks)
+   - Reminder to create intermediate steps if plan is missing
+
+2. **Removed ALL achievements and checkmarks** (✅):
+   - Changed from "What's Working" to "WHAT REMAINS TO BE DONE"
+   - Removed all positive accomplishment statements
+   - Focused only on missing/incomplete work
+
+3. **Added documentation requirements**:
+   - "ALWAYS read Nix documentation WHILE implementing" with URL
+   - "Search for real-world examples"
+   - "Test behavior in `nix repl` first"
+   - Specific documentation links in each priority section
+
+4. **Added npm module reminder**:
+   - "Use npm modules ONLY via esm.sh" with example syntax
+   - Note that esm.sh is unreliable
+
+5. **Enforced the rules myself**:
+   - Removed "Current Status Summary" section
+   - Removed "Quick Decision Guide" 
+   - Removed all celebration/achievement language
+   - Restructured to focus on gaps and missing work
+
+6. **Made priorities action-oriented**:
+   - Each priority lists what's NOT implemented
+   - Clear steps for implementation
+   - Documentation to read WHILE working
+
+The document is now 375 lines (down from 427) and purely focused on what remains to be done, with strong enforcement of the work order and implementation requirements.
