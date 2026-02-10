@@ -24,33 +24,33 @@ case "$1" in
         ;;
     types)
         echo "Running type checking tests (Task 1)..."
-        deno test --allow-all main/tests/builtins_types_test.js 2>/dev/null || \
-            echo "⚠️  File not yet created: main/tests/builtins_types_test.js"
+        deno test --allow-all main/tests/builtins_type_checking_test.js 2>/dev/null || \
+            echo "⚠️  File not yet created: main/tests/builtins_type_checking_test.js"
         ;;
     lists)
         echo "Running list operation tests (Task 2)..."
-        deno test --allow-all main/tests/builtins_lists_test.js 2>/dev/null || \
-            echo "⚠️  File not yet created: main/tests/builtins_lists_test.js"
+        deno test --allow-all main/tests/builtins_lists_comprehensive_test.js 2>/dev/null || \
+            echo "⚠️  File not yet created: main/tests/builtins_lists_comprehensive_test.js"
         ;;
     attrs|attrsets)
         echo "Running attrset tests (Task 3)..."
-        deno test --allow-all main/tests/builtins_attrs_test.js 2>/dev/null || \
-            echo "⚠️  File not yet created: main/tests/builtins_attrs_test.js"
+        deno test --allow-all main/tests/builtins_attrs_comprehensive_test.js 2>/dev/null || \
+            echo "⚠️  File not yet created: main/tests/builtins_attrs_comprehensive_test.js"
         ;;
     strings)
         echo "Running string operation tests (Task 4)..."
-        deno test --allow-all main/tests/builtins_strings_test.js 2>/dev/null || \
-            echo "⚠️  File not yet created: main/tests/builtins_strings_test.js"
+        deno test --allow-all main/tests/builtins_strings_comprehensive_test.js 2>/dev/null || \
+            echo "⚠️  File not yet created: main/tests/builtins_strings_comprehensive_test.js"
         ;;
     math)
         echo "Running math operation tests (Task 5)..."
-        deno test --allow-all main/tests/builtins_math_test.js 2>/dev/null || \
-            echo "⚠️  File not yet created: main/tests/builtins_math_test.js"
+        deno test --allow-all main/tests/builtins_math_comprehensive_test.js 2>/dev/null || \
+            echo "⚠️  File not yet created: main/tests/builtins_math_comprehensive_test.js"
         ;;
     paths)
         echo "Running path/file tests (Task 6)..."
-        deno test --allow-all main/tests/builtins_paths_test.js 2>/dev/null || \
-            echo "⚠️  File not yet created: main/tests/builtins_paths_test.js"
+        deno test --allow-all main/tests/builtins_paths_comprehensive_test.js 2>/dev/null || \
+            echo "⚠️  File not yet created: main/tests/builtins_paths_comprehensive_test.js"
         ;;
     core)
         echo "Running core builtin tests..."

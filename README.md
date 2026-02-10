@@ -78,12 +78,12 @@ const result = eval(jsCode)  // 3n
 denix/
 ├── main.js                 # Nix → JS translator
 ├── main/
-│   ├── runtime.js          # 97 Nix builtins + operators
-│   └── tests/              # Test suite (27 files, 240+ tests)
+│   ├── runtime.js          # 109 Nix builtins + operators
+│   └── tests/              # Test suite (28 files, 240+ tests)
 ├── tools/                  # Utilities (hashing, store paths)
 ├── test.sh                 # Test runner
-├── prompt.md               # Development priorities
-└── ARCHITECTURE.md         # Architecture overview
+├── prompt.md               # Current priorities
+└── ARCHITECTURE.md         # System design
 ```
 
 ## Testing

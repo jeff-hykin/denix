@@ -16,7 +16,7 @@ Converts Nix AST to JavaScript code:
 - Outputs executable JavaScript
 
 ### 2. Runtime (main/runtime.js - 2,314 lines)
-**Status:** ⚠️ 97/97 implemented, 40/97 tested (41%)
+**Status:** ⚠️ 109/109 implemented, 40/109 tested (37%)
 
 Implements all Nix 2.18 builtins:
 - Type checking: isNull, isAttrs, typeOf, etc.
@@ -122,12 +122,12 @@ Variables stored in `nixScope` object:
 
 ### Current Coverage
 - 240+ tests passing
-- Runtime: 40/97 builtins tested (41%)
+- Runtime: 40/109 builtins tested (37%)
 - Translator: 100% (87/87 tests)
 - Integration: Working (nixpkgs.lib files tested)
 
 ### Target Coverage
-- Runtime: 80%+ (77/97 builtins)
+- Runtime: 80%+ (87/109 builtins)
 - Focus: Type checking, list ops, attrset ops
 
 ### Test Methodology
@@ -163,9 +163,9 @@ denix/
 │   └── generic.js               # Utilities
 ├── nixpkgs.lib/                 # Test data (git submodule)
 ├── test.sh                      # Test runner
-├── prompt.md                    # Development guide
+├── prompt.md                    # Current priorities
 ├── README.md                    # Project overview
-└── TESTING.md                   # Testing guide
+└── ARCHITECTURE.md              # This file
 ```
 
 ## Not Part of Core
@@ -194,18 +194,15 @@ denix/
 
 **Current Goal:** 80% runtime test coverage (40/109 → 87/109)
 
-**Phase 1 - CRITICAL (16 functions, 8-12 hours):**
-- List: map, filter, all, any, elem, elemAt, partition, sort, genList, concatLists
-- Attrset: getAttr, attrNames, attrValues, catAttrs, genericClosure, getEnv
+Need to create 6 test files for 50 untested builtins (21-30 hours):
+1. Type checking (10 functions)
+2. List operations (10 functions)
+3. Attrset operations (6 functions)
+4. String operations (5 functions)
+5. Math & bitwise (8 functions)
+6. Path/file operations (11 functions)
 
-**Phase 2 - HIGH (24 functions, 10-14 hours):**
-- String: split, splitVersion, baseNameOf, dirOf, toXML
-- Math: sub, mul, ceil, floor, bitAnd, bitOr, bitXor, toString
-- Path/File: pathExists, readFile, readDir, readFileType, findFile, toFile, storePath, toPath, storeDir, nixPath, placeholder
-
-**Total to 80%: 40 functions, 18-26 hours**
-
-See [prompt.md](prompt.md) for task breakdown.
+See [prompt.md](prompt.md) for details and test file names.
 
 ## Performance Notes
 
