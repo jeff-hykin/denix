@@ -1,0 +1,79 @@
+Excellent! Now let me write a final summary document for the user:
+
+## Summary
+
+I've completed a comprehensive analysis of the Denix runtime testing status and updated all documentation with **verified accurate counts**.
+
+### Key Findings (Session 38)
+
+**Critical Discovery**: The actual builtin count is **109 functions** (not 102 as reported in Session 37).
+
+**Current Test Coverage:**
+- **42/109 builtins tested** = 38.5% coverage ❌ BELOW TARGET
+- **67/109 builtins untested** = 61.5% untested
+- **Target**: 87/109 tested (80%) = need **45 more functions tested**
+
+### What Remains To Be Done
+
+**6 Test Files Must Be Created:**
+
+1. **`builtins_type_checking_test.js`** (3-4 hours)
+   - 10 functions: isNull, isBool, isInt, isFloat, isString, isList, isPath, isAttrs, isFunction, typeOf
+   - **ZERO tests currently** - file does not exist
+   - 50+ tests required (5 per function)
+
+2. **`builtins_lists_comprehensive_test.js`** (6-8 hours)
+   - 12 functions: map, filter, all, any, elem, elemAt, partition, sort, genList, concatLists, zipAttrsWith, foldl'
+   - **CRITICAL**: `map` uses lazyMap proxy (HIGH RISK, ZERO tests)
+   - 70+ tests required
+
+3. **`builtins_attrs_comprehensive_test.js`** (4-6 hours)
+   - 7 functions: getAttr, attrNames, attrValues, catAttrs, genericClosure, hasAttr, genAttrs
+   - **CRITICAL**: `getAttr` and `attrNames` heavily used, ZERO tests
+   - 50+ tests required
+
+4. **`builtins_strings_comprehensive_test.js`** (4-5 hours)
+   - 8 functions: split, splitVersion, baseNameOf, dirOf, toString, match, concatStringsSep, replaceStrings
+   - 50+ tests required
+
+5. **`builtins_math_comprehensive_test.js`** (3-4 hours)
+   - 8 functions: sub, mul, lessThan, ceil, floor, bitAnd, bitOr, bitXor
+   - **ALL 8 have ZERO tests**
+   - 45+ tests required
+
+6. **`builtins_paths_comprehensive_test.js`** (4-6 hours)
+   - 10 functions: pathExists, readFile, readDir, readFileType, findFile, toFile, storePath, storeDir, nixPath, placeholder
+   - **ALL 10 have ZERO tests**
+   - 55+ tests required
+
+**Total Work Remaining:**
+- **55 functions** need tests
+- **320+ tests** need to be written
+- **24-33 hours** estimated time
+- **Result**: 97/109 tested (89% coverage)
+
+### Updated Documentation
+
+✅ **prompt.md** - Now 697 lines with:
+- Corrected builtin counts (109 not 102)
+- Comprehensive list of 67 untested builtins with line numbers
+- Detailed test requirements for each of 6 tasks
+- Step-by-step testing process with nix repl examples
+- Complete test file status (25 existing, 6 needed)
+
+✅ **MEMORY.md** - Updated with:
+- Accurate statistics (42/109 = 38.5%)
+- Session 38 history entry documenting the correction
+- Updated time estimates (24-33 hours)
+
+### Test Distribution Problem Identified
+
+- **Fetch operations**: 97 tests (20% of builtins, 40% of tests) ✅ OVER-TESTED
+- **Core operations**: <30 tests (50% of builtins, 12% of tests) ❌ UNDER-TESTED  
+- **Type checking**: 0 tests (10 builtins, 0% of tests) ❌ ZERO COVERAGE
+
+### Immediate Next Step
+
+Create `/Users/jeffhykin/repos/denix/main/tests/builtins_type_checking_test.js` - this file does not exist yet. Follow the detailed template in prompt.md lines 270-400.
+
+All documentation now reflects **verified accurate counts** based on deep analysis of runtime.js and all 25 existing test files.
