@@ -1,9 +1,15 @@
 // Custom JSON parser that converts plain integers to BigInts
 // This matches Nix behavior where integers are distinct from floats
 export const jsonParseWithBigInt = (text) => {
+    // First handle the special case of a bare integer
+    const trimmed = text.trim()
+    if (/^-?\d+$/.test(trimmed) && !trimmed.includes('.')) {
+        return BigInt(trimmed)
+    }
+
     // Use a regex to find all plain integers in the JSON and mark them
-    // Match integers after : or [ or ,
-    const intPattern = /([:,\[])\s*(-?\d+)(?=\s*[,\}\]\s])/g
+    // Match integers after : or [ or , or at start
+    const intPattern = /([:,\[]|^)\s*(-?\d+)(?=\s*[,\}\]\s]|$)/g
     const replacements = []
     let index = 0
 

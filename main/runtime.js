@@ -120,7 +120,17 @@ import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPa
         if (typeof value === 'string') {
             return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\t/g, '\\t')}"`
         }
-        return JSON.stringify(value)
+        if (typeof value === 'bigint') {
+            return value.toString()
+        }
+        if (typeof value === 'boolean' || value === null) {
+            return String(value)
+        }
+        try {
+            return JSON.stringify(value)
+        } catch {
+            return String(value)
+        }
     }
 
     // Convert POSIX regex patterns to JavaScript-compatible regex
@@ -1394,7 +1404,7 @@ import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPa
             "throw": (s)=>{ throw new NixError(requireString(s).toString()) },
         
         // file system
-            "getEnv": (string)=>Deno.env.get(requireString(string)),
+            "getEnv": (string)=>Deno.env.get(requireString(string)) || "",
             "readFile": (value)=>Deno.readTextFileSync(value.toString()),
             "baseNameOf": (value)=>{
                 if (value && value.outPath) {
@@ -1480,8 +1490,8 @@ import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPa
                     if (stat.isDirectory) return "directory"
                     if (stat.isSymlink) return "symlink"
                     return "unknown"
-                } catch {
-                    return "unknown"
+                } catch (e) {
+                    throw new NixError(`error: getting status of '${absolutePath}': ${e.message}`)
                 }
             },
             "path": async (args) => {

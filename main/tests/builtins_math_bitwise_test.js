@@ -99,3 +99,87 @@ Deno.test("bitXor - same values returns zero", () => {
 Deno.test("bitXor - canceling bits", () => {
     assertEquals(builtins.bitXor(15n)(7n), 8n)
 })
+
+// lessThan tests
+// Documentation: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-lessThan
+// nix repl> builtins.lessThan 3 5
+// true
+// nix repl> builtins.lessThan 5 3
+// false
+// nix repl> builtins.lessThan 3 3
+// false
+// nix repl> builtins.lessThan "a" "b"
+// true
+
+Deno.test("lessThan - integer comparison (3 < 5)", () => {
+    assertEquals(builtins.lessThan(3n)(5n), true)
+})
+
+Deno.test("lessThan - integer comparison (5 < 3)", () => {
+    assertEquals(builtins.lessThan(5n)(3n), false)
+})
+
+Deno.test("lessThan - equal integers", () => {
+    assertEquals(builtins.lessThan(3n)(3n), false)
+})
+
+Deno.test("lessThan - negative integers", () => {
+    assertEquals(builtins.lessThan(-5n)(-3n), true)
+})
+
+Deno.test("lessThan - string comparison (lexicographic)", () => {
+    assertEquals(builtins.lessThan("a")("b"), true)
+})
+
+Deno.test("lessThan - string comparison (reverse)", () => {
+    assertEquals(builtins.lessThan("b")("a"), false)
+})
+
+Deno.test("lessThan - float comparison", () => {
+    assertEquals(builtins.lessThan(3.5)(4.5), true)
+})
+
+Deno.test("lessThan - mixed int and float", () => {
+    assertEquals(builtins.lessThan(3n)(3.5), true)
+})
+
+// mul tests
+// Documentation: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-mul
+// nix repl> builtins.mul 3 5
+// 15
+// nix repl> builtins.mul 3.5 2
+// 7.0
+// nix repl> builtins.mul (-3) 5
+// -15
+
+Deno.test("mul - integer multiplication (3 * 5)", () => {
+    assertEquals(builtins.mul(3n)(5n), 15n)
+})
+
+Deno.test("mul - with zero", () => {
+    assertEquals(builtins.mul(0n)(5n), 0n)
+})
+
+Deno.test("mul - with one", () => {
+    assertEquals(builtins.mul(1n)(7n), 7n)
+})
+
+Deno.test("mul - negative integers", () => {
+    assertEquals(builtins.mul(-3n)(5n), -15n)
+})
+
+Deno.test("mul - both negative", () => {
+    assertEquals(builtins.mul(-3n)(-5n), 15n)
+})
+
+Deno.test("mul - float multiplication", () => {
+    assertEquals(builtins.mul(3.5)(2.0), 7.0)
+})
+
+Deno.test("mul - mixed int and float", () => {
+    assertEquals(builtins.mul(3n)(2.5), 7.5)
+})
+
+Deno.test("mul - large integers", () => {
+    assertEquals(builtins.mul(1000n)(2000n), 2000000n)
+})
