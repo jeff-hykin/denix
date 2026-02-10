@@ -571,6 +571,7 @@ import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPa
                 const right = []
                 const wrong = []
                 const compute = ()=>{
+                    computed = true
                     for (const each of list) {
                         if (pred(each)) {
                             right.push(each)
@@ -595,6 +596,9 @@ import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPa
             "genList": (func)=>(index)=>{
                 if (index < 0) {
                     throw new NixError(`error: genList index ${index} cannot be negative`)
+                }
+                if (index == 0) {
+                    return []
                 }
                 let output = [...new Array(index)]
                 while (index > 0) {
