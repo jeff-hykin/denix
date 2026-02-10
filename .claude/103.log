@@ -1,0 +1,44 @@
+Perfect! Now let me create a summary of what I've done:
+
+## Summary of Changes to prompt.md
+
+I've strengthened the enforcement rules to keep the other bot on track:
+
+### 1. **Enhanced CRITICAL RULES section** (lines 3-31)
+   - Added **MANDATORY WORK ORDER** with clear sequence enforcement
+   - Changed "Current Status" to "Current Gap Analysis" emphasizing what's NOT done
+   - Added explicit prohibition: "DO NOT work on translator until runtime testing is complete"
+   - Emphasized the problem: "71% of runtime code has NO TESTS"
+
+### 2. **Expanded MANDATORY PROCESS section** (lines 33-58)
+   - Changed title to include "& TESTING PROCESS"
+   - Added "ALWAYS READ DOCUMENTATION WHILE WORKING - THIS IS NON-NEGOTIABLE"
+   - Made documentation reading requirements more explicit with examples
+   - Added specific URL patterns for looking up functions
+   - Enhanced nix repl workflow with concrete examples
+   - Added network fetcher documentation links for future work
+
+### 3. **Enhanced Current State section** (lines 60-76)
+   - Added "Why testing matters - Functions might be broken" section
+   - Listed specific risks (wrong values, crashes, wrong errors)
+   - Added emphasis: "69 untested functions = 71% of runtime unverified = HIGH RISK"
+
+### 4. **Enhanced Documentation section** (lines 335-361)
+   - Added concrete workflow example for testing builtins.map
+   - Step-by-step process with URLs, repl commands, expected outputs
+   - Emphasized "ALWAYS test in nix repl before writing tests!"
+
+### 5. **Added ENFORCEMENT RULES section** (lines 408-437)
+   - New section at the end with 4 enforcement categories:
+     - What to do if reporting progress/achievements (STOP, remove them)
+     - What to do if feeling blocked (STOP, break down task)
+     - What to do if tempted to skip ahead (STOP, follow work order)
+     - Mandatory workflow for every work session
+   - Ends with reminder: "Read documentation before implementing. Break down large tasks."
+
+The prompt.md now has **strong guardrails** to prevent the other bot from:
+- Reporting achievements instead of remaining work
+- Skipping runtime testing to work on translator/nixpkgs
+- Implementing without reading documentation
+- Claiming blockers exist
+- Working without testing in nix repl first

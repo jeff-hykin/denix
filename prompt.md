@@ -4,28 +4,53 @@
 
 **Your job is to focus on what is NOT implemented and NOT working. Only report what remains to be done. Do not report accomplishments or add achievement markers (✅/🎉). You are a senior level developer - there is no such thing as a blocker. Break down large tasks into smaller tasks.**
 
-**THE ONLY REMAINING WORK: TESTING**
+**MANDATORY WORK ORDER - MUST FOLLOW IN SEQUENCE:**
+1. **Runtime must be 100% complete** - All builtins fully implemented AND tested
+2. **Then translator improvements** - Edge cases, escape sequences, pattern matching
+3. **Then nixpkgs.lib testing** - Validate against real-world code
+
+**DO NOT work on translator until runtime testing is complete.**
+**DO NOT work on nixpkgs.lib until translator edge cases are done.**
+
+**THE ONLY REMAINING WORK: TESTING THE RUNTIME**
 
 1. **Priority 0: Core builtin testing** - Test 69 untested builtins (Tasks 0.1-0.6) - START HERE
 2. **Priority 1: Edge case testing** - Derivations, translator patterns (After Priority 0)
 3. **Priority 2: nixpkgs.lib expansion** - Test 31 remaining library files (After Priority 1)
 
-**Current Status:**
-- Runtime: 100% implemented (all 97 Nix 2.18 builtins exist)
-- Tests: 26% coverage (28/97 builtins tested, 69 untested)
-- Translator: 100% working (87/87 tests passing)
-- Derivations: WORKING (12/12 tests passing) - NOT a blocker
+**Current Gap Analysis:**
+- Runtime code: 100% written (all 97 Nix 2.18 builtins exist)
+- Runtime verification: 26% tested (28/97 builtins have tests, 69 completely untested)
+- **Problem**: 71% of runtime code has NO TESTS - it might be broken and we don't know
+- Translator: Edge cases not fully tested (nested patterns, escape sequences, etc.)
+- nixpkgs.lib: 26 of 41 files not tested
 
-## MANDATORY IMPLEMENTATION PROCESS
+## MANDATORY IMPLEMENTATION & TESTING PROCESS
 
-**BEFORE implementing ANY builtin or feature:**
-1. Read official Nix documentation at https://nix.dev/manual/nix/2.18/language/builtins.html#builtins-FUNCTION
-2. Test behavior in `nix repl` with 5+ test cases (positive, negative, edge cases)
-3. Search for real-world usage examples in nixpkgs
-4. Write implementation matching Nix behavior EXACTLY
-5. Write comprehensive tests (minimum 5 tests per function)
+**ALWAYS READ DOCUMENTATION WHILE WORKING - THIS IS NON-NEGOTIABLE**
 
-**npm packages:** Only allowed via `https://esm.sh/NPM_MODULE_NAME` (note: unreliable, may not work)
+**BEFORE testing or fixing ANY builtin:**
+1. **Read the official Nix documentation** at https://nix.dev/manual/nix/2.18/language/builtins.html#builtins-FUNCTION_NAME
+   - Example: For `builtins.map`, read https://nix.dev/manual/nix/2.18/language/builtins.html#builtins-map
+2. **Test behavior in `nix repl`** with 5+ test cases (positive, negative, edge cases, null/empty)
+   - Open terminal: `nix repl`
+   - Try: `builtins.map (x: x * 2) [1 2 3]`
+   - Try edge cases: `builtins.map (x: x) []`, etc.
+3. **Search for real-world examples** at https://noogle.dev or in nixpkgs source code
+4. **Write implementation** (if fixing bugs) matching Nix behavior EXACTLY
+5. **Write comprehensive tests** (minimum 5-10 tests per function)
+   - Normal cases (typical inputs)
+   - Edge cases (empty, null, boundary values)
+   - Error cases (invalid inputs should throw)
+   - Match nix repl output exactly
+
+**npm packages:** Only allowed via `https://esm.sh/NPM_MODULE_NAME` (note: unreliable, often doesn't work)
+
+**For network fetchers (when implementing later):**
+- builtins.fetchClosure: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchClosure
+- builtins.fetchGit: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchGit
+- builtins.fetchTarball: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchTarball
+- Search the internet for implementation details, examples, and behavior clarification
 
 ## Current State (2026-02-10)
 
@@ -33,11 +58,19 @@
 
 **What this means:** Runtime has code but NO VERIFICATION that it works correctly.
 
-**All functions ARE implemented** - checked lines 175-650 in runtime.js. They exist and have code. Testing verifies:
+**Why testing matters - Functions might be broken:**
+1. Implementation might return wrong values for normal inputs
+2. Edge cases (empty lists, null, negative numbers) might crash or return wrong results
+3. Invalid inputs might not throw correct errors
+4. Behavior might not match Nix 2.18 exactly
+
+**Testing verifies:**
 1. Functions return correct values for normal inputs
 2. Functions handle edge cases correctly (empty lists, null, negative numbers)
 3. Functions throw correct errors for invalid inputs
 4. Functions match Nix 2.18 behavior exactly (verify in nix repl first)
+
+**69 untested functions = 71% of runtime unverified = HIGH RISK**
 
 ## Remaining Work Breakdown
 
@@ -318,13 +351,21 @@ Deno.test("builtins.isNull - returns false for string", () => {
 
 ## Documentation & Learning Resources
 
-**MANDATORY reading before implementing:**
+**MANDATORY reading before testing/implementing:**
 - Nix 2.18 builtins: https://nix.dev/manual/nix/2.18/language/builtins.html
 - Search function documentation: https://nix.dev/manual/nix/2.18/language/builtins.html#builtins-FUNCTION_NAME
 - Noogle (search nixpkgs for examples): https://noogle.dev
-- Test in nix repl before implementing!
+- **ALWAYS test in nix repl before writing tests!**
 
-**For network fetchers (when implementing):**
+**Example workflow for testing builtins.map:**
+1. Open browser: https://nix.dev/manual/nix/2.18/language/builtins.html#builtins-map
+2. Read documentation (signature, description, examples)
+3. Open terminal: `nix repl`
+4. Test: `builtins.map (x: x * 2) [1 2 3]` → expect `[ 2 4 6 ]`
+5. Test edge cases: `builtins.map (x: x) []` → expect `[ ]`
+6. Write test file matching observed behavior exactly
+
+**For network fetchers (future work):**
 - fetchClosure: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchClosure
 - fetchTarball: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchTarball
 - fetchGit: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchGit
@@ -386,4 +427,33 @@ Deno.test("builtins.isNull - returns false for string", () => {
 
 ---
 
-**REMEMBER:** No achievements. No checkboxes. Only what remains to be done.
+---
+
+## ENFORCEMENT RULES FOR STAYING ON TRACK
+
+**If you find yourself wanting to report progress or achievements:**
+- STOP. Remove all achievement language.
+- Only keep: "X remains to be tested", "Y edge cases not covered"
+- No ✅, no 🎉, no "Successfully completed", no "Achievement unlocked"
+
+**If you find a task is blocked:**
+- STOP. There are no blockers.
+- Break the task into smaller intermediate steps.
+- If missing information: Read documentation, test in nix repl, search nixpkgs.
+- If missing implementation plan: Create one (list 3-5 intermediate steps).
+
+**If you're tempted to skip to translator or nixpkgs.lib work:**
+- STOP. Follow the mandatory work order.
+- Runtime testing MUST be complete first (Priority 0, tasks 0.1-0.6).
+- Translator edge cases MUST wait until runtime is verified.
+- nixpkgs.lib testing MUST wait until translator is solid.
+
+**Every time you start work:**
+1. Read the Nix documentation for the function you're testing
+2. Test the function in `nix repl` with 5+ examples
+3. Write tests matching nix repl behavior exactly
+4. Run tests: `deno test --allow-all main/tests/YOUR_TEST_FILE.js`
+5. Fix any failures (bugs in runtime.js implementation)
+6. Run full suite: `./test.sh` to ensure no regressions
+
+**REMEMBER:** No achievements. No checkboxes. Only what remains to be done. Read documentation before implementing. Break down large tasks into smaller tasks.
