@@ -11,21 +11,73 @@
 **BEFORE executing what is below, filter out any achievements. Only keep remaining/unsolved tasks in this document. Add detail to each task if needed.**
 
 ### WORK ORDER (MUST FOLLOW THIS SEQUENCE):
-1. **FIX DERIVATION BUGS FIRST** - 7/10 tests failing, blocks production use (2-4 hours)
-2. **Runtime test coverage SECOND** - Add tests for untested builtins (3-5 hours to 80%)
-3. **Translator edge cases THIRD** - Only after runtime is fully tested
-4. **nixpkgs.lib tests FOURTH** - Only after translator is fully implemented
+1. **RUNTIME FIRST** - Finish implementing and testing ALL builtins in runtime.js
+   - Fix derivation bugs (7/10 tests failing)
+   - Add tests for 35 untested builtins (reach 80%+ coverage)
+   - Implement optional fetchers if needed (fetchMercurial, fetchClosure)
+2. **TRANSLATOR SECOND** - Only after runtime is 100% stable
+   - Test translator edge cases
+   - Verify all language features work
+3. **NIXPKGS.LIB TESTS THIRD** - Only after translator is fully verified
+   - Test against real nixpkgs.lib files
+   - Expand coverage to 50%+ of lib files
 
-**DO NOT add more runtime tests until derivation bugs are fixed.**
-**DO NOT work on translator until runtime is stable.**
-**DO NOT work on nixpkgs.lib until translator is complete.**
+**DO NOT work on translator until runtime is fully implemented and tested (80%+ coverage).**
+**DO NOT work on nixpkgs.lib until translator edge cases are verified.**
+**DO NOT skip ahead. Follow the work order strictly.**
 
-### IMPLEMENTATION REQUIREMENTS:
-- **ALWAYS read Nix documentation while implementing:** https://nix.dev/manual/nix/2.28/language/builtins.html
-- **ALWAYS test in `nix repl` BEFORE writing code** - match exact behavior, not what you think it should do
-- **ALWAYS search the internet for documentation** (noogle.dev, GitHub, Nix source code)
-- **Use npm modules ONLY through esm.sh:** `https://esm.sh/NPM_MODULE_NAME` (unreliable, prefer Deno std)
-- **Break down tasks:** If a plan is missing for how to implement remaining things, figure out intermediate steps and make them a priority
+### MANDATORY IMPLEMENTATION PROCESS:
+
+**BEFORE writing ANY code:**
+1. **READ the official Nix documentation** for the feature you're implementing
+   - Primary: https://nix.dev/manual/nix/2.28/language/builtins.html
+   - Search: noogle.dev, Nix source code on GitHub
+   - DO NOT guess behavior, DO NOT assume you know how it works
+2. **TEST in `nix repl`** to understand exact behavior
+   - Test edge cases (null, empty, invalid input)
+   - Note exact error messages
+   - Test type conversions
+3. **COMPARE outputs** - Your implementation must match Nix exactly
+
+**WHILE writing code:**
+- Keep Nix documentation open in browser
+- Test each function in `nix repl` as you implement
+- Match behavior exactly, not what makes sense to you
+
+**DEPENDENCIES:**
+- **PREFER Deno standard library** over external packages
+- **USE esm.sh for npm packages:** `import foo from "https://esm.sh/package-name@version"`
+  - WARNING: esm.sh is unreliable, many packages don't work
+  - Only use if Deno stdlib doesn't have the functionality
+  - Test thoroughly, have fallback plan
+- **NO npm, NO jsr, NO package.json** - Only URL imports
+
+**TASK BREAKDOWN:**
+- If you don't know HOW to implement something, break it down:
+  1. Research what Nix does (docs, source code)
+  2. Create implementation plan with phases
+  3. Identify dependencies and prerequisites
+  4. Implement smallest testable unit first
+  5. Add comprehensive tests
+  6. Move to next unit
+- There is NO such thing as a blocker - only tasks not broken down enough
+
+### ENFORCEMENT REMINDERS:
+
+**IF you find yourself about to:**
+- ❌ Report "I completed X" → STOP. Only report what's NOT done.
+- ❌ Work on translator → STOP. Is runtime 80%+ tested?
+- ❌ Work on nixpkgs.lib → STOP. Are translator edge cases verified?
+- ❌ Write code without reading docs → STOP. Read Nix documentation first.
+- ❌ Guess how a builtin works → STOP. Test in `nix repl` first.
+- ❌ Say "this is blocked" → STOP. Break task into smaller pieces.
+- ❌ Use npm packages → STOP. Use Deno stdlib or esm.sh URLs only.
+
+**ALWAYS ask yourself:**
+1. Have I read the Nix documentation for this feature?
+2. Have I tested this in `nix repl` to verify exact behavior?
+3. Am I following the work order (Runtime → Translator → nixpkgs.lib)?
+4. Am I focusing on what's NOT done (not accomplishments)?
 
 ---
 
@@ -93,6 +145,11 @@ Run: `./test.sh derivation` → Shows 7/10 tests failing
 
 **Problem:** Tests 003-008 produce wrong output path hashes. The ATerm serialization format doesn't match Nix exactly.
 
+**MANDATORY FIRST STEP:** Read Nix documentation on derivations:
+- https://nix.dev/manual/nix/2.28/language/derivations
+- Search for "ATerm" in Nix source code
+- Read how Nix serializes derivations for hashing
+
 **Investigation steps:**
 1. Test in nix repl what exact ATerm format Nix produces:
    ```bash
@@ -126,10 +183,15 @@ Run `./test.sh derivation` after each change. All 10 tests must pass.
 ### Task 0.3: Verify Derivation Tests Pass (30 min)
 
 After fixes:
-- [ ] Run `./test.sh derivation`
-- [ ] Verify all 10 tests pass (currently 3/10 passing)
-- [ ] Test edge cases: multiple outputs, various env var types
-- [ ] Document any Nix version differences discovered
+- Run `./test.sh derivation`
+- All 10 tests must pass (currently 3/10 passing)
+- Test edge cases: multiple outputs, various env var types
+- Document any Nix version differences discovered
+
+**Validation criteria:**
+- No test failures
+- Output paths match Nix exactly
+- Error messages match Nix format
 
 ---
 
@@ -144,6 +206,9 @@ After fixes:
 
 **Test:** `lessThan` (line 211) and `mul` (line 233)
 **File:** Edit `main/tests/builtins_math_bitwise_test.js` - Add to END
+**Documentation:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-lessThan and https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-mul
+
+**BEFORE writing tests:** Read the documentation, understand expected behavior
 
 Test both in `nix repl` first:
 ```bash
@@ -164,6 +229,9 @@ Add 5-8 test cases for each function covering:
 ### File Operations (2-3 hours)
 
 **File:** Create `main/tests/builtins_file_ops_test.js`
+**Documentation:** https://nix.dev/manual/nix/2.28/language/builtins.html (search for each function)
+
+**BEFORE writing tests:** Read Nix documentation for each function. Test in `nix repl` to understand exact behavior.
 
 Test these 6 functions:
 1. `pathExists` (line 1422) - Check file/directory existence
@@ -184,6 +252,12 @@ Test these 6 functions:
 ### Conversion & Control (1-2 hours)
 
 **File:** Create `main/tests/builtins_misc_test.js`
+**Documentation:** https://nix.dev/manual/nix/2.28/language/builtins.html (search for each function)
+
+**BEFORE writing tests:** Read Nix documentation for each function. Test in `nix repl` to understand exact behavior, especially:
+- What exact XML format does `toXML` produce?
+- What errors does `fromJSON` throw?
+- How does `splitVersion` handle edge cases?
 
 Test these 6 functions:
 1. `toPath` (line 359) - Convert string to path (must be absolute)
@@ -207,16 +281,22 @@ These are rarely used in practice. Most projects don't need them:
 
 ### fetchMercurial (2-3 days)
 **File:** `main/runtime.js` - Add implementation
+**Documentation:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchMercurial
 **Dependencies:** Need Mercurial binary or hg package
 **Status:** NOT IMPLEMENTED
+**Research needed:** How does Nix call hg? What cache format? Study Nix source code.
 
 ### fetchClosure (5-7 days)
+**Documentation:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchClosure
 **Complexity:** Very high - requires binary cache support
 **Status:** NOT IMPLEMENTED
+**Research needed:** Binary cache protocol, NAR format, signature verification. Read Nix source extensively.
 
 ### getFlake (5-7 days)
+**Documentation:** https://nix.dev/manual/nix/2.28/command-ref/new-cli/nix3-flake
 **Complexity:** Very high - requires full flake system
 **Status:** NOT IMPLEMENTED
+**Research needed:** Flake lock files, flake references, flake resolution. Study Nix flake implementation.
 
 ### fetchTree edge cases (4-6 hours)
 **Missing types:** `type='mercurial'`, `type='path'`, `type='indirect'`
