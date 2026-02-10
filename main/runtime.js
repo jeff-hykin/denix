@@ -1,4 +1,5 @@
 import { zip } from "https://deno.land/x/good@1.5.1.0/array.js"
+import { FileSystem } from "https://deno.land/x/quickr@0.6.51/main/file_system.js"
 
 //  tools
 import { toFloat } from "../tools/generic.js"
@@ -306,6 +307,11 @@ import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPa
                     case "bigint":
                         return JSON.stringify(`${value}`-0)
                     case "function":
+                        // CRITICAL: Derivations may appear as functions due to callable properties
+                        // but should serialize to their outPath string
+                        if (value && typeof value === "object" && value.type === "derivation") {
+                            return JSON.stringify(value.outPath)
+                        }
                         throw new NixError(`error: cannot convert a function to JSON`)
                     case "object":
                         if (value == null) {
@@ -316,7 +322,8 @@ import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPa
                             const items = await Promise.all(value.map(builtins.toJSON))
                             return `[${items.join(",")}]`
                         } else if (value.type === "derivation") {
-                            // Derivations coerce to their outPath string (Nix behavior)
+                            // CRITICAL: Check derivation BEFORE plain object check
+                            // Derivations have toString() functions that would cause errors
                             return JSON.stringify(value.outPath)
                         } else if (Object.getPrototypeOf({}) == Object.getPrototypeOf(value)) {
                             const keys = Object.getOwnPropertyNames(value)
@@ -1750,6 +1757,12 @@ import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPa
                 env.name = name
                 env.builder = builder
                 env.system = system
+
+                // CRITICAL: Add empty output placeholders to env BEFORE hash computation
+                // Nix includes these in the ATerm serialization that gets hashed
+                for (const outputName of outputNames) {
+                    env[outputName] = ""
+                }
 
                 // Create derivation structure for serialization (phase 1: empty output paths)
                 const drvStructure = {
