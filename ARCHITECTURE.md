@@ -16,9 +16,8 @@ Converts Nix AST to JavaScript code:
 - Outputs executable JavaScript
 
 ### 2. Runtime (main/runtime.js - 2,314 lines)
-**Status:** ⚠️ 109/109 implemented, 40/109 tested (37%)
 
-Implements all Nix 2.18 builtins:
+Implements all 109 Nix 2.18 builtins:
 - Type checking: isNull, isAttrs, typeOf, etc.
 - List operations: map, filter, fold, etc.
 - Attrset operations: mapAttrs, hasAttr, etc.
@@ -59,14 +58,17 @@ Implements all Nix 2.18 builtins:
 ### 5. Testing (main/tests/ - 27 files)
 
 **Test Categories:**
-1. Runtime builtins (10 files) - Test individual builtins
-2. Translator (4 files) - Test Nix → JS translation
-3. Derivations (2 files) - Test derivation system
-4. Import system (5 files) - Test import/scopedImport
-5. Infrastructure (4 files) - Test fetcher, tar, NAR, store
-6. Integration (2 files) - Test against nixpkgs.lib
+1. Runtime builtins - Test individual builtins
+2. Translator - Test Nix → JS translation
+3. Derivations - Test derivation system
+4. Import system - Test import/scopedImport
+5. Infrastructure - Test fetcher, tar, NAR, store
+6. Integration - Test against nixpkgs.lib
 
 **Test Runner:** `./test.sh` with category support
+
+Run all tests: `./test.sh`
+Run specific category: `./test.sh derivation`, `./test.sh math`, etc.
 
 ## Key Design Decisions
 
@@ -120,22 +122,12 @@ Variables stored in `nixScope` object:
 
 ## Testing Strategy
 
-### Current Coverage
-- 240+ tests passing
-- Runtime: 40/109 builtins tested (37%)
-- Translator: 100% (87/87 tests)
-- Integration: Working (nixpkgs.lib files tested)
-
-### Target Coverage
-- Runtime: 80%+ (87/109 builtins)
-- Focus: Type checking, list ops, attrset ops
-
 ### Test Methodology
-1. Read Nix 2.18 docs
-2. Test in nix repl (verify behavior)
-3. Write tests (normal + edge cases)
-4. Fix bugs (untested code has bugs)
-5. Verify (match nix repl exactly)
+1. Read Nix documentation for the builtin
+2. Test in `nix repl` to understand exact behavior
+3. Write 5-10 tests per function (normal + edge cases)
+4. Compare JS output against nix repl output
+5. Fix any bugs discovered
 
 ## File Organization
 
@@ -190,19 +182,10 @@ denix/
 
 **These are documented as optional in Nix 2.18 and rarely used in practice.**
 
-## Development Priority
+## Current Status
 
-**Current Goal:** 80% runtime test coverage (40/109 → 87/109)
-
-Need to create 6 test files for 50 untested builtins (21-30 hours):
-1. Type checking (10 functions)
-2. List operations (10 functions)
-3. Attrset operations (6 functions)
-4. String operations (5 functions)
-5. Math & bitwise (8 functions)
-6. Path/file operations (11 functions)
-
-See [prompt.md](prompt.md) for details and test file names.
+See [README.md](README.md) for implementation status.
+See [prompt.md](prompt.md) for development priorities and next tasks.
 
 ## Performance Notes
 
@@ -214,9 +197,7 @@ See [prompt.md](prompt.md) for details and test file names.
 ## Future Considerations
 
 **If expanding beyond Nix 2.18:**
-1. Add `warn` builtin (Nix 2.24+)
-2. Add `convertHash` builtin (Nix 2.25+)
-3. Implement optional fetchers
-4. Add flake system support
-
-**Current recommendation:** Focus on testing, not new features.
+- Add `warn` builtin (Nix 2.24+)
+- Add `convertHash` builtin (Nix 2.25+)
+- Implement optional fetchers (fetchMercurial, fetchClosure, getFlake)
+- Add flake system support

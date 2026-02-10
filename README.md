@@ -9,8 +9,9 @@ A Nix → JavaScript translator with 1-to-1 parity for Nix 2.18 builtins, implem
 ## Status
 
 **Translator:** ✅ 100% complete (87/87 tests passing)
-**Runtime:** ⚠️ 109 builtins implemented, 40 tested (37% coverage)
-**Current Priority:** Test critical functions (map, filter, getAttr) then reach 80% coverage
+**Runtime:** ⚠️ 109 builtins implemented, 56 tested (51% coverage)
+**Critical Issue:** 🐛 8/10 derivation tests failing - [see fixes](prompt.md#-priority-0-fix-derivation-bugs-1-2h---critical)
+**Goal:** 80% test coverage (87/109 builtins)
 
 ## Quick Start
 
@@ -32,7 +33,7 @@ deno test --allow-all
 
 - ✅ **109 Nix builtins** - All Nix 2.18 builtins implemented
 - ✅ **Import system** - `builtins.import` and `builtins.scopedImport` fully working
-- ✅ **Derivations** - Basic derivation support (12/12 tests passing)
+- ⚠️ **Derivations** - Basic derivation support (2/10 tests passing, bugs identified)
 - ✅ **Network fetchers** - fetchGit, fetchTarball, fetchurl, fetchTree, path, filterSource
 - ✅ **Pure Deno** - Zero npm/jsr dependencies, only URL imports
 
@@ -124,22 +125,20 @@ See [main/runtime.js](main/runtime.js) for complete implementation.
 
 ## Known Issues
 
-**Fixed (2026-02-10):**
-- ✅ concatLists variable name typo
-- ✅ isAttrs crashes on null/undefined
-- ✅ head returns array instead of element
+**Critical (must fix first):**
+- 🐛 Derivation store path hash mismatch (8 tests failing)
+- 🐛 toJSON crashes on derivation objects (1 test failing)
 
 **Testing needed:**
-- 57/97 builtins have no tests yet (59% untested)
-- Priority: Type checking, list ops, attrset ops (see prompt.md)
+- 53/109 builtins have no tests yet (49% untested)
+- Priority: Fix bugs → Math ops → Attrset ops → String ops → Path ops
 
 ## Development Priority
 
-**Current focus:** Test all 69 untested builtins
+**Immediate:** Fix 2 derivation bugs (1-2h) - [see prompt.md](prompt.md#-priority-0-fix-derivation-bugs-1-2h---critical)
+**Next:** Add tests for 31 critical builtins (12-16h total)
 
-See [prompt.md](prompt.md) for detailed testing tasks and priorities.
-
-**Don't work on translator or nixpkgs.lib until runtime has 80%+ test coverage.**
+See [prompt.md](prompt.md) for detailed tasks.
 
 ## Key Design Decisions
 
