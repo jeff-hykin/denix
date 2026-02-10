@@ -1,166 +1,383 @@
 # Denix Development Priorities
-**Last Updated:** 2026-02-10 (Architect Review)
+**Last Updated:** 2026-02-10
 
 ---
 
-## 🎯 Current Focus: Test Coverage
+## 🚨 CRITICAL RULES - READ FIRST
 
-**Status:** 74/109 builtins tested (67.9%)
-**Goal:** 88/109 builtins tested (80%)
-**Work Remaining:** 14 high-priority tests (3-5 hours)
+**Your job is to focus on what is NOT implemented and NOT working. Only report what remains to be done. Do not report what you accomplished. You are a senior level developer, there is no such thing as a blocker. Break down large tasks into smaller tasks.**
 
----
+**Before executing what is below, please filter out any achievements. Only keep remaining/unsolved tasks in this document. Add detail to each task if its needed.**
 
-## ⚡ Priority 1: Add 14 High-Priority Tests (3-5 hours)
+### WORK ORDER (MUST FOLLOW THIS SEQUENCE):
+1. **Runtime first** - Finish ALL network fetchers and store functions in runtime.js
+2. **Translator second** - Only after runtime is 100% complete
+3. **nix-lib tests last** - Only after translator is fully implemented
 
-### Quick Win #1: Math Operations (30 minutes)
+**Do not skip ahead. Do not work out of order.**
 
-**File:** Edit `main/tests/builtins_math_bitwise_test.js` (add at end)
+### IMPLEMENTATION REQUIREMENTS:
 
-Test these 2 functions:
-1. `lessThan` (runtime.js:211) - Comparison operator
-2. `mul` (runtime.js:233) - Multiplication operator
+**Always read documentation while implementing:**
+1. Start with official Nix docs: https://nix.dev/manual/nix/2.28/language/builtins.html
+2. Search for examples: https://noogle.dev/
+3. Test behavior in `nix repl` before writing code
+4. Search the internet for implementation details and edge cases
+5. Read related Nix source code if behavior is unclear
 
-**Test in nix repl first:**
-```nix
-builtins.lessThan 3 5        # → true
-builtins.lessThan "a" "b"    # → true (lexicographic)
-builtins.mul 3 5             # → 15
-builtins.mul 3.5 2           # → 7.0
-```
+**External dependencies:**
+- You may use npm modules ONLY through https://esm.sh/NPM_MODULE_NAME
+- Warning: esm.sh is unreliable, prefer standard library or manual implementation
+- Document all external dependencies and why they're needed
 
-**Add 5-8 tests each:**
-- Integer operations
-- Float handling
-- Mixed int/float
-- Edge cases (0, negative, equal values)
+**If a plan is missing for how to implement the remaining things, then figure out intermediate steps and make them a priority.**
 
 ---
 
-### Task #2: File Operations (2-3 hours)
+## 🎯 Current Focus: Runtime Store System NOT IMPLEMENTED
 
-**File:** Already exists at `main/tests/builtins_file_ops_test.js` - Add more tests
-
-Test these 6 functions:
-1. `pathExists` (runtime.js:1422)
-2. `readFile` (runtime.js:1397)
-3. `readDir` (runtime.js:1614)
-4. `readFileType` (runtime.js:1474)
-5. `findFile` (runtime.js:1631)
-6. `getEnv` (runtime.js:1396)
-
-**Test approach:**
-- Use `Deno.makeTempFileSync()` / `Deno.makeTempDirSync()`
-- Always clean up in finally blocks
-- Test in nix repl first to understand behavior
-- 5-8 tests per function
-
-**Example nix repl testing:**
-```nix
-builtins.pathExists "/tmp"           # → true
-builtins.readDir "/tmp"              # → { "file.txt" = "regular"; ... }
-builtins.getEnv "HOME"               # → "/Users/username"
-```
+**Status:** Network fetchers and store functions NOT WORKING
+**Goal:** Implement ALL store-related builtins before touching translator
+**Work Remaining:** ~16-22 days of implementation work
 
 ---
 
-### Task #3: Conversion & Misc (1-2 hours)
+## ⚡ Priority 1: Implement Missing Store System Builtins
 
-**File:** Already exists at `main/tests/builtins_misc_test.js` - Add more tests
+### UNIMPLEMENTED: fetchMercurial (2-3 days)
 
-Test these 6 functions:
-1. `toPath` (runtime.js:359) - Convert string to path
-2. `toXML` (runtime.js:381) - Convert to XML format
-3. `fromJSON` (runtime.js:396) - Parse JSON string
-4. `abort` (runtime.js:408) - Throw error with message
-5. `getAttr` (runtime.js:637) - Get attribute from attrset
-6. `splitVersion` (runtime.js:1020) - Split version string
+**Documentation:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchMercurial
 
-**Test in nix repl first:**
-```nix
-builtins.toPath "/tmp/foo"           # → /tmp/foo
-builtins.fromJSON '{"a":1}'          # → { a = 1; }
-builtins.getAttr "a" {a=1; b=2;}     # → 1
-builtins.splitVersion "1.2.3"        # → ["1" "2" "3"]
-```
+**What it does:** Fetches a Mercurial repository from a URL
 
-**Add 5-8 tests each:**
-- Type conversions
-- Error handling (abort, invalid JSON)
-- Edge cases (empty strings, missing keys)
+**Implementation steps:**
+1. Read Nix docs thoroughly to understand all parameters
+2. Test in `nix repl` to understand exact behavior
+3. Research Mercurial protocol and available npm/deno libraries
+4. Check if https://esm.sh/mercurial or similar exists
+5. May need to shell out to `hg` command if no library available
+6. Implement caching similar to fetchGit
+7. Handle authentication, branches, revisions
+8. Compute store paths correctly
+9. Write comprehensive tests
 
----
+**Parameters to support:**
+- url (required)
+- rev (optional)
+- name (optional)
+- (Check docs for complete list)
 
-## 📊 Test Status Summary
-
-### ✅ **Fully Tested Categories (100%)**
-- Type checking (10/10): isNull, isBool, isInt, isFloat, isString, isList, isAttrs, isFunction, isPath, typeOf
-- List operations (13/13): map, filter, fold, head, tail, length, all, any, elem, etc.
-- Network fetchers (5/5): fetchGit, fetchTarball, fetchurl, fetchTree, path
-- Import system (2/2): import, scopedImport
-
-### ⚠️ **Partially Tested**
-- Math operations (5/7): 71% - **Need lessThan, mul**
-- Attrset operations (9/11): 82% - **Need getAttr, unsafeGetAttrPos**
-- String operations (10/11): 91% - **Need splitVersion**
-
-### ❌ **Medium Priority (21 untested, 8-12 hours)**
-Only test if needed by your project:
-- Context operations (5): getContext, hasContext, appendContext, addErrorContext, unsafeDiscardStringContext
-- Store operations (4): storePath, toFile, placeholder, outputOf
-- Hashing (2): hashString, hashFile
-- Derivation (3): derivationStrict, unsafeDiscardOutputDependency, unsafeGetAttrPos
-- Control flow (3): break, traceVerbose, genericClosure
-- Fetchers (2): fetchMercurial, fetchClosure (not implemented)
-- Advanced (2): getFlake (not implemented), nixPath
+**Blockers/Questions:**
+- Do you need Mercurial support? This is rarely used.
+- Consider skipping if not needed by your project
 
 ---
 
-## 🛠️ Testing Process
+### UNIMPLEMENTED: fetchClosure (5-7 days, VERY COMPLEX)
 
-### Before Writing Any Test:
+**Documentation:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchClosure
 
-1. **Read Nix documentation:**
-   - Primary: https://nix.dev/manual/nix/2.18/language/builtins.html
-   - Search: https://noogle.dev/
+**What it does:** Fetches a pre-built store path from a binary cache
 
-2. **Test in `nix repl`:**
+**Implementation steps:**
+1. Read Nix docs AND Nix source code (this is complex)
+2. Research NAR format for binary caches
+3. Research cache.nixos.org API
+4. Understand narinfo format
+5. Implement binary cache client
+6. Handle compression (xz, bzip2, etc.)
+7. Verify signatures (requires Nix crypto)
+8. Import into store with correct permissions
+9. Handle dependencies recursively
+10. Write comprehensive tests
+
+**Required knowledge:**
+- Binary cache protocol
+- NAR file format
+- Nix store internals
+- Signature verification
+
+**This is the most complex builtin. Consider if you actually need it.**
+
+---
+
+### UNIMPLEMENTED: getFlake (5-7 days, VERY COMPLEX)
+
+**Documentation:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-getFlake
+
+**What it does:** Evaluates and returns a flake's outputs
+
+**Implementation steps:**
+1. Read flake specification: https://nixos.wiki/wiki/Flakes
+2. Understand flake.lock format
+3. Research flake registry
+4. Implement flake resolution
+5. Parse flake.nix
+6. Evaluate flake outputs
+7. Handle flake inputs recursively
+8. Implement lock file generation
+9. Handle flake references (github:, path:, etc.)
+10. Write comprehensive tests
+
+**Required knowledge:**
+- Flake system architecture
+- Flake lock file format
+- Flake reference schemes
+- Recursive flake evaluation
+
+**This requires deep Nix knowledge. Consider if you need full flake support.**
+
+---
+
+### PARTIALLY IMPLEMENTED: fetchTree type='path' (4-6 hours)
+
+**Current status:** fetchTree works for type='git', type='tarball', type='file'
+
+**Not implemented:** type='path', type='indirect', type='mercurial'
+
+**Documentation:** Search for "fetchTree" examples and edge cases
+
+**Implementation steps:**
+1. Read Nix source code for fetchTree type='path' behavior
+2. Test in `nix repl` with various path inputs
+3. Understand how it differs from `path` builtin
+4. Implement type='path' handler
+5. Implement type='indirect' (uses flake registry)
+6. Write tests for each type
+7. Document behavior differences
+
+---
+
+## ⚠️ Priority 2: Missing Store Operations (NOT IMPLEMENTED)
+
+### UNIMPLEMENTED: storePath (1-2 days)
+
+**Documentation:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-storePath
+
+**What it does:** Registers a path as a Nix store path
+
+**Implementation steps:**
+1. Read Nix docs and test behavior in `nix repl`
+2. Understand when/why storePath is needed vs regular paths
+3. Implement store path validation
+4. Add to store manager cache
+5. Handle path canonicalization
+6. Write tests
+
+---
+
+### UNIMPLEMENTED: toFile (1-2 days)
+
+**Documentation:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-toFile
+
+**What it does:** Writes content to a file in the Nix store
+
+**Implementation steps:**
+1. Read Nix docs and test in `nix repl`
+2. Understand how store path is computed for content
+3. Implement content hashing
+4. Write file to store
+5. Return store path
+6. Handle text references to other store paths
+7. Write tests
+
+---
+
+### UNIMPLEMENTED: placeholder (1-2 days)
+
+**Documentation:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-placeholder
+
+**What it does:** Returns a placeholder string for derivation outputs
+
+**Implementation steps:**
+1. Read Nix docs and derivation documentation
+2. Test in `nix repl` to see exact format
+3. Research how placeholders are used in build scripts
+4. Implement placeholder format matching Nix exactly
+5. Write tests
+
+---
+
+### UNIMPLEMENTED: outputOf (1-2 days)
+
+**Documentation:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-outputOf
+
+**What it does:** Gets the store path of a derivation output
+
+**Implementation steps:**
+1. Read Nix docs thoroughly
+2. Test behavior in `nix repl`
+3. Understand relationship with derivations
+4. Implement output path resolution
+5. Handle multiple outputs (out, dev, doc, etc.)
+6. Write tests
+
+---
+
+## ⚠️ Priority 3: Missing Hashing Functions (NOT IMPLEMENTED)
+
+### UNIMPLEMENTED: hashString (1-2 days)
+
+**Documentation:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-hashString
+
+**What it does:** Hashes a string using specified algorithm
+
+**Implementation steps:**
+1. Read Nix docs for supported hash types
+2. Test in `nix repl` with different algorithms
+3. Verify against existing tools/hashing.js implementation
+4. Ensure output format matches Nix exactly (base16/base32/base64)
+5. Support all hash types: md5, sha1, sha256, sha512
+6. Write tests
+
+---
+
+### UNIMPLEMENTED: hashFile (1-2 days)
+
+**Documentation:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-hashFile
+
+**What it does:** Hashes a file using specified algorithm
+
+**Implementation steps:**
+1. Read Nix docs for supported hash types
+2. Test in `nix repl` with test files
+3. Implement file reading + hashing
+4. Ensure output format matches Nix exactly
+5. Support all hash types
+6. Write tests
+
+---
+
+## ⚠️ Priority 4: Missing Context Operations (NOT IMPLEMENTED)
+
+**These are advanced features for string context tracking:**
+
+### UNIMPLEMENTED: getContext, hasContext, appendContext, addErrorContext, unsafeDiscardStringContext
+
+**Documentation:** https://nix.dev/manual/nix/2.28/language/string-context.html
+
+**Implementation strategy:**
+1. Read string context documentation thoroughly
+2. Understand when/why string context is needed
+3. Research Nix source code implementation
+4. Consider if you actually need these (rarely used)
+5. If needed, implement context tracking system
+6. Write comprehensive tests
+
+**Time estimate:** 3-5 days for full context system
+
+---
+
+## ⚠️ Priority 5: Missing Control Flow (NOT IMPLEMENTED)
+
+### UNIMPLEMENTED: break (low priority)
+
+**Documentation:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-break
+
+**What it does:** Enters debugger (only works with nix --debugger)
+
+**Implementation:** Probably skip this, it's for Nix debugger integration
+
+---
+
+### UNIMPLEMENTED: traceVerbose (30 min)
+
+**Documentation:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-traceVerbose
+
+**What it does:** Like trace but only with --trace-verbose flag
+
+**Implementation:** Check if verbose flag is set, conditionally trace
+
+---
+
+### UNIMPLEMENTED: genericClosure (2-3 days)
+
+**Documentation:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-genericClosure
+
+**What it does:** Computes transitive closure of a relation
+
+**Implementation steps:**
+1. Read Nix docs carefully - this is complex
+2. Test extensively in `nix repl`
+3. Understand startSet and operator parameters
+4. Implement graph traversal algorithm
+5. Handle cycles correctly
+6. Write comprehensive tests
+
+---
+
+## 🛠️ Implementation Process (FOLLOW THIS EVERY TIME)
+
+### Before Writing Any Code:
+
+1. **Read Nix documentation thoroughly:**
+   - Primary: https://nix.dev/manual/nix/2.28/language/builtins.html
+   - Search examples: https://noogle.dev/
+   - Search for blog posts and tutorials about the specific builtin
+   - Read related Nix source code if behavior is unclear
+
+2. **Test extensively in `nix repl`:**
    ```bash
    nix repl
-   nix-repl> builtins.lessThan 3 5
-   true
-   nix-repl> builtins.lessThan "a" "b"
-   true
+   nix-repl> builtins.fetchMercurial { url = "..."; }
+   nix-repl> # Try different parameters
+   nix-repl> # Try edge cases
+   nix-repl> # Document exact behavior
    ```
 
-3. **Write test matching exact Nix behavior:**
+3. **Research implementation details:**
+   - Search for "Nix [builtin name] implementation"
+   - Look for GitHub issues discussing the builtin
+   - Check Nixpkgs for real-world usage examples
+   - Understand all parameters and edge cases
+
+4. **Plan implementation steps:**
+   - Break down into smallest possible tasks
+   - Identify dependencies and prerequisites
+   - List external libraries needed (if any)
+   - Estimate time for each sub-task
+
+5. **Implement incrementally:**
+   - Start with simplest case
+   - Add complexity gradually
+   - Test after each addition
+   - Compare behavior with `nix repl` continuously
+
+6. **Write comprehensive tests:**
    ```javascript
-   Deno.test("lessThan - integers", () => {
-       assertEquals(builtins.lessThan(3n, 5n), true)
-       assertEquals(builtins.lessThan(5n, 3n), false)
-       assertEquals(builtins.lessThan(3n, 3n), false)
+   Deno.test("functionName - basic case", () => {
+       // Test normal operation
+   })
+
+   Deno.test("functionName - edge cases", () => {
+       // Test nulls, empty, zeros, etc.
+   })
+
+   Deno.test("functionName - error cases", () => {
+       // Test invalid inputs
    })
    ```
 
-### Test Pattern:
+### Implementation Pattern:
 ```javascript
-import { builtins } from "../runtime.js"
-import { assertEquals, assertThrows } from "https://deno.land/std@0.224.0/assert/mod.ts"
+// 1. Read docs: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-NAME
+// 2. Test in nix repl to understand exact behavior
+// 3. Research any external dependencies needed
+// 4. Implement with error handling
+// 5. Write tests matching Nix behavior exactly
 
-Deno.test("functionName - basic case", () => {
-    // Test normal operation
-    assertEquals(builtins.functionName(input), expected)
-})
+export const functionName = (param1, param2) => {
+    // Validate inputs
+    if (typeof param1 !== "expected") {
+        throw new Error("Invalid parameter")
+    }
 
-Deno.test("functionName - edge case", () => {
-    // Test edge case (null, empty, 0, etc.)
-    assertEquals(builtins.functionName(edge), expected)
-})
+    // Implement core logic
+    const result = /* ... */
 
-Deno.test("functionName - error case", () => {
-    // Test error handling
-    assertThrows(() => builtins.functionName(invalid))
-})
+    // Return matching Nix format exactly
+    return result
+}
 ```
 
 ---
@@ -179,11 +396,6 @@ deno test --allow-all
 deno test --allow-all main/tests/builtins_math_bitwise_test.js
 ```
 
-**Run by pattern:**
-```bash
-deno test --allow-all --filter="lessThan"
-```
-
 **Check for issues:**
 ```bash
 deno check main.js
@@ -192,54 +404,83 @@ deno check main/runtime.js
 
 ---
 
-## 📁 Project Structure
+## 📁 What Still Needs Work
 
 ```
 denix/
-├── main.js                    # Translator (Nix → JS) - 100% complete
 ├── main/
-│   ├── runtime.js             # All 109 builtins - 74/109 tested
-│   ├── import_*.js            # Import system - 100% working
-│   ├── fetcher.js             # HTTP downloads - 100% working
-│   ├── tar.js                 # Tarball extraction - 100% working
-│   ├── nar_hash.js            # NAR hashing - 100% working
-│   ├── store_manager.js       # Store cache - 100% working
-│   ├── errors.js              # Error types
-│   └── tests/                 # 30 test files, 518+ passing
-├── tools/                     # Utilities (hashing, store paths, etc.)
-├── test.sh                    # Test runner
-└── ARCHITECT_REPORT.md        # Architecture analysis (NEW!)
+│   ├── runtime.js             # MISSING: ~8-10 builtins not implemented
+│   │                          # fetchMercurial, fetchClosure, getFlake
+│   │                          # storePath, toFile, placeholder, outputOf
+│   │                          # hashString, hashFile, context operations
+│   │                          # genericClosure, traceVerbose
+│   │
+│   ├── store_manager.js       # INCOMPLETE: Needs storePath, toFile support
+│   │
+│   └── fetcher.js             # INCOMPLETE: Needs fetchMercurial, fetchClosure
 ```
 
-**All core functionality works. Only need more tests.**
+**Runtime is NOT complete. Do not work on translator until these are implemented.**
 
 ---
 
-## ⚠️ Known Issues
+## ⚠️ Current Blockers
 
-### Minor: nixpkgs Integration Tests Broken
-- `nixpkgs_lib_files_test.js` - 13 tests fail
-- Reason: Missing `nixpkgs.lib/` git submodule
-- Impact: None - these are optional integration tests
-- Fix: Run `git submodule update --init` OR skip these tests
+### Critical: Store System Not Implemented
+- `storePath` - Not implemented
+- `toFile` - Not implemented
+- `placeholder` - Not implemented
+- `outputOf` - Not implemented
 
-**All core functionality (translator + runtime) works perfectly.**
+### Critical: Hashing Functions Not Implemented
+- `hashString` - Not implemented
+- `hashFile` - Not implemented
+
+### Critical: Advanced Fetchers Not Implemented
+- `fetchMercurial` - Not implemented
+- `fetchClosure` - Not implemented (very complex)
+- `getFlake` - Not implemented (very complex)
+
+### Medium: Context Operations Not Implemented
+- `getContext`, `hasContext`, `appendContext` - Not implemented
+- `addErrorContext`, `unsafeDiscardStringContext` - Not implemented
+
+### Low: Minor Functions Not Implemented
+- `genericClosure` - Not implemented
+- `traceVerbose` - Not implemented
+- `break` - Not needed (debugger only)
 
 ---
 
-## 🎯 Summary
+## 🎯 Immediate Next Steps
 
-**Immediate action:** Add 14 high-priority tests (3-5 hours)
-1. ✅ Architecture reviewed - Codebase is excellent (see ARCHITECT_REPORT.md)
-2. ⚡ Add math tests (30 min)
-3. ⚡ Add file operation tests (2-3 hours)
-4. ⚡ Add conversion/misc tests (1-2 hours)
+**You MUST work on these in order:**
 
-**Result:** 88/109 builtins tested (80% coverage)
+1. **Decide priority:** Which unimplemented builtins do you actually need?
+   - If you need store operations: Start with storePath, toFile, placeholder, outputOf
+   - If you need hashing: Start with hashString, hashFile
+   - If you need Mercurial: Start with fetchMercurial
+   - If you need binary caches: Start with fetchClosure (very complex, 5-7 days)
+   - If you need flakes: Start with getFlake (very complex, 5-7 days)
 
-**Optional next steps:**
-- Add 21 medium-priority tests (8-12 hours) → 90% coverage
-- Fix nixpkgs test failures (15 min) → 100% test pass rate
-- Implement optional fetchers if needed (fetchMercurial, fetchClosure)
+2. **For each unimplemented builtin:**
+   - Read Nix docs: https://nix.dev/manual/nix/2.28/language/builtins.html
+   - Test extensively in `nix repl`
+   - Research implementation details
+   - Break down into sub-tasks
+   - Implement incrementally
+   - Write comprehensive tests
 
-**The codebase is production-ready. Focus on testing what matters to your project.**
+3. **Only after runtime is 100% complete:**
+   - Work on translator edge cases
+   - Add nixpkgs.lib integration tests
+
+**Total estimated time to complete runtime: 16-22 days**
+
+- Store operations: 4-8 days
+- Hashing: 2-4 days
+- Fetchers: 7-10 days (fetchClosure and getFlake are very complex)
+- Context operations: 3-5 days
+- Control flow: 2-3 days
+
+**Do not proceed to translator work until runtime is complete.**
