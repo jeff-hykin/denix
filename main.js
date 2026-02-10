@@ -1,6 +1,5 @@
 // Core parsing and analysis tools
-import { nixFileToXml, parse, xmlStylePreview } from "./tools/parsing.js"
-import { StackManager } from "./tools/analysis.js"
+import { parse, xmlStylePreview } from "./tools/parsing.js"
 import { NixError, NotImplemented } from "./main/errors.js"
 import { nixRepr } from "./main/runtime.js"
 

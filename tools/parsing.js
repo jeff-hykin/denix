@@ -27,14 +27,3 @@ export const treetoAstString = (tree) => {
 }
 
 export const xmlStylePreview = treetoAstString
-
-export const nixFileToXml = async (path, outputPath=null)=>{
-    return await FileSystem.write({
-        path: outputPath || `${path}.xml`,
-        data: treetoAstString(
-            parse(
-                await FileSystem.read(path)
-            )
-        ),
-    })
-}

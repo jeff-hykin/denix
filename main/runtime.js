@@ -1,7 +1,6 @@
 import { zip } from "https://deno.land/x/good@1.5.1.0/array.js"
 
 //  tools
-import { StackManager } from "../tools/analysis.js"
 import { toFloat } from "../tools/generic.js"
 import { sha256Hex, md5Hex, sha1Hex, sha512Hex } from "../tools/hashing.js"
 import { jsonParseWithBigInt } from "../tools/json_parse.js"
