@@ -183,7 +183,7 @@ import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPa
             "isPath": (value)=>value instanceof Path,
             "isString": (value)=> value instanceof InterpolatedString || typeof value == "string",
             "isList": (value)=>value instanceof Array,
-            "isAttrs": (value)=>Object.getPrototypeOf({}) == Object.getPrototypeOf(value),
+            "isAttrs": (value)=>value != null && Object.getPrototypeOf({}) == Object.getPrototypeOf(value),
             "isFunction": (value)=>value instanceof Function,
             "typeOf": (value)=>{
                 switch (typeof value) {
@@ -556,7 +556,7 @@ import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPa
             "all": (func)=>(list)=>list.length==0||list.every(func), 
             "any": (func)=>(list)=>list.some(func),                  
             "filter": (func)=>(list)=>list.filter(func),             
-            "concatLists": (lists)=>requireList(list)&&lists.flat(1),
+            "concatLists": (lists)=>requireList(lists)&&lists.flat(1),
             "elem": (value)=>(list)=>requireList(list)&&list.includes(value),
             "elemAt": (list)=>(index)=>{
                 requireList(list)
@@ -570,7 +570,7 @@ import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPa
                 }
                 return list[index]
             },
-            "head": (list)=>[list[0]],
+            "head": (list)=>list[0],
             "tail": (list)=>list.slice(1),
             "map": (f)=>(list)=>lazyMap(list, f), // its lazy but behaves like a real array (proxy object)
             // (builtins.partition (x: x > 10) [1 23 9 3 42]) == { right = [ 23 42 ]; wrong = [ 1 9 3 ]; }
