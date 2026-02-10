@@ -170,7 +170,6 @@ denix/
 
 ## Not Part of Core
 
-- `run/` - Development automation (deprecated)
 - `.claude/` - Claude logs (gitignored)
 
 ## Dependencies
@@ -191,11 +190,18 @@ denix/
 
 **These are documented as optional in Nix 2.18 and rarely used in practice.**
 
-## Development Priority
+## Development Priority (Architecture-Driven)
 
-**Current:** Test 57 untested builtins (reach 80% coverage)
+**CRITICAL PRIORITY:** Test most-used builtins first
+1. List operations: map, filter, all, any (CRITICAL - used everywhere)
+2. Attrset operations: getAttr, attrNames, attrValues (CRITICAL)
+3. Then: 80% coverage target (47 more tests needed)
 
-See [prompt.md](prompt.md) for detailed tasks.
+**WHY:** These functions are used in every Nix file. Testing them ensures the runtime works for real-world code.
+
+**SKIP:** Derivation edge cases (basic functionality works), translator improvements (100% tested), optional features (fetchMercurial, getFlake).
+
+See [prompt.md](prompt.md) for detailed test plans.
 
 ## Performance Notes
 

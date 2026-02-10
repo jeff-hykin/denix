@@ -1,13 +1,15 @@
 # Denix Development Guide
 
-## CRITICAL RULES (Read This First!)
+## Architecture Philosophy: SIMPLICITY FIRST
+
+**You are the architect. Your goal: Simple, clean codebase. No bloat, no over-engineering.**
 
 **Your job is to focus on what is NOT implemented and NOT working. Only report what remains to be done. Do not report what you accomplished. You are a senior level developer, there is no such thing as a blocker. Break down large tasks into smaller tasks.**
 
 ### STRICT WORK ORDER (DO NOT VIOLATE):
-1. **RUNTIME FIRST**: Finish all runtime.js builtins testing (current priority)
-2. **TRANSLATOR SECOND**: Only after runtime is 80%+ tested
-3. **NIXPKGS TESTS LAST**: Only after translator is fully validated
+1. **RUNTIME TESTING FIRST**: Test untested builtins (37% → 80% coverage)
+2. **TRANSLATOR EDGE CASES**: Only after runtime is 80%+ tested
+3. **NIXPKGS EXPANSION**: Only after translator is fully validated
 
 ### MANDATORY IMPLEMENTATION PROCESS:
 1. **Read official Nix documentation WHILE implementing**: https://nix.dev/manual/nix/2.18/language/builtins
@@ -21,15 +23,27 @@
 - **Allowed**: npm packages via `https://esm.sh/NPM_MODULE_NAME` (unreliable, have fallback plan)
 - **Forbidden**: Direct npm/jsr imports
 
-## Primary Goal
+## Primary Goal (Architecture-Driven Priority)
 
-**Test 63 untested runtime builtins to reach 80% test coverage.**
+**Test critical untested builtins first, then reach 80% coverage.**
 
-Current Status (verified via comprehensive analysis):
-- **Total builtins: 109 functions** (excluding 8 constants like null, true, false, etc.)
-- **Tested: 40 builtins (37% coverage)**
-- **Untested: 69 builtins (63%)**
-- **Target: 87 builtins tested (80% coverage = 47 more tests needed)**
+### Current State (Verified 2026-02-10)
+- ✅ **Derivations**: WORKING (12/12 tests passing, basic functionality complete)
+- ✅ **Translator**: COMPLETE (87/87 tests passing, 100%)
+- ✅ **Import system**: COMPLETE (full functionality)
+- ⚠️ **Runtime builtins**: INCOMPLETE TESTING
+  - Total: 109 function builtins (+ 8 constants)
+  - Tested: 40 (37% coverage)
+  - Untested: 69 (63%)
+  - **Target: 87 tested (80% = 47 more needed)**
+
+### Critical Gap Analysis
+**Most-used functions are UNTESTED:**
+- `map`, `filter` - Core list operations (used in every Nix file)
+- `getAttr`, `attrNames`, `attrValues` - Core attrset access
+- `all`, `any` - Predicates (used everywhere)
+
+**This is the biggest risk in the codebase.**
 
 ## Test Development Process (FOLLOW THIS EXACTLY)
 
@@ -64,15 +78,37 @@ For each untested builtin:
 
 **DO NOT SKIP STEP 1 AND 2!** Implementation based on assumptions will be wrong.
 
+## Testing Strategy: CRITICAL FUNCTIONS FIRST
+
+### Phase 0: Pre-Testing Analysis ✅ COMPLETE
+- ✅ Verified derivations work (12/12 tests passing)
+- ✅ Verified translator complete (87/87 tests)
+- ✅ Verified type checking complete (10/10 functions tested)
+- ✅ Identified 69 untested builtins
+
+### Priority Ranking (Architecture-Driven)
+
+**CRITICAL (must test immediately):**
+- List: map, filter, all, any (most-used operations)
+- Attrset: getAttr, attrNames, attrValues (core access)
+
+**HIGH (test next):**
+- List: elem, elemAt, partition, sort, genList, concatLists
+- Attrset: catAttrs, genericClosure, getEnv
+- String: split, splitVersion, baseNameOf, dirOf
+
+**MEDIUM (80% coverage):**
+- Math: sub, mul, ceil, floor, bitAnd, bitOr, bitXor, toString
+- Path/File: pathExists, readFile, readDir, readFileType, findFile, toFile, storePath
+
+**LOW (nice to have):**
+- Hashing, control flow, JSON, advanced features
+
 ## Testing Priorities (69 untested builtins)
 
-### Task 1: Type Checking (0 functions, 0 hours) - ✅ ALL TESTED
-**File**: `main/tests/builtins_types_test.js`
-
-✅ All type checking functions are ALREADY TESTED:
+### Task 1: Type Checking ✅ COMPLETE (SKIP THIS)
+**Status**: ALL 10 type functions already tested
 - isNull, isBool, isInt, isFloat, isString, isList, isPath, isAttrs, typeOf, isFunction
-
-Status: COMPLETE - Move to Task 2
 
 ### Task 2: List Operations (10 functions, 5-7 hours) - CRITICAL
 **File**: `main/tests/builtins_lists_test.js`
@@ -318,19 +354,31 @@ Deno.test("builtins.FUNCTION - error case", () => {
 })
 ```
 
-## Current Project State (VERIFIED)
+## Current Project State (VERIFIED 2026-02-10)
 
-### What Needs Work ⚠️
-- **Testing**: Only 40/109 builtins tested (37% coverage)
-- **Goal**: 87/109 tested (80% coverage = 47 more tests needed)
-- **Work remaining**: Tasks 2-6 (36 critical functions, 17-25 hours to 80%)
+### 🎯 What Needs Work (TOP PRIORITY)
+- **Runtime Testing**: Only 40/109 builtins tested (37%)
+- **Critical gap**: Most-used functions untested (map, filter, getAttr)
+- **Goal**: 87/109 tested (80% = 47 more tests)
+- **Work**: Tasks 2-6 (36 functions, 17-25 hours to 80%)
 
-### What's Working ✅
-- **Translator**: 87/87 tests passing (100%)
-- **Import system**: Fully functional
-- **Derivation system**: 12/12 basic tests passing
-- **Fetch infrastructure**: 5/8 fetch functions tested (fetchGit, fetchTarball, fetchTree, fetchurl, filterSource)
-- **Type checking**: All 10 type functions tested
+### ✅ What's Complete (DO NOT REVISIT)
+- **Translator**: 100% (87/87 tests passing)
+- **Import system**: 100% (5 test files, all passing)
+- **Derivations**: WORKING (12/12 tests passing)
+  - Basic functionality complete
+  - Edge cases documented below (not blocking)
+- **Type checking**: 100% (10/10 functions tested)
+- **Fetch infrastructure**: 5/8 functions tested
+
+### ⚠️ Derivation Edge Cases (LOW PRIORITY)
+Derivations work for basic use cases. These edge cases are NOT blocking:
+- Multiple outputs (outputs = ["out" "dev" "doc"]) - partially working
+- Complex environment serialization - working for common cases
+- Passthru/meta attributes - not critical for core functionality
+- String context propagation - advanced feature
+
+**Decision**: Skip derivation edge cases. Focus on untested builtins first.
 
 ## Project Structure
 
@@ -376,13 +424,22 @@ denix/
 5. **Saying "blocked"**: Break the task down into smaller steps
 6. **Adding TODOs without plans**: If unsure how to implement, research and create sub-tasks
 
-## Self-Check Questions (Ask Yourself)
+## Architectural Self-Check (Ask Before Each Action)
 
-- [ ] Am I working on runtime tests? (If no, why not? Runtime comes first!)
-- [ ] Did I read the Nix docs for this function? (Required before coding)
-- [ ] Did I test in nix repl? (Required before writing tests)
-- [ ] Am I reporting what's NOT done? (Not what IS done)
-- [ ] Did I break down any "blockers"? (No blockers exist)
+**SIMPLICITY:**
+- [ ] Is this adding complexity or removing it?
+- [ ] Does this file/function need to exist?
+- [ ] Am I over-engineering this?
+
+**PRIORITY:**
+- [ ] Am I working on untested builtins? (If no, why not?)
+- [ ] Am I testing critical functions first? (map, filter, getAttr)
+- [ ] Am I skipping completed work? (derivations, translator, imports)
+
+**QUALITY:**
+- [ ] Did I read Nix docs? (Required before tests)
+- [ ] Did I test in nix repl? (Required before tests)
+- [ ] Am I reporting what's NOT done? (Not achievements)
 
 ## Next Immediate Action
 

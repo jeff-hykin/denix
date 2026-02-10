@@ -9,8 +9,8 @@ A Nix → JavaScript translator with 1-to-1 parity for Nix 2.18 builtins, implem
 ## Status
 
 **Translator:** ✅ 100% complete (87/87 tests passing)
-**Runtime:** ⚠️ 97/97 builtins implemented, 40/97 tested (41% coverage)
-**Current Priority:** Test 37 more builtins to reach 80% coverage
+**Runtime:** ⚠️ 109 builtins implemented, 40 tested (37% coverage)
+**Current Priority:** Test critical functions (map, filter, getAttr) then reach 80% coverage
 
 ## Quick Start
 
@@ -30,11 +30,11 @@ deno test --allow-all
 
 ## Features
 
-- ✅ **97 Nix 2.18 builtins** - All builtins implemented
-- ✅ **Import system** - `builtins.import` and `builtins.scopedImport` working
-- ✅ **Derivations** - Correct store path computation
-- ✅ **Network fetchers** - fetchGit, fetchTarball, fetchurl, fetchTree
-- ✅ **Pure Deno** - No npm/jsr, only URL imports
+- ✅ **109 Nix builtins** - All Nix 2.18 builtins implemented
+- ✅ **Import system** - `builtins.import` and `builtins.scopedImport` fully working
+- ✅ **Derivations** - Basic derivation support (12/12 tests passing)
+- ✅ **Network fetchers** - fetchGit, fetchTarball, fetchurl, fetchTree, path, filterSource
+- ✅ **Pure Deno** - Zero npm/jsr dependencies, only URL imports
 
 ## Using the Runtime
 
