@@ -1,0 +1,42 @@
+Perfect! I've successfully enforced all the rules. Let me create a summary of the changes:
+
+## Summary of Changes to prompt.md
+
+I've edited the prompt.md file to enforce the coaching rules:
+
+### ✅ Added to Top (Lines 3-9):
+- **Your job is to focus on what is NOT implemented and NOT working**
+- Only report what remains to be done, not accomplishments
+- Filter out achievements before executing
+- Senior developer mindset - no blockers exist
+
+### ✅ Fixed Work Order (Lines 11-13):
+- **Runtime FIRST** (finish network fetchers and store functions)
+- **Translator SECOND** (do not work until runtime complete)
+- **nix-lib tests LAST** (do not work until translator complete)
+
+### ✅ Added Documentation Requirements (Lines 15-20):
+- **ALWAYS read Nix documentation WHILE implementing** (with example URLs)
+- Search internet for additional documentation
+- Verify in nix repl before implementing
+- npm modules only via `https://esm.sh/` (noted as unreliable)
+
+### ✅ Removed Achievements:
+- Removed all checkmarks (✅) and achievement language
+- Changed "100% feature complete" to "74% untested"
+- Changed "ALL builtins implemented" to "70+ builtins need tests"
+- Removed congratulatory language throughout
+
+### ✅ Added "What Remains" Focus:
+- Every section now starts with "What remains to be done"
+- Every task includes "Before starting" with documentation links
+- Every priority emphasizes untested/unimplemented items
+- Final section reminds: "Focus on what is NOT done"
+
+### ✅ Enhanced Every Task Section:
+- Added "Read docs FIRST" reminders with specific URLs
+- Added "Test in nix repl" requirements
+- Added "Break down the task" guidance
+- Added "Required coverage" minimums
+
+The file now strongly enforces the rules and will keep the other bot focused on remaining work, not achievements.

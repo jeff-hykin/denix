@@ -2,97 +2,98 @@
 
 ## ⚠️ CRITICAL RULES - READ FIRST ⚠️
 
-**Your job is to TEST the runtime. Implementation is 100% complete. Testing is only 26% complete.**
+**Your job is to focus on what is NOT implemented and NOT working. Only report what remains to be done. Do not report what you accomplished.**
 
 You are a senior level developer. There is no such thing as a blocker. Break down large tasks into smaller tasks.
 
+**Before executing what is below, filter out any achievements. Only keep remaining/unsolved tasks in this document. Add detail to each task if needed.**
+
 ### MANDATORY WORK ORDER:
-1. **Test core builtins FIRST** (type checking, list ops, attrset ops) - 26% → 80%+ coverage
-2. **Test edge cases SECOND** (derivations, translator, complex scenarios)
-3. **Integration tests LAST** (nixpkgs.lib files)
+1. **Runtime FIRST** - Finish all builtins (especially network fetchers and store functions in runtime.js)
+2. **Translator SECOND** - Do not work on translator until runtime is fully implemented
+3. **nix-lib tests LAST** - Do not work on nix-lib tests until translator is fully implemented
 
-### TESTING REQUIREMENTS:
-- **ALWAYS verify in nix repl first**: Test expected behavior before writing tests
-- **Read Nix documentation**: https://nix.dev/manual/nix/2.18/language/builtins
+### IMPLEMENTATION REQUIREMENTS:
+- **ALWAYS read Nix documentation WHILE implementing**: https://nix.dev/manual/nix/2.18/language/builtins
+  - Example: Working on `builtins.fetchClosure`? Read https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchClosure
+  - Search the internet for additional documentation and real-world usage examples
+- **ALWAYS verify behavior in nix repl**: Test expected behavior before implementing
 - **Test positive + negative + edge cases**: Minimum 5 cases per function
-- **Compare JS output with Nix behavior**: Tests must match exactly
-- **No implementation needed**: ALL builtins are already implemented, just untested
+- **Compare JS output with Nix behavior**: Implementation must match exactly
+- **npm modules via esm.sh ONLY**: Use `https://esm.sh/NPM_MODULE_NAME` (unreliable, may not work)
 
-### CODEBASE STATUS (Verified 2026-02-10):
-- ✅ Runtime: 100% feature complete (ALL 97 Nix 2.18 builtins implemented)
-- ✅ Translator: 100% complete (87/87 tests passing)
-- ✅ Infrastructure: Complete (import, derivation, fetch, store)
-- ❌ **Test coverage: Only 26%** (28/~100 builtins tested)
+### WHAT IS NOT DONE:
+- Test coverage: Only 26% (28/~100 builtins tested) - 74% of code UNTESTED
+- Core builtins untested: map, filter, foldl', all, any, hasAttr, getAttr, throw, trace, isNull, typeOf, sub, mul
+- Type checking: Minimal coverage (isNull, isBool, isInt, isFloat, isString, isList, isAttrs untested)
+- List operations: 20% coverage (most core functions untested)
+- Attrset operations: 33% coverage (hasAttr, getAttr untested)
 
-**DO NOT REFACTOR.** Codebase is clean and simple. Focus on testing only.
-
----
-
-## Core Principle: TEST BEFORE CLAIMING COMPLETE
-
-Implementation ≠ Working correctly. 75% untested code is not "mostly done".
-
-**Priority order:** Core tests → Edge case tests → Integration tests
+**DO NOT REFACTOR.** Codebase is clean and simple. Focus on remaining work only.
 
 ---
 
-## WHAT IS NOT DONE (2026-02-10)
+## Core Principle: Focus on What Remains
 
-**CORRECTED COUNTS (verified against Nix 2.18 docs):**
-- Nix 2.18 has **97 builtin functions** (excluding constants)
-- Denix implements **~107 builtins** (includes some extras like `scopedImport`, `fetchTree`, etc.)
-- **All core Nix 2.18 builtins are implemented** (100% feature complete!)
-- **HOWEVER:** Only 28 builtins have tests (26% coverage) - THIS IS THE REAL PROBLEM
+Implementation ≠ Working correctly. Untested code may have bugs.
 
-**Missing builtins NOT in Nix 2.18:**
-- `warn` - Added in Nix 2.24+ (NOT needed for 2.18 compatibility)
-- `convertHash` - Added in Nix 2.25+ (NOT needed for 2.18 compatibility)
-- `addDrvOutputDependencies` - Added in later versions (NOT needed for 2.18 compatibility)
+**Priority order:** Runtime → Translator → nix-lib tests
 
-**Critical Testing Gap (THE ACTUAL ISSUE):**
-- Only 28/~100 builtins have tests (26% coverage)
-- Type checking: Minimal coverage (isFunction tested, but isNull, isBool, isInt, isFloat, isString, isList, isAttrs untested)
-- List operations: 20% coverage (map, filter, all, any, foldl' untested!)
-- Attrset operations: 33% coverage (hasAttr, getAttr untested!)
-- Math operations: Minimal coverage (sub, mul, ceil, floor untested!)
-- Cannot trust runtime without testing core operations
+---
 
-**Immediate Work Required:**
-1. Test core builtins (type checking, list ops, attrset ops) - 3-5 days (HIGHEST PRIORITY)
-2. Derivation edge cases - 2-4 hours
-3. Translator edge cases - 1-2 days
+## WHAT REMAINS TO BE DONE (2026-02-10)
+
+### Missing Tests (74% of builtins untested):
+- Type checking: isNull, isBool, isInt, isFloat, isString, isList, isAttrs (7 functions)
+- List operations: map, filter, all, any, foldl', concatLists, concatMap, elem, genList, sort, partition, groupBy (12 functions)
+- Attrset operations: hasAttr, getAttr, attrNames, attrValues, catAttrs, listToAttrs (6 functions)
+- Math operations: sub, mul, ceil, floor, lessThan (5 functions)
+- Control flow: throw, abort, trace, seq, deepSeq (5 functions)
+- String operations: concatStringsSep, split, match (3 functions)
+
+**Total untested:** ~70 builtins need test coverage
+
+### Immediate Work Required:
+1. Test core builtins (type checking, list ops, attrset ops) - 3-5 days
+2. Test derivation edge cases - 2-4 hours
+3. Test translator edge cases - 1-2 days
+4. Test more nixpkgs.lib files - 3-5 days
+
+**No implementation work needed** - all code exists, just needs testing.
 
 ---
 
 ## PRIORITY 0: Test Core Builtins (3-5 days) ⚠️ CRITICAL
 
-**Current Status:**
-- ✅ ALL 97 Nix 2.18 builtins implemented (100% feature complete!)
-- ❌ Only 28 builtins have tests (26% coverage)
-- ❌ 74% of builtins UNTESTED - unknown if they work correctly
-- ❌ Core functions (map, filter, hasAttr, getAttr) used everywhere but UNTESTED
+**What is NOT tested:**
+- 70+ builtins have no test coverage (74% untested)
+- Core functions (map, filter, hasAttr, getAttr) used everywhere but UNTESTED
+- Unknown if implemented code works correctly
 
-**Why this matters:**
-- Cannot trust runtime without testing core operations
-- Bugs could exist in "implemented" code
-- Integration tests fail if core builtins broken
+**What remains to be done:**
+- Increase coverage from 26% → 80%+ (test 52+ more builtins)
+- See BUILTIN_COVERAGE.md for complete list of untested builtins
 
-**Goal:** Increase coverage from 26% → 80%+ (test 52+ more builtins)
-
-**See BUILTIN_COVERAGE.md** for complete coverage analysis.
-
-**Testing workflow:**
-1. Read https://nix.dev/manual/nix/2.18/language/builtins.html#builtins-FUNCTIONNAME
-2. Test in `nix repl` to verify expected behavior
-3. Write Deno tests matching Nix behavior exactly
-4. Test positive cases, negative cases, and edge cases (min 5 per function)
+**Testing workflow (DO THIS WHILE IMPLEMENTING TESTS):**
+1. **Read Nix docs first**: https://nix.dev/manual/nix/2.18/language/builtins.html#builtins-FUNCTIONNAME
+2. **Test in nix repl**: Verify expected behavior before writing tests
+3. **Write Deno tests**: Match Nix behavior exactly
+4. **Test all cases**: Positive, negative, and edge cases (min 5 per function)
+5. **Search for examples**: Find real-world usage patterns online
 
 ### Task 0.1: Type Checking Tests (4-6 hours)
 
-Create `main/tests/builtins_types_test.js` - Test ALL 10 type checking functions:
+**What remains:** Create `main/tests/builtins_types_test.js`
 
+**Untested functions:** isNull, isBool, isInt, isFloat, isPath, isString, isList, isAttrs, isFunction, typeOf (10 functions)
+
+**Before starting:**
+1. Read https://nix.dev/manual/nix/2.18/language/builtins.html#builtins-isInt (and similar for each)
+2. Test each in `nix repl` to verify behavior
+3. Search for real-world usage examples
+
+**Test structure example:**
 ```javascript
-// Test each: isNull, isBool, isInt, isFloat, isPath, isString, isList, isAttrs, isFunction, typeOf
 Deno.test("isInt - positive cases", () => {
     assertEquals(builtins.isInt(42n), true)
     assertEquals(builtins.isInt(0n), true)
@@ -106,18 +107,15 @@ Deno.test("isInt - negative cases", () => {
 })
 ```
 
-**Minimum tests:** 5 cases per function (50 tests total)
-- Positive cases (correct type)
-- Negative cases (wrong types)
-- Edge cases (empty, null, undefined)
+**Required coverage:** 5 cases per function minimum (50 tests total)
 
 ### Task 0.2: List Operation Tests (6-8 hours)
 
-Create `main/tests/builtins_list_operations_test.js`:
+**What remains:** Create `main/tests/builtins_list_operations_test.js`
 
-**High priority untested:**
-- `map` - Used everywhere! Test with numbers, strings, nested lists
-- `filter` - Used everywhere! Test predicate functions
+**Untested functions:**
+- `map` - CRITICAL, used everywhere
+- `filter` - CRITICAL, used everywhere
 - `elem` - Check membership
 - `concatLists` - Flatten lists
 - `concatMap` - Map then flatten
@@ -127,60 +125,81 @@ Create `main/tests/builtins_list_operations_test.js`:
 - `partition` - Split by predicate
 - `groupBy` - Group elements
 
-**Minimum tests:** 60+ tests (5-8 per function)
+**Before starting:**
+1. Read https://nix.dev/manual/nix/2.18/language/builtins.html#builtins-map (and similar for each)
+2. Test each in `nix repl` to verify behavior
+3. Find real-world usage in nixpkgs
+
+**Required coverage:** 60+ tests (5-8 per function)
 
 ### Task 0.3: Attrset Operation Tests (4-6 hours)
 
-Create `main/tests/builtins_attrsets_test.js`:
+**What remains:** Create `main/tests/builtins_attrsets_test.js`
 
-**High priority untested:**
-- `hasAttr` - Used extensively! Test nested attrs
-- `getAttr` - Used extensively! Test nested, missing keys
+**Untested functions:**
+- `hasAttr` - CRITICAL, used extensively
+- `getAttr` - CRITICAL, used extensively
 - `attrNames` - List keys
 - `attrValues` - List values
 - `catAttrs` - Extract attribute from list of attrsets
 - `listToAttrs` - Convert list to attrset
-- `mapAttrs` - Already tested but needs more cases
 
-**Minimum tests:** 40+ tests
+**Before starting:**
+1. Read https://nix.dev/manual/nix/2.18/language/builtins.html#builtins-hasAttr (and similar for each)
+2. Test nested attribute access in `nix repl`
+3. Test missing key behavior
+
+**Required coverage:** 40+ tests (5-7 per function)
 
 ### Task 0.4: String Operation Tests (3-4 hours)
 
-Create `main/tests/builtins_strings_test.js`:
+**What remains:** Create `main/tests/builtins_strings_test.js`
 
-**High priority untested:**
-- `concatStringsSep` - Join with separator (VERY common)
+**Untested functions:**
+- `concatStringsSep` - CRITICAL, join with separator
 - `split` - Split by regex
 - `match` - Regex matching
 
-**Already tested but need more cases:**
-- `stringLength`, `substring`, `replaceStrings`
+**Before starting:**
+1. Read https://nix.dev/manual/nix/2.18/language/builtins.html#builtins-concatStringsSep
+2. Test regex behavior in `nix repl`
+3. Find examples of split/match usage
 
-**Minimum tests:** 30+ tests
+**Required coverage:** 30+ tests (5-10 per function)
 
 ### Task 0.5: Math & Comparison Tests (2-3 hours)
 
-Create `main/tests/builtins_math_test.js`:
+**What remains:** Create `main/tests/builtins_math_test.js`
 
-**Untested:**
-- `sub`, `mul` - Basic arithmetic
+**Untested functions:**
+- `sub`, `mul` - Basic arithmetic (BigInt handling)
 - `lessThan` - Comparison
 - `ceil`, `floor` - Rounding
 
-**Minimum tests:** 25+ tests
+**Before starting:**
+1. Read https://nix.dev/manual/nix/2.18/language/builtins.html#builtins-sub
+2. Test BigInt vs Float behavior in `nix repl`
+3. Test edge cases (negative numbers, zero, overflow)
+
+**Required coverage:** 25+ tests (5 per function)
 
 ### Task 0.6: Control Flow Tests (2-3 hours)
 
-Create `main/tests/builtins_control_flow_test.js`:
+**What remains:** Create `main/tests/builtins_control_flow_test.js`
 
-**Untested:**
+**Untested functions:**
 - `throw` - Error throwing
 - `abort` - Fatal errors
 - `trace` - Debug printing
 - `seq` - Force evaluation
 - `deepSeq` - Deep force evaluation
 
-**Minimum tests:** 25+ tests
+**Before starting:**
+1. Read https://nix.dev/manual/nix/2.18/language/builtins.html#builtins-throw
+2. Test error messages in `nix repl`
+3. Understand lazy evaluation implications
+
+**Required coverage:** 25+ tests (5 per function)
 
 ---
 
@@ -188,49 +207,33 @@ Create `main/tests/builtins_control_flow_test.js`:
 
 ## PRIORITY 1: Derivation Edge Cases (2-4 hours)
 
-**Goal:** Verify derivations work in complex scenarios
+**What remains:** Create `main/tests/derivation/002_advanced_tests.js`
 
-**Current status:** 12 basic tests passing, but missing:
+**Untested scenarios:**
 - Multiple outputs edge cases
 - Complex env variable serialization
 - Passthru attributes
 - Meta attributes
 - String context propagation
 
-Create `main/tests/derivation/002_advanced_tests.js`:
+**Before starting:**
+1. Read https://nix.dev/manual/nix/2.18/language/derivations.html
+2. Test multiple outputs in `nix repl`
+3. Examine real derivations in nixpkgs
 
-### Test Case 1: Multiple Outputs
-```nix
-derivation {
-  name = "multi-output";
-  system = "x86_64-linux";
-  builder = "/bin/sh";
-  outputs = [ "out" "dev" "doc" ];
-}
-```
-Verify: Each output has different store path
+**Test cases to implement:**
 
-### Test Case 2: Complex Environment Variables
-```nix
-derivation {
-  name = "complex-env";
-  system = "x86_64-linux";
-  builder = "/bin/sh";
-  listVar = [ "a" "b" "c" ];  # Space-separated in env
-  attrsetVar = { x = 1; };     # toString in env
-}
-```
+1. Multiple Outputs - Each output needs different store path
+2. Complex Environment Variables - Lists → space-separated, attrsets → toString
+3. Passthru Attributes - Should be accessible on result
+4. Meta Attributes - Should be preserved
+5. String Context - Should propagate through derivation
 
-### Test Case 3: Passthru Attributes
-```nix
-derivation {
-  name = "with-passthru";
-  system = "x86_64-linux";
-  builder = "/bin/sh";
-  passthru = { version = "1.0"; };
-}
-```
-Verify: `result.passthru.version == "1.0"`
+**Implementation steps:**
+1. Research how Nix handles each scenario (nix repl + docs)
+2. Write test for expected behavior
+3. Verify implementation matches
+4. Test edge cases
 
 **Time estimate:** 2-4 hours total
 
@@ -238,46 +241,58 @@ Verify: `result.passthru.version == "1.0"`
 
 ## PRIORITY 2: Translator Edge Cases (1-2 days)
 
-**Goal:** Ensure translator handles all Nix syntax correctly
+**What remains:** Test edge cases not covered by existing 87 tests
 
-**Current status:** 87/87 tests passing, but edge cases not tested:
+**Untested syntax patterns:**
 
-### 3.1: Pattern Matching (4-6 hours)
+### Task 2.1: Pattern Matching (4-6 hours)
+**What remains:**
 - Nested @ patterns: `{x, y} @ all @ another`
 - Ellipsis with defaults: `{x ? 1, y ? 2, ...}`
 - Mixed patterns
 
-### 3.2: String Escapes (2-3 hours)
+**Before starting:** Read Nix manual section on function arguments, test in nix repl
+
+### Task 2.2: String Escapes (2-3 hours)
+**What remains:**
 - All escape sequences: `\n`, `\t`, `\r`, `\\`, `\"`, `\'`
 - Unicode escapes
-- Dollar escape in interpolation: `\${not-interpolated}`
+- Dollar escape: `\${not-interpolated}`
 
-### 3.3: Path Literals (2-3 hours)
+**Before starting:** Test each escape sequence in nix repl
+
+### Task 2.3: Path Literals (2-3 hours)
+**What remains:**
 - Relative paths: `./file`, `../file`
 - Absolute paths: `/absolute/path`
 - Path interpolation edge cases
-- `<nixpkgs>` (partially implemented)
+- `<nixpkgs>` edge cases (partially implemented)
 
-### 3.4: Operator Precedence (1-2 hours)
+**Before starting:** Research path resolution rules in Nix
+
+### Task 2.4: Operator Precedence (1-2 hours)
+**What remains:**
 - Complex expressions: `a + b * c - d / e`
 - Mixed operators with parens
 - Has-attr with select: `x ? y.z`
 
-### 3.5: Multi-line Strings (1-2 hours)
+**Before starting:** Review Nix operator precedence table
+
+### Task 2.5: Multi-line Strings (1-2 hours)
+**What remains:**
 - Indentation stripping
 - Mixed indentation
 - Empty lines
+
+**Before starting:** Test ''multi-line'' strings in nix repl
 
 ---
 
 ## PRIORITY 3: Expand nixpkgs.lib Testing (3-5 days)
 
-**Goal:** Validate against more real-world code
+**What remains:** Test 31 more nixpkgs.lib files (currently 10/41 tested)
 
-**Current:** 10/41 files tested (24%)
-**Target:** 25/41 files tested (60%+)
-
-**High-value files:**
+**Untested high-value files:**
 - `lists.nix` - List utilities (2-3 hours)
 - `attrsets.nix` - Attrset utilities (2-3 hours)
 - `options.nix` - NixOS options (3-4 hours)
@@ -285,46 +300,55 @@ Verify: `result.passthru.version == "1.0"`
 - `meta.nix` - Package metadata (2-3 hours)
 - `debug.nix` - Debugging utilities (1-2 hours)
 
-Add tests to `main/tests/nixpkgs_lib_files_test.js`
+**Before starting each file:**
+1. Read the .nix file to understand its structure
+2. Identify key functions to test
+3. Test functions in nix repl first
+4. Add tests to `main/tests/nixpkgs_lib_files_test.js`
 
 ---
 
 ## PRIORITY 4: Optional Builtins (Optional, 1-3 weeks)
 
-**Only if needed for specific use cases:**
+**What remains:** 3 optional builtins not in Nix 2.18 (only implement if needed)
 
 ### fetchMercurial (2-3 days)
-**Read first:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchMercurial
+**Not implemented.** Rarely used.
 
-- Requires `hg` binary or npm mercurial module via `https://esm.sh/mercurial` (if exists)
-- Similar to fetchGit but for Mercurial
-- Rarely used
-- Break down: Research hg → Clone repo → Hash computation → Store integration
+**If needed:**
+1. **Read docs FIRST:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchMercurial
+2. Research Mercurial node modules: `https://esm.sh/mercurial` (may not exist)
+3. Break down: Research hg → Clone repo → Hash computation → Store integration
+4. Test with real Mercurial repos
 
-### fetchClosure (5-7 days) - COMPLEX
-**Read first:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchClosure
+### fetchClosure (5-7 days) - VERY COMPLEX
+**Not implemented.** Experimental feature, complex.
 
-- Requires binary cache access (cache.nixos.org)
-- Experimental feature
-- Very complex implementation
-- Break down: NAR download → Signature verification → Store import → Closure resolution
-- May need npm modules via esm.sh for signature verification
+**If needed:**
+1. **Read docs FIRST:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchClosure
+2. Research binary cache protocol (cache.nixos.org)
+3. Break down: NAR download → Signature verification → Store import → Closure resolution
+4. May need npm modules via `https://esm.sh/` for signature verification
+5. Test with real binary cache
 
 ### getFlake (5-7 days) - VERY COMPLEX
-**Read first:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-getFlake
+**Not implemented.** Experimental feature, large scope.
 
-- Requires full flake system (lock files, inputs, outputs)
-- Experimental feature
-- Large scope
-- Break down: Parse flake.nix → Resolve inputs → Fetch inputs → Evaluate outputs
-- Study real flake.nix files in nixpkgs for patterns
+**If needed:**
+1. **Read docs FIRST:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-getFlake
+2. Study flake.lock format
+3. Break down: Parse flake.nix → Resolve inputs → Fetch inputs → Evaluate outputs
+4. Study real flake.nix files in nixpkgs
+5. Test with simple flakes first
 
 ### fetchTree type='indirect' (3-4 days)
-**Read first:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchTree
+**Not implemented.** Flake registry lookups.
 
-- Flake registry lookups (github:owner/repo → actual URL)
-- Complex resolution logic
-- Break down: Parse registry → Resolve indirection → Call fetchTree with resolved URL
+**If needed:**
+1. **Read docs FIRST:** https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchTree
+2. Research flake registry format
+3. Break down: Parse registry → Resolve indirection → Call fetchTree with resolved URL
+4. Test with github:owner/repo syntax
 
 ---
 
@@ -387,17 +411,33 @@ new InterpolatedString(["Hello ", ""], [name])
 
 ---
 
-## When You Need Information
+## Required Reading WHILE Implementing
 
-1. **ALWAYS read Nix documentation FIRST**: https://nix.dev/manual/nix/2.28/language/builtins.html
-   - For `builtins.fetchClosure`, read https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchClosure
-   - For `builtins.foldl'`, read https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-foldl'
-   - Search web for additional examples and usage patterns
-2. **Search for real-world usage**: Use web search to find how others use the builtin
-3. **Test in nix repl**: Verify expected behavior before implementing in JavaScript
-4. **Break down the task**: No task is too big to break into 1-2 hour pieces
-5. **Write tests first**: Know what success looks like before coding
-6. **Start simple**: Core cases before edge cases
+**ALWAYS follow this process for EVERY builtin/feature:**
+
+1. **Read Nix documentation FIRST** (MANDATORY):
+   - For `builtins.map`: https://nix.dev/manual/nix/2.18/language/builtins.html#builtins-map
+   - For `builtins.fetchClosure`: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-fetchClosure
+   - Search internet for "nix builtin FUNCTIONNAME" for additional docs
+
+2. **Test in nix repl** (MANDATORY):
+   - Verify expected behavior before writing tests
+   - Test positive cases, negative cases, edge cases
+   - Document behavior differences if any
+
+3. **Search for real-world usage**:
+   - Find examples in nixpkgs
+   - Search GitHub for usage patterns
+   - Understand common use cases
+
+4. **Break down the task**:
+   - No task is too big for 1-2 hour pieces
+   - Start with simplest case
+   - Add complexity incrementally
+
+5. **Write tests**:
+   - Know what success looks like before implementing
+   - Test matches nix repl behavior exactly
 
 ---
 
@@ -405,12 +445,18 @@ new InterpolatedString(["Hello ", ""], [name])
 
 All tasks can be started immediately. Break down large tasks into 1-2 hour pieces.
 
-**Remember the work order:**
-1. Runtime (Priority 0-2) - Test and complete all builtins
-2. Translator (Priority 3) - Handle edge cases
-3. nixpkgs.lib (Priority 4) - Expand test coverage
+**MANDATORY WORK ORDER (DO NOT SKIP):**
+1. **Runtime FIRST** - Test all builtins (Priority 0-1)
+2. **Translator SECOND** - Test edge cases (Priority 2)
+3. **nix-lib tests LAST** - Expand coverage (Priority 3)
 
-**Do NOT work on translator until runtime is 100% complete.**
-**Do NOT work on nixpkgs.lib tests until translator is 100% complete.**
+**DO NOT work on translator until runtime testing is complete.**
+**DO NOT work on nix-lib tests until translator testing is complete.**
 
-The biggest issue is test coverage (24.6%), not implementation. Testing comes first.
+**What remains to be done:**
+- 70+ builtins need test coverage (74% untested)
+- Derivation edge cases need tests
+- Translator edge cases need tests
+- 31 nixpkgs.lib files need tests
+
+**Remember:** Focus on what is NOT done. Do not report accomplishments.
