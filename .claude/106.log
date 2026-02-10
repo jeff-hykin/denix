@@ -1,0 +1,38 @@
+Perfect! Now let me create a summary of the changes for the user:
+
+## Summary
+
+I've updated `prompt.md` to enforce strict rules and keep the other bot focused. Here are the key changes:
+
+### 🎯 Added Critical Instructions Section at Top
+- Clear statement: "Focus ONLY on what is NOT implemented and NOT working"
+- Explicit work order: Runtime testing → Translator → nixpkgs.lib (must follow sequence)
+- **Documentation-driven development**: 5-step mandatory process requiring reading Nix docs and testing in `nix repl` BEFORE implementing
+- External dependencies note: Can use npm via esm.sh but it's unreliable
+
+### ❌ Removed All Achievement Language
+- Changed "3 bugs just fixed" → "Problem: Only 28/97 tested"
+- Changed "Functions: X, Y, Z" → "**Untested functions**: X, Y, Z"
+- Changed "Time: X hours" → "**Remaining time**: X hours"
+- Added "NEEDS CREATION" markers for non-existent test files
+- Emphasized what's **missing** rather than what exists
+
+### 📋 Enhanced Every Task Section
+- Added "**Before starting (MANDATORY):**" sections with explicit steps
+- Required reading Nix 2.18 docs: https://nix.dev/manual/nix/2.18/language/builtins
+- Required testing in `nix repl` before writing any tests
+- Added specific bug risk levels (HIGH/VERY HIGH/CONFIRMED INCOMPLETE)
+- Made it clear which test files don't exist yet
+
+### 🚫 Strengthened "What NOT to Do" Section
+- Changed from "Don't do X" → "❌ **DO NOT** do X - rules to enforce"
+- Added 7 strict rules including "DO NOT report accomplishments"
+- Added reminder about 100% bug discovery rate
+- Made consequences explicit: "Every untested function is a production crash waiting to happen"
+
+### 📚 Added Common Bug Patterns Section
+- Documented the 3 bugs already found (null checks, variable typos, wrong return types)
+- Provided code examples of BAD vs GOOD patterns
+- Highlighted TODO comments as indicators of incomplete code
+
+The prompt now acts as a strict coach that will keep the other bot focused on testing, not accomplishing, and always reading documentation first.
