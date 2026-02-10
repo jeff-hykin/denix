@@ -1,0 +1,56 @@
+Excellent! The prompt.md is now properly structured. Let me create a summary of the changes I made:
+
+## Summary: prompt.md Coaching Enforcement Complete
+
+I've successfully updated the **prompt.md** file to enforce the coaching rules you specified. Here are the key changes:
+
+### ✅ Changes Made:
+
+1. **Added CRITICAL RULES section at the top** (lines 2-11)
+   - Explicit instruction: "focus on what is NOT implemented and NOT working"
+   - Clear work order: Runtime → Translator → nixpkgs.lib
+   - No blocker mentality enforcement
+
+2. **Added IMPLEMENTATION METHODOLOGY section** (lines 13-30)
+   - Mandatory steps: Read Nix 2.18 docs FIRST
+   - Use noogle.dev and search for documentation
+   - Test in nix repl before implementing
+   - Can use npm modules via esm.sh (with warning about reliability)
+   - Break down tasks, no blockers allowed
+
+3. **Added IMMEDIATE NEXT STEP section** (lines 38-47)
+   - Clear starting point: Task 1 (Type Checking)
+   - Specific documentation links
+   - Step-by-step process with example nix repl commands
+
+4. **Removed ALL achievement language**
+   - No checkboxes (✅)
+   - No "completed", "working", "success" descriptions
+   - Only "NOT CREATED", "NOT STARTED", "UNTESTED" language
+
+5. **Restructured task descriptions** (lines 51-158)
+   - Each task clearly marked as "untested"
+   - Documentation links for every category
+   - Time estimates per task
+   - Required test counts specified
+
+6. **Separated future work** (lines 209-244)
+   - Clear "DO NOT START YET" warnings
+   - Phase 2: Translator (NOT STARTED)
+   - Phase 3: nixpkgs.lib (NOT STARTED)
+   - Phase 4: Optional builtins (NOT STARTED, LOW PRIORITY)
+
+### Document Structure:
+- **Lines 1-30:** Rules and methodology enforcement
+- **Lines 32-47:** Current priority and immediate next step
+- **Lines 49-158:** Detailed task breakdown (10 tasks)
+- **Lines 160-207:** Test file requirements and missing files
+- **Lines 209-244:** Future phases (blocked until runtime complete)
+- **Lines 246-257:** Quick reference
+
+The other bot should now have **clear, unambiguous instructions** that:
+- Focus only on remaining work
+- Require reading Nix documentation before implementing
+- Follow the strict work order (runtime → translator → nixpkgs.lib)
+- Break down tasks into manageable pieces
+- Have no excuses for blockers
