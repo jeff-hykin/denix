@@ -1,0 +1,59 @@
+Perfect! Now let me create a summary of what I've done for the user:
+
+## Summary
+
+I've analyzed the current project state and **significantly enhanced prompt.md** with comprehensive testing task details. Here's what remains to be done:
+
+### Current Status
+- **Runtime: 100% feature complete** (all 97 Nix 2.18 builtins implemented)
+- **Testing: Only 26% coverage** (~28/97 builtins tested)
+- **Critical gap: 69/97 builtins completely untested** (71%)
+
+### What I Added to prompt.md
+
+**Enhanced 6 Priority 0 Testing Tasks** (22-32 hours critical work):
+
+1. **Task 0.1: Type Checking** (10 functions, 4-6 hours)
+   - isNull, isBool, isInt, isFloat, isPath, isString, isList, isAttrs, isFunction, typeOf
+
+2. **Task 0.2: List Operations** (12 functions, 6-8 hours) 
+   - **CRITICAL:** map, filter, all, any, elem, concatLists, concatMap, genList, sort, partition, groupBy
+
+3. **Task 0.3: Attrset Operations** (8 functions, 4-6 hours)
+   - **CRITICAL:** hasAttr, getAttr, attrNames, attrValues, catAttrs, listToAttrs, zipAttrsWith, genericClosure
+
+4. **Task 0.4: String Operations** (3 functions, 3-4 hours)
+   - concatStringsSep, split, match
+
+5. **Task 0.5: Math & Comparison** (5 functions, 2-3 hours)
+   - sub, mul, lessThan, ceil, floor
+
+6. **Task 0.6: Control Flow** (8 functions, 2-3 hours)
+   - throw, abort, trace, traceVerbose, seq, deepSeq, break, addErrorContext
+
+**Each task now includes:**
+- Complete function list with descriptions
+- Mandatory "before starting" steps (read Nix docs, test in nix repl)
+- Full test structure examples with code
+- Required coverage metrics
+- Time estimates
+
+**Also added:**
+- Task 0.7: Path/File Operations (8 functions, optional)
+- Task 0.8: Additional Tests (20+ functions, optional)
+- PRIORITY 0 SUMMARY with total time estimates
+- FINAL WORK SUMMARY showing all remaining work
+- NEXT IMMEDIATE STEP pointing to Task 0.1
+
+**Identified issues:**
+- 4 old test files using wrong format need conversion/deletion: `builtins_list.js`, `builtins_attrs.js`, `builtins_eval_control.js`, `builtins_version.js`
+
+### Next Immediate Step
+
+**Start Task 0.1: Type Checking Tests** (4-6 hours)
+- Create `main/tests/builtins_types_test.js`
+- Test 10 type checking functions
+- Write 50+ test cases
+- This is the foundation for all other runtime tests
+
+prompt.md now has ~560 lines of detailed, actionable testing instructions. All implementation work is complete - only testing remains.
