@@ -28,24 +28,25 @@ When implementing ANY builtin or feature:
 
 ## Current Status (2026-02-10)
 
-**Runtime:** 97/97 builtins implemented, 28/97 tested (26% coverage) - NEEDS 80%+ COVERAGE
+**Runtime:** 97/97 builtins implemented, 40/97 tested (41% coverage) - NEEDS 80%+ COVERAGE
 **Translator:** 87/87 tests passing (DO NOT TOUCH until runtime is tested)
 **Overall:** 240+ tests passing
+**Known bugs:** ALL FIXED! (3 bugs from Session 32 were already fixed)
 
 ## THE PRIORITY: Test Runtime Builtins
 
-**Problem:** Only 28/97 builtins tested. Recent testing found bugs in 100% of tested functions.
+**Problem:** Only 40/97 builtins tested (41% coverage). Need comprehensive testing.
 
-**Goal:** Test ALL 69 untested builtins to find and fix remaining bugs
+**Goal:** Test ALL 57 remaining untested builtins to achieve 80%+ coverage
 
-**Remaining work:** 30-40 hours testing + 15-20 hours bug fixing = 45-60 hours total
+**Remaining work:** 25-35 hours testing + 10-15 hours bug fixing = 35-50 hours total
 
 ## Testing Tasks (Priority Order)
 
 ### Task 1: Type Checking Functions (HIGH PRIORITY)
-**Untested functions:** isNull, isBool, isInt, isFloat, isString, isList, isPath, isFunction, typeOf (9 untested)
-**Remaining time:** 4-6 hours
-**Why critical:** Used everywhere in Nix code, isAttrs already had a null-check bug
+**Untested functions:** isNull, isBool, isInt, isFloat, isString, isList, isPath, isAttrs, typeOf (9 untested)
+**Remaining time:** 3-4 hours
+**Why critical:** Used everywhere in Nix code, fundamental to all operations
 
 **Before starting (MANDATORY):**
 1. **READ** Nix 2.18 docs: https://nix.dev/manual/nix/2.18/language/builtins
@@ -72,14 +73,15 @@ Deno.test("builtins.isAttrs - basic cases", () => {
 ```
 
 ### Task 2: List Operations (HIGH PRIORITY)
-**Untested functions:** map, filter, all, any, elem, foldl', partition, sort, genList, concatMap (10+ untested)
-**Remaining time:** 6-8 hours
-**Why critical:** Most used operations in Nix, head already had a bug returning wrong type
+**Untested functions:** map, filter, all, any, elem, elemAt, partition, sort, genList, concatLists (10 untested)
+**Already tested:** head, tail, concatMap, foldl
+**Remaining time:** 4-5 hours
+**Why critical:** Most used operations in Nix
 
 **Critical untested functions (TEST FIRST):**
 - `map` - Uses complex lazyMap proxy (VERY HIGH BUG RISK)
 - `filter` - Second most used (HIGH BUG RISK)
-- `foldl'` - Has "TODO: check edgecases" comment in code (CONFIRMED INCOMPLETE)
+- `concatLists` - List flattening (MEDIUM RISK)
 
 **Before starting (MANDATORY):**
 1. **READ** Nix docs for each list function
@@ -88,8 +90,9 @@ Deno.test("builtins.isAttrs - basic cases", () => {
 4. **CREATE** test file: `main/tests/builtins_lists_test.js`
 
 ### Task 3: Attrset Operations (HIGH PRIORITY)
-**Untested functions:** hasAttr, getAttr, attrNames, attrValues, catAttrs, genericClosure (8 untested)
-**Remaining time:** 4-6 hours
+**Untested functions:** hasAttr, getAttr, attrNames, attrValues, catAttrs, genericClosure, zipAttrsWith (7 untested)
+**Already tested:** mapAttrs, removeAttrs, listToAttrs, intersectAttrs, genAttrs, optionalAttrs
+**Remaining time:** 3-4 hours
 **Why critical:** Core attribute set operations, used in every Nix program
 
 **Before starting (MANDATORY):**
@@ -98,8 +101,9 @@ Deno.test("builtins.isAttrs - basic cases", () => {
 3. **CREATE** test file: `main/tests/builtins_attrs_test.js`
 
 ### Task 4: String Operations (MEDIUM PRIORITY)
-**Untested functions:** split, match (concatStringsSep already has bugs that were fixed)
-**Remaining time:** 3-4 hours
+**Untested functions:** split, match, concatStringsSep, toString (4 untested)
+**Already tested:** substring, stringLength, replaceStrings, concatMapStringsSep
+**Remaining time:** 2-3 hours
 
 **Before starting (MANDATORY):**
 1. **READ** Nix docs for string operations
@@ -108,17 +112,43 @@ Deno.test("builtins.isAttrs - basic cases", () => {
 
 ### Task 5: Math & Comparison (MEDIUM PRIORITY)
 **Untested functions:** sub, mul, lessThan, ceil, floor, bitAnd, bitOr, bitXor (8 untested)
+**Already tested:** add, div, compareVersions
 **Remaining time:** 2-3 hours
-**Risk:** Division by zero not handled, BigInt vs Float edge cases
+**Risk:** BigInt vs Float edge cases
 
 **Before starting (MANDATORY):**
 1. **READ** Nix docs for arithmetic operations
 2. **TEST** BigInt vs Float behavior in `nix repl`
 3. **CREATE** test file: `main/tests/builtins_math_test.js`
 
-### Task 6: Everything Else (LOWER PRIORITY)
-**Untested functions:** Path ops, hashing, derivation edge cases, etc. (40+ untested)
-**Remaining time:** 15-20 hours
+### Task 6: Path/File Operations (MEDIUM PRIORITY)
+**Untested functions:** baseNameOf, dirOf, pathExists, readFile, readDir, readFileType, findFile, toPath (8 untested)
+**Remaining time:** 3-4 hours
+**Why important:** File operations are common in build scripts
+
+**Before starting (MANDATORY):**
+1. **READ** Nix docs for path/file operations
+2. **TEST** behavior in `nix repl` with real files
+3. **CREATE** test file: `main/tests/builtins_path_ops_test.js`
+
+### Task 7: Control Flow & Debugging (MEDIUM PRIORITY)
+**Untested functions:** abort, addErrorContext, break, traceVerbose (4 untested)
+**Already tested:** throw, trace, seq, deepSeq, tryEval
+**Remaining time:** 1-2 hours
+
+### Task 8: Derivations (MEDIUM PRIORITY)
+**Untested functions:** derivation, derivationStrict, placeholder, toFile, storePath, outputOf, unsafeDiscardOutputDependency (7 untested)
+**Remaining time:** 3-4 hours
+**Note:** Basic derivation tests exist but don't cover all builtins
+
+### Task 9: Hashing & String Context (LOWER PRIORITY)
+**Untested functions:** hashFile, hashString, getContext, hasContext, appendContext, unsafeDiscardStringContext (6 untested)
+**Remaining time:** 2-3 hours
+
+### Task 10: Miscellaneous (LOWER PRIORITY)
+**Untested functions:** getEnv, splitVersion, unsafeGetAttrPos, toXML, fetchMercurial, fetchClosure, getFlake (7 untested)
+**Note:** fetchMercurial, fetchClosure, getFlake are stubbed (throw NotImplemented)
+**Remaining time:** 2-3 hours
 
 ## How to Test a Builtin (MANDATORY PROCESS)
 
@@ -225,12 +255,18 @@ Based on bugs already discovered:
 
 ## Success Criteria (What Remains)
 
-**Current:** 28/97 builtins tested (26% coverage) - UNACCEPTABLE
+**Current:** 40/97 builtins tested (41% coverage) - NOT ENOUGH
 **Minimum target:** 77/97 builtins tested (80% coverage) - REQUIRED
 **Optimal target:** 87/97 builtins tested (90% coverage) - GOAL
 
-**Remaining work to minimum:** 49 untested builtins
-**Remaining work to optimal:** 59 untested builtins
+**Remaining work to minimum:** 37 untested builtins (Tasks 1-6)
+**Remaining work to optimal:** 47 untested builtins (Tasks 1-10)
+
+**Time estimates:**
+- Tasks 1-6 (reach 80%): 18-23 hours
+- Tasks 7-10 (reach 90%+): Additional 8-12 hours
+- Total to 80%: 18-23 hours
+- Total to 90%: 26-35 hours
 
 ## After Runtime Testing Reaches 80%
 
@@ -248,6 +284,21 @@ DO NOT START THESE until runtime has 80%+ test coverage:
 - Target: 25/41 files tested
 - Remaining: 15 high-value files (lists.nix, attrsets.nix, options.nix, etc.)
 
+## NEXT IMMEDIATE STEP
+
+**START HERE:** Task 1 - Type Checking Functions
+
+1. Read this section of prompt.md: "Task 1: Type Checking Functions"
+2. Open `nix repl` and test each function with edge cases
+3. Create `main/tests/builtins_types_test.js`
+4. Write 5-10 tests per function (9 functions total)
+5. Run tests with `./test.sh builtins_types`
+6. Fix any bugs discovered
+7. Move to Task 2 when done
+
+**Expected time:** 3-4 hours
+**Expected bugs:** 1-3 bugs (based on historical data)
+
 ## STRICT RULES - DO NOT VIOLATE
 
 ❌ **DO NOT** work on translator until runtime is 80%+ tested
@@ -258,11 +309,57 @@ DO NOT START THESE until runtime has 80%+ test coverage:
 ❌ **DO NOT** skip testing in nix repl before writing tests
 ❌ **DO NOT** report what you've accomplished - only report what remains
 
-## Critical Reminder
+## Summary of Remaining Testing Work
 
-**Testing finds bugs.** Recent data:
-- 3 bugs found in 3 tested functions (100% bug rate)
-- 69 functions remain untested
-- Expected bugs remaining: 20-30 critical bugs
+**Priority 1-6 (REQUIRED for 80% coverage):**
+- Task 1: Type Checking (9 builtins, 3-4 hours)
+- Task 2: List Operations (10 builtins, 4-5 hours)
+- Task 3: Attrset Operations (7 builtins, 3-4 hours)
+- Task 4: String Operations (4 builtins, 2-3 hours)
+- Task 5: Math & Comparison (8 builtins, 2-3 hours)
+- Task 6: Path/File Operations (8 builtins, 3-4 hours)
+- **Total: 46 builtins, 18-23 hours**
 
-Every untested function is a production crash waiting to happen.
+**Priority 7-10 (OPTIONAL for 90% coverage):**
+- Task 7: Control Flow (4 builtins, 1-2 hours)
+- Task 8: Derivations (7 builtins, 3-4 hours)
+- Task 9: Hashing & Context (6 builtins, 2-3 hours)
+- Task 10: Miscellaneous (7 builtins, 2-3 hours)
+- **Total: 24 builtins, 8-12 hours**
+
+**GRAND TOTAL: 70 untested builtins, 26-35 hours to 90% coverage**
+
+Note: Some builtins are tested but need more comprehensive edge case testing (like concatMapStringsSep, genAttrs, etc.)
+
+---
+
+## APPENDIX: Complete List of Untested Builtins (72 total)
+
+**Type Checking (9):** isNull, isBool, isInt, isFloat, isString, isList, isPath, isAttrs, typeOf
+
+**List Operations (10):** map, filter, all, any, elem, elemAt, partition, sort, genList, concatLists
+
+**Attrset Operations (7):** hasAttr, getAttr, attrNames, attrValues, catAttrs, genericClosure, zipAttrsWith
+
+**String Operations (4):** split, match, concatStringsSep, toString
+
+**Math & Comparison (8):** sub, mul, lessThan, ceil, floor, bitAnd, bitOr, bitXor
+
+**Path/File Operations (8):** baseNameOf, dirOf, pathExists, readFile, readDir, readFileType, findFile, toPath
+
+**Control Flow (4):** abort, addErrorContext, break, traceVerbose
+
+**Derivations (7):** derivation, derivationStrict, placeholder, toFile, storePath, outputOf, unsafeDiscardOutputDependency
+
+**Hashing & String Context (6):** hashFile, hashString, getContext, hasContext, appendContext, unsafeDiscardStringContext
+
+**Miscellaneous (7):** getEnv, splitVersion, unsafeGetAttrPos, toXML, fetchMercurial, fetchClosure, getFlake
+
+**Constants/Special (2):** nixPath, storeDir
+
+---
+
+## Already Tested Builtins (40 total)
+
+add, compareVersions, concatMap, concatMapStringsSep, deepSeq, div, fetchGit, fetchTarball, fetchTree, fetchurl, filterSource, flakeRefToString, foldl, fromTOML, functionArgs, genAttrs, groupBy, head, import, intersectAttrs, isFunction, length, listToAttrs, mapAttrs, optionalAttrs, parseDrvName, parseFlakeRef, path, removeAttrs, replaceStrings, scopedImport, seq, stringLength, substring, tail, throw, toJSON, trace, tryEval, concatMapStringsSep
+
