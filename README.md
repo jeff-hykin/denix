@@ -12,8 +12,6 @@ A Nix → JavaScript translator with 1-to-1 parity for Nix 2.18 builtins, implem
 **Runtime:** ⚠️ 97/97 builtins implemented, 40/97 tested (41% coverage)
 **Current Priority:** Test 37 more builtins to reach 80% coverage
 
-See [PROJECT_STATUS.md](PROJECT_STATUS.md) for detailed status.
-
 ## Quick Start
 
 ```bash
@@ -108,7 +106,7 @@ denix/
 ### Implemented Builtins (97/97)
 
 ✅ All Nix 2.18 builtins implemented
-⚠️ Only 28/97 tested (26% coverage)
+⚠️ Only 40/97 tested (41% coverage)
 
 **Categories:**
 - Type checking: isNull, isBool, isInt, isFloat, isString, isList, isAttrs, isPath, isFunction, typeOf
@@ -122,7 +120,7 @@ denix/
 - Control: throw, trace, seq, deepSeq, tryEval
 - And more...
 
-See [BUILTIN_COVERAGE.md](BUILTIN_COVERAGE.md) for complete list.
+See [main/runtime.js](main/runtime.js) for complete implementation.
 
 ## Known Issues
 
@@ -132,7 +130,7 @@ See [BUILTIN_COVERAGE.md](BUILTIN_COVERAGE.md) for complete list.
 - ✅ head returns array instead of element
 
 **Testing needed:**
-- 69/97 builtins have no tests yet
+- 57/97 builtins have no tests yet (59% untested)
 - Priority: Type checking, list ops, attrset ops (see prompt.md)
 
 ## Development Priority

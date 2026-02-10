@@ -1,13 +1,19 @@
 # Run Scripts
 
-This directory contains automation scripts for multi-bot development cycles.
+**⚠️ NOT PART OF CORE PROJECT**
 
-**These are NOT part of the core denix project.** They are development automation tools.
+This directory contains automation scripts for multi-bot development loops. These are development tools, not part of the denix runtime or translator.
 
 ## Files
 
-- `run_forever.js` - Runs worker/architect/coach bots in a loop for automated development
+- `run_forever.js` - Automation script for multi-bot development cycles
 
-## Usage
+## Status
 
-This directory is optional and can be ignored for normal denix development.
+**Deprecated for manual development.** This was used for experimental automated development loops but is not needed for:
+- Normal development
+- Testing
+- Using the translator
+- Using the runtime
+
+**Recommendation:** Ignore this directory. It may be removed in future cleanup.

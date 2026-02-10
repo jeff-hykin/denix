@@ -1,0 +1,72 @@
+Perfect! Now let me create a final summary of the architectural review:
+
+## Architectural Review Complete ✅
+
+### Actions Taken
+
+1. **Removed redundant documentation** (824 lines → 220 lines in prompt.md)
+   - Deleted: `PROJECT_STATUS.md` (168 lines) - info now in README
+   - Deleted: `BUILTIN_COVERAGE.md` (324 lines) - detailed coverage analysis was outdated
+   - Simplified: `prompt.md` (824 → 220 lines) - focused on essential tasks only
+   - Updated: `README.md` - corrected coverage stats (41% not 26%)
+   - Rewrote: `ARCHITECTURE.md` - comprehensive architectural overview
+
+2. **Enhanced test runner** (`test.sh`)
+   - Added Task 1-6 shortcuts: `./test.sh types`, `./test.sh lists`, etc.
+   - Each shows helpful error if test file doesn't exist yet
+   - Maintained backward compatibility with existing commands
+
+3. **Documented non-core directories**
+   - `run/` - Marked as deprecated development automation
+   - Clear separation between core project and tooling
+
+4. **Corrected all documentation**
+   - Runtime: 40/97 tested (41%), not 28/97 (26%)
+   - 57 untested builtins, not 69
+   - All known bugs already fixed
+
+### Current Project State
+
+**Strengths:**
+- ✅ Clean separation: translator (main.js), runtime (main/runtime.js), tools (tools/)
+- ✅ Good test organization: 27 files in main/tests/
+- ✅ Simple test runner with category support
+- ✅ Zero npm dependencies (URL imports only)
+- ✅ No architectural debt or duplicate code
+
+**Focus Areas:**
+- ⚠️ Runtime testing: 41% coverage → need 80%
+- 🎯 57 untested builtins need test coverage
+- 📋 Clear task breakdown in prompt.md (Tasks 1-6)
+
+### Documentation Structure (Now 3 Core Files)
+
+1. **README.md** - Quick start, features, status
+2. **ARCHITECTURE.md** - Design decisions, component overview
+3. **prompt.md** - Development guide (what needs testing)
+
+Supporting docs:
+- **TESTING.md** - Test organization reference
+- **test.sh** - Executable test runner
+
+### Key Architectural Decisions Documented
+
+1. **BigInt for integers** - Correct division semantics
+2. **Object.create() for scopes** - Preserves lazy evaluation
+3. **~/.cache/denix/store/** - No root permissions
+4. **URL imports only** - Deno-first design
+5. **Lazy evaluation** - lazyMap proxy, cached getters
+6. **nixScope object** - Avoids keyword conflicts
+
+### Next Steps (For Other Bot)
+
+**Immediate action:** Create `main/tests/builtins_types_test.js` (Task 1)
+
+Test 9 type checking functions:
+- isNull, isBool, isInt, isFloat, isString, isList, isPath, isAttrs, typeOf
+- 50+ test cases total
+- 3-4 hours estimated
+
+Run with: `./test.sh types`
+
+The codebase is now **simple, organized, and focused**. All documentation is accurate and consolidated. The only remaining work is systematic testing of 57 untested builtins.

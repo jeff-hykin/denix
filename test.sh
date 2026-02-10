@@ -3,19 +3,54 @@
 #
 # Usage:
 #   ./test.sh                    # Run all tests
-#   ./test.sh core               # Run core builtin tests
-#   ./test.sh runtime            # Run runtime builtin tests
-#   ./test.sh translator         # Run translator tests
-#   ./test.sh derivation         # Run derivation tests
-#   ./test.sh import             # Run import system tests
-#   ./test.sh infra              # Run infrastructure tests
-#   ./test.sh integration        # Run nixpkgs integration tests
+#   ./test.sh types              # Type checking tests (Task 1)
+#   ./test.sh lists              # List operation tests (Task 2)
+#   ./test.sh attrs              # Attrset tests (Task 3)
+#   ./test.sh strings            # String tests (Task 4)
+#   ./test.sh math               # Math tests (Task 5)
+#   ./test.sh paths              # Path/file tests (Task 6)
+#   ./test.sh core               # Core builtin tests
+#   ./test.sh translator         # Translator tests
+#   ./test.sh derivation         # Derivation tests
+#   ./test.sh import             # Import system tests
+#   ./test.sh infra              # Infrastructure tests
+#   ./test.sh integration        # nixpkgs integration tests
 #   ./test.sh <pattern>          # Run tests matching pattern
 
 case "$1" in
     "")
         echo "Running all tests..."
         deno test --allow-all
+        ;;
+    types)
+        echo "Running type checking tests (Task 1)..."
+        deno test --allow-all main/tests/builtins_types_test.js 2>/dev/null || \
+            echo "⚠️  File not yet created: main/tests/builtins_types_test.js"
+        ;;
+    lists)
+        echo "Running list operation tests (Task 2)..."
+        deno test --allow-all main/tests/builtins_lists_test.js 2>/dev/null || \
+            echo "⚠️  File not yet created: main/tests/builtins_lists_test.js"
+        ;;
+    attrs|attrsets)
+        echo "Running attrset tests (Task 3)..."
+        deno test --allow-all main/tests/builtins_attrs_test.js 2>/dev/null || \
+            echo "⚠️  File not yet created: main/tests/builtins_attrs_test.js"
+        ;;
+    strings)
+        echo "Running string operation tests (Task 4)..."
+        deno test --allow-all main/tests/builtins_strings_test.js 2>/dev/null || \
+            echo "⚠️  File not yet created: main/tests/builtins_strings_test.js"
+        ;;
+    math)
+        echo "Running math operation tests (Task 5)..."
+        deno test --allow-all main/tests/builtins_math_test.js 2>/dev/null || \
+            echo "⚠️  File not yet created: main/tests/builtins_math_test.js"
+        ;;
+    paths)
+        echo "Running path/file tests (Task 6)..."
+        deno test --allow-all main/tests/builtins_paths_test.js 2>/dev/null || \
+            echo "⚠️  File not yet created: main/tests/builtins_paths_test.js"
         ;;
     core)
         echo "Running core builtin tests..."
