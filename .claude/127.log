@@ -1,0 +1,49 @@
+Great! The file looks good. Now let me create a summary of the changes for the user:
+
+## Summary
+
+I've updated `prompt.md` to enforce the rules you specified. Here are the key changes:
+
+### Added at the Top (Lines 1-51):
+1. **CRITICAL RULES** section emphasizing:
+   - Focus only on what's NOT done (no achievements)
+   - No blockers exist - break down large tasks
+   - Senior developer mindset
+
+2. **WORK ORDER (MUST FOLLOW STRICTLY)** section:
+   - Runtime must be finished FIRST (80% test coverage minimum)
+   - Translator can ONLY be worked on after runtime is complete
+   - nixpkgs.lib testing can ONLY be done after translator is complete
+   - Clear "DO NOT PROCEED" warnings between stages
+
+3. **IMPLEMENTATION REQUIREMENTS** section:
+   - Always read Nix documentation (links provided)
+   - Test in `nix repl` before implementing
+   - Search noogle.dev for examples
+   - Step-by-step process: docs → nix repl → tests → fix → verify
+   - NPM modules via esm.sh (with caveat about reliability)
+
+### Enhanced Testing Process (Lines 72-122):
+- **MANDATORY STEPS** before writing tests
+- 6-step process with documentation links
+- Examples showing how to verify behavior in `nix repl`
+
+### Added Near the End (Lines 150-169):
+- **WHAT NOT TO DO** section (7 explicit violations with ❌)
+- **WHAT TO DO** section (7 explicit actions with ✓)
+- Reinforces the work order and documentation requirements
+
+### Result:
+The prompt now:
+- Has NO checkboxes or achievements (was already clean)
+- Starts with critical rules that can't be missed
+- Enforces the Runtime → Translator → nixpkgs.lib workflow
+- Requires documentation reading before implementation
+- Reminds about esm.sh for npm modules
+- Breaks down the process into mandatory steps
+
+The other bot will now see these rules immediately and be constantly reminded to:
+1. Stay focused on runtime testing (current priority)
+2. Read Nix documentation before implementing
+3. Test in `nix repl` to verify behavior
+4. Not skip ahead to translator or nixpkgs.lib work
