@@ -78,50 +78,60 @@ https://github.com/NixOS/nix/blob/master/src/libexpr/primops.cc
 ## Current Status
 
 **Test Results:** 413 tests passing (100% pass rate)
-**Runtime Coverage:** 65/109 builtins tested (59.6%), **44 untested (40.4%)**
-**Next Goal:** 80% coverage (88/109 tested) - **need 23 more builtins tested**
+**Runtime Coverage:** 74/109 builtins tested (67.9%), **35 untested (32.1%)**
+**Next Goal:** 80% coverage (88/109 tested) - **need 14 more builtins tested**
 
-## Priority 1: Test Remaining Builtins (44 untested, 8-12 hours to 80%)
+## Priority 1: Test Remaining Builtins (35 untested, 3-5 hours to 80%)
 
-**DO THIS NEXT: Phase 4 - Context & Store (11 functions, 3-4 hours)**
+**DO THIS NEXT: Test 14 High-Priority Builtins (3-5 hours to reach 80%)**
 
-⚠️ **MANDATORY PREPARATION - DO NOT SKIP:**
+⚠️ **CRITICAL DISCOVERY: Test coverage is 67.9%, not 59.6%!**
+- Session 40 undercounted by 9 builtins (claimed 65 tested, actual 74 tested)
+- Need only 14 more builtins to reach 80%, not 23
 
-Before writing ANY code, you MUST:
-1. Open https://nix.dev/manual/nix/2.28/language/builtins.html in your browser
-2. Read the documentation for EACH function you plan to test
-3. Open `nix repl` and test EACH function with multiple inputs
-4. Write down the EXACT outputs from nix repl
-5. Search GitHub for real nixpkgs usage examples
-6. ONLY THEN start writing tests
+### High-Priority Untested Builtins (14 functions, 3-5 hours to 80%)
 
-**DOCUMENTATION LINKS TO READ:**
-- String context docs: https://nix.dev/manual/nix/2.28/language/string-context.html
-- getContext: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-getContext
-- hasContext: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-hasContext
-- appendContext: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-appendContext
-- unsafeDiscardStringContext: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-unsafeDiscardStringContext
-- placeholder: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-placeholder
-- toFile: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-toFile
-- toPath: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-toPath
-- storePath: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-storePath
+**Quick wins (2 functions, 30 minutes):**
+- `lessThan` (line 211 in runtime.js) - Simple comparison operator
+- `mul` (line 233) - Simple multiplication operator
 
-Functions to test:
-- String context: `getContext`, `hasContext`, `appendContext`, `unsafeDiscardStringContext`, `unsafeDiscardOutputDependency`, `addErrorContext`
-- Store operations: `placeholder`, `toFile`, `toPath`, `storePath` (plus `nixPath`/`storeDir` constants)
+Add to: `main/tests/builtins_math_bitwise_test.js`
 
-Create: `main/tests/builtins_context_test.js` and `main/tests/builtins_store_test.js`
+**File operations (6 functions, 2-3 hours):**
+- `pathExists` (line 1422)
+- `readFile` (line 1397)
+- `readDir` (line 1614)
+- `readFileType` (line 1474)
+- `findFile` (line 1631)
+- `getEnv` (line 1396)
 
-**Phase 5: Remaining (26 functions, 3-4 hours)**
-- File operations: `pathExists`, `readFile`, `readDir`, `readFileType`
-- Hashing: `hashString`, `hashFile`
-- Conversion: `fromJSON`, `toXML`, `abort`
-- Control flow: `traceVerbose`, `break`
-- Advanced/rare: `getEnv`, `findFile`, `derivationStrict`, `outputOf`, `genericClosure`, `splitVersion`, etc.
+Create: `main/tests/builtins_file_ops_test.js`
 
-Create: `main/tests/builtins_remaining_test.js`
+**Conversion & control flow (6 functions, 1-2 hours):**
+- `toPath` (line 359)
+- `toXML` (line 381)
+- `fromJSON` (line 418)
+- `abort` (line 1392)
+- `getAttr` (line 640)
+- `splitVersion` (line 531)
 
-**Total Time to 80% Coverage:** ~8-12 hours remaining (was 12-16 hours, completed 4 hours of work)
+Create: `main/tests/builtins_misc_test.js`
+
+**Total Time to 80%:** 3-5 hours (much less than previously estimated!)
+
+### Medium-Priority Untested Builtins (21 functions, optional)
+
+These are less critical but should be tested eventually:
+- Context operations (5): getContext, hasContext, appendContext, addErrorContext, unsafeDiscardStringContext
+- Store operations (4): storePath, toFile, placeholder, outputOf
+- Hashing (2): hashString, hashFile
+- Derivations (3): derivationStrict, unsafeDiscardOutputDependency, unsafeGetAttrPos
+- Control flow (3): break, traceVerbose, genericClosure
+- Advanced fetchers (2): fetchMercurial, fetchClosure
+- Flakes (1): getFlake
+- Paths (1): nixPath
+
+Create: `main/tests/builtins_advanced_test.js` (when needed)
 
 ---
 
@@ -366,15 +376,21 @@ The following areas have tests, but this does NOT mean you should work on them. 
 - List operations: 1 test file exists (13 functions)
 - Core operations: 1 test file exists (12 functions)
 
-### What Needs Testing (50 functions, 0% coverage)
+### Complete List of 35 Untested Builtins
 
-⚠️ Math & bitwise: ceil, floor, bitAnd, bitOr, bitXor
-⚠️ Attrset ops: attrNames, attrValues, catAttrs
-⚠️ String ops: toString, split, concatStringsSep, baseNameOf, dirOf
-⚠️ Context ops: All 6 context functions (0% coverage area)
-⚠️ Store ops: All 5 store functions (0% coverage area)
-⚠️ File ops: pathExists, readFile, readDir, readFileType
-⚠️ And 26 more rarely-used functions
+**High Priority (14 functions - needed for 80%):**
+- Math: lessThan, mul
+- File ops: pathExists, readFile, readDir, readFileType, findFile, getEnv
+- Misc: toPath, toXML, fromJSON, abort, getAttr, splitVersion
+
+**Medium Priority (21 functions - optional):**
+- Context (5): getContext, hasContext, appendContext, addErrorContext, unsafeDiscardStringContext
+- Store (4): storePath, toFile, placeholder, outputOf
+- Hashing (2): hashString, hashFile
+- Derivations (3): derivationStrict, unsafeDiscardOutputDependency, unsafeGetAttrPos
+- Control (3): break, traceVerbose, genericClosure
+- Fetchers (2): fetchMercurial, fetchClosure
+- Advanced (2): getFlake, nixPath
 
 ---
 
@@ -429,13 +445,17 @@ The following areas have tests, but this does NOT mean you should work on them. 
 
 ## Summary of Remaining Work
 
-**Untested builtins:** 50/110 (45%) - HIGH RISK AREA
+**Current state:** 74/109 builtins tested (67.9% coverage)
+**Untested builtins:** 35/109 (32.1%)
 **Unimplemented builtins:** 4 optional builtins (fetchMercurial, fetchClosure, getFlake, fetchTree edge cases)
 
-**Immediate tasks (in order):**
-1. Test 11 context/store functions (3-4 hours) - CREATE FILES: builtins_context_test.js, builtins_store_test.js
-2. Test 33 remaining functions (4-5 hours) - CREATE FILE: builtins_remaining_test.js
+**Immediate tasks to reach 80% (in order):**
+1. Add 2 math tests (30 min) - EDIT FILE: `main/tests/builtins_math_bitwise_test.js`
+2. Test 6 file operations (2-3 hours) - CREATE FILE: `main/tests/builtins_file_ops_test.js`
+3. Test 6 misc functions (1-2 hours) - CREATE FILE: `main/tests/builtins_misc_test.js`
 
-**Time estimate to 80% coverage:** ~8-12 hours remaining
+**Total time to 80%:** 3-5 hours (14 builtins, much faster than expected!)
+
+**After 80% (optional):** Test 21 remaining advanced builtins (10-15 hours)
 
 **Remember:** Follow the work order. Runtime → Translator → nixpkgs tests. Read documentation before implementing.

@@ -1,0 +1,38 @@
+Perfect! Now let me create a concise summary of what I found and what remains to be done:
+
+## Summary
+
+I've analyzed the Denix codebase and discovered that **Session 40's test coverage count was significantly understated**. Here's the corrected status:
+
+### Key Finding: Test Coverage is Better Than Documented
+
+**Previous claim (Session 40):** 65/109 tested (59.6%), 44 untested  
+**Actual status:** 74/109 tested (67.9%), 35 untested  
+**Difference:** 9 more builtins ARE tested than documented
+
+### What Remains to Be Done
+
+**To reach 80% coverage (88/109 tested), need only 14 more builtins (3-5 hours):**
+
+1. **Math operations (30 min):** Add `lessThan` and `mul` tests to existing file
+2. **File operations (2-3 hours):** Create new test file for 6 file ops (pathExists, readFile, readDir, readFileType, findFile, getEnv)
+3. **Miscellaneous (1-2 hours):** Create new test file for 6 functions (toPath, toXML, fromJSON, abort, getAttr, splitVersion)
+
+**Additional 21 untested builtins (optional, 10-15 hours):**
+- Context operations (5): getContext, hasContext, appendContext, etc.
+- Store operations (4): storePath, toFile, placeholder, outputOf
+- Hashing (2): hashString, hashFile
+- Derivations (3): derivationStrict, unsafeDiscardOutputDependency, unsafeGetAttrPos
+- Control flow (3): break, traceVerbose, genericClosure
+- Fetchers (2): fetchMercurial, fetchClosure
+- Advanced (2): getFlake, nixPath
+
+### Updated Documentation
+
+I've updated three files with corrected information:
+
+1. **prompt.md** - Corrected coverage to 67.9%, updated priorities, reduced time estimate to 3-5 hours
+2. **MEMORY.md** - Added Session 41 entry documenting the discovery
+3. **TEST_COVERAGE_STATUS.md** - NEW comprehensive report with complete untested builtin list
+
+All 413 existing tests still pass (100% pass rate). The runtime is much closer to production-ready than previously thought!
