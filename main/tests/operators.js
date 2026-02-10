@@ -1,8 +1,15 @@
 import { operators, builtins } from "../runtime.js"
 
 const assertEquals = (actual, expected, msg) => {
-    const actualStr = JSON.stringify(actual)
-    const expectedStr = JSON.stringify(expected)
+    // BigInt-safe serialization
+    const serialize = (val) => {
+        if (typeof val === 'bigint') return val.toString() + 'n'
+        if (Array.isArray(val)) return JSON.stringify(val)
+        if (typeof val === 'object' && val !== null) return JSON.stringify(val)
+        return JSON.stringify(val)
+    }
+    const actualStr = serialize(actual)
+    const expectedStr = serialize(expected)
     if (actualStr !== expectedStr) {
         throw new Error(`${msg}\n  Expected: ${expectedStr}\n  Actual: ${actualStr}`)
     }
