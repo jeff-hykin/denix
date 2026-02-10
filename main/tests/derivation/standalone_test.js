@@ -1,27 +1,10 @@
 #!/usr/bin/env -S deno run --allow-all
 // Standalone derivation tests - Test store path computation without full runtime
 
+import { assertEquals } from "https://deno.land/std@0.210.0/assert/mod.ts"
 import { serializeDerivation, computeDrvPath, computeOutputPath } from "/Users/jeffhykin/repos/denix/tools/store_path.js"
 
-console.log("Testing Derivation Store Path Computation\n")
-
-let passed = 0
-let failed = 0
-
-function test(name, actual, expected) {
-    if (actual === expected) {
-        console.log(`✓ ${name}`)
-        passed++
-    } else {
-        console.log(`✗ ${name}`)
-        console.log(`  Expected: ${expected}`)
-        console.log(`  Got:      ${actual}`)
-        failed++
-    }
-}
-
-// Test 1: Basic derivation with no inputs
-{
+Deno.test("derivation - basic with no inputs", () => {
     const drv = {
         outputs: [["out", "", "", ""]],
         inputDrvs: [],
@@ -39,18 +22,17 @@ function test(name, actual, expected) {
 
     const emptySerial = serializeDerivation(drv)
     const outPath = computeOutputPath(emptySerial, "out", "test")
-    
+
     drv.outputs = [["out", outPath, "", ""]]
     drv.env.out = outPath
     const filledSerial = serializeDerivation(drv)
     const drvPath = computeDrvPath(filledSerial, "test")
 
-    test("Basic derivation - outPath", outPath, "/nix/store/d62izaahds46siwr2b7k7q3gan6vw4p0-test")
-    test("Basic derivation - drvPath", drvPath, "/nix/store/y1s2fiq89v2h9vkb38w508ir20dwv6v2-test.drv")
-}
+    assertEquals(outPath, "/nix/store/d62izaahds46siwr2b7k7q3gan6vw4p0-test")
+    assertEquals(drvPath, "/nix/store/y1s2fiq89v2h9vkb38w508ir20dwv6v2-test.drv")
+})
 
-// Test 2: Derivation with args
-{
+Deno.test("derivation - with arguments", () => {
     const drv = {
         outputs: [["out", "", "", ""]],
         inputDrvs: [],
@@ -68,20 +50,19 @@ function test(name, actual, expected) {
 
     const emptySerial = serializeDerivation(drv)
     const outPath = computeOutputPath(emptySerial, "out", "test-args")
-    
+
     drv.outputs = [["out", outPath, "", ""]]
     drv.env.out = outPath
     const filledSerial = serializeDerivation(drv)
     const drvPath = computeDrvPath(filledSerial, "test-args")
 
-    test("Derivation with args - outPath computed", !!outPath.startsWith("/nix/store/"), true)
-    test("Derivation with args - drvPath computed", !!drvPath.startsWith("/nix/store/"), true)
-    test("Derivation with args - outPath ends with name", outPath.endsWith("-test-args"), true)
-    test("Derivation with args - drvPath ends with .drv", drvPath.endsWith(".drv"), true)
-}
+    assertEquals(outPath.startsWith("/nix/store/"), true)
+    assertEquals(drvPath.startsWith("/nix/store/"), true)
+    assertEquals(outPath.endsWith("-test-args"), true)
+    assertEquals(drvPath.endsWith(".drv"), true)
+})
 
-// Test 3: Derivation with multiple outputs
-{
+Deno.test("derivation - multiple outputs", () => {
     const drv = {
         outputs: [["out", "", "", ""], ["dev", "", "", ""]],
         inputDrvs: [],
@@ -101,14 +82,14 @@ function test(name, actual, expected) {
     const emptySerial = serializeDerivation(drv)
     const outPath = computeOutputPath(emptySerial, "out", "multi-output")
     const devPath = computeOutputPath(emptySerial, "dev", "multi-output")
-    
-    test("Multiple outputs - out and dev are different", outPath !== devPath, true)
-    test("Multiple outputs - both have store paths", 
-         outPath.startsWith("/nix/store/") && devPath.startsWith("/nix/store/"), true)
-}
 
-// Test 4: ATerm serialization format
-{
+    // Different outputs should have different paths
+    assertEquals(outPath !== devPath, true)
+    assertEquals(outPath.startsWith("/nix/store/"), true)
+    assertEquals(devPath.startsWith("/nix/store/"), true)
+})
+
+Deno.test("derivation - ATerm serialization format", () => {
     const drv = {
         outputs: [["out", "/nix/store/test", "", ""]],
         inputDrvs: [],
@@ -122,18 +103,8 @@ function test(name, actual, expected) {
     }
 
     const serialized = serializeDerivation(drv)
-    test("Serialization starts with Derive", serialized.startsWith("Derive("), true)
-    test("Serialization contains outputs", serialized.includes('("out","/nix/store/test","","")'), true)
-    test("Serialization contains args", serialized.includes('["a","b"]'), true)
-    test("Serialization contains env", serialized.includes('("key","value")'), true)
-}
-
-console.log("\n" + "=".repeat(60))
-console.log(`Total: ${passed + failed} tests`)
-console.log(`✓ Passed: ${passed}`)
-console.log(`✗ Failed: ${failed}`)
-console.log("=".repeat(60))
-
-if (failed > 0) {
-    Deno.exit(1)
-}
+    assertEquals(serialized.startsWith("Derive("), true)
+    assertEquals(serialized.includes('("out","/nix/store/test","","")'), true)
+    assertEquals(serialized.includes('["a","b"]'), true)
+    assertEquals(serialized.includes('("key","value")'), true)
+})

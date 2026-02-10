@@ -190,18 +190,22 @@ denix/
 
 **These are documented as optional in Nix 2.18 and rarely used in practice.**
 
-## Development Priority (Architecture-Driven)
+## Development Priority
 
-**CRITICAL PRIORITY:** Test most-used builtins first
-1. List operations: map, filter, all, any (CRITICAL - used everywhere)
-2. Attrset operations: getAttr, attrNames, attrValues (CRITICAL)
-3. Then: 80% coverage target (47 more tests needed)
+**Current Goal:** 80% runtime test coverage (40/109 → 87/109)
 
-**WHY:** These functions are used in every Nix file. Testing them ensures the runtime works for real-world code.
+**Phase 1 - CRITICAL (16 functions, 8-12 hours):**
+- List: map, filter, all, any, elem, elemAt, partition, sort, genList, concatLists
+- Attrset: getAttr, attrNames, attrValues, catAttrs, genericClosure, getEnv
 
-**SKIP:** Derivation edge cases (basic functionality works), translator improvements (100% tested), optional features (fetchMercurial, getFlake).
+**Phase 2 - HIGH (24 functions, 10-14 hours):**
+- String: split, splitVersion, baseNameOf, dirOf, toXML
+- Math: sub, mul, ceil, floor, bitAnd, bitOr, bitXor, toString
+- Path/File: pathExists, readFile, readDir, readFileType, findFile, toFile, storePath, toPath, storeDir, nixPath, placeholder
 
-See [prompt.md](prompt.md) for detailed test plans.
+**Total to 80%: 40 functions, 18-26 hours**
+
+See [prompt.md](prompt.md) for task breakdown.
 
 ## Performance Notes
 
