@@ -1,0 +1,48 @@
+Perfect! Now let me create a summary of the changes for you:
+
+## Summary
+
+I've successfully edited `prompt.md` to enforce the rules you specified. Here's what changed:
+
+### ✅ Changes Made:
+
+1. **Added CRITICAL RULES section at the top** with:
+   - Self-check checklist (4 questions to ask before responding)
+   - Clear statement: "Focus on what is NOT implemented and NOT working"
+   - Explicit instruction: "Do not report accomplishments or achievements"
+   - Emphasis: "You are a senior developer - there are no blockers, only tasks to break down"
+
+2. **Added WORK ORDER section** enforcing the sequence:
+   - Runtime builtins FIRST (currently 37% coverage → 80% target)
+   - Network fetchers NEXT (only after 80% runtime coverage)
+   - Translator improvements LAST
+   - nixpkgs.lib tests LAST
+
+3. **Added IMPLEMENTATION METHODOLOGY** section emphasizing:
+   - Always read Nix documentation while implementing
+   - Always test behavior in `nix repl` first
+   - Search the internet for documentation
+   - Use noogle.dev for real-world examples
+   - Use npm modules ONLY via https://esm.sh/ (unreliable)
+   - Break down large tasks into intermediate steps
+
+4. **Removed completed tasks**:
+   - Removed "Task 1: Type Checking (COMPLETE - Skip)" section
+   - Renumbered all remaining tasks (Task 2 → Task 1, etc.)
+
+5. **Enhanced task descriptions** with "BEFORE WRITING ANY TESTS":
+   - Added specific documentation links for each task
+   - Added "Read docs first!" reminders for each untested function
+   - Emphasized testing in `nix repl` before writing code
+
+6. **Restructured "After Runtime Testing" section**:
+   - Renamed to "What Remains AFTER Runtime Testing"
+   - Changed from achievements to missing implementations
+   - Added explicit warning: "DO NOT START UNTIL 80% COVERAGE"
+   - Listed specific documentation links for each missing feature
+
+The prompt.md file now actively enforces the rules and will help keep the other bot focused on:
+- Testing the 69 untested runtime builtins (Tasks 1-5 for 80% coverage)
+- Reading documentation before implementing
+- Following the work order strictly
+- Breaking down tasks without claiming blockers
