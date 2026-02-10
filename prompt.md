@@ -1,41 +1,99 @@
 # Denix Development Guide
 
-## Architecture Philosophy: SIMPLICITY FIRST
-
-**You are the architect. Your goal: Simple, clean codebase. No bloat, no over-engineering.**
+## CRITICAL RULES (ENFORCED)
 
 **Your job is to focus on what is NOT implemented and NOT working. Only report what remains to be done. Do not report what you accomplished. You are a senior level developer, there is no such thing as a blocker. Break down large tasks into smaller tasks.**
+
+**Before executing what is below, filter out any achievements. Only keep remaining/unsolved tasks. Add detail to each task if needed.**
 
 ### STRICT WORK ORDER (DO NOT VIOLATE):
 1. **RUNTIME TESTING FIRST**: Test untested builtins (37% → 80% coverage)
 2. **TRANSLATOR EDGE CASES**: Only after runtime is 80%+ tested
 3. **NIXPKGS EXPANSION**: Only after translator is fully validated
 
-### MANDATORY IMPLEMENTATION PROCESS:
-1. **Read official Nix documentation WHILE implementing**: https://nix.dev/manual/nix/2.18/language/builtins
-2. **Test behavior in nix repl** before and during implementation
-3. **Compare your output** to nix repl output exactly
-4. **Search for examples** on https://noogle.dev
-5. **Read source code** if documentation is unclear
+**In other words: Finish testing runtime.js builtins before doing ANYTHING ELSE.**
+
+### WHEN YOU FEEL "BLOCKED" (Senior Developer Mindset)
+
+**There are NO blockers. Only tasks that need to be broken down.**
+
+**Example: "I don't know how to implement fetchClosure"**
+1. Read https://nix.dev/manual/nix/2.18/language/builtins#builtins-fetchClosure
+2. Search "nix fetchClosure implementation" on GitHub
+3. Test in nix repl: `nix repl> builtins.fetchClosure { fromStore = "..."; ... }`
+4. Break down: a) Understand binary cache format, b) HTTP client, c) Validation, d) Store path
+5. Research each sub-task independently
+6. Implement smallest piece first
+
+**Example: "The implementation is too complex"**
+- That means: Break it into smaller functions
+- Create helper functions for each logical step
+- Test each helper independently
+- Integrate step by step
+
+**Example: "I'm not sure if this is the right approach"**
+- That means: Test in nix repl and compare behavior
+- Your implementation must match Nix exactly
+- If unsure, read source code: https://github.com/NixOS/nix
+
+**You are a SENIOR developer. Research, break down, solve. No task is too large to decompose.**
+
+### MANDATORY IMPLEMENTATION PROCESS (NO EXCEPTIONS):
+
+**YOU MUST FOLLOW THESE STEPS IN ORDER. NO SHORTCUTS.**
+
+1. **Read official Nix documentation BEFORE starting**: https://nix.dev/manual/nix/2.18/language/builtins#builtins-FUNCTION_NAME
+   - Read the ENTIRE entry for the builtin you're testing
+   - Understand ALL parameters, types, return values
+   - Note special behaviors and edge cases
+
+2. **Test behavior in nix repl EXTENSIVELY** before writing ANY code:
+   ```bash
+   nix repl
+   nix-repl> builtins.FUNCTION arg1 arg2
+   ```
+   - Test normal cases
+   - Test edge cases (empty, null, wrong types)
+   - Test error cases
+   - DOCUMENT EXACT OUTPUTS
+
+3. **Search for real-world examples**: https://noogle.dev
+   - See how the builtin is actually used
+   - Find edge cases you might have missed
+
+4. **THEN AND ONLY THEN** write test code
+
+5. **Compare your output** to nix repl output - they must match EXACTLY
+
+6. **If unclear, read Nix source code**: https://github.com/NixOS/nix
+
+**Implementations based on assumptions or memory WILL BE WRONG. Always verify against Nix behavior.**
 
 ### EXTERNAL DEPENDENCIES:
 - **Prefer**: Deno standard library (https://deno.land/std/)
-- **Allowed**: npm packages via `https://esm.sh/NPM_MODULE_NAME` (unreliable, have fallback plan)
-- **Forbidden**: Direct npm/jsr imports
+- **Allowed**: npm packages via `https://esm.sh/NPM_MODULE_NAME`
+  - **WARNING**: esm.sh is UNRELIABLE - always have a fallback plan
+  - If esm.sh fails, implement yourself or use Deno stdlib alternative
+- **Forbidden**: Direct npm/jsr imports (will not work)
 
 ## Primary Goal (Architecture-Driven Priority)
 
 **Test critical untested builtins first, then reach 80% coverage.**
 
 ### Current State (Verified 2026-02-10)
-- ✅ **Derivations**: WORKING (12/12 tests passing, basic functionality complete)
-- ✅ **Translator**: COMPLETE (87/87 tests passing, 100%)
-- ✅ **Import system**: COMPLETE (full functionality)
-- ⚠️ **Runtime builtins**: INCOMPLETE TESTING
+
+**REMAINING WORK (FOCUS HERE):**
+- **Runtime builtins testing**: CRITICALLY INCOMPLETE
   - Total: 109 function builtins (+ 8 constants)
-  - Tested: 40 (37% coverage)
-  - Untested: 69 (63%)
-  - **Target: 87 tested (80% = 47 more needed)**
+  - Tested: 40 (37% coverage) ← TOO LOW
+  - **Untested: 69 (63%)** ← YOUR PRIMARY TASK
+  - **Target: 87 tested (80% = 47 more tests needed)**
+  - **Estimated: 17-25 hours to reach 80%**
+
+**DO NOT MODIFY (ALREADY DONE):**
+- Derivations (12/12 tests passing, basic functionality complete)
+- Translator (87/87 tests passing, 100%)
+- Import system (full functionality)
 
 ### Critical Gap Analysis
 **Most-used functions are UNTESTED:**
@@ -45,38 +103,82 @@
 
 **This is the biggest risk in the codebase.**
 
-## Test Development Process (FOLLOW THIS EXACTLY)
+## Test Development Process (MANDATORY STEPS - NO EXCEPTIONS)
 
-For each untested builtin:
+**For EVERY untested builtin, follow these steps IN ORDER:**
 
-1. **Read official docs FIRST**: https://nix.dev/manual/nix/2.18/language/builtins#builtins-FUNCTION
-   - Understand all parameters, types, return values
-   - Note any special behaviors or edge cases mentioned
+### Step 1: READ NIX DOCUMENTATION (REQUIRED)
+**URL**: https://nix.dev/manual/nix/2.18/language/builtins#builtins-FUNCTION_NAME
 
-2. **Test in nix repl EXTENSIVELY**:
-   ```bash
-   nix repl
-   nix-repl> builtins.FUNCTION arg1 arg2
-   ```
-   - Try normal cases
-   - Try edge cases (null, empty, wrong types)
-   - Document exact outputs
+**What to read:**
+- Function signature (parameters, types)
+- Return value type
+- Behavior description
+- ALL edge cases mentioned
+- ANY special notes or warnings
 
-3. **Search for examples**: https://noogle.dev (see real-world usage)
+**If docs are unclear:**
+- Search "nix builtins.FUNCTION_NAME" on Google
+- Read Nix source: https://github.com/NixOS/nix/tree/2.18-maintenance/src
+- Check noogle.dev for examples
 
-4. **Create test file**: `main/tests/builtins_CATEGORY_test.js`
-   - Use template below
-   - Write 5-10 tests minimum per function
+**DO NOT PROCEED TO STEP 2 WITHOUT READING DOCS.**
 
-5. **Run tests**: `./test.sh CATEGORY`
+### Step 2: TEST IN NIX REPL (REQUIRED)
+```bash
+nix repl
+nix-repl> builtins.FUNCTION_NAME arg1 arg2
+```
 
-6. **Fix bugs found**: Compare test output to nix repl
-   - If output differs, fix runtime.js implementation
-   - Re-read Nix docs to understand correct behavior
+**What to test:**
+- Normal/happy path cases (3-5 examples)
+- Edge cases: empty values, null, single elements
+- Boundary cases: very large/small values
+- Error cases: wrong types, invalid inputs
+- Special cases mentioned in docs
 
-7. **Verify exact match**: Your output must match nix repl exactly
+**WRITE DOWN EXACT OUTPUTS** - you'll need them for tests.
 
-**DO NOT SKIP STEP 1 AND 2!** Implementation based on assumptions will be wrong.
+**DO NOT PROCEED TO STEP 3 WITHOUT NIX REPL TESTING.**
+
+### Step 3: SEARCH REAL-WORLD USAGE (RECOMMENDED)
+- Visit https://noogle.dev
+- Search for the builtin name
+- Review example code
+- Identify patterns you might have missed
+
+### Step 4: CREATE TEST FILE
+**Location**: `main/tests/builtins_CATEGORY_test.js`
+
+**Requirements:**
+- Use template from "Test File Template" section below
+- Write 5-10 tests MINIMUM per function
+- Cover: normal cases, edge cases, error cases
+- Compare outputs to nix repl results from Step 2
+
+### Step 5: RUN TESTS
+```bash
+./test.sh CATEGORY
+```
+
+### Step 6: FIX BUGS IF FOUND
+**If output differs from nix repl:**
+- Go back to runtime.js implementation
+- Re-read Nix docs (Step 1)
+- Check nix repl behavior again (Step 2)
+- Fix implementation to match Nix exactly
+- Re-run tests
+
+### Step 7: VERIFY EXACT MATCH
+**Your test output MUST match nix repl output exactly.**
+- Same values
+- Same types (BigInt vs number, string vs Path)
+- Same error messages
+- Same behavior on edge cases
+
+---
+
+**REMINDER: Steps 1 and 2 are NOT OPTIONAL. Implementations based on guessing WILL BE WRONG.**
 
 ## Testing Strategy: CRITICAL FUNCTIONS FIRST
 
@@ -106,16 +208,17 @@ For each untested builtin:
 
 ## Testing Priorities (69 untested builtins)
 
-### Task 1: Type Checking ✅ COMPLETE (SKIP THIS)
-**Status**: ALL 10 type functions already tested
+### Task 1: Type Checking - SKIP (Already Done)
+**ALL 10 type functions already tested. Do not work on these:**
 - isNull, isBool, isInt, isFloat, isString, isList, isPath, isAttrs, typeOf, isFunction
 
-### Task 2: List Operations (10 functions, 5-7 hours) - CRITICAL
-**File**: `main/tests/builtins_lists_test.js`
+### Task 2: List Operations (10 functions, 5-7 hours) - CRITICAL START HERE
 
-✅ Already tested: concatMap, groupBy, head, tail, length, foldl'
+**File to create**: `main/tests/builtins_lists_test.js`
 
-❌ UNTESTED (10 functions):
+**Already tested (DO NOT RE-TEST)**: concatMap, groupBy, head, tail, length, foldl'
+
+**UNTESTED (10 functions) - YOUR WORK:**
 - **map** - CRITICAL (most used list function, uses lazyMap proxy)
 - **filter** - CRITICAL (second most used)
 - **all** - CRITICAL (list predicate)
@@ -144,9 +247,9 @@ Run: `./test.sh lists`
 ### Task 3: Attrset Operations (6 functions, 3-5 hours) - CRITICAL
 **File**: `main/tests/builtins_attrs_test.js`
 
-✅ Already tested: hasAttr (operator test), functionArgs, genAttrs, intersectAttrs, listToAttrs, mapAttrs, optionalAttrs, removeAttrs, zipAttrsWith
+Already tested (skip): hasAttr (operator test), functionArgs, genAttrs, intersectAttrs, listToAttrs, mapAttrs, optionalAttrs, removeAttrs, zipAttrsWith
 
-❌ UNTESTED (6 functions):
+UNTESTED (your work) (6 functions):
 - **getAttr** - CRITICAL (core attrset access)
 - **attrNames** - CRITICAL (keys list)
 - **attrValues** - CRITICAL (values list)
@@ -166,9 +269,9 @@ Run: `./test.sh attrs`
 ### Task 4: String Operations (5 functions, 3-4 hours) - HIGH
 **File**: `main/tests/builtins_strings_test.js`
 
-✅ Already tested: concatMapStringsSep, match, replaceStrings, stringLength, substring
+Already tested (skip): concatMapStringsSep, match, replaceStrings, stringLength, substring
 
-❌ UNTESTED (5 functions):
+UNTESTED (your work) (5 functions):
 - split - Split string by regex (POSIX ERE)
 - splitVersion - Split version string
 - baseNameOf - Get filename from path
@@ -188,9 +291,9 @@ Run: `./test.sh strings`
 ### Task 5: Math & Bitwise (8 functions, 3-4 hours) - MEDIUM
 **File**: `main/tests/builtins_math_test.js`
 
-✅ Already tested: add, div, lessThan (via operators)
+Already tested (skip): add, div, lessThan (via operators)
 
-❌ UNTESTED (8 functions):
+UNTESTED (your work) (8 functions):
 - sub - Subtraction
 - mul - Multiplication
 - ceil - Round up
@@ -213,9 +316,9 @@ Run: `./test.sh math`
 ### Task 6: Path/File Operations (7 functions, 3-5 hours) - MEDIUM
 **File**: `main/tests/builtins_paths_test.js`
 
-✅ Already tested: path, toPath (likely), baseNameOf/dirOf covered in string tests
+Already tested (skip): path, toPath (likely), baseNameOf/dirOf covered in string tests
 
-❌ UNTESTED (7 functions):
+UNTESTED (your work) (7 functions):
 - pathExists - Check if path exists
 - readFile - Read file contents
 - readDir - List directory contents
@@ -238,7 +341,7 @@ Run: `./test.sh paths`
 ### Task 7: Hashing & Context (6 functions, 3-4 hours) - MEDIUM
 **File**: `main/tests/builtins_hashing_test.js`
 
-❌ UNTESTED (6 functions):
+UNTESTED (your work) (6 functions):
 - hashFile - Hash file contents (MD5, SHA1, SHA256, SHA512)
 - hashString - Hash string (MD5, SHA1, SHA256, SHA512)
 - getContext - Get string context
@@ -259,9 +362,9 @@ Run: `./test.sh hashing`
 ### Task 8: Control Flow & Error (4 functions, 2-3 hours) - LOW
 **File**: `main/tests/builtins_control_test.js`
 
-✅ Already tested: throw, trace, tryEval, deepSeq, seq
+Already tested (skip): throw, trace, tryEval, deepSeq, seq
 
-❌ UNTESTED (4 functions):
+UNTESTED (your work) (4 functions):
 - abort - Abort evaluation with message
 - addErrorContext - Add context to errors
 - traceVerbose - Conditional trace
@@ -276,9 +379,9 @@ Run: `./test.sh control`
 ### Task 9: JSON/Conversion (2 functions, 1-2 hours) - LOW
 **File**: `main/tests/builtins_json_test.js`
 
-✅ Already tested: toJSON, fromTOML, parseDrvName
+Already tested (skip): toJSON, fromTOML, parseDrvName
 
-❌ UNTESTED (2 functions):
+UNTESTED (your work) (2 functions):
 - fromJSON - Parse JSON string
 - toXML - Convert to XML (already in Task 4)
 
@@ -293,9 +396,9 @@ Run: `./test.sh json`
 ### Task 10: Advanced/Fetch (8 functions, 5-7 hours) - OPTIONAL
 **File**: `main/tests/builtins_advanced_test.js`
 
-✅ Already tested: fetchGit, fetchTarball, fetchTree, fetchurl, filterSource, parseFlakeRef, flakeRefToString
+Already tested (skip): fetchGit, fetchTarball, fetchTree, fetchurl, filterSource, parseFlakeRef, flakeRefToString
 
-❌ UNTESTED (8 functions):
+UNTESTED (your work) (8 functions):
 - fetchClosure - Fetch from binary cache (VERY COMPLEX, not in Nix 2.18)
 - fetchMercurial - Fetch Mercurial repo (OPTIONAL, rarely used)
 - getFlake - Get flake (VERY COMPLEX, flakes experimental)
@@ -362,14 +465,12 @@ Deno.test("builtins.FUNCTION - error case", () => {
 - **Goal**: 87/109 tested (80% = 47 more tests)
 - **Work**: Tasks 2-6 (36 functions, 17-25 hours to 80%)
 
-### ✅ What's Complete (DO NOT REVISIT)
-- **Translator**: 100% (87/87 tests passing)
-- **Import system**: 100% (5 test files, all passing)
-- **Derivations**: WORKING (12/12 tests passing)
-  - Basic functionality complete
-  - Edge cases documented below (not blocking)
-- **Type checking**: 100% (10/10 functions tested)
-- **Fetch infrastructure**: 5/8 functions tested
+### Areas to SKIP (Already Done - DO NOT WORK ON THESE)
+- **Translator** - 87/87 tests passing, no work needed
+- **Import system** - 5 test files, all passing, no work needed
+- **Derivations** - 12/12 tests passing, basic functionality complete
+- **Type checking** - 10/10 functions tested, no work needed
+- **Fetch infrastructure** - 5/8 functions tested, sufficient for now
 
 ### ⚠️ Derivation Edge Cases (LOW PRIORITY)
 Derivations work for basic use cases. These edge cases are NOT blocking:
@@ -415,31 +516,63 @@ denix/
 - **Examples**: https://noogle.dev
 - **Test locally**: `nix repl`
 
-## Common Mistakes to Avoid
+## Common Mistakes to Avoid (LEARN THESE)
 
-1. **Reporting achievements**: "I completed X" → Just move to next task
-2. **Working on translator before runtime tests**: Runtime must be 80%+ tested first
-3. **Skipping documentation**: Always read https://nix.dev/manual/nix/2.18/language/builtins#builtins-FUNCTION
-4. **Not testing in nix repl**: You must verify expected behavior first
-5. **Saying "blocked"**: Break the task down into smaller steps
-6. **Adding TODOs without plans**: If unsure how to implement, research and create sub-tasks
+### ❌ WRONG: Reporting achievements
+**Bad**: "I completed testing map!"
+**Good**: "Remaining: 68 untested builtins. Next: filter (Task 2)"
 
-## Architectural Self-Check (Ask Before Each Action)
+### ❌ WRONG: Working on translator/nixpkgs before runtime
+**Bad**: Starting nixpkgs tests when runtime is 37% tested
+**Good**: Finish runtime testing (80%+) FIRST, then move on
 
-**SIMPLICITY:**
-- [ ] Is this adding complexity or removing it?
-- [ ] Does this file/function need to exist?
-- [ ] Am I over-engineering this?
+### ❌ WRONG: Skipping documentation
+**Bad**: "I'll test map based on what I know"
+**Good**: "Reading https://nix.dev/manual/nix/2.18/language/builtins#builtins-map"
 
-**PRIORITY:**
-- [ ] Am I working on untested builtins? (If no, why not?)
-- [ ] Am I testing critical functions first? (map, filter, getAttr)
-- [ ] Am I skipping completed work? (derivations, translator, imports)
+### ❌ WRONG: Not testing in nix repl
+**Bad**: Writing tests without verifying Nix behavior
+**Good**: Running 10+ test cases in nix repl, documenting outputs
 
-**QUALITY:**
-- [ ] Did I read Nix docs? (Required before tests)
-- [ ] Did I test in nix repl? (Required before tests)
-- [ ] Am I reporting what's NOT done? (Not achievements)
+### ❌ WRONG: Saying "blocked" or "can't do this"
+**Bad**: "We're blocked on X"
+**Good**: "X needs research. Sub-tasks: 1) Read Y, 2) Test Z, 3) Implement"
+
+### ❌ WRONG: Large tasks without breakdown
+**Bad**: "Test all list operations" (10 functions, 7 hours)
+**Good**: "1. map (1h), 2. filter (1h), 3. all (30m), 4. any (30m), ..."
+
+### ❌ WRONG: TODOs without implementation plans
+**Bad**: "TODO: Implement fetchClosure"
+**Good**: "fetchClosure: 1) Read docs, 2) Understand binary cache format, 3) Research Deno HTTP streaming, 4) Implement fetcher.js extension, 5) Test"
+
+### ❌ WRONG: Guessing or assuming behavior
+**Bad**: "I think map should return an array"
+**Good**: "Tested in nix repl: builtins.map (x: x*2) [1 2 3] returns [2 4 6]"
+
+## Self-Check Before Every Action (MANDATORY)
+
+### WORK ORDER ENFORCEMENT:
+- [ ] **Am I working on runtime testing?** (If NO, STOP - you're violating work order)
+- [ ] **Is runtime 80%+ tested?** (If NO, don't touch translator/nixpkgs)
+- [ ] **Am I avoiding completed areas?** (derivations, translator, imports are DONE)
+
+### PRIORITY CHECK:
+- [ ] **Am I testing critical functions first?** (map, filter, getAttr are HIGHEST priority)
+- [ ] **Am I starting with Task 2?** (List operations, 10 functions)
+- [ ] **Have I broken down the task?** (Each function is ~30-60min, not 5-7 hours)
+
+### IMPLEMENTATION QUALITY:
+- [ ] **Did I read Nix docs?** (https://nix.dev/manual/nix/2.18/language/builtins#builtins-FUNCTION)
+- [ ] **Did I test in nix repl?** (Minimum 5-10 test cases documented)
+- [ ] **Am I reporting remaining work?** (NOT "I completed X", but "68 functions remain")
+
+### SIMPLICITY CHECK:
+- [ ] **Am I adding complexity?** (If yes, simplify)
+- [ ] **Does this file/function need to exist?** (If no, don't create it)
+- [ ] **Am I over-engineering?** (If yes, use simpler approach)
+
+**IF ANY CHECK FAILS, STOP AND CORRECT COURSE.**
 
 ## Next Immediate Action
 

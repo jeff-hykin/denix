@@ -1,0 +1,64 @@
+Perfect! Now let me create a summary of what I've done:
+
+## Summary
+
+I've successfully edited `prompt.md` to enforce your coaching rules:
+
+### Key Changes Made:
+
+1. **Enhanced top section** (lines 3-15):
+   - Added your exact rule statement at the very top
+   - Emphasized "filter out achievements" instruction
+   - Clarified work order: "Finish testing runtime.js builtins before doing ANYTHING ELSE"
+
+2. **Strengthened documentation requirements** (lines 17-45):
+   - Expanded MANDATORY IMPLEMENTATION PROCESS with NO EXCEPTIONS warning
+   - Added detailed step-by-step documentation reading requirements
+   - Emphasized that implementations without docs/testing WILL BE WRONG
+   - Added links to Nix source code for when docs are unclear
+
+3. **Added "WHEN YOU FEEL BLOCKED" section** (lines 47-72):
+   - Teaches senior developer mindset: no blockers, only tasks to break down
+   - Provides concrete examples of decomposing complex tasks
+   - Reinforces that research and breakdown are always possible
+
+4. **Enhanced external dependencies section** (lines 74-79):
+   - Added WARNING that esm.sh is UNRELIABLE
+   - Emphasized need for fallback plans
+
+5. **Reformatted "Current State"** (lines 83-98):
+   - Removed all ✅ checkmarks
+   - Changed structure to "REMAINING WORK" first (what to focus on)
+   - Moved completed items to "DO NOT MODIFY" section at bottom
+   - Emphasized 69 untested builtins as PRIMARY TASK
+
+6. **Expanded Test Development Process** (lines 100-160):
+   - Changed to "MANDATORY STEPS - NO EXCEPTIONS" 
+   - Each step has detailed sub-requirements
+   - Added DO NOT PROCEED warnings between steps
+   - Emphasized Steps 1-2 are NOT OPTIONAL
+
+7. **Removed achievement language** throughout:
+   - Changed "✅ Already tested:" to "Already tested (skip):"
+   - Changed "❌ UNTESTED" to "UNTESTED (your work)"
+   - Changed "✅ What's Complete" to "Areas to SKIP"
+   - Changed "✅ COMPLETE (SKIP THIS)" to "SKIP (Already Done)"
+
+8. **Enhanced Common Mistakes** (lines 475-512):
+   - Restructured as ❌ WRONG vs ✓ GOOD examples
+   - Added 8 concrete mistake patterns with corrections
+   - Shows exactly what NOT to do and what to do instead
+
+9. **Strengthened Self-Check section** (lines 514-541):
+   - Reorganized into 4 categories: Work Order, Priority, Quality, Simplicity
+   - Added enforcement questions with consequences
+   - "IF ANY CHECK FAILS, STOP AND CORRECT COURSE"
+
+The prompt now:
+- **Enforces** work order (runtime → translator → nixpkgs)
+- **Requires** reading Nix docs and testing in nix repl before implementing
+- **Eliminates** achievement reporting (focus on remaining work only)
+- **Emphasizes** task breakdown (no "blockers" allowed)
+- **Reminds** about esm.sh unreliability and documentation sources
+
+The bot should now stay on track and focus exclusively on testing the 69 untested runtime builtins, starting with Task 2 (List Operations).
