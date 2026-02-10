@@ -30,60 +30,30 @@
 
 ## Current Gaps
 
-## Priority 1: Increase Test Coverage
+## Session 40 Progress Update
 
-**Remaining work:** 50/110 builtins (45%) have zero tests. Must test these to reach 80%+ coverage (88 functions tested).
+**Completed:**
+- ✅ Phase 1: Math & Bitwise - ALL 5 functions tested (24 tests, 100% pass)
+- ✅ Phase 2: Attrset Operations - ALL 3 functions tested (15 tests, 100% pass)
+- ✅ Phase 3: String Operations - ALL 5 functions tested (25 tests, 100% pass)
+- ✅ Bug fix: `toString(false)` now returns "" (was "0")
 
-**Risk:** Untested code likely contains bugs. Session 32 found 100% bug rate in untested functions (3/3 had bugs).
+**New test files created:**
+- `main/tests/builtins_math_bitwise_test.js` (24 tests)
+- `main/tests/builtins_attrset_ops_test.js` (15 tests)
+- `main/tests/builtins_string_ops_test.js` (25 tests)
+
+**Updated test coverage:** 65/109 tested (59.6%), 44 untested (40.4%)
+
+## Priority 1: Continue Test Coverage
+
+**Remaining work:** 44/109 builtins (40.4%) have zero tests. Must test 23 more to reach 80% coverage (88 functions tested).
+
+**Risk:** Untested code likely contains bugs. Session 40 found 1 bug in toString (false returned "0" instead of "").
 
 ### Recommended Testing Order (by importance)
 
-**Phase 1: Math & Bitwise (5 functions, 2-3 hours) - DO THIS FIRST**
-
-BEFORE STARTING: Read documentation for EACH function:
-- ceil: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-ceil
-- floor: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-floor
-- bitAnd: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-bitAnd
-- bitOr: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-bitOr
-- bitXor: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-bitXor
-
-Functions to test:
-- `ceil`, `floor` - Rounding functions (remember: return BigInt, not Number!)
-- `bitAnd`, `bitOr`, `bitXor` - Bitwise operations (work on BigInt)
-
-Create: `main/tests/builtins_math_bitwise_test.js`
-
-**Phase 2: Attrset Operations (3 functions, 1-2 hours)**
-
-BEFORE STARTING: Read documentation:
-- attrNames: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-attrNames
-- attrValues: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-attrValues
-- catAttrs: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-catAttrs
-
-Functions to test:
-- `attrNames` - Get SORTED list of attribute names (alphabetical order!)
-- `attrValues` - Get attribute values in sorted key order
-- `catAttrs` - Extract named attribute from list of sets
-
-Create: `main/tests/builtins_attrset_ops_test.js`
-
-**Phase 3: String Operations (5 functions, 2-3 hours)**
-
-BEFORE STARTING: Read documentation:
-- toString: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-toString
-- split: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-split
-- concatStringsSep: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-concatStringsSep
-- baseNameOf: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-baseNameOf
-- dirOf: https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-dirOf
-
-Functions to test:
-- `toString` - Convert any value to string (HEAVILY USED - test all types!)
-- `split` - Split string by regex (returns alternating non-match/match list)
-- `concatStringsSep` - Join strings with separator
-- `baseNameOf` - Get filename from path (handles trailing slashes!)
-- `dirOf` - Get directory from path (special cases: "/" and ".")
-
-Create: `main/tests/builtins_string_ops_test.js`
+**Phase 4: Context & Store (11 functions, 3-4 hours) - DO THIS NEXT**
 
 **Phase 4: Context & Store (11 functions, 3-4 hours)**
 
@@ -113,7 +83,7 @@ Create: `main/tests/builtins_context_test.js` and `main/tests/builtins_store_tes
 
 Create: `main/tests/builtins_remaining_test.js`
 
-**Total Time to 80% Coverage:** ~12-16 hours
+**Total Time to 80% Coverage:** ~8-12 hours remaining (was 12-16 hours, completed 4 hours of work)
 
 ---
 
@@ -203,12 +173,15 @@ If your test doesn't match nix repl behavior:
 
 ## Test Organization
 
-### Existing Test Files (27 files)
+### Existing Test Files (30 files)
 
-**Builtin Tests (11 files):**
+**Builtin Tests (14 files):**
 - `builtins_core_test.js` - Core functions (12 functions)
 - `builtins_type_checking_test.js` - Type checking (10 functions)
 - `builtins_lists_comprehensive_test.js` - List operations (13 functions)
+- `builtins_math_bitwise_test.js` - Math & bitwise (5 functions) ✨ NEW
+- `builtins_attrset_ops_test.js` - Attrset operations (3 functions) ✨ NEW
+- `builtins_string_ops_test.js` - String operations (5 functions) ✨ NEW
 - `builtins_path_test.js` - Path operations
 - `builtins_filtersource_test.js` - filterSource
 - `builtins_tojson_path_test.js` - toJSON
@@ -422,12 +395,12 @@ The following areas have tests, but this does NOT mean you should work on them. 
 **Unimplemented builtins:** 4 optional builtins (fetchMercurial, fetchClosure, getFlake, fetchTree edge cases)
 
 **Immediate tasks (in order):**
-1. Test 5 math/bitwise functions (2-3 hours) - CREATE FILE: builtins_math_bitwise_test.js
-2. Test 3 attrset functions (1-2 hours) - CREATE FILE: builtins_attrset_ops_test.js
-3. Test 5 string functions (2-3 hours) - CREATE FILE: builtins_string_ops_test.js
+1. ✅ DONE: Test 5 math/bitwise functions - builtins_math_bitwise_test.js (24 tests)
+2. ✅ DONE: Test 3 attrset functions - builtins_attrset_ops_test.js (15 tests)
+3. ✅ DONE: Test 5 string functions - builtins_string_ops_test.js (25 tests)
 4. Test 11 context/store functions (3-4 hours) - CREATE FILES: builtins_context_test.js, builtins_store_test.js
-5. Test 26 remaining functions (3-4 hours) - CREATE FILE: builtins_remaining_test.js
+5. Test 33 remaining functions (4-5 hours) - CREATE FILE: builtins_remaining_test.js
 
-**Time estimate to 80% coverage:** ~12-16 hours
+**Time estimate to 80% coverage:** ~8-12 hours remaining (4 hours completed)
 
 **Remember:** Follow the work order. Runtime → Translator → nixpkgs tests. Read documentation before implementing.

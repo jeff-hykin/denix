@@ -254,7 +254,7 @@ import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPa
                         if (value) {
                             return "1"
                         } else {
-                            return "0"
+                            return ""
                         }
                     case "string":
                         return value

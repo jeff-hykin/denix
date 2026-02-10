@@ -1,0 +1,30 @@
+Perfect! Let me create a summary of what remains:
+
+## Summary
+
+**Session 40 Progress:**
+- ✅ Created 3 new test files with 64 tests total
+- ✅ Tested 13 builtins: ceil, floor, bitAnd, bitOr, bitXor, attrNames, attrValues, catAttrs, toString, split, concatStringsSep, baseNameOf, dirOf
+- ✅ Fixed 1 bug: `toString(false)` now correctly returns "" (was "0")
+- ✅ All 413 tests passing (up from 349)
+- ✅ Test coverage: 59.6% (65/109 functions tested)
+
+**What Remains:**
+
+44 untested builtins (40.4% of runtime). To reach 80% coverage (88/109), need to test 23 more functions.
+
+**Priority order:**
+1. **Phase 4: Context & Store** (11 functions, 3-4 hours)
+   - getContext, hasContext, appendContext, unsafeDiscardStringContext, unsafeDiscardOutputDependency, addErrorContext
+   - placeholder, toFile, toPath, storePath (plus nixPath/storeDir constants)
+
+2. **Phase 5: Remaining** (33 functions, 4-5 hours)
+   - File operations: pathExists, readFile, readDir, readFileType, findFile
+   - Hashing: hashString, hashFile
+   - Conversion: fromJSON, toXML, abort
+   - Control flow: traceVerbose, break
+   - Advanced: getEnv, derivationStrict, outputOf, genericClosure, splitVersion, etc.
+
+**Time to 80% coverage:** ~8-12 hours remaining (completed 4 hours of 12-16 hour estimate)
+
+All documentation updated in `prompt.md` and `MEMORY.md`.
