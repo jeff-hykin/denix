@@ -1,6 +1,35 @@
 # Denix Development Priorities
 
-**See CODEBASE_STATUS.md for full project status and architecture details.**
+## ⚠️ CRITICAL INSTRUCTIONS - READ FIRST
+
+**Your job is to focus on what is NOT implemented and NOT working. Only report what remains to be done. Do not report what you accomplished. You are a senior level developer, there is no such thing as a blocker. Break down large tasks into smaller tasks.**
+
+**WORK ORDER (MUST FOLLOW THIS SEQUENCE):**
+1. **Runtime (main/runtime.js)** - Finish network fetchers and store functions FIRST
+2. **Translator (main.js)** - Only work on this AFTER runtime is 100% complete
+3. **Nix-lib tests** - Only work on these AFTER translator is fully implemented
+
+**IMPLEMENTATION REQUIREMENTS:**
+- **ALWAYS read documentation while implementing** - Check https://nix.dev/manual/nix/2.28/language/builtins.html for each builtin
+- **Search the internet** for additional documentation and examples (e.g., "nix fetchClosure example")
+- **Test in nix repl** before implementing to understand exact behavior
+- **Use npm modules ONLY via https://esm.sh/NPM_MODULE_NAME** (doesn't always work, be prepared for alternatives)
+- **Break down complex tasks** - If a task seems large, decompose it into 2-4 hour chunks
+- **No blockers exist** - If stuck, try a different approach or ask for clarification
+
+**BEFORE STARTING ANY TASK:**
+1. Read the relevant Nix documentation
+2. Test the builtin in `nix repl` to understand its behavior
+3. Search for real-world usage examples
+4. Understand the implementation requirements
+5. Plan the implementation steps
+
+**IF IMPLEMENTATION PLAN IS MISSING:**
+- If a task lacks detailed steps, **create intermediate steps FIRST**
+- Break down the task into 2-4 hour chunks
+- Document dependencies and prerequisites
+- Add the plan to this file under a new priority section
+- Example: If "implement fetchClosure" has no plan, research it, break it down into phases (parse input → validate → fetch from cache → verify signatures → copy to store), estimate each phase, then add as Priority sections
 
 ---
 
@@ -197,14 +226,14 @@ deno run --allow-all main/tests/derivation/001_basic_tests.js
 ## Already Tested - DO NOT Re-test
 
 **56/109 builtins already have tests:**
-- Type checking: 10 functions ✅
-- Core operations: 12 functions ✅
-- List operations: 13 functions ✅
-- Attrset basics: 5 functions ✅
-- String basics: 4 functions ✅
-- Import/eval: 2 functions ✅
-- Fetch operations: 6 functions ✅
-- Derivations: 2 functions ✅
+- Type checking: 10 functions
+- Core operations: 12 functions
+- List operations: 13 functions
+- Attrset basics: 5 functions
+- String basics: 4 functions
+- Import/eval: 2 functions
+- Fetch operations: 6 functions
+- Derivations: 2 functions
 
 ---
 
@@ -224,9 +253,20 @@ deno run --allow-all main/tests/derivation/001_basic_tests.js
 
 ## Rules
 
-- ❌ Do NOT refactor working code
-- ❌ Do NOT reorganize file structure
-- ❌ Do NOT add features beyond documented tasks
-- ✅ DO fix bugs immediately
-- ✅ DO write 5-10 tests per function
-- ✅ DO validate against nix repl behavior
+**What NOT to do:**
+- Do NOT refactor working code
+- Do NOT reorganize file structure
+- Do NOT add features beyond documented tasks
+- Do NOT report achievements or completed work
+- Do NOT skip reading documentation before implementing
+- Do NOT work on translator before runtime is complete
+- Do NOT work on nix-lib tests before translator is complete
+
+**What TO do:**
+- DO fix bugs immediately when discovered
+- DO write 5-10 tests per function
+- DO validate against nix repl behavior before implementing
+- DO read https://nix.dev/manual/nix/2.28/language/builtins.html for each builtin
+- DO search for real-world examples and documentation
+- DO break down large tasks into smaller chunks
+- DO report only what remains to be done

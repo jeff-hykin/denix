@@ -1,0 +1,32 @@
+Perfect! I've updated the prompt.md file to enforce all the rules you specified:
+
+## Changes Made:
+
+1. **Added Critical Instructions at the top** with:
+   - Clear mandate to focus on NOT implemented/NOT working items only
+   - Strict work order: Runtime → Translator → Nix-lib tests
+   - Implementation requirements (read docs, test in nix repl, use esm.sh)
+   - 5-step "BEFORE STARTING ANY TASK" checklist
+
+2. **Added section for missing implementation plans**:
+   - If a task has no detailed plan, create intermediate steps FIRST
+   - Break down into 2-4 hour chunks
+   - Document as priority sections
+
+3. **Removed achievement markers**:
+   - Changed `✅` to plain text in "Already Tested" section
+   - Kept the information but removed celebration markers
+
+4. **Enhanced Rules section**:
+   - Separated into "What NOT to do" and "What TO do"
+   - Added explicit rule: "Do NOT report achievements or completed work"
+   - Added explicit rule: "Do NOT skip reading documentation"
+   - Added explicit rule: "Do NOT work on translator before runtime complete"
+   - Emphasized reading Nix docs and searching for examples
+
+5. **Emphasized documentation-driven development**:
+   - Links to https://nix.dev/manual/nix/2.28/language/builtins.html
+   - Requirement to search internet for examples
+   - Requirement to test in nix repl first
+
+The prompt now clearly enforces the work order (Runtime → Translator → Tests) and emphasizes documentation-based implementation, while removing all achievement language and focusing only on remaining work.
