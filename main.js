@@ -2,6 +2,7 @@
 import { nixFileToXml, parse, xmlStylePreview } from "./tools/parsing.js"
 import { StackManager } from "./tools/analysis.js"
 import { NixError, NotImplemented } from "./main/errors.js"
+import { nixRepr } from "./main/runtime.js"
 
 
 // Design explanation (converting nix to JavaScript)
@@ -1220,10 +1221,6 @@ const nixNodeToJs = (node)=>{
 // internal-only helpers
 //
 const valueBasedChildren = (node)=>node.children.filter(each=>each.type!="comment"&&each.typeId>=0)
-const nixRepr = (value)=>{
-    // FIXME: should use single quotes instead of double, and probably some other things
-    return JSON.stringify(value)
-}
 
 // Check if an expression is constant (doesn't reference variables)
 const isConstantExpression = (node) => {
