@@ -1,0 +1,33 @@
+Excellent! The prompt.md is now properly structured. Let me create a summary of what I've done:
+
+## Summary: prompt.md Enforcement Complete ✅
+
+I've successfully edited the prompt.md file to enforce all your rules. Here are the changes:
+
+### 1. Added CRITICAL INSTRUCTIONS at the top (lines 1-37)
+- **Clear mandate:** Focus only on what's NOT working, no achievements
+- **Mandatory work order:** Runtime → Translator → nixpkgs.lib (DO NOT DEVIATE)
+- **Implementation rules:** Read docs first, test in nix repl, break down tasks
+- **No blockers:** Senior developer mindset, always break tasks down further
+
+### 2. Enhanced status section (lines 41-75)
+- Changed from neutral status to "What's NOT done: 56 builtins have zero tests"
+- Added comprehensive list of what's NOT implemented:
+  - Network fetchers: Partially complete, need edge case testing
+  - Store functions: Implemented but untested
+  - Optional builtins: Not implemented (fetchMercurial, fetchClosure)
+
+### 3. Strengthened reminders section (lines 226-252)
+- **Documentation-driven development:** Always read Nix docs, test in nix repl first
+- **npm modules:** Only via esm.sh, prefer Deno standard library
+- **Research first:** Look at Nix source code, use Noogle for examples
+- **No guessing:** Verify behavior before implementing
+
+### Key Enforcement Points
+✅ **"No achievements"** rule - prominently displayed at top
+✅ **Work order enforcement** - Runtime → Translator → Tests (cannot skip)
+✅ **Documentation requirement** - Must read https://nix.dev/manual/nix/2.18/language/builtins.html
+✅ **No blockers** - Senior dev mindset, break down tasks
+✅ **npm via esm.sh only** - Mentioned with warning about reliability
+
+The prompt.md now acts as a strong "coach" document that will keep the other bot focused on gaps, documentation, and proper work ordering!
