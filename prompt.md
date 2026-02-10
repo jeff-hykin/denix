@@ -10,6 +10,23 @@
 
 **BEFORE executing what is below, filter out any achievements. Only keep remaining/unsolved tasks in this document. Add detail to each task if needed.**
 
+### 🔴 ABSOLUTE REQUIREMENTS:
+
+1. **NEVER write code without reading Nix documentation first**
+   - Every builtin: Read https://nix.dev/manual/nix/2.28/language/builtins.html
+   - Test in `nix repl` before implementing
+   - Match Nix behavior exactly (not approximately)
+
+2. **NEVER skip the work order**
+   - Runtime MUST be 80%+ tested before touching translator
+   - Translator MUST be fully verified before nixpkgs.lib tests
+   - No exceptions
+
+3. **NEVER report achievements**
+   - Don't say "tests passing" - say "X tests DON'T exist yet"
+   - Don't say "X works" - say "Y and Z are NOT implemented"
+   - Focus only on what remains to be done
+
 ### WORK ORDER (MUST FOLLOW THIS SEQUENCE):
 1. **RUNTIME FIRST** - Finish implementing and testing ALL builtins in runtime.js
    - Fix derivation bugs (7/10 tests failing)
@@ -28,21 +45,31 @@
 
 ### MANDATORY IMPLEMENTATION PROCESS:
 
+**⚠️ NEVER WRITE CODE WITHOUT READING NIX DOCUMENTATION FIRST ⚠️**
+
 **BEFORE writing ANY code:**
 1. **READ the official Nix documentation** for the feature you're implementing
    - Primary: https://nix.dev/manual/nix/2.28/language/builtins.html
-   - Search: noogle.dev, Nix source code on GitHub
-   - DO NOT guess behavior, DO NOT assume you know how it works
+   - Secondary: https://noogle.dev/ (search function names)
+   - Deep dive: Nix source code on GitHub when docs are unclear
+   - **DO NOT guess behavior, DO NOT assume you know how it works**
+   - **DO NOT start coding until you've read the complete documentation**
 2. **TEST in `nix repl`** to understand exact behavior
    - Test edge cases (null, empty, invalid input)
    - Note exact error messages
    - Test type conversions
+   - Copy-paste nix repl outputs into your test comments
 3. **COMPARE outputs** - Your implementation must match Nix exactly
+   - Character-by-character for strings
+   - Type-exact for numbers (BigInt vs Number)
+   - Error message exact matches
 
 **WHILE writing code:**
-- Keep Nix documentation open in browser
+- Keep Nix documentation open in browser tab
 - Test each function in `nix repl` as you implement
 - Match behavior exactly, not what makes sense to you
+- When in doubt, test more edge cases in `nix repl`
+- If documentation is unclear, study Nix source code: https://github.com/NixOS/nix
 
 **DEPENDENCIES:**
 - **PREFER Deno standard library** over external packages
@@ -52,32 +79,63 @@
   - Test thoroughly, have fallback plan
 - **NO npm, NO jsr, NO package.json** - Only URL imports
 
-**TASK BREAKDOWN:**
-- If you don't know HOW to implement something, break it down:
-  1. Research what Nix does (docs, source code)
-  2. Create implementation plan with phases
-  3. Identify dependencies and prerequisites
-  4. Implement smallest testable unit first
-  5. Add comprehensive tests
-  6. Move to next unit
-- There is NO such thing as a blocker - only tasks not broken down enough
+**TASK BREAKDOWN (No Blockers Allowed):**
+
+If you don't know HOW to implement something, you MUST break it down:
+
+1. **Research Phase** (REQUIRED FIRST STEP):
+   - Read Nix documentation: https://nix.dev/manual/nix/2.28/
+   - Search noogle.dev for examples
+   - Test in `nix repl` to understand behavior
+   - Study Nix source: https://github.com/NixOS/nix/tree/master/src
+   - Search for usage in nixpkgs: https://github.com/NixOS/nixpkgs
+
+2. **Planning Phase**:
+   - List exact inputs and outputs (from nix repl testing)
+   - Identify edge cases (test in nix repl)
+   - Create implementation plan with phases
+   - Identify dependencies and prerequisites
+
+3. **Implementation Phase**:
+   - Implement smallest testable unit first
+   - Test against nix repl after each function
+   - Add comprehensive tests (5-8 per function)
+   - Move to next unit
+
+**"I don't know how" is NOT a blocker - it means "I need to read more documentation and test in nix repl"**
+
+**"This is too complex" is NOT a blocker - it means "I need to break this into smaller phases"**
+
+**"I need X to work first" is NOT a blocker - it means "I need to implement X first (add it to task list)"**
 
 ### ENFORCEMENT REMINDERS:
 
 **IF you find yourself about to:**
 - ❌ Report "I completed X" → STOP. Only report what's NOT done.
+- ❌ Say "All tests passing!" → STOP. Report which tests DON'T exist yet.
+- ❌ Say "X is working!" → STOP. Report what's NOT working or NOT tested.
 - ❌ Work on translator → STOP. Is runtime 80%+ tested?
 - ❌ Work on nixpkgs.lib → STOP. Are translator edge cases verified?
 - ❌ Write code without reading docs → STOP. Read Nix documentation first.
 - ❌ Guess how a builtin works → STOP. Test in `nix repl` first.
 - ❌ Say "this is blocked" → STOP. Break task into smaller pieces.
-- ❌ Use npm packages → STOP. Use Deno stdlib or esm.sh URLs only.
+- ❌ Use npm packages directly → STOP. Use Deno stdlib or esm.sh URLs only.
+- ❌ Start coding immediately → STOP. Read docs, test in nix repl, then code.
 
-**ALWAYS ask yourself:**
-1. Have I read the Nix documentation for this feature?
-2. Have I tested this in `nix repl` to verify exact behavior?
+**ALWAYS ask yourself BEFORE every action:**
+1. Have I read the Nix documentation for this feature? (Link to exact doc page)
+2. Have I tested this in `nix repl` to verify exact behavior? (Paste nix repl output)
 3. Am I following the work order (Runtime → Translator → nixpkgs.lib)?
 4. Am I focusing on what's NOT done (not accomplishments)?
+5. If stuck, have I broken this into smaller tasks?
+
+**DOCUMENTATION-FIRST CHECKLIST:**
+Before implementing ANY builtin:
+- [ ] Read https://nix.dev/manual/nix/2.28/language/builtins.html#builtins-FUNCTIONNAME
+- [ ] Search noogle.dev for usage examples
+- [ ] Test at least 3 examples in `nix repl`
+- [ ] Document expected behavior in test comments
+- [ ] Match Nix behavior exactly (not "close enough")
 
 ---
 
@@ -420,11 +478,4 @@ Zero npm/jsr dependencies, only Deno standard library + esm.sh
 3. Optional: Translator edge cases (2-3 days)
 4. Optional: nixpkgs.lib expansion (4-6 days)
 
-**Current status:**
-- 413 tests passing
-- 74/109 builtins tested (67.9%)
-- 10/10 derivation tests passing ✅
-- Translator 100% passing
-- Import system 100% passing
-
-**Total time to 80% coverage: 3-5 hours** (add 14 high-priority builtin tests)
+**Time to 80% coverage: 3-5 hours** (add 14 high-priority builtin tests)
