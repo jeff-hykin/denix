@@ -1,0 +1,39 @@
+Excellent! The prompt.md is now properly structured. Let me create a summary for the user:
+
+## Summary
+
+I've successfully updated `/Users/jeffhykin/repos/denix/prompt.md` to enforce all the rules you specified:
+
+### ✅ Changes Made:
+
+1. **Added CRITICAL RULES section at the top** with:
+   - Clear mandate: Focus ONLY on what's NOT done, no accomplishments
+   - "Senior developer - no blockers" mindset
+   - Requirement to break down large tasks
+
+2. **Added MANDATORY WORK ORDER**:
+   - Runtime builtins FIRST (80%+ coverage)
+   - Translator SECOND
+   - Network fetchers & store functions BEFORE ANYTHING ELSE
+
+3. **Added Implementation Guidelines**:
+   - Always read Nix documentation while implementing
+   - Test in `nix repl` BEFORE writing code
+   - Search internet for documentation (especially for fetchClosure, getFlake)
+   - NPM modules only via esm.sh (with caveat it's unreliable)
+
+4. **Removed achievements**:
+   - Removed "✅ DONE" items (Type Checking, List Operations)
+   - Changed "57 functions" to "35 functions remaining"
+   - Removed completed Task 2
+
+5. **Enhanced all task sections**:
+   - Added "BEFORE WRITING TESTS" checklists
+   - Emphasized reading Nix docs first
+   - Required testing in `nix repl` and documenting outputs
+
+6. **Added Priority 0 verification**:
+   - Must verify network fetchers work FIRST
+   - Clear instructions to NOT proceed until complete
+
+The document now enforces a strict work order and emphasizes documentation-driven development.
