@@ -4,25 +4,37 @@
 
 A system that both translates nix code to JavaScript and has a runtime.js that implements the nix builtins and operators faithfully.
 
-**AGENT, YOUR JOB IS TO SPECIFICALLY IMPLEMENT COMPREHENSIVE NIXPKGS.LIB TESTING NO MATTER HOW HARD OR LARGE OF A TASK IT IS.**
+**YOUR JOB IS TO FOCUS ON WRITING CODE AND IMPLEMENTING WHAT IS NOT IMPLEMENTED AND NOT WORKING.**
+
+Report what remains to be done. You are a SENIOR LEVEL DEVELOPER - no task is blocked for you because you can always delegate your task to other agents by calling the Task tool with subagent_type="general-purpose".
+
+**AGENT, YOUR CURRENT ASSIGNMENT IS TO SPECIFICALLY IMPLEMENT COMPREHENSIVE NIXPKGS.LIB TESTING NO MATTER HOW HARD OR LARGE OF A TASK IT IS.**
 
 This is your singular assignment. You are NOT allowed to skip this. You are NOT allowed to say it's too hard. You are a SENIOR DEVELOPER and large tasks are YOUR SPECIALTY.
 
 **YOUR SINGULAR FOCUS:**
 Write code and implement what is NOT implemented and NOT working. Report what remains to be done.
 
+**WHAT "NOT" MEANS:**
+- NOT implemented = feature does not exist, must write code to create it
+- NOT working = feature exists but has bugs, must fix the code
+- NOT tested = feature exists but lacks tests, must write tests
+- NOT done = any of the above, you must implement immediately
+
 **YOU ARE A SENIOR LEVEL DEVELOPER:**
 - No task is blocked for you - EVER
 - No task is too hard - break it down or delegate to specialized agents using the Task tool
 - No task takes too long - start immediately, work in parallel
-- You can delegate complex tasks to other agents: call the Task tool with subagent_type="general-purpose"
-  - Example task: "Fetch lists.nix from nixpkgs and create comprehensive test suite with 30+ tests"
-  - Use this LIBERALLY - delegate research, testing, implementation, anything
-  - Multiple agents can work in parallel - use them!
-- You can use npm modules ONLY through https://esm.sh/NPM_MODULE_NAME
+- You MUST delegate complex tasks to other agents using the Task tool with subagent_type="general-purpose"
+  - Example delegation: "Fetch lists.nix from nixpkgs master branch and create comprehensive test suite with 30+ tests covering map, filter, fold, flatten, unique, sort, partition, and all other list functions"
+  - Use delegation LIBERALLY - delegate research, testing, implementation, anything that can be parallelized
+  - Multiple agents can work in parallel - launch 3-5 agents simultaneously for different files
+  - Large tasks are YOUR SPECIALTY because you delegate and parallelize
+- You can use npm modules but ONLY through https://esm.sh/NPM_MODULE_NAME
   - Example: `import someLib from "https://esm.sh/some-lib@1.0.0"`
-  - WARNING: esm.sh is unreliable and often fails frequently
+  - WARNING: esm.sh is unreliable and often fails - it does NOT always work
   - Always have a backup plan (use Deno @std/* or implement yourself)
+  - If esm.sh fails, immediately switch to Deno @std/* or implement yourself
 - You can implement anything yourself - you're senior level
 
 **IF YOU SEE A LARGE OR HARD TASK:**
@@ -36,10 +48,12 @@ Break it down into smaller pieces OR delegate to specialized agents. No excuses.
 **🚨 ABSOLUTE RULES FOR THIS FILE 🚨**
 - **NEVER** add achievements, completions, success stories, or progress updates
 - **NEVER** use checkboxes (✅ ❌ ☑ ✓ ✔), progress markers, or completion indicators
-- **NEVER** use words like "completed", "done", "finished", "implemented", "working", "passing", "fixed", "resolved", "achieved", "success"
+- **NEVER** use words like "completed", "done", "finished", "implemented", "working", "passing", "fixed", "resolved", "achieved", "success", "successfully"
 - **ONLY** write about what is NOT done, NOT working, NOT implemented, NOT tested
 - **When something is done:** DELETE the entire item from this file immediately - no exceptions
 - **If you find checkboxes or achievements:** DELETE those items immediately - they violate the core purpose of this file
+- **If you see phrases like "was X, now Y" or "improved from X to Y":** DELETE them - this is achievement reporting
+- **If you see historical notes or session summaries:** Those belong in MEMORY.md, NOT here - DELETE them
 
 **WHY THESE RULES EXIST:**
 This file is a TODO list, not a progress report. Achievements go in MEMORY.md or git commits, NEVER here.
@@ -48,22 +62,29 @@ This file is a TODO list, not a progress report. Achievements go in MEMORY.md or
 - Add a checkbox → DELETE items that are done instead
 - Report progress → DELETE items that are done instead
 - Celebrate success → DELETE items that are done and move on
+- Write session summaries → Those go in MEMORY.md, NOT here - focus on implementing
 - Ask "what should I do next?" → Read the WORK ORDER section and implement the next thing immediately
 - Say a task is "too large" → Break it down or delegate using the Task tool immediately
 - Say you need "permission" → You don't. You're senior level. Just implement it immediately.
 - Say something is "blocked" → Nothing is blocked. Find another way or delegate immediately.
+- Say "esm.sh doesn't work" → Switch to Deno @std/* or implement yourself immediately.
 
 **🚨 ENFORCEMENT RULES 🚨**
 - When you open this file and see checkboxes (✅ ❌ etc): DELETE those items immediately
 - When you open this file and see achievement language: DELETE those items immediately
 - When you finish implementing something: DELETE that item from this file immediately
 - Your job is to SHRINK this file by implementing features, NOT grow it with reports
+- When you see phrases describing past work or improvements: DELETE them immediately
+- When you see comparisons to previous states: DELETE them immediately
+- This file should ONLY contain: "X is NOT done" or "Y is NOT implemented" or "Z is NOT tested"
 
-**REMEMBER:** You can and MUST delegate to other specialized agents using the Task tool. Use it for:
+**REMEMBER:** You can and MUST delegate to other specialized agents using the Task tool with subagent_type="general-purpose". Use it for:
 - Parallel work on multiple test files
 - Research tasks (finding documentation, examples)
 - Complex implementations you want to offload
 - ANY task that can be done in parallel
+- Large tasks that you want to break down (delegate the subtask)
+- When you need to focus on multiple things simultaneously
 
 # What is NOT Done
 
@@ -71,22 +92,24 @@ This file is a TODO list, not a progress report. Achievements go in MEMORY.md or
 
 **THIS IS YOUR SINGULAR ASSIGNMENT:**
 
-You must create comprehensive test coverage for nixpkgs.lib files. This is NOT optional. This is NOT negotiable. This task is LARGE and COMPLEX - exactly the kind of task you are REQUIRED to excel at.
+Comprehensive test coverage for nixpkgs.lib files is NOT done. Most files are NOT tested. This task is LARGE and COMPLEX - exactly the kind of task you are REQUIRED to excel at as a senior developer.
 
 **WHAT IS NOT IMPLEMENTED RIGHT NOW:**
 1. Comprehensive test coverage for ALL nixpkgs.lib files (currently most files are NOT tested)
 2. Edge case testing for translator features (NOT tested)
 3. Advanced fetcher features (NOT fully implemented)
 
-**HOW TO IMPLEMENT THIS LARGE TASK:**
-- Break it down into smaller sub-tasks
+**HOW TO IMPLEMENT THIS LARGE TASK (REQUIRED APPROACH):**
+- Break it down into smaller sub-tasks immediately
 - Work on multiple files in PARALLEL using multiple Task tool invocations with subagent_type="general-purpose"
-- Delegate to specialized agents via Task tool:
-  - Task: "Fetch and test lists.nix with 30+ test cases covering all functions"
-  - Task: "Research how nixpkgs.lib.attrsets functions work in nix repl and document behavior"
-  - Task: "Create comprehensive test suite for options.nix with edge cases"
-- Use esm.sh for npm modules ONLY (always have Deno @std/* backups because esm.sh fails frequently)
-- No excuses about complexity, time, or difficulty
+- Delegate to specialized agents via Task tool - Example delegations:
+  - "Fetch lists.nix from nixpkgs master branch and create comprehensive test suite with 30+ test cases covering all list functions"
+  - "Research nixpkgs.lib.attrsets functions in nix repl, document their behavior, and create test suite"
+  - "Create comprehensive test suite for options.nix with edge cases for mkOption, mkEnableOption, mkDefault"
+- Use npm modules ONLY through https://esm.sh/NPM_MODULE_NAME (but it does NOT always work)
+  - If esm.sh fails: immediately switch to Deno @std/* or implement yourself
+  - Never report esm.sh failures as blockers - just use alternatives immediately
+- No excuses about complexity, time, or difficulty - just implement
 - Start immediately and work continuously until items are deleted from this file
 
 **YOUR IMPLEMENTATION PHILOSOPHY:**
