@@ -17,7 +17,7 @@ while (true) {
         // worker
         const workerStart = Date.now()
         await $`claude --allowedTools "Task,Edit,Read,Update,Write,WebFetch,WebSearch,Glob,Grep,Write(./**/*),Bash(*)" -p ${`
-            You are tasked with faithfully creating a nix runtime in JavaScript. A system that can execute nix code by translating it to javascript, and running that JS. The main/runtime.js is the engine for already-translated nix code. You can use deno with URL imports, and esm.sh helps with npm, but you are not allowed to use jsr or npm imports directly. ${FileSystem.read(`${FileSystem.thisFolder}/../prompt.md`).slice(0, 10000)}
+            You are tasked with faithfully creating a nix runtime in JavaScript. Use \`convertToJs\` from \`translate.js\` to convert Nix to JavaScript and test that the result behaves identically to the Nix code. If some nix code isn't supported then add support. You are a capable senior engineer. Start with simple nix code from the nixpkgs-lib (which is available in tests) and then test against more complicated nix code. You job is to implement as much of the nix language as possible. The main/runtime.js is the engine that provides all the helpers for translated nix code. You can use deno with URL imports, and esm.sh helps with npm, but you are not allowed to use jsr or npm imports directly. ${(await FileSystem.read(`${FileSystem.thisFolder}/../prompt.md`)).slice(0, 10000)}
         `.replace(/\n +/g,"\n")} &> .claude/${increment++}.log`
         const workerMinutes = ((Date.now() - workerStart) / 60000).toFixed(1)
         await $`git add -A`

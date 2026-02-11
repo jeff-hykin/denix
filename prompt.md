@@ -9,11 +9,4 @@
 
 **Before executing what is below, please filter out any achievements. Only keep remaining/unsolved tasks in this document. Add detail to each task if its needed.**
 
-### WORK ORDER (MUST FOLLOW THIS SEQUENCE):
-1. **Runtime first** - Finish ALL network fetchers and store functions in runtime.js
-2. **Translator second** - Only after runtime is 100% complete
-3. **nix-lib tests last** - Only after translator is fully implemented
-
-**Do not skip ahead. Do not work out of order.**
-
-- Start using `convertToJs` from `translate.js` to convert Nix to JavaScript. Start with simple nix code from the nix library (available in tests)
+- Start using `convertToJs` from `main.js` to convert Nix to JavaScript. Add any missing functionality. Start with simple nix code from the nixpkgs-lib (which is available in tests) and continually test against more complicated nix code.
