@@ -461,8 +461,6 @@ try {
 }
 
 console.log("\n" + "=".repeat(60))
-console.log(`Total: ${passed + failed} tests`)
-console.log(`✓ Passed: ${passed}`)
 console.log(`✗ Failed: ${failed}`)
 console.log("=".repeat(60))
 

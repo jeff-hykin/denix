@@ -104,4 +104,3 @@ Deno.test("Path with interpolation right after slash", () => {
     assertEquals(result.toString(), "/etc/config.conf")
 })
 
-console.log("\n✅ All path interpolation tests passed!")

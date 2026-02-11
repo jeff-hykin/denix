@@ -250,4 +250,3 @@ Deno.test("import cache", async (t) => {
     })
 })
 
-console.log("✅ All import cache tests passed!")

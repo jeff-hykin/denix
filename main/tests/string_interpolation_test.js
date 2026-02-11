@@ -148,4 +148,3 @@ Deno.test("String with only interpolation", () => {
     assertEquals(result.toString(), "content")
 })
 
-console.log("\n✅ All string interpolation tests passed!")

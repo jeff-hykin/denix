@@ -265,7 +265,6 @@ Deno.test("With and let combined", () => {
     assertEquals(result, 10n)
 })
 
-console.log("\n✅ All translator tests passed!")
 
 Deno.test("Function with default arguments", () => {
     const nix = `({ a, b ? 10 }: a + b) { a = 5; }`

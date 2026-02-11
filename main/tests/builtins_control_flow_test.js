@@ -360,4 +360,3 @@ Deno.test("genericClosure - with numeric keys", () => {
     }
 })
 
-console.log("✓ All control flow builtin tests passed!")
