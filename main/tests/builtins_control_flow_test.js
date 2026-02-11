@@ -229,12 +229,12 @@ Deno.test("genericClosure - handles cycles (self-referential)", () => {
 
 Deno.test("genericClosure - key coercion to string", () => {
     const result = builtins.genericClosure({
-        startSet: [{ key: 1 }, { key: "1" }],
+        startSet: [{ key: 1n }, { key: "1" }],
         operator: (item) => []
     })
 
     if (!Array.isArray(result)) throw new Error("Expected array")
-    // Keys 1 and "1" should be treated as the same (both coerced to "1")
+    // Keys 1n (BigInt) and "1" (string) should be treated as the same (both coerced to "1")
     if (result.length !== 1) throw new Error(`Expected 1 item (key dedup), got ${result.length}`)
 })
 
