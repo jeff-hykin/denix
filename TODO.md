@@ -2,43 +2,51 @@
 
 **Last Updated:** 2026-02-11
 
-## Current Priority: Test nixpkgs.lib Files
+## Current Priority: Expand nixpkgs.lib Test Coverage
 
-### Critical Gap: 3 Core Files Need Tests (~75 functions)
+### Available Test Fixtures (12 files)
 
-These block all real-world nixpkgs usage:
+Only these nixpkgs.lib files are currently available as test fixtures:
 
-- **lists.nix** - ~30 functions need tests (map, filter, fold, flatten, unique, sort, partition, zip, take, drop, head, tail, last, etc.)
-- **attrsets.nix** - ~25 functions need tests (mapAttrs, filterAttrs, mergeAttrs, recursiveUpdate, getAttrFromPath, hasAttrByPath, zipAttrs, collect, etc.)
-- **options.nix** - ~20 functions need tests (mkOption, mkEnableOption, mkDefault, mkForce, mkOverride, mergeOptionDecls, etc.)
+**Already tested (10 files):**
+- `ascii-table.nix` - ASCII character mappings
+- `strings.nix` - String manipulation functions
+- `minfeatures.nix` - Nix version feature detection
+- `source-types.nix` - Source type definitions
+- `versions.nix` - Version parsing utilities
+- `kernel.nix` - Linux kernel config helpers
+- `flakes.nix` - Flake builtin re-exports
+- `flake-version-info.nix` - Version metadata overlay
+- `systems/flake-systems.nix` - Platform list
+- `systems/supported.nix` - Platform tiers
 
-**Files exist at:** `main/tests/fixtures/nixpkgs-lib/lib/*.nix`
+**Not yet tested (2 files):**
+- `fetchers.nix` - Fetcher utilities
+- `licenses.nix` - License definitions
 
-### Other lib Files Needing Tests (18 files)
+**Location:** `main/tests/fixtures/nixpkgs-lib/lib/`
 
-- `modules.nix` - Module system implementation
-- `types.nix` - Type system for NixOS options
-- `meta.nix` - Package metadata helpers
+### To Expand Testing: Fetch More nixpkgs.lib Files
+
+The fixtures directory only has 12 of 40+ nixpkgs.lib files. To test more:
+
+**High-priority files to fetch:**
+- `lists.nix` (~30 functions) - map, filter, fold, flatten, unique, sort, etc.
+- `attrsets.nix` (~25 functions) - mapAttrs, filterAttrs, mergeAttrs, etc.
+- `options.nix` (~20 functions) - mkOption, mkEnableOption, mkDefault, etc.
+- `modules.nix` - Module system
+- `types.nix` - Type system
+- `meta.nix` - Package metadata
 - `debug.nix` - Debugging utilities
-- `generators.nix` - Code generators
-- `filesystem.nix` - File/directory operations
-- `cli.nix` - Command-line interface helpers
-- `derivations.nix` - Derivation utilities
-- `fixed-points.nix` - Fixed point combinators
-- `customisation.nix` - Package customization
-- `maintainers.nix` - Maintainer metadata
-- `teams.nix` - Team metadata
-- `systems/architectures.nix` - CPU architectures
-- `systems/doubles.nix` - System doubles
-- `systems/for-meta.nix` - Platform metadata
-- `systems/parse.nix` - Platform string parsing
-- `systems/inspect.nix` - Platform inspection
-- `systems/default.nix` - Platform aggregation
-- `systems/platform.nix` - Platform utilities
-- `systems/platforms.nix` - Platform definitions
-- `path/` directory - Path utilities
-- `fileset/` directory - File set utilities
-- `asserts.nix` - Assertion helpers
+
+**How to add more fixtures:**
+```bash
+# Clone nixpkgs.lib
+cd main/tests/fixtures/
+curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/lists.nix
+curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/attrsets.nix
+# etc...
+```
 
 ## Translator Edge Cases Not Tested
 

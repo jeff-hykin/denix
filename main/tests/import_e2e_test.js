@@ -4,7 +4,7 @@
  */
 
 import { assertEquals, assertThrows } from "https://deno.land/std@0.224.0/assert/mod.ts"
-import { convertToJs } from "../../translator.js"
+import { convertToJs } from "../translator.js"
 import { createRuntime } from "../runtime.js"
 import { resolve as pathResolve } from "https://deno.land/std@0.224.0/path/mod.ts"
 

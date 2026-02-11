@@ -25,7 +25,7 @@ const treetoAstString = (tree) => {
 const xmlStylePreview = treetoAstString
 // End of inlined parsing.js
 
-import { nixRepr, NixError, NotImplemented } from "./main/runtime.js"
+import { nixRepr, NixError, NotImplemented } from "./runtime.js"
 
 
 // Design explanation (converting nix to JavaScript)

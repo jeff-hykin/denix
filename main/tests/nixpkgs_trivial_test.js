@@ -10,7 +10,7 @@
  * This validates the translator against real nixpkgs code.
  */
 
-import { convertToJs } from "../../translator.js"
+import { convertToJs } from "../translator.js"
 
 // Helper: Convert BigInt or number to float
 const toFloat = (value) => typeof value == "bigint" ? `${value}` - 0 : value

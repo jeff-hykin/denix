@@ -61,7 +61,7 @@ operators.divide(10n, 3n)       // 3n (integer division)
 ## Using the Translator
 
 ```javascript
-import translate from "./translator.js"
+import translate from "./main/translator.js"
 
 const nixCode = `
   let
@@ -78,8 +78,8 @@ const result = eval(jsCode)  // 3n
 
 ```
 denix/
-├── translator.js                 # Nix → JS translator (1,264 lines)
 ├── main/
+│   ├── translator.js       # Nix → JS translator (1,264 lines)
 │   ├── runtime.js          # 102 Nix builtins + operators (2,750+ lines)
 │   ├── import_cache.js     # Import caching & circular detection
 │   ├── import_loader.js    # Nix file loading & evaluation
@@ -87,8 +87,9 @@ denix/
 │   ├── tar.js              # Tarball extraction
 │   ├── nar_hash.js         # NAR directory hashing
 │   ├── store_manager.js    # Store path management
-│   └── tests/              # Test suite (34 files, 538 tests)
-├── tools/                  # Utilities (hashing, store paths, parsing, 10 modules)
+│   ├── registry.js         # Flake registry handling
+│   └── tests/              # Test suite (39 files, 538 tests)
+├── tools/                  # Utilities (hashing, store paths, resolvers)
 ├── test.sh                 # Smart test runner with filters
 └── TODO.md                 # Remaining work priorities
 ```
@@ -145,8 +146,8 @@ See [main/runtime.js](main/runtime.js) for complete implementation.
 ## Development Status
 
 Remaining work:
-- Expand nixpkgs.lib testing (lists.nix, attrsets.nix, options.nix - ~75 functions)
-- Test remaining 18 nixpkgs.lib files (modules, types, meta, debug, generators, etc.)
+- Test 2 remaining fixture files (fetchers.nix, licenses.nix)
+- Fetch and test high-priority nixpkgs.lib files (lists.nix, attrsets.nix, options.nix, etc.)
 - Translator edge cases (pattern matching, string/path handling, operator precedence)
 - Optional: Advanced features (fetchClosure, getFlake, fetchTree edge cases)
 
@@ -186,12 +187,14 @@ See [TODO.md](TODO.md) for detailed priorities.
 
 ### Expanding nixpkgs.lib Testing
 
-Priority files needing tests:
+Current fixtures (12 files): 10 tested, 2 remaining (fetchers.nix, licenses.nix)
+
+To expand testing, fetch more nixpkgs.lib files:
 - **lists.nix** (~30 functions) - map, filter, fold, flatten, unique, sort, etc.
 - **attrsets.nix** (~25 functions) - mapAttrs, filterAttrs, mergeAttrs, etc.
 - **options.nix** (~20 functions) - mkOption, mkEnableOption, mkDefault, etc.
 
-Plus 18 more lib files. See [TODO.md](TODO.md) for details.
+See [TODO.md](TODO.md) for details.
 
 ## License
 
