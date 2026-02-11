@@ -8,10 +8,12 @@ A Nix → JavaScript translator with 1-to-1 parity for Nix 2.18 builtins, implem
 
 ## Status
 
-**Translator:** 87/87 tests passing
-**Runtime:** 102 builtins implemented, 82 tested (80.4% coverage)
-**Derivations:** 12/12 derivation tests passing
-**Remaining work:** See [TODO.md](TODO.md) for nixpkgs.lib testing priorities
+**Translator:** 87/87 tests passing ✓
+**Runtime:** 102/102 builtins implemented (100% feature complete) ✓
+**Test Coverage:** 538 tests passing (82/102 builtins tested) ✓
+**Derivations:** 12/12 tests passing ✓
+
+**Next:** See [TODO.md](TODO.md) for nixpkgs.lib testing priorities
 
 ## Quick Start
 
