@@ -27,15 +27,21 @@ You are tasked with faithfully creating a nix runtime in JavaScript. A system th
 - Prefer Deno standard library when possible
 
 **DELEGATION:**
-- You are NEVER blocked
-- If a task seems large, break it down
+- You are NEVER blocked - period
+- If a task seems large, break it down into smaller pieces
 - If you need help, delegate to other agents: `cld <task description>`
-- No excuses about complexity or time
-- "This is too hard" is not acceptable - delegate instead
+- No excuses about complexity or time - you're a senior developer
+- "This is too hard" is not acceptable - break it down or delegate instead
+- "This will take too long" is not acceptable - start now
+- "I'm not sure how" is not acceptable - research or delegate
 
 ## CURRENT TASK
 
-Agent, your job is to specifically implement **comprehensive nixpkgs.lib testing** no matter how hard or large of a task it is.
+**Agent, your job is to specifically implement comprehensive nixpkgs.lib testing no matter how hard or large of a task it is.**
+
+You must fetch missing nixpkgs.lib files and create comprehensive test suites. This is NOT optional. This is NOT "too hard". You WILL do this.
+
+Break the task down. Delegate to other agents if needed. But you MUST make progress on this task.
 
 ### What is NOT Done
 
@@ -229,12 +235,39 @@ curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/<filename>.ni
 
 ---
 
-## START HERE
+## START HERE - YOUR EXACT TASK
 
-Agent, your job is to specifically implement **comprehensive nixpkgs.lib testing** no matter how hard or large of a task it is.
+**Agent, your job is to specifically implement comprehensive nixpkgs.lib testing no matter how hard or large of a task it is.**
 
-Begin with Priority 1: Test fetchers.nix and licenses.nix (1-2 hours).
+### Immediate Actions (DO THIS NOW)
 
-Then move to Priority 2: Fetch lists.nix, attrsets.nix, options.nix and create comprehensive tests (8-16 hours).
+**Step 1: Test existing fixtures (START HERE, 1-2 hours)**
+- Create tests for fetchers.nix
+- Create tests for licenses.nix
+- These files already exist in fixtures - no excuses
 
-Do not stop. Do not ask for permission. Just implement.
+**Step 2: Fetch critical missing files (2-3 hours)**
+```bash
+cd main/tests/fixtures/nixpkgs-lib/lib/
+curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/lists.nix
+curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/attrsets.nix
+curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/options.nix
+```
+
+**Step 3: Create comprehensive test suites (8-16 hours)**
+- Test lists.nix (~30 functions, 3-5 hours)
+- Test attrsets.nix (~25 functions, 3-4 hours)
+- Test options.nix (~20 functions, 2-3 hours)
+
+### Rules for Execution
+
+- ❌ Do NOT stop to report progress
+- ❌ Do NOT ask for permission to continue
+- ❌ Do NOT say "this is too complex" - break it down or delegate
+- ❌ Do NOT update this file with achievements
+- ✅ DO break large tasks into smaller ones
+- ✅ DO delegate to other agents if needed: `cld <task>`
+- ✅ DO keep working until all Priority 1 and 2 tasks are complete
+- ✅ DO delete items from this file when they're truly done
+
+**You are a senior developer. No task is blocked for you. Start now.**
