@@ -2,7 +2,7 @@
 // Standalone derivation tests - Test store path computation without full runtime
 
 import { assertEquals } from "https://deno.land/std@0.210.0/assert/mod.ts"
-import { serializeDerivation, computeDrvPath, computeOutputPath } from "/Users/jeffhykin/repos/denix/tools/store_path.js"
+import { serializeDerivation, computeDrvPath, computeOutputPath } from "../../../tools/store_path.js"
 
 Deno.test("derivation - basic with no inputs", () => {
     const drv = {

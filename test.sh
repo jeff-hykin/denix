@@ -60,9 +60,9 @@ case "$1" in
         echo "Running translator tests..."
         deno test --allow-all \
             main/tests/translator_test.js \
-            main/tests/hasattr_test.js \
             main/tests/string_interpolation_test.js \
-            main/tests/path_interpolation_test.js
+            main/tests/path_interpolation_test.js \
+            main/tests/operators_test.js
         ;;
     derivation|drv)
         echo "Running derivation tests..."

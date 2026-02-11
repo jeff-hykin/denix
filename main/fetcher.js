@@ -152,3 +152,6 @@ export async function validateSha256(filePath, expectedSha256) {
 
     return true;
 }
+
+// Export internal function for testing
+export { downloadFile }

@@ -166,3 +166,6 @@ async function stripTopLevelDirectory(extractDir) {
 
     return extractDir;
 }
+
+// Export internal functions for testing
+export { detectFormat, stripTopLevelDirectory }

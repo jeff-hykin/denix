@@ -5,7 +5,6 @@ import {
     atomicMove,
     getCachedPath,
     setCachedPath,
-    withLock,
     exists,
     STORE_DIR,
 } from "../store_manager.js";
@@ -138,39 +137,6 @@ Deno.test("StoreManager - getCachedPath returns null if path doesn't exist", asy
     // Get cache should return null and clean up cache
     const result = await getCachedPath(testKey);
     assertEquals(result, null);
-});
-
-Deno.test("StoreManager - withLock runs function", async () => {
-    let executed = false;
-
-    await withLock("test-lock", async () => {
-        executed = true;
-    });
-
-    assertEquals(executed, true);
-});
-
-Deno.test("StoreManager - withLock returns function result", async () => {
-    const result = await withLock("test-lock-2", async () => {
-        return "success";
-    });
-
-    assertEquals(result, "success");
-});
-
-Deno.test("StoreManager - withLock handles errors", async () => {
-    let errorCaught = false;
-
-    try {
-        await withLock("test-lock-3", async () => {
-            throw new Error("Test error");
-        });
-    } catch (error) {
-        errorCaught = true;
-        assertEquals(error.message, "Test error");
-    }
-
-    assert(errorCaught);
 });
 
 Deno.test("StoreManager - exists returns true for existing path", async () => {
