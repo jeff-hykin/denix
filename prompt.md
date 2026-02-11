@@ -5,9 +5,13 @@
 
 ## 🚨 MANDATORY INSTRUCTIONS - READ FIRST
 
-You are tasked with faithfully creating a nix runtime in JavaScript. A system that both translates nix code to JavaScript and has a runtime.js that implements the nix builtins and operators faithfully.
+**You are tasked with faithfully creating a nix runtime in JavaScript.** A system that both translates nix code to JavaScript and has a runtime.js that implements the nix builtins and operators faithfully.
 
-**Your job is to focus on writing code and implementing what is NOT implemented and NOT working. Report what remains to be done. You are a senior level developer, no task is blocked for you because you can always delegate your task to other agents by calling `cld <clear focused actionable task description>`.**
+**YOUR ONLY JOB: Implement what is NOT implemented. Test what is NOT tested. Fix what is broken.**
+
+**REPORT ONLY WHAT REMAINS TO BE DONE. NEVER report what works, what's done, or achievements.**
+
+**You are a senior level developer. No task is blocked for you. If something seems hard or large, break it into smaller tasks or delegate by calling `cld <clear focused actionable task description>`.**
 
 ### CRITICAL RULES:
 1. **NEVER report achievements** - Only report what remains to be done
@@ -16,8 +20,12 @@ You are tasked with faithfully creating a nix runtime in JavaScript. A system th
 4. **Break down large tasks** into smaller actionable tasks
 5. **Delegate to agents** when you need help - use `cld <task description>`
 6. **Read Nix documentation** before implementing: https://nix.dev/manual/nix/2.18/language/builtins
-7. **Use npm modules ONLY through esm.sh**: `https://esm.sh/NPM_MODULE_NAME` (doesn't always work)
+7. **CRITICAL: Use npm modules ONLY through esm.sh**: `import X from "https://esm.sh/NPM_MODULE_NAME"`
+   - esm.sh is unreliable and often fails - have backup plans
+   - Prefer Deno's standard library when possible
+   - If esm.sh fails, try native Deno modules or implement yourself
 8. **No blockers exist** - If you think something is too hard, break it into smaller pieces or delegate
+9. **DO NOT celebrate or report success** - Move directly to next untested/unimplemented item
 
 ---
 
@@ -25,8 +33,10 @@ You are tasked with faithfully creating a nix runtime in JavaScript. A system th
 
 **Agent, your job is to specifically expand nixpkgs.lib test coverage no matter how hard or large of a task it is.**
 
-Current nixpkgs.lib coverage: 12/41 files (29%)
-Target: 20/41 files (50%+)
+**DO THIS NOW: Test lists.nix, attrsets.nix, and options.nix - these are NOT tested and block real-world nixpkgs usage.**
+
+29 nixpkgs.lib files have ZERO test coverage (71% untested)
+You must test at minimum 8 more files to reach 50% coverage
 
 ### WHAT IS NOT TESTED IN NIXPKGS.LIB
 
@@ -71,57 +81,57 @@ The following 29 nixpkgs.lib files have ZERO test coverage:
 
 ## REMAINING PRIORITIES
 
-### Priority 1: Test lists.nix (2-3 hours)
+### Priority 1: Test lists.nix (NOT DONE - 2-3 hours)
 
 File: `nixpkgs/lib/lists.nix`
-Missing tests for core list operations used throughout nixpkgs.
+**MISSING TESTS** for core list operations used throughout nixpkgs.
 
-Functions that need tests:
-- `map` - Transform list elements
-- `filter` - Filter list by predicate
-- `fold`, `foldl`, `foldr` - List reduction
-- `flatten` - Flatten nested lists
-- `zip`, `zipLists` - Combine lists
-- `unique` - Remove duplicates
-- `sort` - Sort by comparator
-- `partition` - Split by predicate
-- `take`, `drop` - List slicing
-- `head`, `tail`, `last` - List access
+**Functions that are NOT TESTED:**
+- `map` - Transform list elements (NOT TESTED)
+- `filter` - Filter list by predicate (NOT TESTED)
+- `fold`, `foldl`, `foldr` - List reduction (NOT TESTED)
+- `flatten` - Flatten nested lists (NOT TESTED)
+- `zip`, `zipLists` - Combine lists (NOT TESTED)
+- `unique` - Remove duplicates (NOT TESTED)
+- `sort` - Sort by comparator (NOT TESTED)
+- `partition` - Split by predicate (NOT TESTED)
+- `take`, `drop` - List slicing (NOT TESTED)
+- `head`, `tail`, `last` - List access (NOT TESTED)
 
-Estimated: 50-70 test cases needed
+**Required: 50-70 test cases MISSING**
 
-### Priority 2: Test attrsets.nix (2-3 hours)
+### Priority 2: Test attrsets.nix (NOT DONE - 2-3 hours)
 
 File: `nixpkgs/lib/attrsets.nix`
-Missing tests for attribute set operations used everywhere.
+**MISSING TESTS** for attribute set operations used everywhere.
 
-Functions that need tests:
-- `mapAttrs` - Transform attribute values
-- `filterAttrs` - Filter attributes by predicate
-- `mergeAttrs` - Merge multiple attribute sets
-- `recursiveUpdate` - Deep merge
-- `getAttrFromPath` - Nested attribute access
-- `hasAttrByPath` - Check nested attributes exist
-- `zipAttrs` - Combine attribute sets
-- `collect` - Collect nested values
-- `nameValuePair` - Create name-value pairs
+**Functions that are NOT TESTED:**
+- `mapAttrs` - Transform attribute values (NOT TESTED)
+- `filterAttrs` - Filter attributes by predicate (NOT TESTED)
+- `mergeAttrs` - Merge multiple attribute sets (NOT TESTED)
+- `recursiveUpdate` - Deep merge (NOT TESTED)
+- `getAttrFromPath` - Nested attribute access (NOT TESTED)
+- `hasAttrByPath` - Check nested attributes exist (NOT TESTED)
+- `zipAttrs` - Combine attribute sets (NOT TESTED)
+- `collect` - Collect nested values (NOT TESTED)
+- `nameValuePair` - Create name-value pairs (NOT TESTED)
 
-Estimated: 40-60 test cases needed
+**Required: 40-60 test cases MISSING**
 
-### Priority 3: Test options.nix (3-4 hours)
+### Priority 3: Test options.nix (NOT DONE - 3-4 hours)
 
 File: `nixpkgs/lib/options.nix`
-Missing tests for NixOS module system options (COMPLEX).
+**MISSING TESTS** for NixOS module system options (COMPLEX).
 
-Functions that need tests:
-- `mkOption` - Define module options
-- `mkEnableOption` - Boolean option helper
-- `mkPackageOption` - Package option helper
-- `mkDefault`, `mkForce`, `mkOverride` - Priority system
-- `mergeOptionDecls` - Merge option declarations
-- `showOption` - Convert option to string
+**Functions that are NOT TESTED:**
+- `mkOption` - Define module options (NOT TESTED)
+- `mkEnableOption` - Boolean option helper (NOT TESTED)
+- `mkPackageOption` - Package option helper (NOT TESTED)
+- `mkDefault`, `mkForce`, `mkOverride` - Priority system (NOT TESTED)
+- `mergeOptionDecls` - Merge option declarations (NOT TESTED)
+- `showOption` - Convert option to string (NOT TESTED)
 
-Estimated: 30-50 test cases needed
+**Required: 30-50 test cases MISSING**
 
 ### Priority 4: Translator Edge Cases NOT IMPLEMENTED
 
@@ -252,21 +262,25 @@ git clone --depth 1 https://github.com/NixOS/nixpkgs.git
 
 ---
 
-## WHEN YOU COMPLETE A PRIORITY
+## WHEN YOU FINISH SOMETHING
 
-1. **Remove completed items** from this file
-2. **Do NOT add checkboxes or achievements**
-3. **Update "YOUR CURRENT TASK"** to next priority
-4. **Report what remains** - e.g., "29 files remain untested"
+1. **Remove completed items** from this file immediately
+2. **Do NOT add checkboxes, ✅, or achievement language**
+3. **Do NOT say "done" or "complete" or "success"**
+4. **Update "YOUR CURRENT TASK"** to next untested/unimplemented item
+5. **Report what remains** - e.g., "28 files remain untested, now starting X"
+6. **Move immediately to next item** - Do not wait for praise or confirmation
 
 ---
 
-## REMEMBER
+## REMEMBER - KEEP THE BOT ON TRACK
 
-1. **Focus only on what's NOT done**
+1. **Focus ONLY on what's NOT done** - Never mention what works
 2. **No task is blocked** - Break it down or delegate with `cld`
-3. **Test in nix repl first** - Understand expected behavior
-4. **Use esm.sh for npm** - `https://esm.sh/package-name` (unreliable)
-5. **Write comprehensive tests** - 5-10 tests minimum per function
+3. **Test in nix repl first** - Understand expected behavior before coding
+4. **Use esm.sh for npm ONLY** - `import X from "https://esm.sh/package-name"` (often fails)
+5. **Write comprehensive tests** - Minimum 5-10 tests per function
 6. **Always delegate when stuck** - `cld "implement X"` or `cld "research Y"`
-7. **Update this file** - Keep it current with remaining work only
+7. **Update this file** - Remove finished items immediately, keep only remaining work
+8. **No celebration** - Immediately move to next untested/unimplemented item
+9. **Report gaps** - "X remains untested", "Y is not implemented", "Z is broken"
