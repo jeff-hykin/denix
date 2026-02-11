@@ -147,17 +147,34 @@ Deno.test("fetchTree - unsupported type throws error", async () => {
     );
 });
 
-Deno.test("fetchTree - mercurial type throws NotImplemented", async () => {
-    await assertRejects(
-        async () => {
-            await builtins.fetchTree({
-                type: "mercurial",
-                url: "https://example.com/repo",
-            });
-        },
-        Error,
-        "fetchMercurial"
-    );
+Deno.test("fetchTree - mercurial type delegates to fetchMercurial", async () => {
+    try {
+        // Test fetchTree with type='mercurial'
+        const result = await builtins.fetchTree({
+            type: "mercurial",
+            url: "https://www.mercurial-scm.org/repo/hello",
+            name: "hello-via-fetchtree"
+        });
+
+        // Should return unified fetchTree format
+        assertExists(result.outPath);
+        assertEquals(typeof result.outPath, "string");
+        assertEquals(typeof result.rev, "string");
+        assertEquals(result.rev.length, 40); // Full hash
+        assertEquals(typeof result.shortRev, "string");
+        assertEquals(result.shortRev.length, 12); // Mercurial short hash
+        assertEquals(typeof result.revCount, "bigint");
+        assertEquals(typeof result.lastModified, "bigint");
+        assertExists(result.narHash);
+        assertEquals(result.narHash.startsWith("sha256"), true);
+    } catch (error) {
+        // Network issues are acceptable in tests
+        if (!error.message.includes("hg clone failed") &&
+            !error.message.includes("network")) {
+            throw error;
+        }
+        console.warn("Skipping test due to network issue:", error.message);
+    }
 });
 
 Deno.test("fetchTree - path type with local directory", async () => {
