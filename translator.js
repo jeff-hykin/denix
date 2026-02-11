@@ -1162,9 +1162,9 @@ const nixNodeToJs = (node)=>{
             }
         }
 
-        // Add lazy bindings (those that reference other variables)
+        // Add lazy bindings (those that reference other variables) using defGetter helper
         for (const {name, value, isConstant} of simpleBindings.filter(b => !b.isConstant)) {
-            code += `        Object.defineProperty(nixScope, ${JSON.stringify(name)}, {enumerable: true, get(){return ${nixNodeToJs(value)};}});\n`
+            code += `        defGetter(nixScope, ${JSON.stringify(name)}, (nixScope) => ${nixNodeToJs(value)});\n`
         }
 
         code += `    return ${nixNodeToJs(body).trimStart()};\n`
