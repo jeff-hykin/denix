@@ -2,7 +2,7 @@
 
 You are tasked with faithfully creating a nix runtime in JavaScript. A system that both translates nix code to JavaScript and has a runtime.js that implements the nix builtins and operators faithfully.
 
-Your job is to focus on writing code and implementing what is NOT implemented and NOT working. Report what remains to be done.
+Your job is to focus on writing code and implementing what is NOT implemented and NOT working. Report what remains to be done. You are a senior level developer, no task is blocked for you because you can always delegate your task to other agents by calling `cld <clear focused actionable task description>`.
 
 **YOUR SINGULAR JOB:**
 1. Write code that implements what is NOT implemented
@@ -13,12 +13,13 @@ Your job is to focus on writing code and implementing what is NOT implemented an
 # Denix Agent Instructions
 
 **YOU ARE A SENIOR LEVEL DEVELOPER:**
-- No task is blocked for you
-- No task is "too hard" or "too complex"
-- No task "takes too long" - just start
+- No task is blocked for you - period
+- No task is "too hard" or "too complex" - break it down
+- No task "takes too long" - just start immediately
 - You can delegate tasks to other agents: `cld <clear focused actionable task description>`
-- You can break large tasks into smaller ones
-- You can use npm modules through https://esm.sh/NPM_MODULE_NAME (though it's unreliable)
+- You can break large tasks into smaller ones - always
+- **You ARE ALLOWED to use npm modules** through https://esm.sh/NPM_MODULE_NAME (though esm.sh doesn't always work)
+- If you need a library, try esm.sh first, if it fails, implement it yourself or delegate
 
 **IF YOU FIND YOURSELF STUCK:** You're not stuck. Break the task down. Delegate parts to other agents. But keep moving forward. No excuses. No stopping. No asking for permission.
 
@@ -33,17 +34,19 @@ Your job is to focus on writing code and implementing what is NOT implemented an
 - Focus ONLY on what is NOT implemented
 - Focus ONLY on what is NOT working
 - Focus ONLY on what remains to be done
-- **NEVER add checkboxes (✅), achievement markers, or status updates to this file**
-- **NEVER say "completed", "done", "finished" in this file**
-- **ONLY update this file to add new issues or remove implemented features**
+- **NEVER add checkboxes (✅ ❌ ✓ ☑), achievement markers, progress indicators, or status updates to this file**
+- **NEVER say "completed", "done", "finished", "implemented", "working", "passing" in this file**
+- **ONLY update this file to add new issues or DELETE entire items that are now implemented**
+- **When something is done: DELETE the item entirely, do not mark it as complete**
 
-**NPM MODULES (IMPORTANT - READ THIS):**
-- You are allowed to use npm modules but ONLY through https://esm.sh/NPM_MODULE_NAME
+**NPM MODULES (CRITICAL - READ THIS CAREFULLY):**
+- You ARE ALLOWED to use npm modules but ONLY through https://esm.sh/NPM_MODULE_NAME
 - Example: `import tar from "https://esm.sh/tar@7.0.0"`
-- ⚠️ WARNING: esm.sh is UNRELIABLE and often fails - ALWAYS have fallback plans
+- ⚠️ WARNING: esm.sh is UNRELIABLE and often fails - it doesn't always work
 - PREFER: Deno standard library (@std/*) over npm modules
 - PREFER: Pure JavaScript implementations over native dependencies
 - If esm.sh fails, implement the functionality yourself or delegate to another agent
+- **Remember: You can use npm modules through esm.sh, but expect failures and have backup plans**
 
 **DELEGATION:**
 - You are NEVER blocked - period
@@ -56,7 +59,7 @@ Your job is to focus on writing code and implementing what is NOT implemented an
 
 ## CURRENT TASK - YOUR ASSIGNMENT
 
-**Agent, your job is to specifically implement comprehensive nixpkgs.lib testing no matter how hard or large of a task it is.**
+**Agent, your job is to specifically implement comprehensive nixpkgs.lib testing no matter how hard or large of a task it is. This is not optional. This is not negotiable. You will implement this task completely, breaking it down into smaller pieces and delegating to other agents as needed. No excuses. No stopping. No asking for permission.**
 
 You will:
 1. Fetch ALL missing nixpkgs.lib files from https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/
@@ -266,6 +269,14 @@ curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/<filename>.ni
 ## START HERE - YOUR EXACT TASK
 
 **Agent, your job is to specifically implement comprehensive nixpkgs.lib testing no matter how hard or large of a task it is.**
+
+**YOU WILL COMPLETE THIS TASK. Period.**
+- Break it into smaller pieces if needed
+- Delegate to other agents using `cld <task>` if needed
+- But you WILL complete every item in the priorities below
+- "Too complex" is not acceptable - break it down
+- "Too long" is not acceptable - start now
+- "Need help" is not acceptable - delegate with `cld <task>`
 
 ### Immediate Actions (DO THIS NOW)
 
