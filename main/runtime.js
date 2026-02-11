@@ -25,6 +25,9 @@ import { extractTarball } from "./tar.js"
 import { hashDirectory } from "./nar_hash.js"
 import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPath, atomicMove, exists } from "./store_manager.js"
 
+// registry system
+import { resolveIndirectReference } from "./registry.js"
+
 //
 // Import state (shared across runtime instances)
 //
