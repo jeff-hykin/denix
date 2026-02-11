@@ -143,18 +143,39 @@ import { nixRepr } from "./main/runtime.js"
 // The Main function! nix comes in js comes out
 //
 // 
-export const convertToJs = (code)=>{
+export const convertToJs = (code, options = {}) => {
     const tree = parse(code)
     const rootNode = tree.rootNode
     let output = ""
     for (const node of rootNode.children) {
         output += nixNodeToJs(node)
     }
-    // optimization, could be made less hacky
-    if (!output.includes("runtime")) {
-        return output
+
+    // Determine if we need runtime imports
+    const needsRuntime = output.includes("runtime")
+
+    // Handle runtime import path (default to relative path from root)
+    const runtimePath = options.runtimePath || "./main/runtime.js"
+
+    let result = ""
+
+    if (needsRuntime) {
+        result += `import { createRuntime, createFunc } from "${runtimePath}"\n`
+        result += `const runtime = createRuntime()\n`
+
+        // Extract commonly used runtime components if they're referenced
+        if (output.includes("operators.")) {
+            result += `const operators = runtime.operators\n`
+        }
+        if (output.includes("builtins.") && !output.includes("nixScope[\"builtins\"]")) {
+            result += `const builtins = runtime.builtins\n`
+        }
     }
-    return `import { createRuntime } from "./main/runtime.js"\nconst runtime = createRuntime()\n${output}`
+
+    // Always export the result as a module
+    result += `\nexport default ${output.trim()}`
+
+    return result
 }
 
 const nixNodeToJs = (node)=>{
@@ -940,55 +961,46 @@ const nixNodeToJs = (node)=>{
             if (children[0].type != "formals") {
                 throw Error(`When handling a function, it didn't seem to be a simple function, but also didn't have <formals>. Not sure what happened:\n${node.text}`)
             }
+            let argNames = []
             const formals = children[0].children.filter(each=>each.type=="formal")
             // A formal with a default has more than just the identifier
             const formalsWithDefaults = formals.filter(each=>{
                 const formalChildren = valueBasedChildren(each)
+                argNames.push(formalChildren[0].text)
                 return formalChildren.length > 1 // Has default if more than just identifier
             })
 
-            const defaults = formalsWithDefaults.map(each=>{
+            const defaulters = formalsWithDefaults.map(each=>{
                 const formalChildren = valueBasedChildren(each)
                 const argName = formalChildren[0].text
                 const defaultValue = nixNodeToJs(formalChildren[2])
+                // TODO: if this is a literal (any literal other than interpolated string) it can be passed as-is
+                // otherwise it needs to be a function that accepts the other args before it
+                
                 // Wrap default value in IIFE to capture parent scope at evaluation time
                 // This allows defaults to reference outer function parameters (e.g., lname: { shortName ? lname }: ...)
-                return `${JSON.stringify(argName)}: (()=>{ const nixScope = runtime.scopeStack.slice(-1)[0]; return ${defaultValue}; })(),`
+                return `${JSON.stringify(argName)}: (nixScope)=>(${defaultValue}),`
             }).join("")
 
             // Handle @ syntax: { a, b }@args: body
-            let allArgsString = ""
+            let allArgsName = null
             const atIndex = children.findIndex(each=>each.type=="@")
             if (atIndex >= 0) {
                 // The identifier after @ is the name for the full argument set
-                const allArgsName = children[atIndex + 1]
-                if (allArgsName?.type === "identifier") {
-                    allArgsString = `${JSON.stringify(allArgsName.text)}: arg,`
+                const allArgsNameNode = children[atIndex + 1]
+                if (allArgsNameNode?.type === "identifier") {
+                    allArgsName = allArgsNameNode.text
                 }
             }
+            
+            const allArgsString = allArgsName ? `@${allArgsName}` : ""
+            const translationHint = `// args: {\n${argNames.map(each=>"//    "+each.replace(/\n|\r/g,"")+",").join("\n")}\n//}${allArgsString}`
 
             // The body is the last child (after the ":")
             const body = children.slice(-1)[0]
-
-            return `(function(arg){
-                    const nixScope = {
-                        // inherit parent scope
-                        ...runtime.scopeStack.slice(-1)[0],
-                        // inherit default arguments
-                        ${defaults}
-                        // inherit arguments
-                        ...arg,
-                        // all-args arg (if @ syntax is used)
-                        ${allArgsString}
-                    }
-                    runtime.scopeStack.push(nixScope)
-                    try {
-                        return ${nixNodeToJs(body)}
-                    } finally {
-                        runtime.scopeStack.pop()
-                    }
-                })`
-
+            return `${translationHint}\ncreateFunc({${defaulters}}, ${JSON.stringify(allArgsName)}, {}, (nixScope)=>(
+                ${nixNodeToJs(body).replace(/\n/g,"\n    ")}
+            ))`
         }
     } else if (node.type == "let_expression") {
         // <let_expression>

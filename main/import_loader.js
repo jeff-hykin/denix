@@ -61,11 +61,14 @@ function loadNixFile(content, runtime) {
     // Translate Nix to JavaScript
     let jsCode = convertToJs(content)
 
-    // Strip import statement if present (we already have runtime available)
-    if (jsCode.includes('import { createRuntime }')) {
-        jsCode = jsCode.replace(/import \{ createRuntime \}.*\n/, '')
-        jsCode = jsCode.replace(/const runtime = createRuntime\(\)\n/, '')
-    }
+    // Strip import, export, and runtime creation (we already have runtime available)
+    jsCode = jsCode
+        .replace(/^import\s+.*$/gm, '')  // Remove import lines
+        .replace(/^const\s+runtime\s+=\s+createRuntime\(\).*$/gm, '')  // Remove runtime creation
+        .replace(/^const\s+operators\s+=\s+.*$/gm, '')  // Remove operators extraction
+        .replace(/^const\s+builtins\s+=\s+.*$/gm, '')  // Remove builtins extraction
+        .replace(/^export\s+default\s+/m, '')  // Remove export default
+        .trim()
 
     // Create nixScope with builtins available
     const nixScope = {
