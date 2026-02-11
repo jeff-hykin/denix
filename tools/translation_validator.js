@@ -89,10 +89,13 @@ async function evaluateWithDenix(nixExpr) {
         }
         runtimeContext.scopeStack.push(nixScope)
 
-        // Strip import statements and runtime creation (we provide our own)
+        // Strip import, export, and runtime creation (we provide our own)
         jsCode = jsCode
             .replace(/^import\s+.*$/gm, '')  // Remove import lines
             .replace(/^const\s+runtime\s+=\s+createRuntime\(\).*$/gm, '')  // Remove runtime creation
+            .replace(/^const\s+operators\s+=\s+.*$/gm, '')  // Remove operators extraction
+            .replace(/^const\s+builtins\s+=\s+.*$/gm, '')  // Remove builtins extraction
+            .replace(/^export\s+default\s+/m, '')  // Remove export default
             .trim()
 
         // Evaluate the generated JS
