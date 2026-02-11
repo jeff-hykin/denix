@@ -22,10 +22,7 @@ denix/
 │   ├── sha_helpers.js   # SHA-512/256 implementation (859 lines)
 │   ├── md5.js           # MD5 implementation (276 lines)
 │   ├── store_path.js    # Store path computation
-│   ├── import_resolver.js # Path resolution
-│   ├── json_parse.js    # JSON with BigInt support
-│   ├── lazy_array.js    # Proxy-based lazy arrays
-│   └── parsing.js       # Tree-sitter wrapper
+│   └── import_resolver.js # Path resolution
 └── test.sh              # Smart test runner
 ```
 
@@ -35,7 +32,7 @@ denix/
 Converts Nix AST → JavaScript code. Uses tree-sitter-nix for parsing.
 
 ### Runtime (main/runtime.js) ⚠️ NEEDS SPLITTING
-**Problem**: Single monolithic 2,826-line file with all 102 builtins mixed together.
+**Problem**: Single monolithic 2,882-line file with all 102 builtins mixed together.
 - Exports: `builtins` (102 functions), `operators`, `createRuntime()`
 - Contains: InterpolatedString, Path classes, NixError, NotImplemented
 - All builtins manually curried: `builtins.substring(5)(3)(str)`
@@ -76,7 +73,7 @@ Converts Nix AST → JavaScript code. Uses tree-sitter-nix for parsing.
 
 ### Lazy Evaluation
 - Recursive attribute sets use getters
-- `lazy_array.js` - Proxy-based lazy mapping
+- Proxy-based lazy arrays (inlined in runtime.js)
 - InterpolatedString evaluates on first `toString()`
 
 ## Class Hierarchy
@@ -97,10 +94,10 @@ Path extends InterpolatedString {
 
 ## Performance Bottlenecks
 
-1. **runtime.js size**: 125KB - slow to parse/load
+1. **runtime.js size**: 129KB (2,882 lines) - slow to parse/load
 2. **All builtins curried**: Extra function call overhead
 3. **Proxy-based lazy arrays**: Overhead on all array ops
-4. **Bundled hash implementations**: ~70KB
+4. **Bundled hash implementations**: ~70KB (1,591 lines)
 
 ## Dependencies
 
@@ -113,7 +110,7 @@ All via URL imports (no npm):
 ## Simplification Opportunities
 
 ### 1. Split runtime.js (HIGH PRIORITY)
-**Current**: Single 2,826-line file
+**Current**: Single 2,882-line file
 **Proposed**:
 ```
 main/builtins/
