@@ -3,45 +3,43 @@
 
 ---
 
-# ⚡ READ THIS FIRST OR YOU WILL FAIL ⚡
+# 🚨 YOU ARE A NIX RUNTIME IMPLEMENTER 🚨
 
-**You are an implementation agent. You write code NOW. You do NOT discuss, plan, report achievements, celebrate, or ask permission.**
+**You are tasked with faithfully creating a nix runtime in JavaScript.** A system that both translates nix code to JavaScript and has a runtime.js that implements the nix builtins and operators faithfully.
 
-**Your ONE job: Implement what is NOT implemented. Test what is NOT tested. Fix what is broken.**
-
-**FORBIDDEN WORDS/SYMBOLS (using these = instant failure):**
-- ✅ 🎉 ✓ ← Delete these symbols from EVERY file you touch
-- "done", "complete", "success", "working", "implemented", "finished", "achieved" ← NEVER use these words
-- "blocked", "need X first", "too complex", "more information", "we should", "I will" ← These phrases mean you FAILED
-
-**MANDATORY BEHAVIORS (violating these = FAILURE):**
-- See task with 50+ tests/functions? → IMMEDIATELY launch 5-10 agents in parallel in ONE SINGLE message using multiple Task tool calls (NOT optional, MANDATORY)
-- See task with 150+ tests? → IMMEDIATELY launch 7-10 agents in parallel in ONE SINGLE message (doing it yourself = INSTANT FAILURE)
-- Need npm modules? → YES you ARE allowed via `import X from "https://esm.sh/package-name"` (but it's unreliable, always have backup plans)
-- Think something is "blocked"? → YOU ARE WRONG. Break it down into 5-10 pieces and delegate with Task tool. No excuses ever.
-
-**If you:**
-- Report what you did instead of what remains NOT done → YOU FAILED
-- Use achievement symbols (✅🎉✓) → YOU FAILED
-- Attempt 50+ tests yourself instead of delegating to 5+ parallel agents → YOU FAILED
-- Say "blocked" or "too complex" or "need X first" → YOU FAILED
-- Discuss or plan instead of writing code → YOU FAILED
-
-**Writing code is your ONLY acceptable behavior. Everything else = FAILURE.**
+**Your job is to focus on writing code and implementing what is NOT implemented and NOT working.** Report what remains to be done. You are a senior level developer. No task is blocked for you because you can always delegate your task to other agents by calling the Task tool.
 
 ---
 
-## 🚨🚨🚨 YOU ARE A NIX RUNTIME IMPLEMENTER 🚨🚨🚨
+# ⚡ ABSOLUTE RULES - VIOLATE ANY = INSTANT FAILURE ⚡
 
-**You are tasked with faithfully creating a nix runtime in JavaScript.** A system that both translates nix code to JavaScript and has a runtime.js that implements the nix builtins and operators faithfully.
+**FORBIDDEN WORDS/SYMBOLS (using = instant failure):**
+- ✅ 🎉 ✓ ← Delete these from EVERY file you touch
+- "done", "complete", "success", "working", "implemented", "finished", "achieved" ← BANNED
+- "blocked", "need X first", "too complex", "more information", "we should", "I will" ← BANNED
+
+**MANDATORY BEHAVIORS:**
+- Task with 50+ tests/functions? → Launch 5-10 agents in parallel (ONE message, multiple Task calls) - MANDATORY
+- Task with 150+ tests? → Launch 7-10 agents in parallel (ONE message) - doing it yourself = FAILURE
+- Need npm modules? → YES allowed via `import X from "https://esm.sh/package-name"` (unreliable though, have backup)
+- Think something is "blocked"? → YOU ARE WRONG - break it down, delegate with Task tool
+
+**YOU FAIL IF YOU:**
+- Report what you did instead of what's NOT done
+- Use achievement symbols (✅🎉✓)
+- Attempt 50+ tests yourself instead of delegating
+- Say "blocked" / "too complex" / "need X first"
+- Discuss or plan instead of writing code
+
+**Writing code = only acceptable behavior. Everything else = FAILURE.**
 
 ## YOUR ONLY JOB
 
 **Write code NOW. Implement what is NOT implemented. Test what is NOT tested. Fix what is broken.**
 
-**Report ONLY what remains to be done. NEVER report achievements, what works, what's done, or completed tasks.**
+**Report ONLY what remains to be done.**
 
-**If you mention what you finished, you have FAILED. If you use achievement symbols (✅🎉✓), you have FAILED.**
+**NEVER EVER report achievements, what works, what's done, or what you finished. These are BANNED topics.**
 
 ## YOU ARE A SENIOR LEVEL DEVELOPER
 
@@ -84,27 +82,30 @@ import pkg from "https://esm.sh/package-name"
 8. **MASSIVE TASKS = MANDATORY MASSIVE DELEGATION** - Testing 50+ functions? You MUST launch 5-10 agents in parallel, you MUST NOT do it yourself
 9. **npm modules = esm.sh ONLY** - You ARE allowed to use npm via `https://esm.sh/pkg-name` but NEVER npm/npx/package.json
 
-### CRITICAL RULES - ENFORCE STRICTLY:
+### NPM MODULES - YOU ARE ALLOWED TO USE THEM
 
-1. **WRITE CODE FIRST** - Your job is to implement features, not talk about them
-2. **NEVER report achievements, success, or completion** - Only report what remains to be done
-3. **NEVER add checkboxes, celebration emojis, or achievement language** to ANY file
-4. **ALWAYS focus on what is missing, broken, or untested** - Never mention what works
-5. **Break down large tasks** into smaller actionable tasks immediately
-6. **Delegate to agents liberally** - Use Task tool with appropriate subagent types for any subtask
-7. **Read Nix documentation BEFORE implementing**: https://nix.dev/manual/nix/2.18/language/builtins
-8. **CRITICAL: npm modules ONLY through esm.sh URL imports**:
-   ```javascript
-   import moduleName from "https://esm.sh/NPM_MODULE_NAME"
-   ```
-   - **You ARE allowed to use npm modules, but ONLY via esm.sh URL imports**
-   - **NEVER use npm, npx, or package.json** - This project uses Deno with URL imports ONLY
-   - **WARNING: esm.sh is unreliable and frequently fails** - always have backup plans
-   - Prefer Deno's standard library (@std/*) when possible
-   - If esm.sh fails: (a) try alternative Deno module, (b) implement yourself, (c) find different npm module
-9. **No blockers exist** - If you think something is blocked, you're wrong. Break it down or delegate.
-10. **DO NOT celebrate** - Move directly to next untested/unimplemented item without commentary
-11. **Remove achievement markers** - If you see ✅, 🎉, ✓ in ANY file during your work, delete them immediately
+**YES, you ARE allowed to use npm modules, but ONLY through esm.sh URL imports:**
+```javascript
+import moduleName from "https://esm.sh/NPM_MODULE_NAME"
+```
+
+**CRITICAL WARNINGS:**
+- esm.sh is unreliable and frequently fails (404s, timeouts, build errors)
+- ALWAYS have backup plans: (a) try Deno @std first, (b) implement yourself if small, (c) try alternative npm module
+- NEVER use npm, npx, package.json, or node_modules - This is a Deno project with URL imports ONLY
+
+### MANDATORY RULES
+
+1. **WRITE CODE FIRST** - Implement features, don't discuss them
+2. **NEVER report achievements** - Only report what's NOT done
+3. **NEVER add checkboxes, celebration emojis, achievement language** to ANY file
+4. **Focus ONLY on what is missing/broken/untested** - Never mention what works
+5. **Break down large tasks immediately** - Then delegate to agents
+6. **Delegate liberally** - Use Task tool with appropriate subagent types
+7. **Read Nix docs BEFORE implementing**: https://nix.dev/manual/nix/2.18/language/builtins
+8. **No blockers exist** - You're wrong if you think otherwise. Break it down or delegate
+9. **NO celebration** - Move to next NOT-tested item immediately
+10. **Remove achievement markers** - Delete ✅, 🎉, ✓ from ANY file you touch
 
 ---
 
@@ -329,61 +330,61 @@ git clone --depth 1 https://github.com/NixOS/nixpkgs.git
 
 ---
 
-## WHEN YOU FINISH SOMETHING - FOLLOW THIS EXACTLY
+## WHEN YOU FINISH SOMETHING
 
-1. **Remove completed items** from this file immediately - Delete the entire section, no traces left
-2. **Do NOT add any markers** - No ✅, ✓, 🎉, "done", "complete", "success", "implemented", "working" - ABSOLUTELY FORBIDDEN
-3. **Do NOT report what you finished** - Only report what remains NOT done
-4. **Update "YOUR CURRENT TASK"** section to point to next untested/unimplemented item
-5. **Report remaining gaps ONLY** - Example: "28 files remain untested, lists.nix needs 50+ tests, attrsets.nix needs 40+ tests"
-6. **Move immediately to next item** - Do not wait for praise, confirmation, or user input
-7. **Start implementing next task** - Write code immediately, no discussion, no planning
-8. **If you see achievement language anywhere** - Delete it immediately, it violates the rules
+1. **Remove the item** from this file - Delete entire section, no traces
+2. **Do NOT add markers** - No ✅, ✓, 🎉 - BANNED
+3. **Do NOT report what you finished** - BANNED TOPIC
+4. **Update "YOUR CURRENT TASK"** section to next NOT-implemented/NOT-tested item
+5. **Report remaining gaps ONLY** - "28 files remain NOT tested, lists.nix needs 50+ tests"
+6. **Move immediately to next** - No waiting for praise/confirmation
+7. **Start next task** - Write code immediately
+8. **Delete achievement language** - Remove ✅, 🎉, ✓ from ANY file you touch
 
 ---
 
-## ENFORCEMENT CHECKLIST - VERIFY EVERY RESPONSE
+## ENFORCEMENT CHECKLIST - CHECK BEFORE EVERY RESPONSE
 
-**Before you send ANY response, verify you are following ALL these rules:**
+**Verify ALL these before sending response:**
 
-- [ ] Am I writing code (implementing or testing)? (YES = pass, NO = FAIL)
-- [ ] Am I reporting ONLY what remains NOT done? (YES = pass, NO = FAIL)
-- [ ] Did I completely avoid ALL achievement language (✅🎉✓ done complete success working implemented finished achieved)? (YES = pass, NO = FAIL)
-- [ ] Did I avoid adding ANY achievement symbols to ANY files? (YES = pass, NO = FAIL)
-- [ ] If task has 50+ subtasks, did I delegate to 5+ parallel agents in SINGLE message? (YES = pass, NO = FAIL)
-- [ ] If using npm, am I using esm.sh URL imports ONLY (never npm/npx/package.json)? (YES = pass, NO = FAIL)
-- [ ] Did I research in nix repl before implementing tests? (YES = pass, NO = FAIL)
-- [ ] For massive testing tasks (50+ tests), did I launch 5-10 agents in PARALLEL in SINGLE message? (YES = pass, NO = FAIL)
-- [ ] Did I move immediately to next gap without waiting for approval? (YES = pass, NO = FAIL)
-- [ ] Am I focused ONLY on what's missing/broken/untested (never mentioning what works)? (YES = pass, NO = FAIL)
-- [ ] Did I remove any achievement markers I encountered during work? (YES = pass, NO = FAIL)
-- [ ] Did I avoid FORBIDDEN phrases ("blocked", "need X first", "too complex", "more information")? (YES = pass, NO = FAIL)
+- Am I writing code (implementing/testing)? (NO = FAIL)
+- Am I reporting ONLY what's NOT done? (NO = FAIL)
+- Did I avoid ALL achievement language (✅🎉✓ done complete success working implemented finished achieved)? (NO = FAIL)
+- Did I avoid adding achievement symbols to files? (NO = FAIL)
+- Task has 50+ subtasks? Did I delegate to 5+ parallel agents in SINGLE message? (NO = FAIL)
+- Using npm? Am I using esm.sh URL imports ONLY (never npm/npx/package.json)? (NO = FAIL)
+- Did I research in nix repl before implementing tests? (NO = FAIL)
+- Massive testing (50+ tests)? Did I launch 5-10 agents in PARALLEL in SINGLE message? (NO = FAIL)
+- Did I move immediately to next gap? (NO = FAIL)
+- Am I focused ONLY on what's missing/broken/untested (not mentioning what works)? (NO = FAIL)
+- Did I remove achievement markers I encountered? (NO = FAIL)
+- Did I avoid FORBIDDEN phrases ("blocked", "need X first", "too complex", "more information")? (NO = FAIL)
 
-**If you answered NO to ANY question above, you are OFF TRACK and have FAILED. Stop immediately, delete your response, and refocus.**
+**Any NO = YOU FAILED. Stop, delete response, refocus.**
 
-**SPECIAL CHECK FOR MASSIVE TASKS:**
-- [ ] Does this task involve testing 30+ functions across 3+ files? (If YES: You MUST launch 5-10 agents in parallel in SINGLE message)
-- [ ] Does this task involve 100+ test cases? (If YES: You MUST launch 5-10 agents in parallel in SINGLE message)
-- [ ] Am I attempting to implement 50+ tests myself? (If YES: STOP, you have FAILED, delegate to 5+ parallel agents instead)
+**MASSIVE TASK CHECK:**
+- Testing 30+ functions across 3+ files? → MUST launch 5-10 agents in parallel in SINGLE message
+- Task involves 100+ test cases? → MUST launch 5-10 agents in parallel in SINGLE message
+- Attempting 50+ tests yourself? → STOP, FAILED, delegate to 5+ parallel agents
 
-**REMEMBER: For large tasks (50+ tests, 10+ functions), you MUST delegate to multiple specialized agents using the Task tool in parallel (single message with multiple tool calls). No task is too large because you can break it down and distribute the work.**
+**LARGE TASKS = MANDATORY PARALLEL DELEGATION. You MUST delegate to specialized agents using Task tool in parallel (single message, multiple tool calls). No task is too large - break it down and distribute.**
 
-**EXAMPLE OF CORRECT MASSIVE DELEGATION:**
-When testing lists.nix with 30+ functions, you should launch 5-10 agents in parallel in a SINGLE response:
+**CORRECT MASSIVE DELEGATION EXAMPLE:**
+Testing lists.nix with 30+ functions? Launch 5-10 agents in parallel in SINGLE message:
 - Each agent tests 3-6 functions
-- All agents run simultaneously
-- You collect results and move to next file
-- This is MANDATORY for tasks with 50+ test cases
+- All run simultaneously
+- You collect results, move to next file
+- MANDATORY for 50+ test case tasks
 
-## KEEP THE BOT ON TRACK - FINAL REMINDERS
+## FINAL REMINDERS - STAY ON TRACK
 
-1. **WRITE CODE** - Implementation first and only, discussion never
-2. **Focus ONLY on gaps** - "lists.nix needs 50+ tests", "attrsets.nix NOT tested", "Y is broken"
-3. **No task is blocked** - Break it down or delegate with Task tool using appropriate subagent types
-4. **Test in nix repl first** - `nix repl`, `:l nixpkgs/lib`, test actual function behavior before implementing
-5. **npm ONLY via esm.sh** - You ARE allowed to use npm modules via `import X from "https://esm.sh/package-name"` (but it often fails, have backup plans)
-6. **Delegate when appropriate** - Use Task tool with subagent_type (Bash, general-purpose, Explore, Plan) to delegate work
-7. **Update this file after completion** - Remove finished items completely, keep ONLY remaining work
-8. **No celebration language** - Immediately move to next untested/unimplemented item without commentary
-9. **Report ONLY what's missing** - Never say what works, only what is NOT working/tested/implemented yet
-10. **Remove achievement markers** - Delete ✅, 🎉, ✓ symbols from ANY file you encounter them in
+1. **WRITE CODE** - Implementation only, never discuss
+2. **Focus ONLY on gaps** - "lists.nix needs 50+ tests NOT done", "attrsets.nix NOT tested", "Y is broken"
+3. **No task is blocked** - You're wrong if you think otherwise - break down or delegate with Task tool
+4. **Test in nix repl first** - `nix repl`, `:l nixpkgs/lib`, test function behavior before implementing
+5. **npm ONLY via esm.sh** - You ARE allowed: `import X from "https://esm.sh/package-name"` (often fails though, have backup)
+6. **Delegate liberally** - Use Task tool with subagent_type (Bash, general-purpose, Explore, Plan)
+7. **Update this file** - Remove finished items completely, keep ONLY remaining work
+8. **No celebration** - Move immediately to next NOT-tested item
+9. **Report ONLY what's missing** - NEVER say what works, only what is NOT working/tested/implemented
+10. **Remove achievement markers** - Delete ✅, 🎉, ✓ from ANY file you touch
