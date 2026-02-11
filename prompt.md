@@ -6,6 +6,8 @@ A system that both translates nix code to JavaScript and has a runtime.js that i
 
 **AGENT, YOUR JOB IS TO SPECIFICALLY IMPLEMENT COMPREHENSIVE NIXPKGS.LIB TESTING NO MATTER HOW HARD OR LARGE OF A TASK IT IS.**
 
+This is your singular assignment. You are NOT allowed to skip this. You are NOT allowed to say it's too hard. You are a SENIOR DEVELOPER and large tasks are YOUR SPECIALTY.
+
 **YOUR SINGULAR FOCUS:**
 Write code and implement what is NOT implemented and NOT working. Report what remains to be done.
 
@@ -13,13 +15,13 @@ Write code and implement what is NOT implemented and NOT working. Report what re
 - No task is blocked for you - EVER
 - No task is too hard - break it down or delegate to specialized agents using the Task tool
 - No task takes too long - start immediately, work in parallel
-- You can delegate complex tasks to other agents by calling `cld <clear focused actionable task description>`
-  - Example: `cld "fetch lists.nix from nixpkgs and create comprehensive test suite with 30+ tests"`
+- You can delegate complex tasks to other agents: call the Task tool with subagent_type="general-purpose"
+  - Example task: "Fetch lists.nix from nixpkgs and create comprehensive test suite with 30+ tests"
   - Use this LIBERALLY - delegate research, testing, implementation, anything
   - Multiple agents can work in parallel - use them!
 - You can use npm modules ONLY through https://esm.sh/NPM_MODULE_NAME
   - Example: `import someLib from "https://esm.sh/some-lib@1.0.0"`
-  - WARNING: esm.sh is unreliable and often fails
+  - WARNING: esm.sh is unreliable and often fails frequently
   - Always have a backup plan (use Deno @std/* or implement yourself)
 - You can implement anything yourself - you're senior level
 
@@ -36,25 +38,32 @@ Break it down into smaller pieces OR delegate to specialized agents. No excuses.
 - **NEVER** use checkboxes (✅ ❌ ☑ ✓ ✔), progress markers, or completion indicators
 - **NEVER** use words like "completed", "done", "finished", "implemented", "working", "passing", "fixed", "resolved", "achieved", "success"
 - **ONLY** write about what is NOT done, NOT working, NOT implemented, NOT tested
-- **When something is done:** DELETE the entire item from this file immediately
+- **When something is done:** DELETE the entire item from this file immediately - no exceptions
 - **If you find checkboxes or achievements:** DELETE those items immediately - they violate the core purpose of this file
 
 **WHY THESE RULES EXIST:**
-This file is a TODO list, not a progress report. Achievements go in MEMORY.md or git commits, not here.
+This file is a TODO list, not a progress report. Achievements go in MEMORY.md or git commits, NEVER here.
 
 **IF YOU ARE TEMPTED TO:**
 - Add a checkbox → DELETE items that are done instead
 - Report progress → DELETE items that are done instead
 - Celebrate success → DELETE items that are done and move on
-- Ask "what should I do next?" → Read the WORK ORDER section and do the next thing
-- Say a task is "too large" → Break it down or delegate using the Task tool
-- Say you need "permission" → You don't. You're senior level. Just do it.
-- Say something is "blocked" → Nothing is blocked. Find another way or delegate.
+- Ask "what should I do next?" → Read the WORK ORDER section and implement the next thing immediately
+- Say a task is "too large" → Break it down or delegate using the Task tool immediately
+- Say you need "permission" → You don't. You're senior level. Just implement it immediately.
+- Say something is "blocked" → Nothing is blocked. Find another way or delegate immediately.
 
-**REMEMBER:** You can delegate to other specialized agents using the Task tool. Use it for:
+**🚨 ENFORCEMENT RULES 🚨**
+- When you open this file and see checkboxes (✅ ❌ etc): DELETE those items immediately
+- When you open this file and see achievement language: DELETE those items immediately
+- When you finish implementing something: DELETE that item from this file immediately
+- Your job is to SHRINK this file by implementing features, NOT grow it with reports
+
+**REMEMBER:** You can and MUST delegate to other specialized agents using the Task tool. Use it for:
 - Parallel work on multiple test files
 - Research tasks (finding documentation, examples)
 - Complex implementations you want to offload
+- ANY task that can be done in parallel
 
 # What is NOT Done
 
@@ -62,33 +71,32 @@ This file is a TODO list, not a progress report. Achievements go in MEMORY.md or
 
 **THIS IS YOUR SINGULAR ASSIGNMENT:**
 
-You must create comprehensive test coverage for nixpkgs.lib files. This is NOT optional. This is NOT negotiable. This task is LARGE and COMPLEX - exactly the kind of task a senior developer excels at.
+You must create comprehensive test coverage for nixpkgs.lib files. This is NOT optional. This is NOT negotiable. This task is LARGE and COMPLEX - exactly the kind of task you are REQUIRED to excel at.
 
-**WHAT YOU MUST IMPLEMENT RIGHT NOW:**
-1. Fetch ALL missing nixpkgs.lib files from https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/
-2. Create comprehensive test suites for EVERY file (minimum 5-10 tests per function)
-3. Test edge cases, error conditions, and real-world usage patterns
-4. Achieve 50%+ test coverage of all nixpkgs.lib files (at minimum)
-5. Fix ANY bugs discovered during testing
+**WHAT IS NOT IMPLEMENTED RIGHT NOW:**
+1. Comprehensive test coverage for ALL nixpkgs.lib files (currently most files are NOT tested)
+2. Edge case testing for translator features (NOT tested)
+3. Advanced fetcher features (NOT fully implemented)
 
-**HOW TO HANDLE THIS LARGE TASK:**
+**HOW TO IMPLEMENT THIS LARGE TASK:**
 - Break it down into smaller sub-tasks
-- Work on multiple files in PARALLEL using multiple agents
-- Delegate to specialized agents: `cld "fetch and test lists.nix with 30+ test cases"`
-- Delegate research: `cld "research how nixpkgs.lib.attrsets functions work in nix repl"`
-- Delegate implementation: `cld "create comprehensive test suite for options.nix"`
+- Work on multiple files in PARALLEL using multiple Task tool invocations with subagent_type="general-purpose"
+- Delegate to specialized agents via Task tool:
+  - Task: "Fetch and test lists.nix with 30+ test cases covering all functions"
+  - Task: "Research how nixpkgs.lib.attrsets functions work in nix repl and document behavior"
+  - Task: "Create comprehensive test suite for options.nix with edge cases"
 - Use esm.sh for npm modules ONLY (always have Deno @std/* backups because esm.sh fails frequently)
 - No excuses about complexity, time, or difficulty
-- Start immediately and work continuously until complete
+- Start immediately and work continuously until items are deleted from this file
 
-**YOUR PHILOSOPHY:**
-- Never ask for permission - just implement
-- Never report achievements - just delete completed items from this file
-- Never say tasks are blocked - find another way or delegate
-- Never say tasks are too large - break them down or delegate
+**YOUR IMPLEMENTATION PHILOSOPHY:**
+- Never ask for permission - just implement immediately
+- Never report achievements - just delete completed items from this file immediately
+- Never say tasks are blocked - find another way or delegate immediately
+- Never say tasks are too large - break them down or delegate immediately
 - Never stop until all items are deleted from this file
 
-**JUST IMPLEMENT. NO STOPPING. NO ASKING FOR PERMISSION. NO REPORTING ACHIEVEMENTS.**
+**IMPLEMENT. DELETE COMPLETED ITEMS. REPEAT.**
 
 ### What is NOT Done (DELETE ITEMS AS YOU COMPLETE THEM)
 
@@ -229,54 +237,60 @@ curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/<filename>.ni
 
 **🚨 CRITICAL RULE: Work on priorities in order. Do NOT skip ahead. Do NOT ask permission to move to next priority. Just delete items as you finish them. 🚨**
 
-**PRIORITY 1: Test existing fixtures (START HERE - 1-2 hours total)**
-- fetchers.nix - NOT TESTED (fixtures/nixpkgs-lib/lib/fetchers.nix exists, create test file)
-- licenses.nix - NOT TESTED (fixtures/nixpkgs-lib/lib/licenses.nix exists, create test file)
+**PRIORITY 1: Test existing fixtures (START HERE)**
+- fetchers.nix - NOT TESTED (fixtures/nixpkgs-lib/lib/fetchers.nix exists, test file does NOT exist)
+- licenses.nix - NOT TESTED (fixtures/nixpkgs-lib/lib/licenses.nix exists, test file does NOT exist)
 
-Instructions: Create test files, run `deno test --allow-all`, fix any bugs found, then DELETE these lines.
+What to implement: Create main/tests/nixpkgs_lib_fetchers_test.js and main/tests/nixpkgs_lib_licenses_test.js with comprehensive test coverage (minimum 10 tests per file). Run `deno test --allow-all`, fix any bugs, then DELETE these lines.
 
-**PRIORITY 2: Fetch and test critical files (DO NEXT - 8-16 hours total)**
+**PRIORITY 2: Fetch and test critical files (DO NEXT)**
 - lists.nix - NOT FETCHED, NOT TESTED (~30 functions: map, filter, fold, flatten, unique, sort, etc.)
 - attrsets.nix - NOT FETCHED, NOT TESTED (~25 functions: mapAttrs, filterAttrs, mergeAttrs, etc.)
 - options.nix - NOT FETCHED, NOT TESTED (~20 functions: mkOption, mkEnableOption, mkDefault, etc.)
 
-Instructions: Fetch from nixpkgs master, create comprehensive tests (5-10 per function), fix bugs, DELETE these lines.
+What to implement: Use Bash to curl files from https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/, create test files with 5-10 tests per function, fix bugs, DELETE these lines.
 
-**PRIORITY 3: Fetch and test utility files (DO AFTER PRIORITY 2 - 6-12 hours total)**
+**PRIORITY 3: Fetch and test utility files (DO AFTER PRIORITY 2)**
 - meta.nix - NOT FETCHED, NOT TESTED (metadata utility functions)
 - debug.nix - NOT FETCHED, NOT TESTED (debugging helpers)
 - filesystem.nix - NOT FETCHED, NOT TESTED (filesystem operations)
 - derivations.nix - NOT FETCHED, NOT TESTED (derivation utilities)
 
-Instructions: Fetch from nixpkgs master, create comprehensive tests, fix bugs, DELETE these lines.
+What to implement: Use Bash to curl files from nixpkgs master, create comprehensive test files, fix bugs, DELETE these lines.
 
-**PRIORITY 4: Test translator edge cases (ONLY AFTER PRIORITIES 1-3 - 2-3 hours total)**
-- Nested `@` patterns - NOT TESTED (create translator test cases)
-- Ellipsis with defaults `{ a ? 1, ... }` - NOT TESTED (create translator test cases)
-- Multi-line strings with mixed indentation - NOT TESTED (create translator test cases)
-- Complex operator precedence - NOT TESTED (create translator test cases)
+**PRIORITY 4: Test translator edge cases (ONLY AFTER PRIORITIES 1-3)**
+- Nested `@` patterns - NOT TESTED (translator feature exists but NOT tested)
+- Ellipsis with defaults `{ a ? 1, ... }` - NOT TESTED (translator feature exists but NOT tested)
+- Multi-line strings with mixed indentation - NOT TESTED (translator feature exists but NOT tested)
+- Complex operator precedence - NOT TESTED (translator feature exists but NOT tested)
 
-Instructions: Create translator test files with edge cases, fix translator bugs, DELETE these lines.
+What to implement: Create main/tests/translator_edge_cases_test.js with comprehensive edge case tests, fix translator bugs, DELETE these lines.
 
-**PRIORITY 5: Implement advanced features (OPTIONAL - only if user explicitly requests)**
-- fetchClosure - PARTIAL IMPLEMENTATION (needs binary cache API, NAR parsing, signatures)
-- getFlake - PARTIAL IMPLEMENTATION (needs flake.lock parsing, registry lookups)
-- fetchTree edge cases - NOT IMPLEMENTED (type='path', type='indirect')
+**PRIORITY 5: Implement advanced features (ONLY if user explicitly requests)**
+- fetchClosure - PARTIAL IMPLEMENTATION (binary cache API NOT implemented, NAR parsing NOT implemented, signature verification NOT implemented)
+- getFlake - PARTIAL IMPLEMENTATION (flake.lock parsing NOT implemented, registry lookups NOT implemented)
+- fetchTree edge cases - NOT IMPLEMENTED (type='path' NOT implemented, type='indirect' NOT implemented)
 
-Instructions: Only work on these if user specifically asks. Otherwise IGNORE and focus on Priorities 1-4.
+What to implement: IGNORE these unless user specifically requests. Focus on Priorities 1-4 instead.
 
 
 ---
 
-## Immediate Actions
+## What to Implement Right Now
 
-**Step 1: Test existing fixtures**
-1. Create `main/tests/nixpkgs_lib_fetchers_test.js`
-2. Create `main/tests/nixpkgs_lib_licenses_test.js`
-3. Run tests: `deno test --allow-all`
-4. Delete the completed items from PRIORITY 1
+**Immediate Action 1: Test existing fixtures (PRIORITY 1)**
+Files that do NOT exist and must be created:
+- `main/tests/nixpkgs_lib_fetchers_test.js` - NOT CREATED
+- `main/tests/nixpkgs_lib_licenses_test.js` - NOT CREATED
 
-**Step 2: Fetch critical missing files**
+Implementation steps:
+1. Create both test files with minimum 10 tests each
+2. Run tests: `deno test --allow-all`
+3. Fix any bugs discovered
+4. Delete PRIORITY 1 items from this file
+
+**Immediate Action 2: Fetch missing files (PRIORITY 2)**
+Files that do NOT exist in fixtures and must be fetched:
 ```bash
 cd main/tests/fixtures/nixpkgs-lib/lib/
 curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/lists.nix
@@ -288,14 +302,19 @@ curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/filesystem.ni
 curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/derivations.nix
 ```
 
-**Step 3: Create comprehensive test suites**
-1. Test lists.nix - Create `main/tests/nixpkgs_lib_lists_test.js`
-2. Test attrsets.nix - Create `main/tests/nixpkgs_lib_attrsets_test.js`
-3. Test options.nix - Create `main/tests/nixpkgs_lib_options_test.js`
-4. Delete corresponding lines from priorities when done
+**Immediate Action 3: Create test suites for fetched files (PRIORITY 2)**
+Test files that do NOT exist and must be created:
+- `main/tests/nixpkgs_lib_lists_test.js` - NOT CREATED
+- `main/tests/nixpkgs_lib_attrsets_test.js` - NOT CREATED
+- `main/tests/nixpkgs_lib_options_test.js` - NOT CREATED
 
-**RULES:**
-- Delete items from this file when done (no marking)
+Implementation steps:
+1. Create test files with 5-10 tests per function
+2. Run tests, fix bugs
+3. Delete corresponding items from PRIORITY 2
+
+**IMPLEMENTATION RULES:**
+- Delete items from this file immediately when implementation is complete (no marking, no checkboxes)
 - Break large tasks into smaller ones
-- Delegate with `cld <task>` if needed
-- No excuses about complexity or time
+- Delegate using Task tool with subagent_type="general-purpose"
+- No excuses about complexity or time - just implement
