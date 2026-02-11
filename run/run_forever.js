@@ -51,7 +51,7 @@ while (true) {
         const coachStart = Date.now()
         await $`claude --allowedTools "Task,Edit,Read,Update,Write,WebFetch,WebSearch,Glob,Grep,Write(./**/*),Bash(*)" -p ${`
                 There is another bot running, but it tends to run off the rails. You are a coach that keeps them on track. Please edit the prompt.md file to enforce the following:
-                - If there are checkboxes (✅) in the prompt.md remove those items and anything else that looks like an achievement.
+                - If there are checkboxes (✅) in the prompt.md remove those items and remove absolutely anything else that looks like an achievement.
                 - Find what is NOT implemented and then say "Agent, your job is to specifically implement <feature> no matter how hard or large of a task it is."
                 - Make sure this is always at the top:
                     You are tasked with faithfully creating a nix runtime in JavaScript. A system that both translates nix code to JavaScript and has a runtime.js that implements the nix builtins and operators faithfully.
