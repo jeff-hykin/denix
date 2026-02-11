@@ -68,11 +68,12 @@ import { resolveIndirectReference } from "./registry.js"
 //
 
 
-    export class Interpolater {
+    export class InterpolatedString {
         constructor(strings, getters) {
             this.strings = strings
             this.getters = getters
             this.cached = null
+            this.isPath = false
         }
         toString() {
             if (this.cached == null) {
@@ -104,10 +105,11 @@ import { resolveIndirectReference } from "./registry.js"
         }
     }
 
-    export class InterpolatedString extends Interpolater {
-    }
-
-    export class Path extends Interpolater {
+    export class Path extends InterpolatedString {
+        constructor(strings, getters) {
+            super(strings, getters)
+            this.isPath = true
+        }
     }
 
 // 
@@ -219,10 +221,10 @@ import { resolveIndirectReference } from "./registry.js"
                     case "object":
                         if (value == null) {
                             return "null"
-                        } else if (value instanceof InterpolatedString) {
-                            return "string"
                         } else if (value instanceof Path) {
                             return "path"
+                        } else if (value instanceof InterpolatedString) {
+                            return "string"
                         } else if (value instanceof Array) {
                             return "list"
                         } else if (Object.getPrototypeOf({}) == Object.getPrototypeOf(value)) {
