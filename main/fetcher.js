@@ -67,7 +67,9 @@ export async function downloadWithRetry(url, destPath, retries = 3) {
 
             // Exponential backoff: 1s, 2s, 4s
             const delayMs = Math.pow(2, attempt) * 1000;
-            console.error(`Download attempt ${attempt + 1} failed, retrying in ${delayMs}ms...`);
+            if (Deno.env.get("NIX_DEBUG")) {
+                console.error(`Download attempt ${attempt + 1} failed, retrying in ${delayMs}ms...`);
+            }
             await new Promise(resolve => setTimeout(resolve, delayMs));
         }
     }

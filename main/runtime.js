@@ -1637,7 +1637,10 @@ import { resolveIndirectReference } from "./registry.js"
         // evaluation control
             "break": (value)=>value, // NOTE: we just ignore the debugging aspect
             "trace": (e1)=>(e2)=>{
-                console.error(builtins.toString(e1))
+                // Note: Nix trace prints to stderr, we emit to stderr only if NIX_DEBUG is set
+                if (Deno.env.get("NIX_DEBUG")) {
+                    console.error(builtins.toString(e1))
+                }
                 return e2
             },
             "traceVerbose": (e1)=>(e2)=>{

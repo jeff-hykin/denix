@@ -270,7 +270,6 @@ const nixNodeToJs = (node)=>{
             }
             return `operators.${operatorName}(${nixNodeToJs(children[0])}, ${nixNodeToJs(children[2])})`
         }
-        console.debug(`xmlStylePreview(node) is:`,xmlStylePreview(node))
         return node.text
     } else if (node.type == "string_expression") {
         const children = valueBasedChildren(node)

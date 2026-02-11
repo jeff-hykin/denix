@@ -47,14 +47,18 @@ async function fetchGlobalRegistry() {
         })
 
         if (!response.ok) {
-            console.warn(`Failed to fetch global registry: HTTP ${response.status}`)
+            if (Deno.env.get("NIX_DEBUG")) {
+                console.warn(`Failed to fetch global registry: HTTP ${response.status}`)
+            }
             return null
         }
 
         const text = await response.text()
         return JSON.parse(text)
     } catch (error) {
-        console.warn(`Failed to fetch global registry: ${error.message}`)
+        if (Deno.env.get("NIX_DEBUG")) {
+            console.warn(`Failed to fetch global registry: ${error.message}`)
+        }
         return null
     }
 }
