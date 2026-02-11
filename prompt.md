@@ -6,11 +6,11 @@ A system that both translates nix code to JavaScript and has a runtime.js that i
 
 **YOUR JOB IS TO FOCUS ON WRITING CODE AND IMPLEMENTING WHAT IS NOT IMPLEMENTED AND NOT WORKING.**
 
-Report what remains to be done. You are a SENIOR LEVEL DEVELOPER - no task is blocked for you because you can always delegate your task to other agents by calling the Task tool with subagent_type="general-purpose" or other specialized agents.
+Report what remains to be done. You are a senior level developer - no task is blocked for you because you can always delegate your task to other agents by calling the Task tool with appropriate subagent_type.
 
 **AGENT, YOUR JOB IS TO SPECIFICALLY IMPLEMENT COMPREHENSIVE NIXPKGS.LIB TESTING NO MATTER HOW HARD OR LARGE OF A TASK IT IS.**
 
-This is your singular assignment. You are NOT allowed to skip this. You are NOT allowed to say it's too hard. You are a SENIOR DEVELOPER and large tasks are YOUR SPECIALTY. Break down the task, delegate to multiple agents in parallel, and implement until completion.
+This is your singular assignment. You are NOT allowed to skip this. You are NOT allowed to say it's too hard. Break down the task, delegate to multiple agents in parallel, and implement until completion.
 
 **YOUR SINGULAR FOCUS:**
 Write code and implement what is NOT implemented and NOT working. Report what remains to be done.
@@ -32,16 +32,16 @@ Write code and implement what is NOT implemented and NOT working. Report what re
   - Example delegation: "Fetch lists.nix from nixpkgs master branch and create comprehensive test suite with 30+ tests covering map, filter, fold, flatten, unique, sort, partition, and all other list functions"
   - Use delegation LIBERALLY - delegate research, testing, implementation, anything that can be parallelized
   - Multiple agents can work in parallel - launch 3-5 agents simultaneously for different files
-  - Large tasks are YOUR SPECIALTY because you delegate and parallelize
+  - Large tasks require parallelization through delegation
 - You can use npm modules but ONLY through https://esm.sh/NPM_MODULE_NAME
   - Example: `import someLib from "https://esm.sh/some-lib@1.0.0"`
   - WARNING: esm.sh is unreliable and often fails - it does NOT always work
   - Always have a backup plan (use Deno @std/* or implement yourself)
   - If esm.sh fails, immediately switch to Deno @std/* or implement yourself
-- You can implement anything yourself - you're senior level
+- You can implement anything yourself
 
 **IF YOU SEE A LARGE OR HARD TASK:**
-Break it down into smaller pieces OR delegate to specialized agents. No excuses. Large tasks are YOUR SPECIALTY.
+Break it down into smaller pieces OR delegate to specialized agents. No excuses.
 
 **YOUR THREE COMMANDMENTS:**
 1. Write code that implements what is NOT implemented
@@ -132,7 +132,8 @@ Comprehensive test coverage for nixpkgs.lib files is NOT done. Critical files li
   - Agent 3: "Fetch options.nix from nixpkgs master and create comprehensive test suite with 20+ tests"
   - Agent 4: "Create comprehensive test suite for fetchers.nix in fixtures directory"
   - Agent 5: "Create comprehensive test suite for licenses.nix in fixtures directory"
-- Use npm modules ONLY through https://esm.sh/NPM_MODULE_NAME (but it does NOT always work)
+- Use npm modules ONLY through https://esm.sh/NPM_MODULE_NAME
+  - WARNING: esm.sh is unreliable and often fails - it does NOT always work
   - If esm.sh fails: immediately switch to Deno @std/* or implement yourself
   - Never report esm.sh failures as blockers - just use alternatives immediately
 - No excuses about complexity, time, or difficulty - just implement
