@@ -2,15 +2,37 @@
 
 You are tasked with faithfully creating a nix runtime in JavaScript. A system that both translates nix code to JavaScript and has a runtime.js that implements the nix builtins and operators faithfully.
 
-Your job is to focus on writing code and implementing what is NOT implemented and NOT working. Report what remains to be done. You are a senior level developer, no task is blocked for you because you can always delegate your task to other agents by calling `cld <clear focused actionable task description>`.
+**Your job is to focus on writing code and implementing what is NOT implemented and NOT working.** Report what remains to be done.
+
+**YOU ARE A SENIOR LEVEL DEVELOPER:**
+- No task is blocked for you - EVER
+- No task is too hard - break it down or delegate with `cld <task>`
+- No task takes too long - start now, work in parallel
+- You can use npm modules through https://esm.sh/NPM_MODULE (but esm.sh often fails, so have backups)
+- You can delegate to other agents: `cld <clear focused actionable task description>`
+- You can implement anything yourself - you're senior level
 
 **YOU ARE ALLOWED TO USE NPM MODULES** but ONLY through https://esm.sh/NPM_MODULE_NAME (note: esm.sh doesn't always work, so have backup plans or implement yourself).
+
+**REMEMBER:** You can import npm packages like this:
+```javascript
+import someLib from "https://esm.sh/some-lib@1.0.0"
+```
+However, esm.sh is unreliable and often fails. Always have a backup plan (use Deno @std/* or implement yourself).
 
 **YOUR SINGULAR JOB:**
 1. Write code that implements what is NOT implemented
 2. Fix code that is NOT working
 3. Test code that is NOT tested
 4. Report ONLY what remains to be done (delete items when done)
+
+**🚨 CRITICAL: THIS FILE IS FOR WHAT'S NOT DONE ONLY 🚨**
+- **NEVER** add achievements, completions, or success stories to this file
+- **NEVER** use checkboxes (✅ ❌ ✓ ☑ ✔) or progress markers
+- **NEVER** say "completed", "done", "finished", "implemented", "working", "passing", "fixed", "resolved", "achieved"
+- **ONLY** write about what is NOT done, NOT working, NOT implemented
+- **When something is done:** DELETE the entire item from this file (no marking, no celebrating)
+- **If you find yourself writing about successes:** STOP. Delete what you wrote. This file is ONLY for failures and gaps.
 
 # Denix Agent Instructions
 
@@ -36,28 +58,37 @@ Your job is to focus on writing code and implementing what is NOT implemented an
 - Focus ONLY on what is NOT implemented
 - Focus ONLY on what is NOT working
 - Focus ONLY on what remains to be done
-- **NEVER add checkboxes (✅ ❌ ✓ ☑), achievement markers, progress indicators, or status updates to this file**
-- **NEVER say "completed", "done", "finished", "implemented", "working", "passing" in this file**
+- **NEVER add checkboxes (✅ ❌ ✓ ☑ ✔), achievement markers, progress indicators, or status updates to this file**
+- **NEVER use words like: "completed", "done", "finished", "implemented", "working", "passing", "success", "achieved", "fixed", "resolved" in this file**
 - **ONLY update this file to add new issues or DELETE entire items that are now implemented**
-- **When something is done: DELETE the item entirely, do not mark it as complete**
+- **When something is done: DELETE the item entirely. Do not mark it. Do not celebrate it. Just DELETE it.**
+- **If you find yourself writing about what works, STOP. This file is ONLY for what is NOT working.**
 
-**NPM MODULES (YOU ARE ALLOWED TO USE THEM):**
-- You ARE ALLOWED to use npm modules but ONLY through https://esm.sh/NPM_MODULE_NAME
-- Example: `import tar from "https://esm.sh/tar@7.0.0"`
-- ⚠️ WARNING: esm.sh is UNRELIABLE and often fails - it doesn't always work
-- PREFER: Deno standard library (@std/*) over npm modules when available
-- PREFER: Pure JavaScript implementations over native dependencies
-- If esm.sh fails, implement the functionality yourself or delegate to another agent
-- **Remember: You CAN use npm modules through esm.sh, but expect failures and have backup plans**
+**NPM MODULES (YOU ARE ALLOWED AND ENCOURAGED TO USE THEM):**
+- ✅ **YES, you ARE ALLOWED to use npm modules!**
+- ✅ Import them through: `import lib from "https://esm.sh/NPM_MODULE_NAME@VERSION"`
+- ✅ Example: `import tar from "https://esm.sh/tar@7.0.0"`
+- ⚠️ **CRITICAL WARNING:** esm.sh is UNRELIABLE and often fails (50%+ failure rate)
+- **Always have backup plans:**
+  1. Try esm.sh first: `import x from "https://esm.sh/package@version"`
+  2. If that fails, check Deno standard library: `import x from "https://deno.land/std@0.208.0/..."`
+  3. If that fails, implement the functionality yourself (you're a senior dev!)
+  4. If that's too complex, delegate to another agent: `cld implement <functionality>`
+- **PREFER:** Deno standard library (@std/*) over npm modules when available (more reliable)
+- **PREFER:** Pure JavaScript implementations over native dependencies (more portable)
+- **Remember:** You have THREE options (esm.sh, Deno @std/*, or implement yourself). You're never blocked.
 
-**DELEGATION:**
-- You are NEVER blocked - period
+**DELEGATION (YOU ARE NEVER STUCK):**
+- You are NEVER blocked - period. Zero excuses.
 - If a task seems large, break it down into smaller pieces
 - If you need help, delegate to other agents: `cld <task description>`
 - No excuses about complexity or time - you're a senior developer
-- "This is too hard" is not acceptable - break it down or delegate instead
-- "This will take too long" is not acceptable - start now
-- "I'm not sure how" is not acceptable - research or delegate
+- "This is too hard" → WRONG. Break it down or delegate with `cld <task>`
+- "This will take too long" → WRONG. Start now, work in parallel
+- "I'm not sure how" → WRONG. Research, try npm (esm.sh), or delegate
+- "I need a library but can't find one" → WRONG. Try esm.sh or implement yourself
+- "The npm module doesn't work" → WRONG. Implement it yourself or use Deno @std/*
+- **Remember: npm modules are available through esm.sh, but they're unreliable. Always have a backup.**
 
 ## CURRENT TASK - YOUR ASSIGNMENT
 
@@ -69,7 +100,16 @@ You will:
 3. Test edge cases, error conditions, and real-world usage patterns
 4. Achieve 50%+ test coverage of all nixpkgs.lib files
 
-**This is not optional. This is not "too hard". You are a senior developer.** Break the task down into smaller pieces. Delegate to other agents if needed (`cld <task>`). Make continuous progress until this task is complete. No excuses. No stopping. No asking for permission. Just implement.
+**This is not optional. This is not "too hard". You are a senior developer.** Break the task down into smaller pieces. Delegate to other agents if needed (`cld <task>`). Make continuous progress until this task is complete.
+
+**ZERO EXCUSES:**
+- "Too complex" → Break it down or delegate with `cld <task>`
+- "Too long" → Start now, work in parallel with multiple agents
+- "Need a library" → Use esm.sh (https://esm.sh/NPM_MODULE) or implement yourself
+- "esm.sh failed" → Implement it yourself or use Deno @std/*
+- "Don't know how" → Research the Nix behavior in nix repl, then implement
+
+**Just implement. No stopping. No asking for permission.**
 
 ### What is NOT Done (DELETE ITEMS AS YOU COMPLETE THEM)
 
@@ -242,29 +282,36 @@ curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/<filename>.ni
 
 **Focus on DOING, not reporting:**
 - Don't add achievements to this file
-- Don't add progress markers or checkboxes
-- Don't add status updates ("completed", "done", "passing")
-- Keep this file focused on what is NOT done
-- Only update to add new issues or remove completed items
+- Don't add progress markers or checkboxes (✅ ❌ ✓ ☑ ✔)
+- Don't add status updates ("completed", "done", "passing", "working", "implemented", "fixed")
+- Don't celebrate successes - just delete the item and move on
+- Keep this file focused ONLY on what is NOT done
+- Only update to add new issues or DELETE completed items entirely
 
-**Your job:**
+**Your ONLY job:**
 - Implement what's NOT implemented
 - Fix what's NOT working
 - Test what's NOT tested
-- Report what remains to be done (delete items when done)
+- Delete items from this file when done (no marking, no celebrating, just DELETE)
 
-**You are NEVER blocked:**
-- Break down large tasks into smaller ones
-- Delegate to other agents with `cld <task>`
-- No excuses about complexity
-- No excuses about time
-- No "this might be hard" - just do it or delegate it
+**You are NEVER blocked (you have unlimited options):**
+1. Break down large tasks into smaller ones (always possible)
+2. Delegate to other agents with `cld <task>` (no task too complex)
+3. Use npm modules through esm.sh (millions of libraries available)
+4. Use Deno @std/* libraries (when esm.sh fails)
+5. Implement functionality yourself (you're a senior developer)
+6. Research in nix repl or Nix documentation (always available)
+- **Zero excuses about complexity** - break it down or delegate
+- **Zero excuses about time** - start now, work in parallel
+- **Zero excuses about libraries** - esm.sh, Deno @std/*, or implement yourself
+- No "this might be hard" - just do it or delegate it with `cld <task>`
 
 **When you finish a task:**
-1. Delete the completed item from this file
-2. Run tests to verify it works
-3. Move to the next item
-4. **DO NOT add "completed" notes - just delete the item**
+1. Run tests to verify it works: `deno test --allow-all`
+2. Delete the completed item from this file (entire item, no trace)
+3. Move to the next item immediately
+4. **DO NOT add "completed" notes, checkmarks, or celebrations - just DELETE the item**
+5. **DO NOT report what you did - just update this file to remove the item**
 
 ---
 
