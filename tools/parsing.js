@@ -7,7 +7,7 @@ export const parser = await createParser(nixTreeSitter) // argument is path or U
 export const parse = (...args) => parser.parse(...args)
 
 // For visualizing nix programs as if they were HTML
-export const treetoAstString = (tree) => {
+const treetoAstString = (tree) => {
     const rootNode = tree.rootNode || tree
     const outputs = []
     let indent = ""
@@ -26,4 +26,5 @@ export const treetoAstString = (tree) => {
     return outputs.join("\n")
 }
 
+// Export only the alias (preferred name)
 export const xmlStylePreview = treetoAstString

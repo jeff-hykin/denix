@@ -36,7 +36,8 @@ import md5 from "./md5.js"
     // sha256() returns an object you can call .add(data) zero or more time and .digest() at the end
     // digest is a 32-byte Uint8Array instance with an added .hex() function.
     // Input should be either a string (that will be encoded as UTF-8) or an array-like object with values 0..255.
-    export function sha256Bytes(data) {
+    // Internal use only - not exported (only used by sha256Hex)
+    function sha256Bytes(data) {
         let h0 = 0x6a09e667,
             h1 = 0xbb67ae85,
             h2 = 0x3c6ef372,
@@ -167,7 +168,8 @@ import md5 from "./md5.js"
     }
 
     // HMAC-SHA256 implementation
-    export function hmacSha256Bytes(key, message) {
+    // Internal use only - not exported (unused, kept for future potential use)
+    function hmacSha256Bytes(key, message) {
         if (typeof key === "string") {
             key = typeof TextEncoder === "undefined" ? Buffer.from(key) : new TextEncoder().encode(key)
         }
