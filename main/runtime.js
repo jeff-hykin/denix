@@ -108,7 +108,7 @@ import { resolveIndirectReference } from "./registry.js"
                 // inherit parent scope
                 ...runtime.scopeStack.slice(-1)[0],
             }
-            
+
             runtime.scopeStack.push(nixScope)
             // args are now setup
             try {
@@ -116,6 +116,21 @@ import { resolveIndirectReference } from "./registry.js"
             } finally {
                 runtime.scopeStack.pop()
             }
+        }
+    }
+
+    function createDefGetter(runtime) {
+        return function defGetter(obj, key, fn) {
+            // Simplified helper for defining lazy getters in recursive attribute sets
+            // Replaces the verbose Object.defineProperty + get(){return value;} pattern
+            Object.defineProperty(obj, key, {
+                enumerable: true,
+                get() {
+                    // Call the function with the current scope (obj is nixScope in rec attrsets)
+                    // The function body can reference nixScope and other lazy properties
+                    return fn(obj)
+                },
+            })
         }
     }
 
@@ -2901,6 +2916,7 @@ import { resolveIndirectReference } from "./registry.js"
         return {
             createFunc: createCreateFunc(runtimeWithScope),
             createScope: createCreateScope(runtimeWithScope),
+            defGetter: createDefGetter(runtimeWithScope),
             runtime: runtimeWithScope,
         }
     }

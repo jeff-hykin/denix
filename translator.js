@@ -161,7 +161,7 @@ export const convertToJs = async (code, options = {}) => {
 
     if (needsRuntime) {
         result += `import { createRuntime } from "${runtimePath}"\n`
-        result += `const {runtime, createFunc, createScope} = createRuntime()\n`
+        result += `const {runtime, createFunc, createScope, defGetter} = createRuntime()\n`
 
         // Extract commonly used runtime components if they're referenced
         if (output.includes("operators.")) {
@@ -223,7 +223,7 @@ export const convertToJsSync = (code, options = {}) => {
 
     if (needsRuntime) {
         result += `import { createRuntime } from "${runtimePath}"\n`
-        result += `const {runtime, createFunc} = createRuntime()\n`
+        result += `const {runtime, createFunc, createScope, defGetter} = createRuntime()\n`
 
         // Extract commonly used runtime components if they're referenced
         if (output.includes("operators.")) {
@@ -260,7 +260,7 @@ const nixNodeToJs = (node)=>{
             return node.text
         } else {
             // fun fact, in nix builtins and other identifiers can all be overridden with local variable names
-            return varAccess(node.text)
+            return "nixScope" + varAccess(node.text)
         }
     } else if (node.type == "integer_expression") {
         // Note: Nix does not support hex (0xFF) or octal (0o77) literals
@@ -323,7 +323,7 @@ const nixNodeToJs = (node)=>{
             if (!operatorName) {
                 throw new NotImplemented(`error: operator ${operator} is not supported yet`)
             }
-            return `operators.${operatorName}(${nixNodeToJs(children[0])}, ${nixNodeToJs(children[2])})`
+            return `operators${varAccess(operatorName)}(${nixNodeToJs(children[0])}, ${nixNodeToJs(children[2])})`
         }
         console.debug(`xmlStylePreview(node) is:`,xmlStylePreview(node))
         return node.text
@@ -793,16 +793,16 @@ const nixNodeToJs = (node)=>{
 
             // Create base objects for nested bindings
             for (const [baseName, _] of Object.entries(bindingsByBase)) {
-                code += `    ${varAccess(baseName)} = {};\n`
+                code += `    nixScope${varAccess(baseName)} = {};\n`
             }
 
             // Add simple constant bindings
             for (const {name, value, isConstant} of simpleBindings.filter(b => b.isConstant)) {
                 if (value.type === "select") {
                     // Special case for inherit_from
-                    code += `    ${varAccess(name)} = ${nixNodeToJs(value.source)}[${JSON.stringify(value.attr)}];\n`
+                    code += `    nixScope${varAccess(name)} = ${nixNodeToJs(value.source)}[${JSON.stringify(value.attr)}];\n`
                 } else {
-                    code += `    ${varAccess(name)} = ${nixNodeToJs(value)};\n`
+                    code += `    nixScope${varAccess(name)} = ${nixNodeToJs(value)};\n`
                 }
             }
 
@@ -826,9 +826,9 @@ const nixNodeToJs = (node)=>{
             }
 
             // For rec, we need to push the scope so lazy bindings can reference other attributes
-            // Add lazy bindings
+            // Add lazy bindings using defGetter helper
             for (const {name, value, isConstant} of simpleBindings.filter(b => !b.isConstant)) {
-                code += `        Object.defineProperty(nixScope, ${JSON.stringify(name)}, {enumerable: true, get(){return ${nixNodeToJs(value)};}});\n`
+                code += `        defGetter(nixScope, ${JSON.stringify(name)}, (nixScope) => ${nixNodeToJs(value)});\n`
             }
             code += `        return nixScope;\n`
             code += `})`
@@ -915,10 +915,11 @@ const nixNodeToJs = (node)=>{
                 if (value.type === "select") {
                     // Special case for inherit_from
                     const indentPrefix = hasInheritFrom ? "    " : ""
-                    code += `    ${indentPrefix}obj[${JSON.stringify(key)}] = ${nixNodeToJs(value.source)}[${JSON.stringify(value.attr)}];\n`
+                    
+                    code += `    ${indentPrefix}obj${varAccess(key)} = ${nixNodeToJs(value.source)}${varAccess(value.attr)}\n`
                 } else {
                     const indentPrefix = hasInheritFrom ? "    " : ""
-                    code += `    ${indentPrefix}obj[${JSON.stringify(key)}] = ${nixNodeToJs(value)};\n`
+                    code += `    ${indentPrefix}obj${varAccess(key)} = ${nixNodeToJs(value)};\n`
                 }
             }
 
@@ -1136,16 +1137,16 @@ const nixNodeToJs = (node)=>{
 
         // Create base objects for nested bindings
         for (const [baseName, _] of Object.entries(bindingsByBase)) {
-            code += `        ${varAccess(baseName)} = {};\n`
+            code += `        nixScope${varAccess(baseName)} = {};\n`
         }
 
         // Add simple constant bindings
         for (const {name, value, isConstant} of simpleBindings.filter(b => b.isConstant)) {
             if (value.type === "select") {
                 // Special case for inherit_from: value is { type: "select", source: expr, attr: name }
-                code += `        ${varAccess(name)} = ${nixNodeToJs(value.source)}[${JSON.stringify(value.attr)}];\n`
+                code += `        nixScope${varAccess(name)} = ${nixNodeToJs(value.source)}[${JSON.stringify(value.attr)}];\n`
             } else {
-                code += `        ${varAccess(name)} = ${nixNodeToJs(value)};\n`
+                code += `        nixScope${varAccess(name)} = ${nixNodeToJs(value)};\n`
             }
         }
 
@@ -1314,8 +1315,8 @@ const isConstantExpression = (node) => {
 
 function varAccess(varName) {
     if (isValidKeyLiteral(varName)) {
-        return `nixScope.${varName}`
+        return `.${varName}`
     } else {
-        return `nixScope[${JSON.stringify(varName)}]`
+        return `[${JSON.stringify(varName)}]`
     }
 }
