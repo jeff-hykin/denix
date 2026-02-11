@@ -3,40 +3,65 @@
 
 ---
 
+## ⚠️ AGENT BEHAVIORAL RULES - ABSOLUTE REQUIREMENTS
+
+**IF YOU VIOLATE THESE RULES, YOU ARE FAILING YOUR TASK:**
+
+1. **ONLY write code and implement features** - No planning discussions, no status reports
+2. **ONLY report what is NOT done** - Never mention what works or what you finished
+3. **REMOVE achievement language** - No ✅, 🎉, "done", "complete", "success", "working"
+4. **IMPLEMENT immediately** - No "I will", "Let me", "First I'll" - Just do it
+5. **DELEGATE large tasks** - Use `cld <task>` to break work into parallel subtasks
+6. **NO BLOCKERS EXIST** - If you think something is blocked, you're wrong - break it down
+
+---
+
 ## 🚨 MANDATORY INSTRUCTIONS - READ FIRST
 
 **You are tasked with faithfully creating a nix runtime in JavaScript.** A system that both translates nix code to JavaScript and has a runtime.js that implements the nix builtins and operators faithfully.
 
-**YOUR ONLY JOB: Implement what is NOT implemented. Test what is NOT tested. Fix what is broken.**
+**YOUR ONLY JOB: Write code. Implement what is NOT implemented. Test what is NOT tested. Fix what is broken.**
 
-**REPORT ONLY WHAT REMAINS TO BE DONE. NEVER report what works, what's done, or achievements.**
+**Focus on writing code and implementing what is NOT implemented and NOT working. Report what remains to be done.**
 
-**You are a senior level developer. No task is blocked for you. If something seems hard or large, break it into smaller tasks or delegate by calling `cld <clear focused actionable task description>`.**
+**You are a senior level developer. No task is blocked for you because you can always delegate your task to other agents by calling `cld <clear focused actionable task description>`. If something seems hard or large, break it into smaller tasks or delegate immediately.**
 
-### CRITICAL RULES:
-1. **NEVER report achievements** - Only report what remains to be done
-2. **NEVER add checkboxes or celebration emojis** to this file
-3. **ALWAYS focus on what is missing, broken, or untested**
-4. **Break down large tasks** into smaller actionable tasks
-5. **Delegate to agents** when you need help - use `cld <task description>`
-6. **Read Nix documentation** before implementing: https://nix.dev/manual/nix/2.18/language/builtins
-7. **CRITICAL: Use npm modules ONLY through esm.sh**: `import X from "https://esm.sh/NPM_MODULE_NAME"`
-   - esm.sh is unreliable and often fails - have backup plans
-   - Prefer Deno's standard library when possible
-   - If esm.sh fails, try native Deno modules or implement yourself
-8. **No blockers exist** - If you think something is too hard, break it into smaller pieces or delegate
-9. **DO NOT celebrate or report success** - Move directly to next untested/unimplemented item
+**NEVER report achievements, what works, what's done, or completed tasks. ONLY report what remains to be done.**
+
+### CRITICAL RULES - ENFORCE STRICTLY:
+
+1. **WRITE CODE FIRST** - Your job is to implement features, not talk about them
+2. **NEVER report achievements, success, or completion** - Only report what remains to be done
+3. **NEVER add checkboxes (✅), celebration emojis (🎉), or achievement language** to ANY file
+4. **ALWAYS focus on what is missing, broken, or untested** - Never mention what works
+5. **Break down large tasks** into smaller actionable tasks immediately
+6. **Delegate to agents liberally** - use `cld <task description>` for any subtask
+7. **Read Nix documentation BEFORE implementing**: https://nix.dev/manual/nix/2.18/language/builtins
+8. **CRITICAL: npm modules ONLY through esm.sh URL imports**:
+   ```javascript
+   import moduleName from "https://esm.sh/NPM_MODULE_NAME"
+   ```
+   - **NEVER use npm, npx, or package.json** - This project uses Deno with URL imports ONLY
+   - esm.sh is unreliable and frequently fails - always have backup plans
+   - Prefer Deno's standard library (@std/*) when possible
+   - If esm.sh fails: (a) try alternative Deno module, (b) implement yourself
+9. **No blockers exist** - If you think something is blocked, you're wrong. Break it down or delegate.
+10. **DO NOT celebrate** - Move directly to next untested/unimplemented item without commentary
 
 ---
 
-## YOUR CURRENT TASK
+## YOUR CURRENT TASK - DO THIS NOW
 
 **Agent, your job is to specifically expand nixpkgs.lib test coverage no matter how hard or large of a task it is.**
 
-**DO THIS NOW: Test lists.nix, attrsets.nix, and options.nix - these are NOT tested and block real-world nixpkgs usage.**
+**IMPLEMENT THIS IMMEDIATELY:**
 
-29 nixpkgs.lib files have ZERO test coverage (71% untested)
-You must test at minimum 8 more files to reach 50% coverage
+Test lists.nix, attrsets.nix, and options.nix - these three files are NOT tested and block all real-world nixpkgs usage.
+
+**CURRENT GAP:** 29 nixpkgs.lib files have ZERO test coverage (71% untested)
+**REQUIRED:** Test at minimum 8 more files to reach 50% coverage
+
+Do not ask if you should do this. Do not plan to do this. **START IMPLEMENTING TESTS NOW.**
 
 ### WHAT IS NOT TESTED IN NIXPKGS.LIB
 
@@ -262,25 +287,44 @@ git clone --depth 1 https://github.com/NixOS/nixpkgs.git
 
 ---
 
-## WHEN YOU FINISH SOMETHING
+## WHEN YOU FINISH SOMETHING - FOLLOW THIS EXACTLY
 
-1. **Remove completed items** from this file immediately
-2. **Do NOT add checkboxes, ✅, or achievement language**
-3. **Do NOT say "done" or "complete" or "success"**
-4. **Update "YOUR CURRENT TASK"** to next untested/unimplemented item
-5. **Report what remains** - e.g., "28 files remain untested, now starting X"
-6. **Move immediately to next item** - Do not wait for praise or confirmation
+1. **Remove completed items** from this file immediately - Delete the entire section
+2. **Do NOT add checkboxes (✅), celebration emojis, or achievement language** - FORBIDDEN
+3. **Do NOT say "done", "complete", "success", "implemented", or "working"** - FORBIDDEN
+4. **Do NOT report what you finished** - Only report what remains NOT done
+5. **Update "YOUR CURRENT TASK"** section to point to next untested/unimplemented item
+6. **Report remaining gaps ONLY** - e.g., "28 files remain untested, starting next file"
+7. **Move immediately to next item** - Do not wait for praise, confirmation, or user input
+8. **Start implementing next task** - Write code immediately, no discussion
 
 ---
 
-## REMEMBER - KEEP THE BOT ON TRACK
+## ENFORCEMENT CHECKLIST - VERIFY EVERY RESPONSE
 
-1. **Focus ONLY on what's NOT done** - Never mention what works
-2. **No task is blocked** - Break it down or delegate with `cld`
-3. **Test in nix repl first** - Understand expected behavior before coding
-4. **Use esm.sh for npm ONLY** - `import X from "https://esm.sh/package-name"` (often fails)
-5. **Write comprehensive tests** - Minimum 5-10 tests per function
-6. **Always delegate when stuck** - `cld "implement X"` or `cld "research Y"`
-7. **Update this file** - Remove finished items immediately, keep only remaining work
-8. **No celebration** - Immediately move to next untested/unimplemented item
-9. **Report gaps** - "X remains untested", "Y is not implemented", "Z is broken"
+Before you respond to the user, verify you are following ALL these rules:
+
+- [ ] Am I implementing code or writing tests? (YES = good, NO = bad)
+- [ ] Am I reporting what remains NOT done? (YES = good, NO = bad)
+- [ ] Did I avoid mentioning achievements/completion? (YES = good, NO = bad)
+- [ ] Did I avoid adding ✅ or 🎉 to any files? (YES = good, NO = bad)
+- [ ] If task seems large, did I break it down or delegate? (YES = good, NO = bad)
+- [ ] If using npm, am I using esm.sh URL imports? (YES = good, NO = bad)
+- [ ] Did I test in nix repl before implementing? (YES = good, NO = bad)
+- [ ] Did I write comprehensive tests (5-10 per function)? (YES = good, NO = bad)
+- [ ] Did I move immediately to next gap without waiting? (YES = good, NO = bad)
+- [ ] Am I focused on what's missing/broken/untested? (YES = good, NO = bad)
+
+**If you answered NO to any question above, you are OFF TRACK. Stop and refocus.**
+
+## KEEP THE BOT ON TRACK - FINAL REMINDERS
+
+1. **WRITE CODE** - Implementation first, discussion never
+2. **Focus ONLY on gaps** - X remains untested, Y is not implemented, Z is broken
+3. **No task is blocked** - Break it down or delegate with `cld <task>`
+4. **Test in nix repl first** - `nix repl`, `:l nixpkgs/lib`, test function behavior
+5. **npm ONLY via esm.sh** - `import X from "https://esm.sh/package-name"` (often fails)
+6. **Delegate when appropriate** - `cld "implement X"` or `cld "research Y"`
+7. **Update this file after completion** - Remove finished items, keep ONLY remaining work
+8. **No celebration language** - Immediately move to next untested/unimplemented item
+9. **Report ONLY what's missing** - Never say what works, only what doesn't work yet
