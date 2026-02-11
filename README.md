@@ -151,12 +151,29 @@ Remaining work:
 
 See [prompt.md](prompt.md) for remaining work.
 
-## Key Design Decisions
+## Architecture & Design Decisions
 
-1. **BigInt for integers** - Correct integer division (1/2 = 0, not 0.5)
-2. **Object.create() for scopes** - Preserves lazy evaluation getters
-3. **~/.cache/denix/store/** - No root permissions needed
-4. **URL imports only** - Zero npm/jsr dependencies
+### Core Patterns
+
+**Type System:**
+- Nix integers → JavaScript BigInt (for correct integer division: 1/2 = 0, not 0.5)
+- Nix floats → JavaScript number
+- Nix strings → String or InterpolatedString class
+- Nix paths → Path class (extends InterpolatedString)
+
+**Scope Management:**
+- Nix variables → `nixScope["varName"]` (avoids JS keyword conflicts)
+- Function closures use `Object.create(parentScope)` to preserve lazy evaluation getters
+- NEVER use spread operator `{...scope}` as it loses getters
+
+**Storage:**
+- Store path: `~/.cache/denix/store/` (no root permissions needed)
+- Import caching with circular dependency detection
+
+**Dependencies:**
+- URL imports only (zero npm/jsr dependencies)
+- tree-sitter-nix for parsing (via esm.sh)
+- Deno standard library modules
 
 ## Dependencies
 
