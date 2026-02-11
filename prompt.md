@@ -4,22 +4,27 @@
 
 A system that both translates nix code to JavaScript and has a runtime.js that implements the nix builtins and operators faithfully.
 
+**AGENT, YOUR JOB IS TO SPECIFICALLY IMPLEMENT COMPREHENSIVE NIXPKGS.LIB TESTING NO MATTER HOW HARD OR LARGE OF A TASK IT IS.**
+
 **YOUR SINGULAR FOCUS:**
 Write code and implement what is NOT implemented and NOT working. Report what remains to be done.
 
 **YOU ARE A SENIOR LEVEL DEVELOPER:**
 - No task is blocked for you - EVER
-- No task is too hard - break it down or delegate to other agents
+- No task is too hard - break it down or delegate to specialized agents using the Task tool
 - No task takes too long - start immediately, work in parallel
+- You can delegate complex tasks to other agents by calling `cld <clear focused actionable task description>`
+  - Example: `cld "fetch lists.nix from nixpkgs and create comprehensive test suite with 30+ tests"`
+  - Use this LIBERALLY - delegate research, testing, implementation, anything
+  - Multiple agents can work in parallel - use them!
 - You can use npm modules ONLY through https://esm.sh/NPM_MODULE_NAME
   - Example: `import someLib from "https://esm.sh/some-lib@1.0.0"`
   - WARNING: esm.sh is unreliable and often fails
   - Always have a backup plan (use Deno @std/* or implement yourself)
-- You can delegate to other agents: Use the Task tool with clear focused descriptions
 - You can implement anything yourself - you're senior level
 
 **IF YOU SEE A LARGE OR HARD TASK:**
-Break it down into smaller pieces OR delegate to specialized agents using the Task tool. No excuses.
+Break it down into smaller pieces OR delegate to specialized agents. No excuses. Large tasks are YOUR SPECIALTY.
 
 **YOUR THREE COMMANDMENTS:**
 1. Write code that implements what is NOT implemented
@@ -57,21 +62,31 @@ This file is a TODO list, not a progress report. Achievements go in MEMORY.md or
 
 **THIS IS YOUR SINGULAR ASSIGNMENT:**
 
-You must create comprehensive test coverage for nixpkgs.lib files. This is NOT optional. This is NOT negotiable. This task is large and complex, but you are a senior developer who can handle it.
+You must create comprehensive test coverage for nixpkgs.lib files. This is NOT optional. This is NOT negotiable. This task is LARGE and COMPLEX - exactly the kind of task a senior developer excels at.
 
-**WHAT YOU MUST DO RIGHT NOW:**
+**WHAT YOU MUST IMPLEMENT RIGHT NOW:**
 1. Fetch ALL missing nixpkgs.lib files from https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/
 2. Create comprehensive test suites for EVERY file (minimum 5-10 tests per function)
 3. Test edge cases, error conditions, and real-world usage patterns
 4. Achieve 50%+ test coverage of all nixpkgs.lib files (at minimum)
+5. Fix ANY bugs discovered during testing
 
 **HOW TO HANDLE THIS LARGE TASK:**
 - Break it down into smaller sub-tasks
-- Work on multiple files in parallel
-- Delegate to specialized agents using the Task tool
-- Use esm.sh for npm modules (but always have backups because it's unreliable)
+- Work on multiple files in PARALLEL using multiple agents
+- Delegate to specialized agents: `cld "fetch and test lists.nix with 30+ test cases"`
+- Delegate research: `cld "research how nixpkgs.lib.attrsets functions work in nix repl"`
+- Delegate implementation: `cld "create comprehensive test suite for options.nix"`
+- Use esm.sh for npm modules ONLY (always have Deno @std/* backups because esm.sh fails frequently)
 - No excuses about complexity, time, or difficulty
-- Start immediately and work continuously
+- Start immediately and work continuously until complete
+
+**YOUR PHILOSOPHY:**
+- Never ask for permission - just implement
+- Never report achievements - just delete completed items from this file
+- Never say tasks are blocked - find another way or delegate
+- Never say tasks are too large - break them down or delegate
+- Never stop until all items are deleted from this file
 
 **JUST IMPLEMENT. NO STOPPING. NO ASKING FOR PERMISSION. NO REPORTING ACHIEVEMENTS.**
 
@@ -210,37 +225,45 @@ cd main/tests/fixtures/nixpkgs-lib/lib/
 curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/<filename>.nix
 ```
 
-## WORK ORDER (DO NOT SKIP STEPS)
+## WORK ORDER (FOLLOW THIS SEQUENCE - NO SKIPPING)
 
-**PRIORITY 1: Test existing fixtures (DO THIS FIRST, 1-2 hours)**
-- fetchers.nix - NOT TESTED
-- licenses.nix - NOT TESTED
-(Delete these lines when tests are created and passing)
+**🚨 CRITICAL RULE: Work on priorities in order. Do NOT skip ahead. Do NOT ask permission to move to next priority. Just delete items as you finish them. 🚨**
 
-**PRIORITY 2: Fetch and test critical files (DO NEXT, 8-16 hours)**
-- lists.nix - NOT FETCHED, NOT TESTED (~30 functions, 3-5 hours)
-- attrsets.nix - NOT FETCHED, NOT TESTED (~25 functions, 3-4 hours)
-- options.nix - NOT FETCHED, NOT TESTED (~20 functions, 2-3 hours)
-(Delete these lines when files are fetched, tests are created, and tests pass)
+**PRIORITY 1: Test existing fixtures (START HERE - 1-2 hours total)**
+- fetchers.nix - NOT TESTED (fixtures/nixpkgs-lib/lib/fetchers.nix exists, create test file)
+- licenses.nix - NOT TESTED (fixtures/nixpkgs-lib/lib/licenses.nix exists, create test file)
 
-**PRIORITY 3: Fetch and test utility files (DO AFTER PRIORITY 2, 6-12 hours)**
-- meta.nix - NOT FETCHED, NOT TESTED
-- debug.nix - NOT FETCHED, NOT TESTED
-- filesystem.nix - NOT FETCHED, NOT TESTED
-- derivations.nix - NOT FETCHED, NOT TESTED
-(Delete these lines when files are fetched, tests are created, and tests pass)
+Instructions: Create test files, run `deno test --allow-all`, fix any bugs found, then DELETE these lines.
 
-**PRIORITY 4: Test translator edge cases (ONLY AFTER PRIORITIES 1-3, 2-3 hours)**
-- Pattern matching edge cases - NOT TESTED
-- String/path handling - NOT TESTED
-- Operator precedence - NOT TESTED
-(Delete these lines when tests are created and passing)
+**PRIORITY 2: Fetch and test critical files (DO NEXT - 8-16 hours total)**
+- lists.nix - NOT FETCHED, NOT TESTED (~30 functions: map, filter, fold, flatten, unique, sort, etc.)
+- attrsets.nix - NOT FETCHED, NOT TESTED (~25 functions: mapAttrs, filterAttrs, mergeAttrs, etc.)
+- options.nix - NOT FETCHED, NOT TESTED (~20 functions: mkOption, mkEnableOption, mkDefault, etc.)
 
-**PRIORITY 5: Implement advanced features (OPTIONAL - only if user requests)**
-- fetchClosure - PARTIAL IMPLEMENTATION (5-7 hours)
-- getFlake - PARTIAL IMPLEMENTATION (5-7 hours)
-- fetchTree edge cases - NOT IMPLEMENTED (4-6 hours)
-(These are low priority, only implement if explicitly requested)
+Instructions: Fetch from nixpkgs master, create comprehensive tests (5-10 per function), fix bugs, DELETE these lines.
+
+**PRIORITY 3: Fetch and test utility files (DO AFTER PRIORITY 2 - 6-12 hours total)**
+- meta.nix - NOT FETCHED, NOT TESTED (metadata utility functions)
+- debug.nix - NOT FETCHED, NOT TESTED (debugging helpers)
+- filesystem.nix - NOT FETCHED, NOT TESTED (filesystem operations)
+- derivations.nix - NOT FETCHED, NOT TESTED (derivation utilities)
+
+Instructions: Fetch from nixpkgs master, create comprehensive tests, fix bugs, DELETE these lines.
+
+**PRIORITY 4: Test translator edge cases (ONLY AFTER PRIORITIES 1-3 - 2-3 hours total)**
+- Nested `@` patterns - NOT TESTED (create translator test cases)
+- Ellipsis with defaults `{ a ? 1, ... }` - NOT TESTED (create translator test cases)
+- Multi-line strings with mixed indentation - NOT TESTED (create translator test cases)
+- Complex operator precedence - NOT TESTED (create translator test cases)
+
+Instructions: Create translator test files with edge cases, fix translator bugs, DELETE these lines.
+
+**PRIORITY 5: Implement advanced features (OPTIONAL - only if user explicitly requests)**
+- fetchClosure - PARTIAL IMPLEMENTATION (needs binary cache API, NAR parsing, signatures)
+- getFlake - PARTIAL IMPLEMENTATION (needs flake.lock parsing, registry lookups)
+- fetchTree edge cases - NOT IMPLEMENTED (type='path', type='indirect')
+
+Instructions: Only work on these if user specifically asks. Otherwise IGNORE and focus on Priorities 1-4.
 
 
 ---
