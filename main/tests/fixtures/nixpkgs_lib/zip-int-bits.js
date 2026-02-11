@@ -5,10 +5,11 @@ export default /* Helper function to implement a fallback for the bit operators
   createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
     createFunc(/*arg:*/ "y", null, {}, (nixScope) => (
       /*let*/ createScope((nixScope) => {
-        Object.defineProperty(nixScope, "intToBits", {
-          enumerable: true,
-          get() {
-            return createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+        defGetter(
+          nixScope,
+          "intToBits",
+          (nixScope) =>
+            createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
               operators.ifThenElse(
                 operators.or(
                   operators.equal(nixScope.x, 0n),
@@ -16,48 +17,50 @@ export default /* Helper function to implement a fallback for the bit operators
                 ),
                 () => [],
                 () => (/*let*/ createScope((nixScope) => {
-                  Object.defineProperty(nixScope, "headbit", {
-                    enumerable: true,
-                    get() {
-                      return (operators.ifThenElse(
-                        operators.notEqual(
-                          operators.multiply(
-                            operators.divide(nixScope.x, 2n),
-                            2n,
-                          ),
-                          nixScope.x,
+                  defGetter(
+                    nixScope,
+                    "headbit",
+                    (
+                      nixScope,
+                    ) => (operators.ifThenElse(
+                      operators.notEqual(
+                        operators.multiply(
+                          operators.divide(nixScope.x, 2n),
+                          2n,
                         ),
-                        () => (1n),
-                        () => (0n),
-                      ));
-                    },
-                  });
-                  Object.defineProperty(nixScope, "tailbits", {
-                    enumerable: true,
-                    get() {
-                      return (operators.ifThenElse(
-                        operators.lessThan(nixScope.x, 0n),
-                        () => (operators.subtract(
-                          operators.divide(operators.add(nixScope.x, 1n), 2n),
-                          1n,
-                        )),
-                        () => (operators.divide(nixScope.x, 2n)),
-                      ));
-                    },
-                  });
+                        nixScope.x,
+                      ),
+                      () => (1n),
+                      () => (0n),
+                    )),
+                  );
+                  defGetter(
+                    nixScope,
+                    "tailbits",
+                    (
+                      nixScope,
+                    ) => (operators.ifThenElse(
+                      operators.lessThan(nixScope.x, 0n),
+                      () => (operators.subtract(
+                        operators.divide(operators.add(nixScope.x, 1n), 2n),
+                        1n,
+                      )),
+                      () => (operators.divide(nixScope.x, 2n)),
+                    )),
+                  );
                   return operators.listConcat(
                     [nixScope.headbit],
                     nixScope.intToBits(nixScope.tailbits),
                   );
                 })),
               )
-            ));
-          },
-        });
-        Object.defineProperty(nixScope, "bitsToInt", {
-          enumerable: true,
-          get() {
-            return createFunc(/*arg:*/ "l", null, {}, (nixScope) => (
+            )),
+        );
+        defGetter(
+          nixScope,
+          "bitsToInt",
+          (nixScope) =>
+            createFunc(/*arg:*/ "l", null, {}, (nixScope) => (
               createFunc(/*arg:*/ "signum", null, {}, (nixScope) => (
                 operators.ifThenElse(
                   operators.equal(nixScope.l, []),
@@ -77,33 +80,35 @@ export default /* Helper function to implement a fallback for the bit operators
                   )),
                 )
               ))
-            ));
-          },
-        });
-        Object.defineProperty(nixScope, "xsignum", {
-          enumerable: true,
-          get() {
-            return (operators.ifThenElse(
-              operators.lessThan(nixScope.x, 0n),
-              () => (1n),
-              () => (0n),
-            ));
-          },
-        });
-        Object.defineProperty(nixScope, "ysignum", {
-          enumerable: true,
-          get() {
-            return (operators.ifThenElse(
-              operators.lessThan(nixScope.y, 0n),
-              () => (1n),
-              () => (0n),
-            ));
-          },
-        });
-        Object.defineProperty(nixScope, "zipListsWith'", {
-          enumerable: true,
-          get() {
-            return createFunc(/*arg:*/ "fst", null, {}, (nixScope) => (
+            )),
+        );
+        defGetter(
+          nixScope,
+          "xsignum",
+          (
+            nixScope,
+          ) => (operators.ifThenElse(
+            operators.lessThan(nixScope.x, 0n),
+            () => (1n),
+            () => (0n),
+          )),
+        );
+        defGetter(
+          nixScope,
+          "ysignum",
+          (
+            nixScope,
+          ) => (operators.ifThenElse(
+            operators.lessThan(nixScope.y, 0n),
+            () => (1n),
+            () => (0n),
+          )),
+        );
+        defGetter(
+          nixScope,
+          "zipListsWith'",
+          (nixScope) =>
+            createFunc(/*arg:*/ "fst", null, {}, (nixScope) => (
               createFunc(/*arg:*/ "snd", null, {}, (nixScope) => (
                 operators.ifThenElse(
                   operators.and(
@@ -149,9 +154,8 @@ export default /* Helper function to implement a fallback for the bit operators
                   )),
                 )
               ))
-            ));
-          },
-        });
+            )),
+        );
         return ((_cond) => {
           if (!_cond) {
             throw new Error(

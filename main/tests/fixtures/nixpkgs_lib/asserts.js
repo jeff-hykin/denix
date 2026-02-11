@@ -4,23 +4,24 @@ export default createFunc({}, null, {}, (nixScope) => (
     nixScope.filter = nixScope.lib["lists"]["filter"];
     nixScope.showWarnings = nixScope.lib["trivial"]["showWarnings"];
     return /*rec*/ createScope((nixScope) => {
-      Object.defineProperty(nixScope, "assertMsg", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "pred", null, {}, (nixScope) => (
+      defGetter(
+        nixScope,
+        "assertMsg",
+        (nixScope) =>
+          createFunc(/*arg:*/ "pred", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "msg", null, {}, (nixScope) => (
               operators.or(
                 nixScope.pred,
                 nixScope.builtins["throw"](nixScope.msg),
               )
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "assertOneOf", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "assertOneOf",
+        (nixScope) =>
+          createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "val", null, {}, (nixScope) => (
               createFunc(/*arg:*/ "xs", null, {}, (nixScope) => (
                 nixScope.assertMsg(
@@ -43,13 +44,13 @@ export default createFunc({}, null, {}, (nixScope) => (
                 )
               ))
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "assertEachOneOf", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "assertEachOneOf",
+        (nixScope) =>
+          createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "vals", null, {}, (nixScope) => (
               createFunc(/*arg:*/ "xs", null, {}, (nixScope) => (
                 nixScope.assertMsg(
@@ -76,32 +77,28 @@ export default createFunc({}, null, {}, (nixScope) => (
                 )
               ))
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "checkAssertWarn", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "assertions", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "checkAssertWarn",
+        (nixScope) =>
+          createFunc(/*arg:*/ "assertions", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "warnings", null, {}, (nixScope) => (
               createFunc(/*arg:*/ "val", null, {}, (nixScope) => (
                 /*let*/ createScope((nixScope) => {
-                  Object.defineProperty(nixScope, "failedAssertions", {
-                    enumerable: true,
-                    get() {
-                      return nixScope.map(
+                  defGetter(nixScope, "failedAssertions", (nixScope) =>
+                    nixScope.map(
+                      createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+                        nixScope.x["message"]
+                      )),
+                    )(
+                      nixScope.filter(
                         createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
-                          nixScope.x["message"]
+                          operators.negate(nixScope.x["assertion"])
                         )),
-                      )(
-                        nixScope.filter(
-                          createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
-                            operators.negate(nixScope.x["assertion"])
-                          )),
-                        )(nixScope.assertions),
-                      );
-                    },
-                  });
+                      )(nixScope.assertions),
+                    ));
                   return (operators.ifThenElse(
                     operators.notEqual(nixScope.failedAssertions, []),
                     () => (nixScope.throw(
@@ -124,9 +121,8 @@ export default createFunc({}, null, {}, (nixScope) => (
                 })
               ))
             ))
-          ));
-        },
-      });
+          )),
+      );
       return nixScope;
     });
   })

@@ -3,7 +3,7 @@ export default createFunc({}, null, {}, (nixScope) => (
     nixScope.types = nixScope.lib["types"];
     return createScope((nixScope) => {
       const obj = {};
-      obj["imports"] = [
+      obj.imports = [
         createFunc({}, null, {}, (nixScope) => (
           {
             "options":
@@ -47,7 +47,7 @@ export default createFunc({}, null, {}, (nixScope) => (
           }
         )),
       ];
-      obj["options"] = {
+      obj.options = {
         "result": nixScope.lib["mkOption"]({
           "type": nixScope.types["str"],
           "default": nixScope.lib["concatStringsSep"](" ")(

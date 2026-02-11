@@ -81,22 +81,22 @@ export default createFunc({}, null, {}, (nixScope) => (
       "x86_64-windows",
       "i686-windows",
     ];
-    Object.defineProperty(nixScope, "allParsed", {
-      enumerable: true,
-      get() {
-        return nixScope.map(nixScope.parse["mkSystemFromString"])(nixScope.all);
-      },
-    });
-    Object.defineProperty(nixScope, "filterDoubles", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
+    defGetter(
+      nixScope,
+      "allParsed",
+      (nixScope) =>
+        nixScope.map(nixScope.parse["mkSystemFromString"])(nixScope.all),
+    );
+    defGetter(
+      nixScope,
+      "filterDoubles",
+      (nixScope) =>
+        createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
           nixScope.map(nixScope.parse["doubleFromSystem"])(
             nixScope.lists["filter"](nixScope.f)(nixScope.allParsed),
           )
-        ));
-      },
-    });
+        )),
+    );
     return ({
       "all": nixScope.all,
       "none": [],

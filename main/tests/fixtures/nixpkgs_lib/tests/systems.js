@@ -1,5 +1,5 @@
 import { createRuntime } from "../../../../../../../../../../../../../runtime.js";
-const { runtime, createFunc, createScope } = createRuntime();
+const { runtime, createFunc, createScope, defGetter } = createRuntime();
 const operators = runtime.operators;
 
 export default //
@@ -8,16 +8,16 @@ export default //
 //
 //
 /*let*/ createScope((nixScope) => {
-  Object.defineProperty(nixScope, "lib", {
-    enumerable: true,
-    get() {
-      return nixScope.import(new Path(["../default.nix"], []));
-    },
-  });
-  Object.defineProperty(nixScope, "mseteq", {
-    enumerable: true,
-    get() {
-      return createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+  defGetter(
+    nixScope,
+    "lib",
+    (nixScope) => nixScope.import(new Path(["../default.nix"], [])),
+  );
+  defGetter(
+    nixScope,
+    "mseteq",
+    (nixScope) =>
+      createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
         createFunc(/*arg:*/ "y", null, {}, (nixScope) => (
           {
             "expr": nixScope.lib["sort"](nixScope.lib["lessThan"])(nixScope.x),
@@ -26,13 +26,13 @@ export default //
             ),
           }
         ))
-      ));
-    },
-  });
-  Object.defineProperty(nixScope, "toLosslessStringMaybe", {
-    enumerable: true,
-    get() {
-      return createFunc(/*arg:*/ "sys", null, {}, (nixScope) => (
+      )),
+  );
+  defGetter(
+    nixScope,
+    "toLosslessStringMaybe",
+    (nixScope) =>
+      createFunc(/*arg:*/ "sys", null, {}, (nixScope) => (
         operators.ifThenElse(
           nixScope.lib["isString"](nixScope.sys),
           () => (nixScope.sys),
@@ -44,9 +44,8 @@ export default //
             () => (null),
           )),
         )
-      ));
-    },
-  });
+      )),
+  );
   return nixScope.lib["runTests"](operators.merge(
     ((_withAttrs) => {
       const nixScope = { ...runtime.scopeStack.slice(-1)[0], ..._withAttrs };
@@ -338,40 +337,32 @@ export default //
                   () => (nixScope.platformAttrName),
                 ])
               ] = /*let*/ createScope((nixScope) => {
-                Object.defineProperty(nixScope, "modified", {
-                  enumerable: true,
-                  get() {
-                    return ((_cond) => {
-                      if (!_cond) {
-                        throw new Error(
-                          "assertion failed: " + "origValue != arbitraryValue",
-                        );
-                      }
-                      return operators.merge(
-                        nixScope.lib["systems"]["elaborate"]("x86_64-linux"),
-                        createScope((nixScope) => {
-                          const obj = {};
-                          obj[nixScope.platformAttrName] =
-                            nixScope.arbitraryValue;
-                          return obj;
-                        }),
+                defGetter(nixScope, "modified", (nixScope) =>
+                  ((_cond) => {
+                    if (!_cond) {
+                      throw new Error(
+                        "assertion failed: " + "origValue != arbitraryValue",
                       );
-                    })(
-                      operators.notEqual(
-                        nixScope.origValue,
-                        nixScope.arbitraryValue,
-                      ),
+                    }
+                    return operators.merge(
+                      nixScope.lib["systems"]["elaborate"]("x86_64-linux"),
+                      createScope((nixScope) => {
+                        const obj = {};
+                        obj[nixScope.platformAttrName] =
+                          nixScope.arbitraryValue;
+                        return obj;
+                      }),
                     );
-                  },
-                });
-                Object.defineProperty(nixScope, "arbitraryValue", {
-                  enumerable: true,
-                  get() {
-                    return createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
-                      "<<modified>>"
-                    ));
-                  },
-                });
+                  })(
+                    operators.notEqual(
+                      nixScope.origValue,
+                      nixScope.arbitraryValue,
+                    ),
+                  ));
+                defGetter(nixScope, "arbitraryValue", (nixScope) =>
+                  createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+                    "<<modified>>"
+                  )));
                 return ({
                   "expr": nixScope.lib["systems"]["equals"](
                     nixScope.lib["systems"]["elaborate"]("x86_64-linux"),

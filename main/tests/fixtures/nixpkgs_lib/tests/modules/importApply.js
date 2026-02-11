@@ -1,7 +1,7 @@
 export default createFunc({}, null, {}, (nixScope) => (
   createScope((nixScope) => {
     const obj = {};
-    obj["imports"] = [
+    obj.imports = [
       nixScope.lib["modules"]["importApply"](
         new Path(["./importApply-function.nix"], []),
       )({ "foo": "abc" }),

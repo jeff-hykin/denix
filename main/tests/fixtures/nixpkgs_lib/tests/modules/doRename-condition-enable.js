@@ -2,7 +2,7 @@ export default createFunc({}, null, {}, (nixScope) => (
   {
     "config": createScope((nixScope) => {
       const obj = {};
-      obj["result"] = ((_cond) => {
+      obj.result = ((_cond) => {
         if (!_cond) {
           throw new Error(
             "assertion failed: " +

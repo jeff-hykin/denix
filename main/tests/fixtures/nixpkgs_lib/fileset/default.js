@@ -198,14 +198,8 @@ export default /**
       )),
       "trace": createFunc(/*arg:*/ "fileset", null, {}, (nixScope) => (
         /*let*/ createScope((nixScope) => {
-          Object.defineProperty(nixScope, "actualFileset", {
-            enumerable: true,
-            get() {
-              return nixScope._coerce("lib.fileset.trace: Argument")(
-                nixScope.fileset,
-              );
-            },
-          });
+          defGetter(nixScope, "actualFileset", (nixScope) =>
+            nixScope._coerce("lib.fileset.trace: Argument")(nixScope.fileset));
           return nixScope.seq(nixScope._printFileset(nixScope.actualFileset))(
             createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
               nixScope.x
@@ -215,14 +209,10 @@ export default /**
       )),
       "traceVal": createFunc(/*arg:*/ "fileset", null, {}, (nixScope) => (
         /*let*/ createScope((nixScope) => {
-          Object.defineProperty(nixScope, "actualFileset", {
-            enumerable: true,
-            get() {
-              return nixScope._coerce("lib.fileset.traceVal: Argument")(
-                nixScope.fileset,
-              );
-            },
-          });
+          defGetter(nixScope, "actualFileset", (nixScope) =>
+            nixScope._coerce("lib.fileset.traceVal: Argument")(
+              nixScope.fileset,
+            ));
           return nixScope.seq(nixScope._printFileset(nixScope.actualFileset))(
             nixScope.actualFileset,
           );
@@ -230,41 +220,19 @@ export default /**
       )),
       "toSource": createFunc({}, null, {}, (nixScope) => (
         /*let*/ createScope((nixScope) => {
-          Object.defineProperty(nixScope, "filesetArg", {
-            enumerable: true,
-            get() {
-              return nixScope.fileset;
-            },
-          });
+          defGetter(nixScope, "filesetArg", (nixScope) =>
+            nixScope.fileset);
           return /*let*/ createScope((nixScope) => {
-            Object.defineProperty(nixScope, "fileset", {
-              enumerable: true,
-              get() {
-                return nixScope._coerce("lib.fileset.toSource: `fileset`")(
-                  nixScope.filesetArg,
-                );
-              },
-            });
-            Object.defineProperty(nixScope, "rootFilesystemRoot", {
-              enumerable: true,
-              get() {
-                return (nixScope.splitRoot(nixScope.root))["root"];
-              },
-            });
-            Object.defineProperty(nixScope, "filesetFilesystemRoot", {
-              enumerable: true,
-              get() {
-                return (nixScope.splitRoot(nixScope.fileset["_internalBase"]))[
-                  "root"
-                ];
-              },
-            });
-            Object.defineProperty(nixScope, "sourceFilter", {
-              enumerable: true,
-              get() {
-                return nixScope._toSourceFilter(nixScope.fileset);
-              },
-            });
+            defGetter(nixScope, "fileset", (nixScope) =>
+              nixScope._coerce("lib.fileset.toSource: `fileset`")(
+                nixScope.filesetArg,
+              ));
+            defGetter(nixScope, "rootFilesystemRoot", (nixScope) =>
+              (nixScope.splitRoot(nixScope.root))["root"]);
+            defGetter(nixScope, "filesetFilesystemRoot", (nixScope) =>
+              (nixScope.splitRoot(nixScope.fileset["_internalBase"]))["root"]);
+            defGetter(nixScope, "sourceFilter", (nixScope) =>
+              nixScope._toSourceFilter(nixScope.fileset));
             return (operators.ifThenElse(
               operators.negate(nixScope.isPath(nixScope.root)),
               () => (operators.ifThenElse(
@@ -424,15 +392,11 @@ export default /**
       "intersection": createFunc(/*arg:*/ "fileset1", null, {}, (nixScope) => (
         createFunc(/*arg:*/ "fileset2", null, {}, (nixScope) => (
           /*let*/ createScope((nixScope) => {
-            Object.defineProperty(nixScope, "filesets", {
-              enumerable: true,
-              get() {
-                return nixScope._coerceMany("lib.fileset.intersection")([
-                  { "context": "First argument", "value": nixScope.fileset1 },
-                  { "context": "Second argument", "value": nixScope.fileset2 },
-                ]);
-              },
-            });
+            defGetter(nixScope, "filesets", (nixScope) =>
+              nixScope._coerceMany("lib.fileset.intersection")([
+                { "context": "First argument", "value": nixScope.fileset1 },
+                { "context": "Second argument", "value": nixScope.fileset2 },
+              ]));
             return nixScope._intersection(
               nixScope.elemAt(nixScope.filesets)(0n),
             )(nixScope.elemAt(nixScope.filesets)(1n));
@@ -442,21 +406,17 @@ export default /**
       "difference": createFunc(/*arg:*/ "positive", null, {}, (nixScope) => (
         createFunc(/*arg:*/ "negative", null, {}, (nixScope) => (
           /*let*/ createScope((nixScope) => {
-            Object.defineProperty(nixScope, "filesets", {
-              enumerable: true,
-              get() {
-                return nixScope._coerceMany("lib.fileset.difference")([
-                  {
-                    "context": "First argument (positive set)",
-                    "value": nixScope.positive,
-                  },
-                  {
-                    "context": "Second argument (negative set)",
-                    "value": nixScope.negative,
-                  },
-                ]);
-              },
-            });
+            defGetter(nixScope, "filesets", (nixScope) =>
+              nixScope._coerceMany("lib.fileset.difference")([
+                {
+                  "context": "First argument (positive set)",
+                  "value": nixScope.positive,
+                },
+                {
+                  "context": "Second argument (negative set)",
+                  "value": nixScope.negative,
+                },
+              ]));
             return nixScope._difference(nixScope.elemAt(nixScope.filesets)(0n))(
               nixScope.elemAt(nixScope.filesets)(1n),
             );
@@ -506,25 +466,19 @@ export default /**
       )),
       "fromSource": createFunc(/*arg:*/ "source", null, {}, (nixScope) => (
         /*let*/ createScope((nixScope) => {
-          Object.defineProperty(nixScope, "isFiltered", {
-            enumerable: true,
-            get() {
-              return operators.hasAttr(
-                nixScope.source,
-                "_isLibCleanSourceWith",
-              );
-            },
-          });
-          Object.defineProperty(nixScope, "path", {
-            enumerable: true,
-            get() {
-              return (operators.ifThenElse(
-                nixScope.isFiltered,
-                () => (nixScope.source["origSrc"]),
-                () => (nixScope.source),
-              ));
-            },
-          });
+          defGetter(nixScope, "isFiltered", (nixScope) =>
+            operators.hasAttr(nixScope.source, "_isLibCleanSourceWith"));
+          defGetter(
+            nixScope,
+            "path",
+            (
+              nixScope,
+            ) => (operators.ifThenElse(
+              nixScope.isFiltered,
+              () => (nixScope.source["origSrc"]),
+              () => (nixScope.source),
+            )),
+          );
           return (operators.ifThenElse(
             operators.negate(nixScope.isPath(nixScope.path)),
             () => (operators.ifThenElse(

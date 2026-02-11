@@ -3,24 +3,22 @@ export default createFunc({}, null, {}, (nixScope) => (
     nixScope.mkOption = nixScope.lib["mkOption"];
     nixScope.types = nixScope.lib["types"];
     nixScope.moduleWithoutKey = { "config": ({ "raw": "pear" }) };
-    Object.defineProperty(nixScope, "moduleWithKey", {
-      enumerable: true,
-      get() {
-        return ({
-          "key": operators.add(nixScope.__curPos["file"], "#moduleWithKey"),
-          "config": ({ "raw": "pear" }),
-        });
-      },
-    });
-    Object.defineProperty(nixScope, "decl", {
-      enumerable: true,
-      get() {
-        return ({
-          "options":
-            ({ "raw": nixScope.mkOption({ "type": nixScope.types["lines"] }) }),
-        });
-      },
-    });
+    defGetter(
+      nixScope,
+      "moduleWithKey",
+      (nixScope) => ({
+        "key": operators.add(nixScope.__curPos["file"], "#moduleWithKey"),
+        "config": ({ "raw": "pear" }),
+      }),
+    );
+    defGetter(
+      nixScope,
+      "decl",
+      (nixScope) => ({
+        "options":
+          ({ "raw": nixScope.mkOption({ "type": nixScope.types["lines"] }) }),
+      }),
+    );
     return ({
       "options": ({
         "once": nixScope.mkOption(

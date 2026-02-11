@@ -1,5 +1,5 @@
 import { createRuntime } from "../../../../../../../../../../../../../runtime.js";
-const { runtime, createFunc, createScope } = createRuntime();
+const { runtime, createFunc, createScope, defGetter } = createRuntime();
 
 export default /*let*/ createScope((nixScope) => {
   nixScope.fakeHash = nixScope.lib["fakeHash"];
@@ -13,16 +13,16 @@ export default /*let*/ createScope((nixScope) => {
   nixScope.sri256 = "sha256-d6xi4mKdjkX2JFicDIv5niSzpyI0m/Hnm8GGAIU04kY=";
   nixScope.sri512 =
     "sha512-AXFyVo7jiZ5we10fxZ5E9qfPjSfqkizY2apCzORKFVYZaNhCIVbooY+J4cYST00ztLf0EjivIBPPdtIYFUMfzQ==";
-  Object.defineProperty(nixScope, "lib", {
-    enumerable: true,
-    get() {
-      return nixScope.import(new Path(["./.."], []));
-    },
-  });
-  Object.defineProperty(nixScope, "testingThrow", {
-    enumerable: true,
-    get() {
-      return createFunc(/*arg:*/ "expr", null, {}, (nixScope) => (
+  defGetter(
+    nixScope,
+    "lib",
+    (nixScope) => nixScope.import(new Path(["./.."], [])),
+  );
+  defGetter(
+    nixScope,
+    "testingThrow",
+    (nixScope) =>
+      createFunc(/*arg:*/ "expr", null, {}, (nixScope) => (
         {
           "expr": ((_withAttrs) => {
             const nixScope = {
@@ -40,21 +40,19 @@ export default /*let*/ createScope((nixScope) => {
           })(nixScope.builtins),
           "expected": ({ "success": false, "value": false }),
         }
-      ));
-    },
-  });
-  Object.defineProperty(nixScope, "unionOfDisjoints", {
-    enumerable: true,
-    get() {
-      return nixScope.lib["foldl"](nixScope.lib["attrsets"]["unionOfDisjoint"])(
-        {},
-      );
-    },
-  });
-  Object.defineProperty(nixScope, "genTests", {
-    enumerable: true,
-    get() {
-      return createFunc(/*arg:*/ "n", null, {}, (nixScope) => (
+      )),
+  );
+  defGetter(
+    nixScope,
+    "unionOfDisjoints",
+    (nixScope) =>
+      nixScope.lib["foldl"](nixScope.lib["attrsets"]["unionOfDisjoint"])({}),
+  );
+  defGetter(
+    nixScope,
+    "genTests",
+    (nixScope) =>
+      createFunc(/*arg:*/ "n", null, {}, (nixScope) => (
         createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
           createScope((nixScope) => {
             const obj = {};
@@ -148,9 +146,8 @@ export default /*let*/ createScope((nixScope) => {
             return obj;
           })
         ))
-      ));
-    },
-  });
+      )),
+  );
   return nixScope.runTests(
     nixScope.unionOfDisjoints([
       nixScope.genTests("NormalizeHash")(nixScope.normalizeHash),
@@ -173,7 +170,7 @@ export default /*let*/ createScope((nixScope) => {
           }),
         "testNormalizeNotRequiredPassthru": createScope((nixScope) => {
           const obj = {};
-          obj["expr"] = nixScope.normalizeHash({ "required": false })(
+          obj.expr = nixScope.normalizeHash({ "required": false })(
             { "ga bu": "zo meu" },
           );
           if (obj["expected"] === undefined) obj["expected"] = {};
@@ -182,7 +179,7 @@ export default /*let*/ createScope((nixScope) => {
         }),
         "testOptionalArg": createScope((nixScope) => {
           const obj = {};
-          obj["expr"] = nixScope.withNormalizedHash({})(
+          obj.expr = nixScope.withNormalizedHash({})(
             createFunc(
               {
                 "outputHash": (nixScope) => (""),
@@ -203,7 +200,7 @@ export default /*let*/ createScope((nixScope) => {
         }),
         "testOptionalArgMetadata": createScope((nixScope) => {
           const obj = {};
-          obj["expr"] = nixScope.functionArgs(
+          obj.expr = nixScope.functionArgs(
             nixScope.withNormalizedHash({})(
               createFunc(
                 {

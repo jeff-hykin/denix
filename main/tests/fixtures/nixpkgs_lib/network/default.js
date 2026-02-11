@@ -9,32 +9,29 @@ export default createFunc({}, null, {}, (nixScope) => (
         ({
           "fromString": createFunc(/*arg:*/ "addr", null, {}, (nixScope) => (
             /*let*/ createScope((nixScope) => {
-              Object.defineProperty(nixScope, "splittedAddr", {
-                enumerable: true,
-                get() {
-                  return nixScope._ipv6["split"](nixScope.addr);
-                },
-              });
-              Object.defineProperty(nixScope, "addrInternal", {
-                enumerable: true,
-                get() {
-                  return nixScope.splittedAddr["address"];
-                },
-              });
-              Object.defineProperty(nixScope, "prefixLength", {
-                enumerable: true,
-                get() {
-                  return nixScope.splittedAddr["prefixLength"];
-                },
-              });
-              Object.defineProperty(nixScope, "address", {
-                enumerable: true,
-                get() {
-                  return nixScope._ipv6["toStringFromExpandedIp"](
+              defGetter(
+                nixScope,
+                "splittedAddr",
+                (nixScope) => nixScope._ipv6["split"](nixScope.addr),
+              );
+              defGetter(
+                nixScope,
+                "addrInternal",
+                (nixScope) => nixScope.splittedAddr["address"],
+              );
+              defGetter(
+                nixScope,
+                "prefixLength",
+                (nixScope) => nixScope.splittedAddr["prefixLength"],
+              );
+              defGetter(
+                nixScope,
+                "address",
+                (nixScope) =>
+                  nixScope._ipv6["toStringFromExpandedIp"](
                     nixScope.addrInternal,
-                  );
-                },
-              });
+                  ),
+              );
               return ({
                 "address": nixScope.address,
                 "prefixLength": nixScope.prefixLength,

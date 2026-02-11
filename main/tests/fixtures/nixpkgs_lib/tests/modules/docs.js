@@ -8,10 +8,11 @@ export default /*
     nixScope.length = nixScope.lib["length"];
     nixScope.mkOption = nixScope.lib["mkOption"];
     nixScope.types = nixScope.lib["types"];
-    Object.defineProperty(nixScope, "traceListSeq", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "l", null, {}, (nixScope) => (
+    defGetter(
+      nixScope,
+      "traceListSeq",
+      (nixScope) =>
+        createFunc(/*arg:*/ "l", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "v", null, {}, (nixScope) => (
             nixScope.lib["foldl'"](
               createFunc(/*arg:*/ "a", null, {}, (nixScope) => (
@@ -21,9 +22,8 @@ export default /*
               )),
             )(nixScope.v)(nixScope.l)
           ))
-        ));
-      },
-    });
+        )),
+    );
     return createScope((nixScope) => {
       const obj = {};
       if (obj["options"] === undefined) obj["options"] = {};

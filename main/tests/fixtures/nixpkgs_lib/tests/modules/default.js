@@ -8,20 +8,20 @@ export default createFunc(
   (nixScope) => (
     createScope((nixScope) => {
       const obj = {};
-      obj["config"] = nixScope.lib["evalModules"](createScope((nixScope) => {
+      obj.config = nixScope.lib["evalModules"](createScope((nixScope) => {
         const obj = {};
-        obj["modules"] = nixScope.modules;
+        obj.modules = nixScope.modules;
         if (obj["specialArgs"] === undefined) obj["specialArgs"] = {};
         obj["specialArgs"]["modulesPath"] = new Path(["./."], []);
         return obj;
-      }))["config"];
-      obj["options"] = nixScope.lib["evalModules"](createScope((nixScope) => {
+      })).config;
+      obj.options = nixScope.lib["evalModules"](createScope((nixScope) => {
         const obj = {};
-        obj["modules"] = nixScope.modules;
+        obj.modules = nixScope.modules;
         if (obj["specialArgs"] === undefined) obj["specialArgs"] = {};
         obj["specialArgs"]["modulesPath"] = new Path(["./."], []);
         return obj;
-      }))["options"];
+      })).options;
       return obj;
     })
   ),

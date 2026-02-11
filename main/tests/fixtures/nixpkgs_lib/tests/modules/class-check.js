@@ -50,7 +50,7 @@ export default createFunc({}, null, {}, (nixScope) => (
     ],
     "config": createScope((nixScope) => {
       const obj = {};
-      obj["ok"] = nixScope.lib["evalModules"](
+      obj.ok = nixScope.lib["evalModules"](
         {
           "class": "nixos",
           "modules": [
@@ -59,7 +59,7 @@ export default createFunc({}, null, {}, (nixScope) => (
           ],
         },
       );
-      obj["fail"] = nixScope.lib["evalModules"](
+      obj.fail = nixScope.lib["evalModules"](
         {
           "class": "nixos",
           "modules": [

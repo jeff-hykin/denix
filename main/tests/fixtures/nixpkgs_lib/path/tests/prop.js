@@ -10,74 +10,67 @@ createFunc({}, null, {}, (nixScope) => (
     nixScope.normalise = nixScope.lib["path"]["subpath"]["normalise"];
     nixScope.isValid = nixScope.lib["path"]["subpath"]["isValid"];
     nixScope.assertMsg = nixScope.lib["asserts"]["assertMsg"];
-    Object.defineProperty(nixScope, "lib", {
-      enumerable: true,
-      get() {
-        return nixScope.import(nixScope.libpath);
-      },
-    });
-    Object.defineProperty(nixScope, "strings", {
-      enumerable: true,
-      get() {
-        return nixScope.map(
-          createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
-            nixScope.builtins["readFile"](
-              operators.add(
-                nixScope.dir,
-                new InterpolatedString(["/", ""], [() => (nixScope.name)]),
-              ),
-            )
-          )),
-        )(nixScope.builtins["attrNames"](
-          nixScope.builtins["readDir"](nixScope.dir),
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "normaliseAndCheck", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "str", null, {}, (nixScope) => (
+    defGetter(nixScope, "lib", (nixScope) => nixScope.import(nixScope.libpath));
+    defGetter(
+      nixScope,
+      "strings",
+      (nixScope) =>
+        nixScope.map(createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
+          nixScope.builtins["readFile"](
+            operators.add(
+              nixScope.dir,
+              new InterpolatedString(["/", ""], [() => (nixScope.name)]),
+            ),
+          )
+        )))(
+          nixScope.builtins["attrNames"](
+            nixScope.builtins["readDir"](nixScope.dir),
+          ),
+        ),
+    );
+    defGetter(
+      nixScope,
+      "normaliseAndCheck",
+      (nixScope) =>
+        createFunc(/*arg:*/ "str", null, {}, (nixScope) => (
           /*let*/ createScope((nixScope) => {
-            Object.defineProperty(nixScope, "originalValid", {
-              enumerable: true,
-              get() {
-                return nixScope.isValid(nixScope.str);
-              },
-            });
-            Object.defineProperty(nixScope, "tryOnce", {
-              enumerable: true,
-              get() {
-                return nixScope.builtins["tryEval"](
-                  nixScope.normalise(nixScope.str),
-                );
-              },
-            });
-            Object.defineProperty(nixScope, "tryTwice", {
-              enumerable: true,
-              get() {
-                return nixScope.builtins["tryEval"](
+            defGetter(
+              nixScope,
+              "originalValid",
+              (nixScope) => nixScope.isValid(nixScope.str),
+            );
+            defGetter(
+              nixScope,
+              "tryOnce",
+              (nixScope) =>
+                nixScope.builtins["tryEval"](nixScope.normalise(nixScope.str)),
+            );
+            defGetter(
+              nixScope,
+              "tryTwice",
+              (nixScope) =>
+                nixScope.builtins["tryEval"](
                   nixScope.normalise(nixScope.tryOnce["value"]),
-                );
-              },
-            });
-            Object.defineProperty(nixScope, "absConcatOrig", {
-              enumerable: true,
-              get() {
-                return operators.add(
+                ),
+            );
+            defGetter(
+              nixScope,
+              "absConcatOrig",
+              (nixScope) =>
+                operators.add(
                   new Path(["/."], []),
                   operators.add("/", nixScope.str),
-                );
-              },
-            });
-            Object.defineProperty(nixScope, "absConcatNormalised", {
-              enumerable: true,
-              get() {
-                return operators.add(
+                ),
+            );
+            defGetter(
+              nixScope,
+              "absConcatNormalised",
+              (nixScope) =>
+                operators.add(
                   new Path(["/."], []),
                   operators.add("/", nixScope.tryOnce["value"]),
-                );
-              },
-            });
+                ),
+            );
             return ((_cond) => {
               if (!_cond) {
                 throw new Error(
@@ -208,9 +201,8 @@ createFunc({}, null, {}, (nixScope) => (
               ),
             );
           })
-        ));
-      },
-    });
+        )),
+    );
     return nixScope.lib["genAttrs"](nixScope.strings)(
       nixScope.normaliseAndCheck,
     );

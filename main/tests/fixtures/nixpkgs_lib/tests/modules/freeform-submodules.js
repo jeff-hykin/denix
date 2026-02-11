@@ -1,5 +1,5 @@
 import { createRuntime } from "../../../../../../../../../../../../../../runtime.js";
-const { runtime, createFunc, createScope } = createRuntime();
+const { runtime, createFunc, createScope, defGetter } = createRuntime();
 
 export default createFunc({}, null, {}, (nixScope) => (
   ((_withAttrs) => {

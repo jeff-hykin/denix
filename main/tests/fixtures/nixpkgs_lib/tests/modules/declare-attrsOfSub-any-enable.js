@@ -1,9 +1,10 @@
 export default createFunc({}, null, {}, (nixScope) => (
   /*let*/ createScope((nixScope) => {
-    Object.defineProperty(nixScope, "submod", {
-      enumerable: true,
-      get() {
-        return createFunc({}, null, {}, (nixScope) => (
+    defGetter(
+      nixScope,
+      "submod",
+      (nixScope) =>
+        createFunc({}, null, {}, (nixScope) => (
           {
             "options":
               ({
@@ -19,9 +20,8 @@ export default createFunc({}, null, {}, (nixScope) => (
                 ),
               }),
           }
-        ));
-      },
-    });
+        )),
+    );
     return ({
       "options": ({
         "attrsOfSub": nixScope.lib["mkOption"](

@@ -12,8 +12,8 @@ import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts"
 const evalTranslated = (nixCode) => {
     let jsCode = convertToJsSync(nixCode)
 
-    // Get createFunc from real runtime
-    const { createFunc } = createFullRuntime()
+    // Get createFunc, createScope, and defGetter from real runtime
+    const { createFunc, createScope, defGetter } = createFullRuntime()
 
     // Create a simple runtime for testing
     const runtime = {
@@ -69,7 +69,7 @@ const evalTranslated = (nixCode) => {
 
     // Strip import and export statements (for simple expressions that don't need runtime)
     jsCode = jsCode.replace(/import \{ createRuntime \}[^\n]*\n/g, '')
-    jsCode = jsCode.replace(/const \{runtime, createFunc\} = createRuntime\(\)[^\n]*\n/g, '')
+    jsCode = jsCode.replace(/const \{[^}]*\} = createRuntime\(\)[^\n]*\n/g, '')  // Match any destructuring from createRuntime()
     jsCode = jsCode.replace(/const operators = runtime\.operators[^\n]*\n/g, '')
     jsCode = jsCode.replace(/const builtins = runtime\.builtins[^\n]*\n/g, '')
     jsCode = jsCode.replace(/^export\s+default\s+/m, '')
@@ -82,8 +82,8 @@ const evalTranslated = (nixCode) => {
         })()
     `
 
-    const fn = new Function('runtime', 'operators', 'createFunc', wrappedCode)
-    return fn(runtime, operators, createFunc)
+    const fn = new Function('runtime', 'operators', 'createFunc', 'createScope', 'defGetter', wrappedCode)
+    return fn(runtime, operators, createFunc, createScope, defGetter)
 }
 
 console.log("Testing Nix to JavaScript translator\n")

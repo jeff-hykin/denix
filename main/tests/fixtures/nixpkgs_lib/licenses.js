@@ -1,10 +1,11 @@
 export default createFunc({}, null, {}, (nixScope) => (
   /*let*/ createScope((nixScope) => {
     nixScope.optionalAttrs = nixScope.lib["optionalAttrs"];
-    Object.defineProperty(nixScope, "mkLicense", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "lname", null, {}, (nixScope) => (
+    defGetter(
+      nixScope,
+      "mkLicense",
+      (nixScope) =>
+        createFunc(/*arg:*/ "lname", null, {}, (nixScope) => (
           createFunc(
             {
               "shortName": (nixScope) => (nixScope.lname),
@@ -48,9 +49,8 @@ export default createFunc({}, null, {}, (nixScope) => (
               )
             ),
           )
-        ));
-      },
-    });
+        )),
+    );
     return nixScope.lib["mapAttrs"](nixScope.mkLicense)(operators.merge({
       "abstyles": ({ "spdxId": "Abstyles", "fullName": "Abstyles License" }),
       "acsl14":

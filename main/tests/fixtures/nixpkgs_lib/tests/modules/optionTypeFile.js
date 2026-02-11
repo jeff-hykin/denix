@@ -1,7 +1,7 @@
 export default createFunc({}, null, {}, (nixScope) => (
   createScope((nixScope) => {
     const obj = {};
-    obj["_file"] = "optionTypeFile.nix";
+    obj._file = "optionTypeFile.nix";
     if (obj["options"] === undefined) obj["options"] = {};
     obj["options"]["theType"] = nixScope.lib["mkOption"](
       { "type": nixScope.lib["types"]["optionType"] },
@@ -22,7 +22,7 @@ export default createFunc({}, null, {}, (nixScope) => (
       })),
       nixScope.lib["types"]["submodule"](createScope((nixScope) => {
         const obj = {};
-        obj["_file"] = "other.nix";
+        obj._file = "other.nix";
         if (obj["options"] === undefined) obj["options"] = {};
         obj["options"]["nested"] = nixScope.lib["mkOption"](
           { "type": nixScope.lib["types"]["str"] },

@@ -7,7 +7,7 @@ export default createFunc({}, null, {}, (nixScope) => (
       "imports": [
         createScope((nixScope) => {
           const obj = {};
-          obj["_file"] = "file";
+          obj._file = "file";
           if (obj["options"] === undefined) obj["options"] = {};
           obj["options"]["conflict"] = nixScope.mkOption({ "default": 1n });
           if (obj["config"] === undefined) obj["config"] = {};

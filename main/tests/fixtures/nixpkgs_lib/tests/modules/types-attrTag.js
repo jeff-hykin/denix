@@ -2,22 +2,22 @@ export default createFunc({}, null, {}, (nixScope) => (
   /*let*/ createScope((nixScope) => {
     nixScope.mkOption = nixScope.lib["mkOption"];
     nixScope.types = nixScope.lib["types"];
-    Object.defineProperty(nixScope, "forceDeep", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+    defGetter(
+      nixScope,
+      "forceDeep",
+      (nixScope) =>
+        createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
           nixScope.builtins["deepSeq"](nixScope.x)(nixScope.x)
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "mergedSubOption", {
-      enumerable: true,
-      get() {
-        return (nixScope.options["merged"]["type"]["getSubOptions"](
+        )),
+    );
+    defGetter(
+      nixScope,
+      "mergedSubOption",
+      (nixScope) =>
+        (nixScope.options["merged"]["type"]["getSubOptions"](
           nixScope.options["merged"]["loc"],
-        ))["extensible"];
-      },
-    });
+        ))["extensible"],
+    );
     return ({
       "options": ({
         "intStrings": nixScope.mkOption({
@@ -109,7 +109,7 @@ export default createFunc({}, null, {}, (nixScope) => (
       ],
       "config": createScope((nixScope) => {
         const obj = {};
-        obj["okChecks"] = nixScope.builtins["addErrorContext"](
+        obj.okChecks = nixScope.builtins["addErrorContext"](
           "while evaluating the assertions",
         )(((_cond) => {
           if (!_cond) {

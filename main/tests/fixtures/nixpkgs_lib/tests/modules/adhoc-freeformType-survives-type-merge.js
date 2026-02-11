@@ -1,20 +1,20 @@
 export default createFunc({}, null, {}, (nixScope) => (
   createScope((nixScope) => {
     const obj = {};
-    obj["freeformType"] = /*let*/ createScope((nixScope) => {
-      Object.defineProperty(nixScope, "a", {
-        enumerable: true,
-        get() {
-          return nixScope.lib["types"]["attrsOf"](
+    obj.freeformType = /*let*/ createScope((nixScope) => {
+      defGetter(
+        nixScope,
+        "a",
+        (nixScope) =>
+          nixScope.lib["types"]["attrsOf"](
             nixScope.lib["types"]["submodule"](createScope((nixScope) => {
               const obj = {};
               if (obj["options"] === undefined) obj["options"] = {};
               obj["options"]["bar"] = nixScope.lib["mkOption"]({});
               return obj;
             })),
-          );
-        },
-      });
+          ),
+      );
       return operators.merge(
         nixScope.a,
         {

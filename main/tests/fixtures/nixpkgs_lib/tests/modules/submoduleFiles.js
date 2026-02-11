@@ -1,9 +1,9 @@
 export default createFunc({}, null, {}, (nixScope) => (
   createScope((nixScope) => {
     const obj = {};
-    obj["imports"] = [createScope((nixScope) => {
+    obj.imports = [createScope((nixScope) => {
       const obj = {};
-      obj["_file"] = "the-file.nix";
+      obj._file = "the-file.nix";
       if (obj["submodule"] === undefined) obj["submodule"] = {};
       obj["submodule"]["value"] = 10n;
       return obj;

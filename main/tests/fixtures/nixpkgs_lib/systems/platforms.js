@@ -9,7 +9,7 @@ createFunc({}, null, {}, (nixScope) => (
     nixScope.bluefield2 = { "gcc": ({ "arch": "armv8-a+fp+simd+crc+crypto" }) };
     nixScope["armv7a-android"] = createScope((nixScope) => {
       const obj = {};
-      obj["gcc"] = {
+      obj.gcc = {
         "arch": "armv7-a",
         "float-abi": "softfp",
         "fpu": "vfpv3-d16",
@@ -43,44 +43,41 @@ createFunc({}, null, {}, (nixScope) => (
     };
     nixScope.gcc_mips64r2_64 = { "gcc": ({ "arch": "mips64r2", "abi": "64" }) };
     nixScope.gcc_mips64r6_64 = { "gcc": ({ "arch": "mips64r6", "abi": "64" }) };
-    Object.defineProperty(nixScope, "pc", {
-      enumerable: true,
-      get() {
-        return ({
-          "linux-kernel":
-            ({
-              "name": "pc",
-              "baseConfig": "defconfig",
-              "autoModules": true,
-              "target": "bzImage",
-            }),
-        });
-      },
-    });
-    Object.defineProperty(nixScope, "pc_simplekernel", {
-      enumerable: true,
-      get() {
-        return nixScope.lib["recursiveUpdate"](nixScope.pc)(
-          createScope((nixScope) => {
-            const obj = {};
-            if (obj["linux-kernel"] === undefined) obj["linux-kernel"] = {};
-            obj["linux-kernel"]["autoModules"] = false;
-            return obj;
+    defGetter(
+      nixScope,
+      "pc",
+      (nixScope) => ({
+        "linux-kernel":
+          ({
+            "name": "pc",
+            "baseConfig": "defconfig",
+            "autoModules": true,
+            "target": "bzImage",
           }),
-        );
-      },
-    });
-    Object.defineProperty(nixScope, "powernv", {
-      enumerable: true,
-      get() {
-        return ({
-          "linux-kernel":
-            ({
-              "name": "PowerNV",
-              "baseConfig": "powernv_defconfig",
-              "target": "vmlinux",
-              "autoModules": true,
-              "extraConfig": `
+      }),
+    );
+    defGetter(
+      nixScope,
+      "pc_simplekernel",
+      (nixScope) =>
+        nixScope.lib["recursiveUpdate"](nixScope.pc)(createScope((nixScope) => {
+          const obj = {};
+          if (obj["linux-kernel"] === undefined) obj["linux-kernel"] = {};
+          obj["linux-kernel"]["autoModules"] = false;
+          return obj;
+        })),
+    );
+    defGetter(
+      nixScope,
+      "powernv",
+      (nixScope) => ({
+        "linux-kernel":
+          ({
+            "name": "PowerNV",
+            "baseConfig": "powernv_defconfig",
+            "target": "vmlinux",
+            "autoModules": true,
+            "extraConfig": `
             PPC_64K_PAGES n
             PPC_4K_PAGES y
             IPV6 y
@@ -89,20 +86,19 @@ createFunc({}, null, {}, (nixScope) => (
             ATA_SFF y
             VIRTIO_MENU y
           `,
-            }),
-        });
-      },
-    });
-    Object.defineProperty(nixScope, "pogoplug4", {
-      enumerable: true,
-      get() {
-        return ({
-          "linux-kernel":
-            ({
-              "name": "pogoplug4",
-              "baseConfig": "multi_v5_defconfig",
-              "autoModules": false,
-              "extraConfig": `
+          }),
+      }),
+    );
+    defGetter(
+      nixScope,
+      "pogoplug4",
+      (nixScope) => ({
+        "linux-kernel":
+          ({
+            "name": "pogoplug4",
+            "baseConfig": "multi_v5_defconfig",
+            "autoModules": false,
+            "extraConfig": `
             # Ubi for the mtd
             MTD_UBI y
             UBIFS_FS y
@@ -112,23 +108,22 @@ createFunc({}, null, {}, (nixScope) => (
             UBIFS_FS_ZLIB y
             UBIFS_FS_DEBUG n
           `,
-              "makeFlags": ["LOADADDR=0x8000"],
-              "target": "uImage",
-            }),
-          "gcc": ({ "arch": "armv5te" }),
-        });
-      },
-    });
-    Object.defineProperty(nixScope, "sheevaplug", {
-      enumerable: true,
-      get() {
-        return ({
-          "linux-kernel":
-            ({
-              "name": "sheevaplug",
-              "baseConfig": "multi_v5_defconfig",
-              "autoModules": false,
-              "extraConfig": `
+            "makeFlags": ["LOADADDR=0x8000"],
+            "target": "uImage",
+          }),
+        "gcc": ({ "arch": "armv5te" }),
+      }),
+    );
+    defGetter(
+      nixScope,
+      "sheevaplug",
+      (nixScope) => ({
+        "linux-kernel":
+          ({
+            "name": "sheevaplug",
+            "baseConfig": "multi_v5_defconfig",
+            "autoModules": false,
+            "extraConfig": `
             BLK_DEV_RAM y
             BLK_DEV_INITRD y
             BLK_DEV_CRYPTOLOOP m
@@ -226,86 +221,72 @@ createFunc({}, null, {}, (nixScope) => (
             KGDB_SERIAL_CONSOLE y
             KGDB_KDB y
           `,
-              "makeFlags": ["LOADADDR=0x0200000"],
-              "target": "uImage",
-              "DTB": true,
-            }),
-          "gcc": ({ "arch": "armv5te" }),
-        });
-      },
-    });
-    Object.defineProperty(nixScope, "raspberrypi", {
-      enumerable: true,
-      get() {
-        return ({
-          "linux-kernel":
-            ({
-              "name": "raspberrypi",
-              "baseConfig": "bcm2835_defconfig",
-              "DTB": true,
-              "autoModules": true,
-              "preferBuiltin": true,
-              "extraConfig": `
+            "makeFlags": ["LOADADDR=0x0200000"],
+            "target": "uImage",
+            "DTB": true,
+          }),
+        "gcc": ({ "arch": "armv5te" }),
+      }),
+    );
+    defGetter(
+      nixScope,
+      "raspberrypi",
+      (nixScope) => ({
+        "linux-kernel":
+          ({
+            "name": "raspberrypi",
+            "baseConfig": "bcm2835_defconfig",
+            "DTB": true,
+            "autoModules": true,
+            "preferBuiltin": true,
+            "extraConfig": `
             # Disable OABI to have seccomp_filter (required for systemd)
             # https://github.com/raspberrypi/firmware/issues/651
             OABI_COMPAT n
           `,
-              "target": "zImage",
-            }),
-          "gcc": ({ "arch": "armv6kz", "fpu": "vfpv2" }),
-        });
-      },
-    });
-    Object.defineProperty(nixScope, "raspberrypi2", {
-      enumerable: true,
-      get() {
-        return nixScope["armv7l-hf-multiplatform"];
-      },
-    });
-    Object.defineProperty(nixScope, "zero-gravitas", {
-      enumerable: true,
-      get() {
-        return ({
-          "linux-kernel":
-            ({
-              "name": "zero-gravitas",
-              "baseConfig": "zero-gravitas_defconfig",
-              "target": "zImage",
-              "autoModules": false,
-              "DTB": true,
-            }),
-          "gcc": ({ "fpu": "neon", "cpu": "cortex-a9" }),
-        });
-      },
-    });
-    Object.defineProperty(nixScope, "zero-sugar", {
-      enumerable: true,
-      get() {
-        return ({
-          "linux-kernel":
-            ({
-              "name": "zero-sugar",
-              "baseConfig": "zero-sugar_defconfig",
-              "DTB": true,
-              "autoModules": false,
-              "preferBuiltin": true,
-              "target": "zImage",
-            }),
-          "gcc":
-            ({ "cpu": "cortex-a7", "fpu": "neon-vfpv4", "float-abi": "hard" }),
-        });
-      },
-    });
-    Object.defineProperty(nixScope, "utilite", {
-      enumerable: true,
-      get() {
-        return ({
-          "linux-kernel":
-            ({
-              "name": "utilite",
-              "maseConfig": "multi_v7_defconfig",
-              "autoModules": false,
-              "extraConfig": `
+            "target": "zImage",
+          }),
+        "gcc": ({ "arch": "armv6kz", "fpu": "vfpv2" }),
+      }),
+    );
+    defGetter(
+      nixScope,
+      "raspberrypi2",
+      (nixScope) => nixScope["armv7l-hf-multiplatform"],
+    );
+    defGetter(nixScope, "zero-gravitas", (nixScope) => ({
+      "linux-kernel":
+        ({
+          "name": "zero-gravitas",
+          "baseConfig": "zero-gravitas_defconfig",
+          "target": "zImage",
+          "autoModules": false,
+          "DTB": true,
+        }),
+      "gcc": ({ "fpu": "neon", "cpu": "cortex-a9" }),
+    }));
+    defGetter(nixScope, "zero-sugar", (nixScope) => ({
+      "linux-kernel":
+        ({
+          "name": "zero-sugar",
+          "baseConfig": "zero-sugar_defconfig",
+          "DTB": true,
+          "autoModules": false,
+          "preferBuiltin": true,
+          "target": "zImage",
+        }),
+      "gcc": ({ "cpu": "cortex-a7", "fpu": "neon-vfpv4", "float-abi": "hard" }),
+    }));
+    defGetter(
+      nixScope,
+      "utilite",
+      (nixScope) => ({
+        "linux-kernel":
+          ({
+            "name": "utilite",
+            "maseConfig": "multi_v7_defconfig",
+            "autoModules": false,
+            "extraConfig": `
             # Ubi for the mtd
             MTD_UBI y
             UBIFS_FS y
@@ -315,57 +296,53 @@ createFunc({}, null, {}, (nixScope) => (
             UBIFS_FS_ZLIB y
             UBIFS_FS_DEBUG n
           `,
-              "makeFlags": ["LOADADDR=0x10800000"],
-              "target": "uImage",
-              "DTB": true,
-            }),
-          "gcc": ({ "cpu": "cortex-a9", "fpu": "neon" }),
-        });
-      },
-    });
-    Object.defineProperty(nixScope, "guruplug", {
-      enumerable: true,
-      get() {
-        return nixScope.lib["recursiveUpdate"](nixScope.sheevaplug)(
+            "makeFlags": ["LOADADDR=0x10800000"],
+            "target": "uImage",
+            "DTB": true,
+          }),
+        "gcc": ({ "cpu": "cortex-a9", "fpu": "neon" }),
+      }),
+    );
+    defGetter(
+      nixScope,
+      "guruplug",
+      (nixScope) =>
+        nixScope.lib["recursiveUpdate"](nixScope.sheevaplug)(
           createScope((nixScope) => {
             const obj = {};
             if (obj["linux-kernel"] === undefined) obj["linux-kernel"] = {};
             obj["linux-kernel"]["baseConfig"] = "guruplug_defconfig";
             return obj;
           }),
-        );
-      },
-    });
-    Object.defineProperty(nixScope, "beaglebone", {
-      enumerable: true,
-      get() {
-        return nixScope.lib["recursiveUpdate"](
-          nixScope["armv7l-hf-multiplatform"],
-        )({
-          "linux-kernel":
-            ({
-              "name": "beaglebone",
-              "baseConfig": "bb.org_defconfig",
-              "autoModules": false,
-              "extraConfig": "",
-              "target": "zImage",
-            }),
-        });
-      },
-    });
-    Object.defineProperty(nixScope, "armv7l-hf-multiplatform", {
-      enumerable: true,
-      get() {
-        return ({
-          "linux-kernel": ({
-            "name": "armv7l-hf-multiplatform",
-            "Major": "2.6",
-            "baseConfig": "multi_v7_defconfig",
-            "DTB": true,
-            "autoModules": true,
-            "preferBuiltin": true,
-            "target": "zImage",
-            "extraConfig": `
+        ),
+    );
+    defGetter(
+      nixScope,
+      "beaglebone",
+      (nixScope) =>
+        nixScope.lib["recursiveUpdate"](nixScope["armv7l-hf-multiplatform"])(
+          {
+            "linux-kernel":
+              ({
+                "name": "beaglebone",
+                "baseConfig": "bb.org_defconfig",
+                "autoModules": false,
+                "extraConfig": "",
+                "target": "zImage",
+              }),
+          },
+        ),
+    );
+    defGetter(nixScope, "armv7l-hf-multiplatform", (nixScope) => ({
+      "linux-kernel": ({
+        "name": "armv7l-hf-multiplatform",
+        "Major": "2.6",
+        "baseConfig": "multi_v7_defconfig",
+        "DTB": true,
+        "autoModules": true,
+        "preferBuiltin": true,
+        "target": "zImage",
+        "extraConfig": `
             # Serial port for Raspberry Pi 3. Wasn't included in ARMv7 defconfig
             # until 4.17.
             SERIAL_8250_BCM2835AUX y
@@ -385,23 +362,21 @@ createFunc({}, null, {}, (nixScope) => (
             # See: https://lore.kernel.org/netdev/20210116164828.40545-1-marex@denx.de/T/
             KS8851_MLL y
           `,
-          }),
-          "gcc": ({ "arch": "armv7-a", "fpu": "vfpv3-d16" }),
-        });
-      },
-    });
-    Object.defineProperty(nixScope, "aarch64-multiplatform", {
-      enumerable: true,
-      get() {
-        return ({
-          "linux-kernel":
-            ({
-              "name": "aarch64-multiplatform",
-              "baseConfig": "defconfig",
-              "DTB": true,
-              "autoModules": true,
-              "preferBuiltin": true,
-              "extraConfig": `
+      }),
+      "gcc": ({ "arch": "armv7-a", "fpu": "vfpv3-d16" }),
+    }));
+    defGetter(
+      nixScope,
+      "aarch64-multiplatform",
+      (nixScope) => ({
+        "linux-kernel":
+          ({
+            "name": "aarch64-multiplatform",
+            "baseConfig": "defconfig",
+            "DTB": true,
+            "autoModules": true,
+            "preferBuiltin": true,
+            "extraConfig": `
             # Raspberry Pi 3 stuff. Not needed for   s >= 4.10.
             ARCH_BCM2835 y
             BCM2835_MBOX y
@@ -422,22 +397,21 @@ createFunc({}, null, {}, (nixScope) => (
             # which our initrd builder can't currently do easily.
             USB_XHCI_TEGRA m
           `,
-              "target": "Image",
-            }),
-          "gcc": ({ "arch": "armv8-a" }),
-        });
-      },
-    });
-    Object.defineProperty(nixScope, "fuloong2f_n32", {
-      enumerable: true,
-      get() {
-        return ({
-          "linux-kernel":
-            ({
-              "name": "fuloong2f_n32",
-              "baseConfig": "lemote2f_defconfig",
-              "autoModules": false,
-              "extraConfig": `
+            "target": "Image",
+          }),
+        "gcc": ({ "arch": "armv8-a" }),
+      }),
+    );
+    defGetter(
+      nixScope,
+      "fuloong2f_n32",
+      (nixScope) => ({
+        "linux-kernel":
+          ({
+            "name": "fuloong2f_n32",
+            "baseConfig": "lemote2f_defconfig",
+            "autoModules": false,
+            "extraConfig": `
             MIGRATION n
             COMPACTION n
     
@@ -501,24 +475,23 @@ createFunc({}, null, {}, (nixScope) => (
             # The kernel doesn't boot at all, with FTRACE
             FTRACE n
           `,
-              "target": "vmlinux",
-            }),
-          "gcc": ({ "arch": "loongson2f", "float": "hard", "abi": "n32" }),
-        });
-      },
-    });
-    Object.defineProperty(nixScope, "mips64el-qemu-linux-gnuabi64", {
-      enumerable: true,
-      get() {
-        return ({
-          "linux-kernel":
-            ({
-              "name": "mips64el",
-              "baseConfig": "64r2el_defconfig",
-              "target": "vmlinuz",
-              "autoModules": false,
-              "DTB": true,
-              "extraConfig": `
+            "target": "vmlinux",
+          }),
+        "gcc": ({ "arch": "loongson2f", "float": "hard", "abi": "n32" }),
+      }),
+    );
+    defGetter(
+      nixScope,
+      "mips64el-qemu-linux-gnuabi64",
+      (nixScope) => ({
+        "linux-kernel":
+          ({
+            "name": "mips64el",
+            "baseConfig": "64r2el_defconfig",
+            "target": "vmlinuz",
+            "autoModules": false,
+            "DTB": true,
+            "extraConfig": `
             MIPS_MALTA y
             PAGE_SIZE_4KB y
             CPU_LITTLE_ENDIAN y
@@ -533,64 +506,54 @@ createFunc({}, null, {}, (nixScope) => (
             PCI y
             VIRTIO_PCI y
           `,
-            }),
-        });
-      },
-    });
-    Object.defineProperty(nixScope, "riscv-multiplatform", {
-      enumerable: true,
-      get() {
-        return ({
-          "linux-kernel":
-            ({
-              "name": "riscv-multiplatform",
-              "target": "Image",
-              "autoModules": true,
-              "preferBuiltin": true,
-              "baseConfig": "defconfig",
-              "DTB": true,
-            }),
-        });
-      },
-    });
-    Object.defineProperty(nixScope, "loongarch64-multiplatform", {
-      enumerable: true,
-      get() {
-        return ({
-          "gcc":
-            ({ "arch": "la64v1.0", "strict-align": false, "cmodel": "medium" }),
-          "linux-kernel":
-            ({
-              "name": "loongarch-multiplatform",
-              "target": "vmlinuz.efi",
-              "autoModules": true,
-              "preferBuiltin": true,
-              "baseConfig": "defconfig",
-              "DTB": true,
-            }),
-        });
-      },
-    });
-    Object.defineProperty(nixScope, "select", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "platform", null, {}, (nixScope) => (
+          }),
+      }),
+    );
+    defGetter(
+      nixScope,
+      "riscv-multiplatform",
+      (nixScope) => ({
+        "linux-kernel":
+          ({
+            "name": "riscv-multiplatform",
+            "target": "Image",
+            "autoModules": true,
+            "preferBuiltin": true,
+            "baseConfig": "defconfig",
+            "DTB": true,
+          }),
+      }),
+    );
+    defGetter(nixScope, "loongarch64-multiplatform", (nixScope) => ({
+      "gcc":
+        ({ "arch": "la64v1.0", "strict-align": false, "cmodel": "medium" }),
+      "linux-kernel":
+        ({
+          "name": "loongarch-multiplatform",
+          "target": "vmlinuz.efi",
+          "autoModules": true,
+          "preferBuiltin": true,
+          "baseConfig": "defconfig",
+          "DTB": true,
+        }),
+    }));
+    defGetter(
+      nixScope,
+      "select",
+      (nixScope) =>
+        createFunc(/*arg:*/ "platform", null, {}, (nixScope) => (
           operators.ifThenElse(
             nixScope.platform["isx86"],
             () => (nixScope.pc),
             () => (operators.ifThenElse(
               nixScope.platform["isAarch32"],
               () => (/*let*/ createScope((nixScope) => {
-                Object.defineProperty(nixScope, "version", {
-                  enumerable: true,
-                  get() {
-                    return operators.selectOrDefault(nixScope.platform, [
-                      "parsed",
-                      "cpu",
-                      "version",
-                    ], null);
-                  },
-                });
+                defGetter(nixScope, "version", (nixScope) =>
+                  operators.selectOrDefault(nixScope.platform, [
+                    "parsed",
+                    "cpu",
+                    "version",
+                  ], null));
                 return (operators.ifThenElse(
                   operators.equal(nixScope.version, null),
                   () => (nixScope.pc),
@@ -645,9 +608,8 @@ createFunc({}, null, {}, (nixScope) => (
               )),
             )),
           )
-        ));
-      },
-    });
+        )),
+    );
     return nixScope;
   })
 ));

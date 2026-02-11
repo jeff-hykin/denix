@@ -33,18 +33,18 @@ export default createFunc({}, null, {}, (nixScope) => (
       "0000000000000000000000000000000000000000000000000000000000000000";
     nixScope.fakeSha512 =
       "00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000";
-    Object.defineProperty(nixScope, "maybeEnv", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
+    defGetter(
+      nixScope,
+      "maybeEnv",
+      (nixScope) =>
+        createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "default", null, {}, (nixScope) => (
             /*let*/ createScope((nixScope) => {
-              Object.defineProperty(nixScope, "value", {
-                enumerable: true,
-                get() {
-                  return nixScope.builtins["getEnv"](nixScope.name);
-                },
-              });
+              defGetter(
+                nixScope,
+                "value",
+                (nixScope) => nixScope.builtins["getEnv"](nixScope.name),
+              );
               return (operators.ifThenElse(
                 operators.equal(nixScope.value, ""),
                 () => (nixScope.default),
@@ -52,13 +52,13 @@ export default createFunc({}, null, {}, (nixScope) => (
               ));
             })
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "defaultMergeArg", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "defaultMergeArg",
+      (nixScope) =>
+        createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "y", null, {}, (nixScope) => (
             operators.ifThenElse(
               nixScope.builtins["isAttrs"](nixScope.y),
@@ -66,85 +66,78 @@ export default createFunc({}, null, {}, (nixScope) => (
               () => (nixScope.y(nixScope.x)),
             )
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "defaultMerge", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "defaultMerge",
+      (nixScope) =>
+        createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "y", null, {}, (nixScope) => (
             operators.merge(
               nixScope.x,
               nixScope.defaultMergeArg(nixScope.x)(nixScope.y),
             )
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "foldArgs", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "merger", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "foldArgs",
+      (nixScope) =>
+        createFunc(/*arg:*/ "merger", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "init", null, {}, (nixScope) => (
               createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
                 /*let*/ createScope((nixScope) => {
-                  Object.defineProperty(nixScope, "arg", {
-                    enumerable: true,
-                    get() {
-                      return (nixScope.merger(nixScope.init)(
-                        nixScope.defaultMergeArg(nixScope.init)(nixScope.x),
-                      ));
-                    },
-                  });
-                  Object.defineProperty(nixScope, "base", {
-                    enumerable: true,
-                    get() {
-                      return (nixScope.setAttrMerge("passthru")({})(
-                        nixScope.f(nixScope.arg),
-                      )(createFunc(/*arg:*/ "z", null, {}, (nixScope) => (
-                        operators.merge(nixScope.z, {
-                          "function": nixScope.foldArgs(nixScope.merger)(
-                            nixScope.f,
-                          )(nixScope.arg),
-                          "args": operators.merge(
-                            nixScope.attrByPath(["passthru", "args"])({})(
-                              nixScope.z,
-                            ),
-                            nixScope.x,
+                  defGetter(
+                    nixScope,
+                    "arg",
+                    (
+                      nixScope,
+                    ) => (nixScope.merger(nixScope.init)(
+                      nixScope.defaultMergeArg(nixScope.init)(nixScope.x),
+                    )),
+                  );
+                  defGetter(
+                    nixScope,
+                    "base",
+                    (
+                      nixScope,
+                    ) => (nixScope.setAttrMerge("passthru")({})(
+                      nixScope.f(nixScope.arg),
+                    )(createFunc(/*arg:*/ "z", null, {}, (nixScope) => (
+                      operators.merge(nixScope.z, {
+                        "function": nixScope.foldArgs(nixScope.merger)(
+                          nixScope.f,
+                        )(nixScope.arg),
+                        "args": operators.merge(
+                          nixScope.attrByPath(["passthru", "args"])({})(
+                            nixScope.z,
                           ),
-                        })
-                      ))));
-                    },
-                  });
-                  Object.defineProperty(nixScope, "withStdOverrides", {
-                    enumerable: true,
-                    get() {
-                      return operators.merge(
-                        nixScope.base,
-                        { "override": nixScope.base["passthru"]["function"] },
-                      );
-                    },
-                  });
+                          nixScope.x,
+                        ),
+                      })
+                    )))),
+                  );
+                  defGetter(nixScope, "withStdOverrides", (nixScope) =>
+                    operators.merge(
+                      nixScope.base,
+                      { "override": nixScope.base["passthru"]["function"] },
+                    ));
                   return nixScope.withStdOverrides;
                 })
               ))
             ))
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "maybeAttrNullable", {
-      enumerable: true,
-      get() {
-        return nixScope.maybeAttr;
-      },
-    });
-    Object.defineProperty(nixScope, "maybeAttr", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(nixScope, "maybeAttrNullable", (nixScope) => nixScope.maybeAttr);
+    defGetter(
+      nixScope,
+      "maybeAttr",
+      (nixScope) =>
+        createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "default", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "attrs", null, {}, (nixScope) => (
               operators.selectOrDefault(
@@ -154,13 +147,13 @@ export default createFunc({}, null, {}, (nixScope) => (
               )
             ))
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "ifEnable", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "cond", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "ifEnable",
+      (nixScope) =>
+        createFunc(/*arg:*/ "cond", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "val", null, {}, (nixScope) => (
             operators.ifThenElse(
               nixScope.cond,
@@ -183,13 +176,13 @@ export default createFunc({}, null, {}, (nixScope) => (
               )),
             )
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "checkFlag", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "attrSet", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "checkFlag",
+      (nixScope) =>
+        createFunc(/*arg:*/ "attrSet", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
             operators.ifThenElse(
               operators.equal(nixScope.name, "true"),
@@ -209,13 +202,13 @@ export default createFunc({}, null, {}, (nixScope) => (
               )),
             )
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "getValue", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "attrSet", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "getValue",
+      (nixScope) =>
+        createFunc(/*arg:*/ "attrSet", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "argList", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
               nixScope.attrByPath([nixScope.name])(
@@ -226,12 +219,12 @@ export default createFunc({}, null, {}, (nixScope) => (
                     operators.equal(nixScope.argList, []),
                     () => (null),
                     () => (/*let*/ createScope((nixScope) => {
-                      Object.defineProperty(nixScope, "x", {
-                        enumerable: true,
-                        get() {
-                          return nixScope.builtins["head"](nixScope.argList);
-                        },
-                      });
+                      defGetter(
+                        nixScope,
+                        "x",
+                        (nixScope) =>
+                          nixScope.builtins["head"](nixScope.argList),
+                      );
                       return (operators.ifThenElse(
                         operators.equal(
                           nixScope.head(nixScope.x),
@@ -248,38 +241,38 @@ export default createFunc({}, null, {}, (nixScope) => (
               )(nixScope.attrSet)
             ))
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "checkReqs", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "attrSet", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "checkReqs",
+      (nixScope) =>
+        createFunc(/*arg:*/ "attrSet", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "argList", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "condList", null, {}, (nixScope) => (
               nixScope.foldr(nixScope.and)(true)(
                 nixScope.map(createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
                   /*let*/ createScope((nixScope) => {
-                    Object.defineProperty(nixScope, "name", {
-                      enumerable: true,
-                      get() {
-                        return (nixScope.head(nixScope.x));
-                      },
-                    });
+                    defGetter(
+                      nixScope,
+                      "name",
+                      (nixScope) => (nixScope.head(nixScope.x)),
+                    );
                     return (operators.implication(
                       nixScope.checkFlag(nixScope.attrSet)(nixScope.name),
                       nixScope.foldr(nixScope.and)(true)(
                         nixScope.map(
                           createFunc(/*arg:*/ "y", null, {}, (nixScope) => (
                             /*let*/ createScope((nixScope) => {
-                              Object.defineProperty(nixScope, "val", {
-                                enumerable: true,
-                                get() {
-                                  return (nixScope.getValue(nixScope.attrSet)(
-                                    nixScope.argList,
-                                  )(nixScope.y));
-                                },
-                              });
+                              defGetter(
+                                nixScope,
+                                "val",
+                                (
+                                  nixScope,
+                                ) => (nixScope.getValue(nixScope.attrSet)(
+                                  nixScope.argList,
+                                )(nixScope.y)),
+                              );
                               return operators.and(
                                 operators.notEqual(nixScope.val, null),
                                 operators.notEqual(nixScope.val, false),
@@ -294,60 +287,56 @@ export default createFunc({}, null, {}, (nixScope) => (
               )
             ))
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "uniqList", {
-      enumerable: true,
-      get() {
-        return createFunc({ "acc": (nixScope) => [] }, null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "uniqList",
+      (nixScope) =>
+        createFunc({ "acc": (nixScope) => [] }, null, {}, (nixScope) => (
           /*let*/ createScope((nixScope) => {
-            Object.defineProperty(nixScope, "go", {
-              enumerable: true,
-              get() {
-                return createFunc(/*arg:*/ "xs", null, {}, (nixScope) => (
-                  createFunc(/*arg:*/ "acc", null, {}, (nixScope) => (
-                    operators.ifThenElse(
-                      operators.equal(nixScope.xs, []),
-                      () => [],
-                      () => (/*let*/ createScope((nixScope) => {
-                        Object.defineProperty(nixScope, "x", {
-                          enumerable: true,
-                          get() {
-                            return nixScope.head(nixScope.xs);
-                          },
-                        });
-                        Object.defineProperty(nixScope, "y", {
-                          enumerable: true,
-                          get() {
-                            return (operators.ifThenElse(
-                              nixScope.elem(nixScope.x)(nixScope.acc),
-                              () => [],
-                              () => [nixScope.x],
-                            ));
-                          },
-                        });
-                        return operators.listConcat(
-                          nixScope.y,
-                          nixScope.go(nixScope.tail(nixScope.xs))(
-                            operators.listConcat(nixScope.y, nixScope.acc),
-                          ),
-                        );
-                      })),
-                    )
-                  ))
-                ));
-              },
-            });
+            defGetter(nixScope, "go", (nixScope) =>
+              createFunc(/*arg:*/ "xs", null, {}, (nixScope) => (
+                createFunc(/*arg:*/ "acc", null, {}, (nixScope) => (
+                  operators.ifThenElse(
+                    operators.equal(nixScope.xs, []),
+                    () => [],
+                    () => (/*let*/ createScope((nixScope) => {
+                      defGetter(
+                        nixScope,
+                        "x",
+                        (nixScope) => nixScope.head(nixScope.xs),
+                      );
+                      defGetter(
+                        nixScope,
+                        "y",
+                        (
+                          nixScope,
+                        ) => (operators.ifThenElse(
+                          nixScope.elem(nixScope.x)(nixScope.acc),
+                          () => [],
+                          () => [nixScope.x],
+                        )),
+                      );
+                      return operators.listConcat(
+                        nixScope.y,
+                        nixScope.go(nixScope.tail(nixScope.xs))(
+                          operators.listConcat(nixScope.y, nixScope.acc),
+                        ),
+                      );
+                    })),
+                  )
+                ))
+              )));
             return nixScope.go(nixScope.inputList)(nixScope.acc);
           })
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "uniqListExt", {
-      enumerable: true,
-      get() {
-        return createFunc(
+        )),
+    );
+    defGetter(
+      nixScope,
+      "uniqListExt",
+      (nixScope) =>
+        createFunc(
           {
             "outputList": (nixScope) => [],
             "getter": (
@@ -370,35 +359,23 @@ export default createFunc({}, null, {}, (nixScope) => (
               operators.equal(nixScope.inputList, []),
               () => (nixScope.outputList),
               () => (/*let*/ createScope((nixScope) => {
-                Object.defineProperty(nixScope, "x", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.head(nixScope.inputList);
-                  },
-                });
-                Object.defineProperty(nixScope, "isX", {
-                  enumerable: true,
-                  get() {
-                    return createFunc(/*arg:*/ "y", null, {}, (nixScope) => (
-                      nixScope.compare(nixScope.getter(nixScope.y))(
-                        nixScope.getter(nixScope.x),
-                      )
-                    ));
-                  },
-                });
-                Object.defineProperty(nixScope, "newOutputList", {
-                  enumerable: true,
-                  get() {
-                    return operators.listConcat(
-                      nixScope.outputList,
-                      operators.ifThenElse(
-                        nixScope.any(nixScope.isX)(nixScope.outputList),
-                        () => [],
-                        () => [nixScope.x],
-                      ),
-                    );
-                  },
-                });
+                defGetter(nixScope, "x", (nixScope) =>
+                  nixScope.head(nixScope.inputList));
+                defGetter(nixScope, "isX", (nixScope) =>
+                  createFunc(/*arg:*/ "y", null, {}, (nixScope) => (
+                    nixScope.compare(nixScope.getter(nixScope.y))(
+                      nixScope.getter(nixScope.x),
+                    )
+                  )));
+                defGetter(nixScope, "newOutputList", (nixScope) =>
+                  operators.listConcat(
+                    nixScope.outputList,
+                    operators.ifThenElse(
+                      nixScope.any(nixScope.isX)(nixScope.outputList),
+                      () => [],
+                      () => [nixScope.x],
+                    ),
+                  ));
                 return nixScope.uniqListExt(
                   {
                     "outputList": nixScope.newOutputList,
@@ -410,13 +387,13 @@ export default createFunc({}, null, {}, (nixScope) => (
               })),
             )
           ),
-        );
-      },
-    });
-    Object.defineProperty(nixScope, "condConcat", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
+        ),
+    );
+    defGetter(
+      nixScope,
+      "condConcat",
+      (nixScope) =>
+        createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "list", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "checker", null, {}, (nixScope) => (
               operators.ifThenElse(
@@ -439,72 +416,63 @@ export default createFunc({}, null, {}, (nixScope) => (
               )
             ))
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "lazyGenericClosure", {
-      enumerable: true,
-      get() {
-        return createFunc({}, null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "lazyGenericClosure",
+      (nixScope) =>
+        createFunc({}, null, {}, (nixScope) => (
           /*let*/ createScope((nixScope) => {
-            Object.defineProperty(nixScope, "work", {
-              enumerable: true,
-              get() {
-                return createFunc(/*arg:*/ "list", null, {}, (nixScope) => (
-                  createFunc(/*arg:*/ "doneKeys", null, {}, (nixScope) => (
-                    createFunc(/*arg:*/ "result", null, {}, (nixScope) => (
-                      operators.ifThenElse(
-                        operators.equal(nixScope.list, []),
-                        () => (nixScope.result),
-                        () => (/*let*/ createScope((nixScope) => {
-                          Object.defineProperty(nixScope, "x", {
-                            enumerable: true,
-                            get() {
-                              return nixScope.head(nixScope.list);
-                            },
-                          });
-                          Object.defineProperty(nixScope, "key", {
-                            enumerable: true,
-                            get() {
-                              return nixScope.x["key"];
-                            },
-                          });
-                          return (operators.ifThenElse(
-                            nixScope.elem(nixScope.key)(nixScope.doneKeys),
-                            () => (nixScope.work(nixScope.tail(nixScope.list))(
-                              nixScope.doneKeys,
-                            )(nixScope.result)),
-                            () => (nixScope.work(
-                              operators.listConcat(
-                                nixScope.tail(nixScope.list),
-                                nixScope.operator(nixScope.x),
-                              ),
-                            )(operators.listConcat(
-                              [nixScope.key],
-                              nixScope.doneKeys,
-                            ))(
-                              operators.listConcat(
-                                [nixScope.x],
-                                nixScope.result,
-                              ),
-                            )),
-                          ));
-                        })),
-                      )
-                    ))
+            defGetter(nixScope, "work", (nixScope) =>
+              createFunc(/*arg:*/ "list", null, {}, (nixScope) => (
+                createFunc(/*arg:*/ "doneKeys", null, {}, (nixScope) => (
+                  createFunc(/*arg:*/ "result", null, {}, (nixScope) => (
+                    operators.ifThenElse(
+                      operators.equal(nixScope.list, []),
+                      () => (nixScope.result),
+                      () => (/*let*/ createScope((nixScope) => {
+                        defGetter(
+                          nixScope,
+                          "x",
+                          (nixScope) => nixScope.head(nixScope.list),
+                        );
+                        defGetter(
+                          nixScope,
+                          "key",
+                          (nixScope) => nixScope.x["key"],
+                        );
+                        return (operators.ifThenElse(
+                          nixScope.elem(nixScope.key)(nixScope.doneKeys),
+                          () => (nixScope.work(nixScope.tail(nixScope.list))(
+                            nixScope.doneKeys,
+                          )(nixScope.result)),
+                          () => (nixScope.work(
+                            operators.listConcat(
+                              nixScope.tail(nixScope.list),
+                              nixScope.operator(nixScope.x),
+                            ),
+                          )(operators.listConcat(
+                            [nixScope.key],
+                            nixScope.doneKeys,
+                          ))(
+                            operators.listConcat([nixScope.x], nixScope.result),
+                          )),
+                        ));
+                      })),
+                    )
                   ))
-                ));
-              },
-            });
+                ))
+              )));
             return nixScope.work(nixScope.startSet)([])([]);
           })
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "innerModifySumArgs", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "innerModifySumArgs",
+      (nixScope) =>
+        createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "a", null, {}, (nixScope) => (
               createFunc(/*arg:*/ "b", null, {}, (nixScope) => (
@@ -521,52 +489,44 @@ export default createFunc({}, null, {}, (nixScope) => (
               ))
             ))
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "modifySumArgs", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "modifySumArgs",
+      (nixScope) =>
+        createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
             nixScope.innerModifySumArgs(nixScope.f)(nixScope.x)({})
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "innerClosePropagation", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "acc", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "innerClosePropagation",
+      (nixScope) =>
+        createFunc(/*arg:*/ "acc", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "xs", null, {}, (nixScope) => (
             operators.ifThenElse(
               operators.equal(nixScope.xs, []),
               () => (nixScope.acc),
               () => (/*let*/ createScope((nixScope) => {
-                Object.defineProperty(nixScope, "y", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.head(nixScope.xs);
-                  },
-                });
-                Object.defineProperty(nixScope, "ys", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.tail(nixScope.xs);
-                  },
-                });
+                defGetter(nixScope, "y", (nixScope) =>
+                  nixScope.head(nixScope.xs));
+                defGetter(nixScope, "ys", (nixScope) =>
+                  nixScope.tail(nixScope.xs));
                 return (operators.ifThenElse(
                   operators.negate(nixScope.isAttrs(nixScope.y)),
                   () => (nixScope.innerClosePropagation(nixScope.acc)(
                     nixScope.ys,
                   )),
                   () => (/*let*/ createScope((nixScope) => {
-                    Object.defineProperty(nixScope, "acc'", {
-                      enumerable: true,
-                      get() {
-                        return operators.listConcat([nixScope.y], nixScope.acc);
-                      },
-                    });
+                    defGetter(
+                      nixScope,
+                      "acc'",
+                      (nixScope) =>
+                        operators.listConcat([nixScope.y], nixScope.acc),
+                    );
                     return nixScope.innerClosePropagation(nixScope["acc'"])(
                       nixScope.uniqList({
                         "inputList": operators.listConcat(
@@ -588,25 +548,25 @@ export default createFunc({}, null, {}, (nixScope) => (
               })),
             )
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "closePropagationSlow", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "list", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "closePropagationSlow",
+      (nixScope) =>
+        createFunc(/*arg:*/ "list", null, {}, (nixScope) => (
           nixScope.uniqList(
             {
               "inputList": (nixScope.innerClosePropagation([])(nixScope.list)),
             },
           )
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "closePropagationFast", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "list", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "closePropagationFast",
+      (nixScope) =>
+        createFunc(/*arg:*/ "list", null, {}, (nixScope) => (
           nixScope.builtins["map"](
             createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
               nixScope.x["val"]
@@ -654,47 +614,48 @@ export default createFunc({}, null, {}, (nixScope) => (
               )),
             },
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "closePropagation", {
-      enumerable: true,
-      get() {
-        return (operators.ifThenElse(
-          operators.hasAttr(nixScope.builtins, "genericClosure"),
-          () => (nixScope.closePropagationFast),
-          () => (nixScope.closePropagationSlow),
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "mapAttrsFlatten", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "closePropagation",
+      (
+        nixScope,
+      ) => (operators.ifThenElse(
+        operators.hasAttr(nixScope.builtins, "genericClosure"),
+        () => (nixScope.closePropagationFast),
+        () => (nixScope.closePropagationSlow),
+      )),
+    );
+    defGetter(
+      nixScope,
+      "mapAttrsFlatten",
+      (nixScope) =>
+        createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "r", null, {}, (nixScope) => (
             nixScope.map(createFunc(/*arg:*/ "attr", null, {}, (nixScope) => (
               nixScope.f(nixScope.attr)(nixScope.r[nixScope.attr])
             )))(nixScope.attrNames(nixScope.r))
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "nvs", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "nvs",
+      (nixScope) =>
+        createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "value", null, {}, (nixScope) => (
             nixScope.listToAttrs([
               nixScope.nameValuePair(nixScope.name)(nixScope.value),
             ])
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "setAttr", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "set", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "setAttr",
+      (nixScope) =>
+        createFunc(/*arg:*/ "set", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "v", null, {}, (nixScope) => (
               operators.merge(
@@ -703,13 +664,13 @@ export default createFunc({}, null, {}, (nixScope) => (
               )
             ))
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "setAttrMerge", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "setAttrMerge",
+      (nixScope) =>
+        createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "default", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "attrs", null, {}, (nixScope) => (
               createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
@@ -723,13 +684,13 @@ export default createFunc({}, null, {}, (nixScope) => (
               ))
             ))
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "mergeAttrsWithFunc", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "mergeAttrsWithFunc",
+      (nixScope) =>
+        createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "set1", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "set2", null, {}, (nixScope) => (
               nixScope.foldr(createFunc(/*arg:*/ "n", null, {}, (nixScope) => (
@@ -749,13 +710,13 @@ export default createFunc({}, null, {}, (nixScope) => (
               )
             ))
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "mergeAttrsConcatenateValues", {
-      enumerable: true,
-      get() {
-        return nixScope.mergeAttrsWithFunc(
+        )),
+    );
+    defGetter(
+      nixScope,
+      "mergeAttrsConcatenateValues",
+      (nixScope) =>
+        nixScope.mergeAttrsWithFunc(
           createFunc(/*arg:*/ "a", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "b", null, {}, (nixScope) => (
               operators.listConcat(
@@ -764,13 +725,13 @@ export default createFunc({}, null, {}, (nixScope) => (
               )
             ))
           )),
-        );
-      },
-    });
-    Object.defineProperty(nixScope, "mergeAttrsNoOverride", {
-      enumerable: true,
-      get() {
-        return createFunc(
+        ),
+    );
+    defGetter(
+      nixScope,
+      "mergeAttrsNoOverride",
+      (nixScope) =>
+        createFunc(
           {
             "mergeLists": (
               nixScope,
@@ -814,27 +775,23 @@ export default createFunc({}, null, {}, (nixScope) => (
               ))
             ))
           ),
-        );
-      },
-    });
-    Object.defineProperty(nixScope, "mergeAttrByFunc", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+        ),
+    );
+    defGetter(
+      nixScope,
+      "mergeAttrByFunc",
+      (nixScope) =>
+        createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "y", null, {}, (nixScope) => (
             /*let*/ createScope((nixScope) => {
-              Object.defineProperty(nixScope, "mergeAttrBy2", {
-                enumerable: true,
-                get() {
-                  return operators.merge(
-                    { "mergeAttrBy": nixScope.mergeAttrs },
-                    operators.merge(
-                      nixScope.maybeAttr("mergeAttrBy")({})(nixScope.x),
-                      nixScope.maybeAttr("mergeAttrBy")({})(nixScope.y),
-                    ),
-                  );
-                },
-              });
+              defGetter(nixScope, "mergeAttrBy2", (nixScope) =>
+                operators.merge(
+                  { "mergeAttrBy": nixScope.mergeAttrs },
+                  operators.merge(
+                    nixScope.maybeAttr("mergeAttrBy")({})(nixScope.x),
+                    nixScope.maybeAttr("mergeAttrBy")({})(nixScope.y),
+                  ),
+                ));
               return nixScope.foldr(nixScope.mergeAttrs)({})([
                 nixScope.x,
                 nixScope.y,
@@ -873,31 +830,31 @@ export default createFunc({}, null, {}, (nixScope) => (
               ]);
             })
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "mergeAttrsByFuncDefaults", {
-      enumerable: true,
-      get() {
-        return nixScope.foldl(nixScope.mergeAttrByFunc)(
+        )),
+    );
+    defGetter(
+      nixScope,
+      "mergeAttrsByFuncDefaults",
+      (nixScope) =>
+        nixScope.foldl(nixScope.mergeAttrByFunc)(
           { "mergeAttrBy": nixScope.mergeAttrBy },
-        );
-      },
-    });
-    Object.defineProperty(nixScope, "mergeAttrsByFuncDefaultsClean", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "list", null, {}, (nixScope) => (
+        ),
+    );
+    defGetter(
+      nixScope,
+      "mergeAttrsByFuncDefaultsClean",
+      (nixScope) =>
+        createFunc(/*arg:*/ "list", null, {}, (nixScope) => (
           nixScope.removeAttrs(
             nixScope.mergeAttrsByFuncDefaults(nixScope.list),
           )(["mergeAttrBy"])
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "mergeAttrBy", {
-      enumerable: true,
-      get() {
-        return operators.merge(
+        )),
+    );
+    defGetter(
+      nixScope,
+      "mergeAttrBy",
+      (nixScope) =>
+        operators.merge(
           nixScope.listToAttrs(
             nixScope.map(createFunc(/*arg:*/ "n", null, {}, (nixScope) => (
               nixScope.nameValuePair(nixScope.n)(nixScope.concat)
@@ -932,13 +889,13 @@ export default createFunc({}, null, {}, (nixScope) => (
               )))(["preConfigure", "postInstall"]),
             ),
           ),
-        );
-      },
-    });
-    Object.defineProperty(nixScope, "nixType", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+        ),
+    );
+    defGetter(
+      nixScope,
+      "nixType",
+      (nixScope) =>
+        createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
           operators.ifThenElse(
             nixScope.isAttrs(nixScope.x),
             () => (operators.ifThenElse(
@@ -972,15 +929,9 @@ export default createFunc({}, null, {}, (nixScope) => (
               )),
             )),
           )
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "imap", {
-      enumerable: true,
-      get() {
-        return nixScope.imap1;
-      },
-    });
+        )),
+    );
+    defGetter(nixScope, "imap", (nixScope) => nixScope.imap1);
     return ({
       "checkFlag": nixScope.checkFlag,
       "checkReqs": nixScope.checkReqs,

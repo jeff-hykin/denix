@@ -25,8 +25,8 @@ export default createFunc({}, null, {}, (nixScope) => (
                     obj["options"]["specialisation"] = nixScope.mkOption(
                       createScope((nixScope) => {
                         const obj = {};
-                        obj["default"] = {};
-                        obj["type"] =
+                        obj.default = {};
+                        obj.type =
                           nixScope.extendModules(
                             {
                               "modules": [
@@ -35,7 +35,7 @@ export default createFunc({}, null, {}, (nixScope) => (
                                 },
                               ],
                             },
-                          )["type"];
+                          ).type;
                         return obj;
                       }),
                     );

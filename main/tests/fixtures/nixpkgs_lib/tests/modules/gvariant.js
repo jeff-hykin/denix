@@ -1,5 +1,5 @@
 import { createRuntime } from "../../../../../../../../../../../../../../runtime.js";
-const { runtime, createFunc, createScope } = createRuntime();
+const { runtime, createFunc, createScope, defGetter } = createRuntime();
 const operators = runtime.operators;
 
 export default createFunc({}, null, {}, (nixScope) => (
@@ -48,31 +48,23 @@ export default createFunc({}, null, {}, (nixScope) => (
         }
       })(nixScope.lib["gvariant"]),
       "assertion": /*let*/ createScope((nixScope) => {
-        Object.defineProperty(nixScope, "mkLine", {
-          enumerable: true,
-          get() {
-            return createFunc(/*arg:*/ "n", null, {}, (nixScope) => (
-              createFunc(/*arg:*/ "v", null, {}, (nixScope) => (
-                new InterpolatedString(["", " = ", ""], [
-                  () => (nixScope.n),
-                  () => (nixScope.toString(
-                    nixScope.lib["gvariant"]["mkValue"](nixScope.v),
-                  )),
-                ])
-              ))
-            ));
-          },
-        });
-        Object.defineProperty(nixScope, "result", {
-          enumerable: true,
-          get() {
-            return nixScope.lib["concatStringsSep"]("")(
-              nixScope.lib["mapAttrsToList"](nixScope.mkLine)(
-                nixScope.config["examples"],
-              ),
-            );
-          },
-        });
+        defGetter(nixScope, "mkLine", (nixScope) =>
+          createFunc(/*arg:*/ "n", null, {}, (nixScope) => (
+            createFunc(/*arg:*/ "v", null, {}, (nixScope) => (
+              new InterpolatedString(["", " = ", ""], [
+                () => (nixScope.n),
+                () => (nixScope.toString(
+                  nixScope.lib["gvariant"]["mkValue"](nixScope.v),
+                )),
+              ])
+            ))
+          )));
+        defGetter(nixScope, "result", (nixScope) =>
+          nixScope.lib["concatStringsSep"]("")(
+            nixScope.lib["mapAttrsToList"](nixScope.mkLine)(
+              nixScope.config["examples"],
+            ),
+          ));
         return operators.equal(
           operators.add(nixScope.result, ""),
           `

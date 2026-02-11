@@ -1,14 +1,14 @@
 export default /*let*/ createScope((nixScope) => {
-  Object.defineProperty(nixScope, "lib", {
-    enumerable: true,
-    get() {
-      return nixScope.import(new Path(["../../.."], []));
-    },
-  });
-  Object.defineProperty(nixScope, "evaluation", {
-    enumerable: true,
-    get() {
-      return nixScope.lib["evalModules"](
+  defGetter(
+    nixScope,
+    "lib",
+    (nixScope) => nixScope.import(new Path(["../../.."], [])),
+  );
+  defGetter(
+    nixScope,
+    "evaluation",
+    (nixScope) =>
+      nixScope.lib["evalModules"](
         {
           "modules": [
             {},
@@ -19,69 +19,64 @@ export default /*let*/ createScope((nixScope) => {
             new Path(["./b.nix"], []),
           ],
         },
-      );
-    },
-  });
-  Object.defineProperty(nixScope, "actual", {
-    enumerable: true,
-    get() {
-      return nixScope.evaluation["graph"];
-    },
-  });
-  Object.defineProperty(nixScope, "expected", {
-    enumerable: true,
-    get() {
-      return [
-        {
-          "key": ":anon-1",
-          "file": "<unknown-file>",
-          "imports": [],
-          "disabled": false,
-        },
-        {
-          "key": ":anon-2",
-          "file": "<unknown-file>",
-          "imports": [],
-          "disabled": false,
-        },
-        {
-          "key": nixScope.toString(new Path(["./a.nix"], [])),
+      ),
+  );
+  defGetter(nixScope, "actual", (nixScope) => nixScope.evaluation["graph"]);
+  defGetter(
+    nixScope,
+    "expected",
+    (
+      nixScope,
+    ) => [
+      {
+        "key": ":anon-1",
+        "file": "<unknown-file>",
+        "imports": [],
+        "disabled": false,
+      },
+      {
+        "key": ":anon-2",
+        "file": "<unknown-file>",
+        "imports": [],
+        "disabled": false,
+      },
+      {
+        "key": nixScope.toString(new Path(["./a.nix"], [])),
+        "file": nixScope.toString(new Path(["./a.nix"], [])),
+        "imports": [{
+          "key":
+            (new InterpolatedString(["", ":anon-1"], [
+              () => (nixScope.toString(new Path(["./a.nix"], []))),
+            ])),
           "file": nixScope.toString(new Path(["./a.nix"], [])),
           "imports": [{
             "key":
-              (new InterpolatedString(["", ":anon-1"], [
+              (new InterpolatedString(["", ":anon-1:anon-1"], [
                 () => (nixScope.toString(new Path(["./a.nix"], []))),
               ])),
             "file": nixScope.toString(new Path(["./a.nix"], [])),
-            "imports": [{
-              "key":
-                (new InterpolatedString(["", ":anon-1:anon-1"], [
-                  () => (nixScope.toString(new Path(["./a.nix"], []))),
-                ])),
-              "file": nixScope.toString(new Path(["./a.nix"], [])),
-              "imports": [],
-              "disabled": false,
-            }],
+            "imports": [],
             "disabled": false,
           }],
           "disabled": false,
-        },
-        {
-          "key": nixScope.toString(new Path(["./b.nix"], [])),
-          "file": nixScope.toString(new Path(["./b.nix"], [])),
-          "imports": [
-            {
-              "key": "explicit-key",
-              "file": nixScope.toString(new Path(["./b.nix"], [])),
-              "imports": [],
-              "disabled": false,
-            },
-          ],
-          "disabled": true,
-        },
-      ];
-    },
-  });
+        }],
+        "disabled": false,
+      },
+      {
+        "key": nixScope.toString(new Path(["./b.nix"], [])),
+        "file": nixScope.toString(new Path(["./b.nix"], [])),
+        "imports": [
+          {
+            "key": "explicit-key",
+            "file": nixScope.toString(new Path(["./b.nix"], [])),
+            "imports": [],
+            "disabled": false,
+          },
+        ],
+        "disabled": true,
+      },
+    ],
+  );
   return ((_cond) => {
     if (!_cond) {
       throw new Error("assertion failed: " + "actual == expected");

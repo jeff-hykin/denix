@@ -5,7 +5,7 @@ export default createFunc({}, null, {}, (nixScope) => (
     obj["options"]["submodule"] = nixScope.lib["mkOption"](
       createScope((nixScope) => {
         const obj = {};
-        obj["type"] =
+        obj.type =
           nixScope.lib["evalModules"]({
             "modules": [createScope((nixScope) => {
               const obj = {};
@@ -15,8 +15,8 @@ export default createFunc({}, null, {}, (nixScope) => (
               );
               return obj;
             })],
-          })["type"];
-        obj["default"] = {};
+          }).type;
+        obj.default = {};
         return obj;
       }),
     );

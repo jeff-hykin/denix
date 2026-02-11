@@ -23,9 +23,9 @@ export default createFunc({}, null, {}, (nixScope) => (
     }),
     "config": createScope((nixScope) => {
       const obj = {};
-      obj["processedToplevel"] = nixScope.lib["mkIf"](true)(10n);
-      obj["multiple"] = nixScope.lib["mkMerge"](["foo", "foo"]);
-      obj["priorities"] = nixScope.lib["mkMerge"]([
+      obj.processedToplevel = nixScope.lib["mkIf"](true)(10n);
+      obj.multiple = nixScope.lib["mkMerge"](["foo", "foo"]);
+      obj.priorities = nixScope.lib["mkMerge"]([
         "foo",
         nixScope.lib["mkForce"]("bar"),
       ]);

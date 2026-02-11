@@ -11,18 +11,18 @@ createFunc({}, null, {}, (nixScope) => (
       "i686-linux",
       "mipsel-linux",
     ];
-    Object.defineProperty(nixScope, "hydra", {
-      enumerable: true,
-      get() {
-        return operators.listConcat(
+    defGetter(
+      nixScope,
+      "hydra",
+      (nixScope) =>
+        operators.listConcat(
           nixScope.tier1,
           operators.listConcat(
             nixScope.tier2,
             operators.listConcat(nixScope.tier3, ["aarch64-darwin"]),
           ),
-        );
-      },
-    });
+        ),
+    );
     return nixScope;
   })
 ));

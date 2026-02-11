@@ -1,7 +1,7 @@
 export default createFunc({}, null, {}, (nixScope) => (
   createScope((nixScope) => {
     const obj = {};
-    obj["config"] = {
+    obj.config = {
       "foo": createFunc({}, null, {}, (nixScope) => (
         ((_cond) => {
           if (!_cond) {

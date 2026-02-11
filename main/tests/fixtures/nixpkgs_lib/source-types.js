@@ -1,13 +1,13 @@
 export default createFunc({}, null, {}, (nixScope) => (
   /*let*/ createScope((nixScope) => {
-    Object.defineProperty(nixScope, "defaultSourceType", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "tname", null, {}, (nixScope) => (
+    defGetter(
+      nixScope,
+      "defaultSourceType",
+      (nixScope) =>
+        createFunc(/*arg:*/ "tname", null, {}, (nixScope) => (
           { "shortName": nixScope.tname, "isSource": false }
-        ));
-      },
-    });
+        )),
+    );
     return nixScope.lib["mapAttrs"](
       createFunc(/*arg:*/ "tname", null, {}, (nixScope) => (
         createFunc(/*arg:*/ "tset", null, {}, (nixScope) => (

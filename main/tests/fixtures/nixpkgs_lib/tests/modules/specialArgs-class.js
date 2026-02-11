@@ -39,19 +39,19 @@ export default createFunc({}, null, {}, (nixScope) => (
     }),
     "config": createScope((nixScope) => {
       const obj = {};
-      obj["nixos"] = nixScope.lib["evalModules"](
+      obj.nixos = nixScope.lib["evalModules"](
         {
           "class": "nixos",
           "modules": [new Path(["./expose-module-class.nix"], [])],
         },
       );
-      obj["conditionalImportAsNixos"] = nixScope.lib["evalModules"](
+      obj.conditionalImportAsNixos = nixScope.lib["evalModules"](
         {
           "class": "nixos",
           "modules": [new Path(["./polymorphic-module.nix"], [])],
         },
       );
-      obj["conditionalImportAsDarwin"] = nixScope.lib["evalModules"](
+      obj.conditionalImportAsDarwin = nixScope.lib["evalModules"](
         {
           "class": "darwin",
           "modules": [new Path(["./polymorphic-module.nix"], [])],

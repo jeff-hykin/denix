@@ -26,10 +26,11 @@ export default /**
     nixScope.mapAttrs = nixScope.lib["mapAttrs"];
     nixScope.trace = nixScope.lib["trace"];
     return /*rec*/ createScope((nixScope) => {
-      Object.defineProperty(nixScope, "traceIf", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "pred", null, {}, (nixScope) => (
+      defGetter(
+        nixScope,
+        "traceIf",
+        (nixScope) =>
+          createFunc(/*arg:*/ "pred", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "msg", null, {}, (nixScope) => (
               createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
                 operators.ifThenElse(
@@ -39,112 +40,94 @@ export default /**
                 )
               ))
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "traceValFn", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "traceValFn",
+        (nixScope) =>
+          createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
               nixScope.trace(nixScope.f(nixScope.x))(nixScope.x)
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "traceVal", {
-        enumerable: true,
-        get() {
-          return nixScope.traceValFn(nixScope.id);
-        },
-      });
-      Object.defineProperty(nixScope, "traceSeq", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "traceVal",
+        (nixScope) => nixScope.traceValFn(nixScope.id),
+      );
+      defGetter(
+        nixScope,
+        "traceSeq",
+        (nixScope) =>
+          createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "y", null, {}, (nixScope) => (
               nixScope.trace(
                 nixScope.builtins["deepSeq"](nixScope.x)(nixScope.x),
               )(nixScope.y)
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "traceSeqN", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "depth", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "traceSeqN",
+        (nixScope) =>
+          createFunc(/*arg:*/ "depth", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
               createFunc(/*arg:*/ "y", null, {}, (nixScope) => (
                 /*let*/ createScope((nixScope) => {
-                  Object.defineProperty(nixScope, "snip", {
-                    enumerable: true,
-                    get() {
-                      return createFunc(/*arg:*/ "v", null, {}, (nixScope) => (
-                        operators.ifThenElse(
-                          nixScope.isList(nixScope.v),
-                          () => (nixScope.noQuotes("[…]")(nixScope.v)),
-                          () => (operators.ifThenElse(
-                            nixScope.isAttrs(nixScope.v),
-                            () => (nixScope.noQuotes("{…}")(nixScope.v)),
-                            () => (nixScope.v),
-                          )),
-                        )
-                      ));
-                    },
-                  });
-                  Object.defineProperty(nixScope, "noQuotes", {
-                    enumerable: true,
-                    get() {
-                      return createFunc(
-                        /*arg:*/ "str",
-                        null,
-                        {},
-                        (nixScope) => (
-                          createFunc(/*arg:*/ "v", null, {}, (nixScope) => (
-                            {
-                              "__pretty": nixScope.const(nixScope.str),
-                              "val": nixScope.v,
-                            }
-                          ))
-                        ),
-                      );
-                    },
-                  });
-                  Object.defineProperty(nixScope, "modify", {
-                    enumerable: true,
-                    get() {
-                      return createFunc(/*arg:*/ "n", null, {}, (nixScope) => (
-                        createFunc(/*arg:*/ "fn", null, {}, (nixScope) => (
-                          createFunc(/*arg:*/ "v", null, {}, (nixScope) => (
-                            operators.ifThenElse(
-                              operators.equal(nixScope.n, 0n),
-                              () => (nixScope.fn(nixScope.v)),
+                  defGetter(nixScope, "snip", (nixScope) =>
+                    createFunc(/*arg:*/ "v", null, {}, (nixScope) => (
+                      operators.ifThenElse(
+                        nixScope.isList(nixScope.v),
+                        () => (nixScope.noQuotes("[…]")(nixScope.v)),
+                        () => (operators.ifThenElse(
+                          nixScope.isAttrs(nixScope.v),
+                          () => (nixScope.noQuotes("{…}")(nixScope.v)),
+                          () => (nixScope.v),
+                        )),
+                      )
+                    )));
+                  defGetter(nixScope, "noQuotes", (nixScope) =>
+                    createFunc(/*arg:*/ "str", null, {}, (nixScope) => (
+                      createFunc(/*arg:*/ "v", null, {}, (nixScope) => (
+                        {
+                          "__pretty": nixScope.const(nixScope.str),
+                          "val": nixScope.v,
+                        }
+                      ))
+                    )));
+                  defGetter(nixScope, "modify", (nixScope) =>
+                    createFunc(/*arg:*/ "n", null, {}, (nixScope) => (
+                      createFunc(/*arg:*/ "fn", null, {}, (nixScope) => (
+                        createFunc(/*arg:*/ "v", null, {}, (nixScope) => (
+                          operators.ifThenElse(
+                            operators.equal(nixScope.n, 0n),
+                            () => (nixScope.fn(nixScope.v)),
+                            () => (operators.ifThenElse(
+                              nixScope.isList(nixScope.v),
+                              () => (nixScope.map(
+                                nixScope.modify(
+                                  operators.subtract(nixScope.n, 1n),
+                                )(nixScope.fn),
+                              )(nixScope.v)),
                               () => (operators.ifThenElse(
-                                nixScope.isList(nixScope.v),
-                                () => (nixScope.map(
-                                  nixScope.modify(
-                                    operators.subtract(nixScope.n, 1n),
-                                  )(nixScope.fn),
+                                nixScope.isAttrs(nixScope.v),
+                                () => (nixScope.mapAttrs(
+                                  nixScope.const(
+                                    nixScope.modify(
+                                      operators.subtract(nixScope.n, 1n),
+                                    )(nixScope.fn),
+                                  ),
                                 )(nixScope.v)),
-                                () => (operators.ifThenElse(
-                                  nixScope.isAttrs(nixScope.v),
-                                  () => (nixScope.mapAttrs(
-                                    nixScope.const(
-                                      nixScope.modify(
-                                        operators.subtract(nixScope.n, 1n),
-                                      )(nixScope.fn),
-                                    ),
-                                  )(nixScope.v)),
-                                  () => (nixScope.v),
-                                )),
+                                () => (nixScope.v),
                               )),
-                            )
-                          ))
+                            )),
+                          )
                         ))
-                      ));
-                    },
-                  });
+                      ))
+                    )));
                   return nixScope.trace(
                     nixScope.generators["toPretty"](
                       { "allowPrettyValues": true },
@@ -157,31 +140,30 @@ export default /**
                 })
               ))
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "traceValSeqFn", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "traceValSeqFn",
+        (nixScope) =>
+          createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "v", null, {}, (nixScope) => (
               nixScope.traceValFn(nixScope.f)(
                 nixScope.builtins["deepSeq"](nixScope.v)(nixScope.v),
               )
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "traceValSeq", {
-        enumerable: true,
-        get() {
-          return nixScope.traceValSeqFn(nixScope.id);
-        },
-      });
-      Object.defineProperty(nixScope, "traceValSeqNFn", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "traceValSeq",
+        (nixScope) => nixScope.traceValSeqFn(nixScope.id),
+      );
+      defGetter(
+        nixScope,
+        "traceValSeqNFn",
+        (nixScope) =>
+          createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "depth", null, {}, (nixScope) => (
               createFunc(/*arg:*/ "v", null, {}, (nixScope) => (
                 nixScope.traceSeqN(nixScope.depth)(nixScope.f(nixScope.v))(
@@ -189,29 +171,27 @@ export default /**
                 )
               ))
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "traceValSeqN", {
-        enumerable: true,
-        get() {
-          return nixScope.traceValSeqNFn(nixScope.id);
-        },
-      });
-      Object.defineProperty(nixScope, "traceFnSeqN", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "depth", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "traceValSeqN",
+        (nixScope) => nixScope.traceValSeqNFn(nixScope.id),
+      );
+      defGetter(
+        nixScope,
+        "traceFnSeqN",
+        (nixScope) =>
+          createFunc(/*arg:*/ "depth", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
               createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
                 createFunc(/*arg:*/ "v", null, {}, (nixScope) => (
                   /*let*/ createScope((nixScope) => {
-                    Object.defineProperty(nixScope, "res", {
-                      enumerable: true,
-                      get() {
-                        return nixScope.f(nixScope.v);
-                      },
-                    });
+                    defGetter(
+                      nixScope,
+                      "res",
+                      (nixScope) => nixScope.f(nixScope.v),
+                    );
                     return nixScope.lib["traceSeqN"](
                       operators.add(nixScope.depth, 1n),
                     )({
@@ -223,29 +203,30 @@ export default /**
                 ))
               ))
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "runTests", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "tests", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "runTests",
+        (nixScope) =>
+          createFunc(/*arg:*/ "tests", null, {}, (nixScope) => (
             nixScope.concatLists(
               nixScope.attrValues(
                 nixScope.mapAttrs(
                   createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
                     createFunc(/*arg:*/ "test", null, {}, (nixScope) => (
                       /*let*/ createScope((nixScope) => {
-                        Object.defineProperty(nixScope, "testsToRun", {
-                          enumerable: true,
-                          get() {
-                            return (operators.ifThenElse(
-                              operators.hasAttr(nixScope.tests, "tests"),
-                              () => (nixScope.tests["tests"]),
-                              () => [],
-                            ));
-                          },
-                        });
+                        defGetter(
+                          nixScope,
+                          "testsToRun",
+                          (
+                            nixScope,
+                          ) => (operators.ifThenElse(
+                            operators.hasAttr(nixScope.tests, "tests"),
+                            () => (nixScope.tests["tests"]),
+                            () => [],
+                          )),
+                        );
                         return (operators.ifThenElse(
                           operators.and(
                             operators.and(
@@ -285,13 +266,13 @@ export default /**
                 )(nixScope.tests),
               ),
             )
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "testAllTrue", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "expr", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "testAllTrue",
+        (nixScope) =>
+          createFunc(/*arg:*/ "expr", null, {}, (nixScope) => (
             {
               "expr": nixScope.expr,
               "expected": nixScope.map(
@@ -300,9 +281,8 @@ export default /**
                 )),
               )(nixScope.expr),
             }
-          ));
-        },
-      });
+          )),
+      );
       return nixScope;
     });
   })

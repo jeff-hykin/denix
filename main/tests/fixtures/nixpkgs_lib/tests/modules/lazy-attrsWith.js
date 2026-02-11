@@ -3,30 +3,30 @@ createFunc({}, null, {}, (nixScope) => (
   /*let*/ createScope((nixScope) => {
     nixScope.types = nixScope.lib["types"];
     nixScope.mkOption = nixScope.lib["mkOption"];
-    Object.defineProperty(nixScope, "lazyAttrsOf", {
-      enumerable: true,
-      get() {
-        return nixScope.mkOption(
+    defGetter(
+      nixScope,
+      "lazyAttrsOf",
+      (nixScope) =>
+        nixScope.mkOption(
           {
             "type": nixScope.types["attrsWith"](
               { "lazy": true, "elemType": nixScope.types["int"] },
             ),
           },
-        );
-      },
-    });
-    Object.defineProperty(nixScope, "attrsOf", {
-      enumerable: true,
-      get() {
-        return nixScope.mkOption(
+        ),
+    );
+    defGetter(
+      nixScope,
+      "attrsOf",
+      (nixScope) =>
+        nixScope.mkOption(
           {
             "type": nixScope.types["attrsWith"](
               { "elemType": nixScope.types["int"] },
             ),
           },
-        );
-      },
-    });
+        ),
+    );
     return ({
       "imports": [
         createFunc({}, null, {}, (nixScope) => (

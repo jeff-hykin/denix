@@ -1,9 +1,10 @@
 export default createFunc({}, null, {}, (nixScope) => (
   /*let*/ createScope((nixScope) => {
-    Object.defineProperty(nixScope, "foo", {
-      enumerable: true,
-      get() {
-        return nixScope.lib["mkOptionType"](
+    defGetter(
+      nixScope,
+      "foo",
+      (nixScope) =>
+        nixScope.lib["mkOptionType"](
           {
             "name": "foo",
             "functor": operators.merge(
@@ -11,12 +12,11 @@ export default createFunc({}, null, {}, (nixScope) => (
               { "wrapped": nixScope.lib["types"]["int"], "payload": 10n },
             ),
           },
-        );
-      },
-    });
+        ),
+    );
     return createScope((nixScope) => {
       const obj = {};
-      obj["imports"] = [
+      obj.imports = [
         createScope((nixScope) => {
           const obj = {};
           if (obj["options"] === undefined) obj["options"] = {};

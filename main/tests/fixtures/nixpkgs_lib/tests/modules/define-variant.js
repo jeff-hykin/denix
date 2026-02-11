@@ -15,15 +15,15 @@ export default createFunc({}, null, {}, (nixScope) => (
       }),
       "config": createScope((nixScope) => {
         const obj = {};
-        obj["resultFoo"] = nixScope.lib["concatMapStringsSep"](" ")(
+        obj.resultFoo = nixScope.lib["concatMapStringsSep"](" ")(
           nixScope.toString,
         )(nixScope.attrNames(nixScope.config["variants"]["foo"]["attrs"]));
-        obj["resultFooBar"] = nixScope.lib["concatMapStringsSep"](" ")(
+        obj.resultFooBar = nixScope.lib["concatMapStringsSep"](" ")(
           nixScope.toString,
         )(nixScope.attrNames(
           nixScope.config["variants"]["foo"]["variants"]["bar"]["attrs"],
         ));
-        obj["resultFooFoo"] = nixScope.lib["concatMapStringsSep"](" ")(
+        obj.resultFooFoo = nixScope.lib["concatMapStringsSep"](" ")(
           nixScope.toString,
         )(nixScope.attrNames(
           nixScope.config["variants"]["foo"]["variants"]["foo"]["attrs"],

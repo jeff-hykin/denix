@@ -1,5 +1,5 @@
 import { createRuntime } from "../../../../../../../../../../../../../../runtime.js";
-const { runtime, createFunc, createScope } = createRuntime();
+const { runtime, createFunc, createScope, defGetter } = createRuntime();
 const operators = runtime.operators;
 
 export default createFunc(

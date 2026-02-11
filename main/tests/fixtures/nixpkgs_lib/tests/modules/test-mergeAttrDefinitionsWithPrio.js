@@ -1,17 +1,18 @@
 export default createFunc({}, null, {}, (nixScope) => (
   /*let*/ createScope((nixScope) => {
-    Object.defineProperty(nixScope, "defs", {
-      enumerable: true,
-      get() {
-        return nixScope.lib["modules"]["mergeAttrDefinitionsWithPrio"](
+    defGetter(
+      nixScope,
+      "defs",
+      (nixScope) =>
+        nixScope.lib["modules"]["mergeAttrDefinitionsWithPrio"](
           nixScope.options["_module"]["args"],
-        );
-      },
-    });
-    Object.defineProperty(nixScope, "assertLazy", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "pos", null, {}, (nixScope) => (
+        ),
+    );
+    defGetter(
+      nixScope,
+      "assertLazy",
+      (nixScope) =>
+        createFunc(/*arg:*/ "pos", null, {}, (nixScope) => (
           nixScope.throw(
             new InterpolatedString([
               "",
@@ -24,9 +25,8 @@ export default createFunc({}, null, {}, (nixScope) => (
               () => (nixScope.toString(nixScope.pos["column"])),
             ]),
           )
-        ));
-      },
-    });
+        )),
+    );
     return createScope((nixScope) => {
       const obj = {};
       if (obj["options"] === undefined) obj["options"] = {};

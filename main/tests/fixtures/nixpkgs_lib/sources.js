@@ -10,18 +10,19 @@ createFunc({}, null, {}, (nixScope) => (
     nixScope.readFile = nixScope.lib["readFile"];
     nixScope.pathIsRegularFile =
       nixScope.lib["filesystem"]["pathIsRegularFile"];
-    Object.defineProperty(nixScope, "cleanSourceFilter", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
+    defGetter(
+      nixScope,
+      "cleanSourceFilter",
+      (nixScope) =>
+        createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "type", null, {}, (nixScope) => (
             /*let*/ createScope((nixScope) => {
-              Object.defineProperty(nixScope, "baseName", {
-                enumerable: true,
-                get() {
-                  return nixScope.baseNameOf(nixScope.toString(nixScope.name));
-                },
-              });
+              defGetter(
+                nixScope,
+                "baseName",
+                (nixScope) =>
+                  nixScope.baseNameOf(nixScope.toString(nixScope.name)),
+              );
               return operators.negate(
                 operators.or(
                   operators.or(
@@ -78,23 +79,23 @@ createFunc({}, null, {}, (nixScope) => (
               );
             })
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "cleanSource", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "src", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "cleanSource",
+      (nixScope) =>
+        createFunc(/*arg:*/ "src", null, {}, (nixScope) => (
           nixScope.cleanSourceWith(
             { "filter": nixScope.cleanSourceFilter, "src": nixScope.src },
           )
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "cleanSourceWith", {
-      enumerable: true,
-      get() {
-        return createFunc(
+        )),
+    );
+    defGetter(
+      nixScope,
+      "cleanSourceWith",
+      (nixScope) =>
+        createFunc(
           {
             "filter": (
               nixScope,
@@ -109,16 +110,15 @@ createFunc({}, null, {}, (nixScope) => (
           {},
           (nixScope) => (
             /*let*/ createScope((nixScope) => {
-              Object.defineProperty(nixScope, "orig", {
-                enumerable: true,
-                get() {
-                  return nixScope.toSourceAttributes(nixScope.src);
-                },
-              });
+              defGetter(
+                nixScope,
+                "orig",
+                (nixScope) => nixScope.toSourceAttributes(nixScope.src),
+              );
               return nixScope.fromSourceAttributes(createScope((nixScope) => {
                 const obj = {};
-                obj["origSrc"] = nixScope.orig["origSrc"];
-                obj["filter"] = createFunc(
+                obj.origSrc = nixScope.orig.origSrc;
+                obj.filter = createFunc(
                   /*arg:*/ "path",
                   null,
                   {},
@@ -131,7 +131,7 @@ createFunc({}, null, {}, (nixScope) => (
                     ))
                   ),
                 );
-                obj["name"] = operators.ifThenElse(
+                obj.name = operators.ifThenElse(
                   operators.notEqual(nixScope.name, null),
                   () => (nixScope.name),
                   () => (nixScope.orig["name"]),
@@ -140,20 +140,19 @@ createFunc({}, null, {}, (nixScope) => (
               }));
             })
           ),
-        );
-      },
-    });
-    Object.defineProperty(nixScope, "trace", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "src", null, {}, (nixScope) => (
+        ),
+    );
+    defGetter(
+      nixScope,
+      "trace",
+      (nixScope) =>
+        createFunc(/*arg:*/ "src", null, {}, (nixScope) => (
           /*let*/ createScope((nixScope) => {
-            Object.defineProperty(nixScope, "attrs", {
-              enumerable: true,
-              get() {
-                return nixScope.toSourceAttributes(nixScope.src);
-              },
-            });
+            defGetter(
+              nixScope,
+              "attrs",
+              (nixScope) => nixScope.toSourceAttributes(nixScope.src),
+            );
             return operators.merge(
               nixScope.fromSourceAttributes(
                 operators.merge(
@@ -166,14 +165,14 @@ createFunc({}, null, {}, (nixScope) => (
                       (nixScope) => (
                         createFunc(/*arg:*/ "type", null, {}, (nixScope) => (
                           /*let*/ createScope((nixScope) => {
-                            Object.defineProperty(nixScope, "r", {
-                              enumerable: true,
-                              get() {
-                                return nixScope.attrs["filter"](nixScope.path)(
+                            defGetter(
+                              nixScope,
+                              "r",
+                              (nixScope) =>
+                                nixScope.attrs["filter"](nixScope.path)(
                                   nixScope.type,
-                                );
-                              },
-                            });
+                                ),
+                            );
                             return nixScope.builtins["trace"](
                               new InterpolatedString([
                                 "",
@@ -201,51 +200,45 @@ createFunc({}, null, {}, (nixScope) => (
               },
             );
           })
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "sourceByRegex", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "src", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "sourceByRegex",
+      (nixScope) =>
+        createFunc(/*arg:*/ "src", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "regexes", null, {}, (nixScope) => (
             /*let*/ createScope((nixScope) => {
-              Object.defineProperty(nixScope, "isFiltered", {
-                enumerable: true,
-                get() {
-                  return operators.hasAttr(
-                    nixScope.src,
-                    "_isLibCleanSourceWith",
-                  );
-                },
-              });
-              Object.defineProperty(nixScope, "origSrc", {
-                enumerable: true,
-                get() {
-                  return (operators.ifThenElse(
-                    nixScope.isFiltered,
-                    () => (nixScope.src["origSrc"]),
-                    () => (nixScope.src),
-                  ));
-                },
-              });
+              defGetter(
+                nixScope,
+                "isFiltered",
+                (nixScope) =>
+                  operators.hasAttr(nixScope.src, "_isLibCleanSourceWith"),
+              );
+              defGetter(
+                nixScope,
+                "origSrc",
+                (
+                  nixScope,
+                ) => (operators.ifThenElse(
+                  nixScope.isFiltered,
+                  () => (nixScope.src["origSrc"]),
+                  () => (nixScope.src),
+                )),
+              );
               return nixScope.lib["cleanSourceWith"](
                 {
                   "filter":
                     (createFunc(/*arg:*/ "path", null, {}, (nixScope) => (
                       createFunc(/*arg:*/ "type", null, {}, (nixScope) => (
                         /*let*/ createScope((nixScope) => {
-                          Object.defineProperty(nixScope, "relPath", {
-                            enumerable: true,
-                            get() {
-                              return nixScope.lib["removePrefix"](
-                                operators.add(
-                                  nixScope.toString(nixScope.origSrc),
-                                  "/",
-                                ),
-                              )(nixScope.toString(nixScope.path));
-                            },
-                          });
+                          defGetter(nixScope, "relPath", (nixScope) =>
+                            nixScope.lib["removePrefix"](
+                              operators.add(
+                                nixScope.toString(nixScope.origSrc),
+                                "/",
+                              ),
+                            )(nixScope.toString(nixScope.path)));
                           return nixScope.lib["any"](
                             createFunc(/*arg:*/ "re", null, {}, (nixScope) => (
                               operators.notEqual(
@@ -262,373 +255,317 @@ createFunc({}, null, {}, (nixScope) => (
               );
             })
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "sourceFilesBySuffices", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "src", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "sourceFilesBySuffices",
+      (nixScope) =>
+        createFunc(/*arg:*/ "src", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "exts", null, {}, (nixScope) => (
             /*let*/ createScope((nixScope) => {
-              Object.defineProperty(nixScope, "filter", {
-                enumerable: true,
-                get() {
-                  return createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
-                    createFunc(/*arg:*/ "type", null, {}, (nixScope) => (
-                      /*let*/ createScope((nixScope) => {
-                        Object.defineProperty(nixScope, "base", {
-                          enumerable: true,
-                          get() {
-                            return nixScope.baseNameOf(
-                              nixScope.toString(nixScope.name),
-                            );
-                          },
-                        });
-                        return operators.or(
-                          operators.equal(nixScope.type, "directory"),
-                          nixScope.lib["any"](
-                            createFunc(/*arg:*/ "ext", null, {}, (nixScope) => (
-                              nixScope.lib["hasSuffix"](nixScope.ext)(
-                                nixScope.base,
-                              )
-                            )),
-                          )(nixScope.exts),
-                        );
-                      })
-                    ))
-                  ));
-                },
-              });
+              defGetter(nixScope, "filter", (nixScope) =>
+                createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
+                  createFunc(/*arg:*/ "type", null, {}, (nixScope) => (
+                    /*let*/ createScope((nixScope) => {
+                      defGetter(
+                        nixScope,
+                        "base",
+                        (nixScope) =>
+                          nixScope.baseNameOf(nixScope.toString(nixScope.name)),
+                      );
+                      return operators.or(
+                        operators.equal(nixScope.type, "directory"),
+                        nixScope.lib["any"](
+                          createFunc(/*arg:*/ "ext", null, {}, (nixScope) => (
+                            nixScope.lib["hasSuffix"](nixScope.ext)(
+                              nixScope.base,
+                            )
+                          )),
+                        )(nixScope.exts),
+                      );
+                    })
+                  ))
+                )));
               return nixScope.cleanSourceWith(
                 { "filter": nixScope.filter, "src": nixScope.src },
               );
             })
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "pathIsGitRepo", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "path", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "pathIsGitRepo",
+      (nixScope) =>
+        createFunc(/*arg:*/ "path", null, {}, (nixScope) => (
           operators.hasAttr(
             nixScope._commitIdFromGitRepoOrError(nixScope.path),
             "value",
           )
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "commitIdFromGitRepo", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "path", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "commitIdFromGitRepo",
+      (nixScope) =>
+        createFunc(/*arg:*/ "path", null, {}, (nixScope) => (
           /*let*/ createScope((nixScope) => {
-            Object.defineProperty(nixScope, "commitIdOrError", {
-              enumerable: true,
-              get() {
-                return nixScope._commitIdFromGitRepoOrError(nixScope.path);
-              },
-            });
+            defGetter(
+              nixScope,
+              "commitIdOrError",
+              (nixScope) => nixScope._commitIdFromGitRepoOrError(nixScope.path),
+            );
             return operators.selectOrDefault(nixScope.commitIdOrError, [
               "value",
             ], nixScope.throw(nixScope.commitIdOrError["error"]));
           })
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "_commitIdFromGitRepoOrError", {
-      enumerable: true,
-      get() {
-        return /*let*/ createScope((nixScope) => {
-          Object.defineProperty(nixScope, "readCommitFromFile", {
-            enumerable: true,
-            get() {
-              return createFunc(/*arg:*/ "file", null, {}, (nixScope) => (
-                createFunc(/*arg:*/ "path", null, {}, (nixScope) => (
-                  /*let*/ createScope((nixScope) => {
-                    Object.defineProperty(nixScope, "fileName", {
-                      enumerable: true,
-                      get() {
-                        return operators.add(
-                          nixScope.path,
-                          new InterpolatedString(["/", ""], [
-                            () => (nixScope.file),
-                          ]),
-                        );
-                      },
-                    });
-                    Object.defineProperty(nixScope, "packedRefsName", {
-                      enumerable: true,
-                      get() {
-                        return operators.add(nixScope.path, "/packed-refs");
-                      },
-                    });
-                    Object.defineProperty(nixScope, "absolutePath", {
-                      enumerable: true,
-                      get() {
-                        return createFunc(
-                          /*arg:*/ "base",
-                          null,
-                          {},
-                          (nixScope) => (
-                            createFunc(
-                              /*arg:*/ "path",
-                              null,
-                              {},
-                              (nixScope) => (
-                                operators.ifThenElse(
-                                  nixScope.lib["hasPrefix"]("/")(nixScope.path),
-                                  () => (nixScope.path),
-                                  () => (nixScope.toString(
-                                    operators.add(
-                                      new Path(["/."], []),
-                                      new InterpolatedString(["", "/", ""], [
-                                        () => (nixScope.base),
-                                        () => (nixScope.path),
-                                      ]),
-                                    ),
-                                  )),
-                                )
-                              ),
-                            )
-                          ),
-                        );
-                      },
-                    });
-                    return (operators.ifThenElse(
-                      nixScope.pathIsRegularFile(nixScope.path),
-                      () => (/*let*/ createScope((nixScope) => {
-                        Object.defineProperty(nixScope, "m", {
-                          enumerable: true,
-                          get() {
-                            return nixScope.match("^gitdir: (.*)$")(
-                              nixScope.lib["fileContents"](nixScope.path),
-                            );
-                          },
-                        });
-                        return (operators.ifThenElse(
-                          operators.equal(nixScope.m, null),
-                          () => ({
-                            "error": operators.add(
-                              "File contains no gitdir reference: ",
-                              nixScope.path,
+        )),
+    );
+    defGetter(
+      nixScope,
+      "_commitIdFromGitRepoOrError",
+      (nixScope) =>
+        /*let*/ createScope((nixScope) => {
+          defGetter(nixScope, "readCommitFromFile", (nixScope) =>
+            createFunc(/*arg:*/ "file", null, {}, (nixScope) => (
+              createFunc(/*arg:*/ "path", null, {}, (nixScope) => (
+                /*let*/ createScope((nixScope) => {
+                  defGetter(nixScope, "fileName", (nixScope) =>
+                    operators.add(
+                      nixScope.path,
+                      new InterpolatedString(["/", ""], [
+                        () => (nixScope.file),
+                      ]),
+                    ));
+                  defGetter(
+                    nixScope,
+                    "packedRefsName",
+                    (nixScope) => operators.add(nixScope.path, "/packed-refs"),
+                  );
+                  defGetter(nixScope, "absolutePath", (nixScope) =>
+                    createFunc(/*arg:*/ "base", null, {}, (nixScope) => (
+                      createFunc(/*arg:*/ "path", null, {}, (nixScope) => (
+                        operators.ifThenElse(
+                          nixScope.lib["hasPrefix"]("/")(nixScope.path),
+                          () => (nixScope.path),
+                          () => (nixScope.toString(
+                            operators.add(
+                              new Path(["/."], []),
+                              new InterpolatedString(["", "/", ""], [
+                                () => (nixScope.base),
+                                () => (nixScope.path),
+                              ]),
                             ),
-                          }),
-                          () => (/*let*/ createScope((nixScope) => {
-                            Object.defineProperty(nixScope, "gitDir", {
-                              enumerable: true,
-                              get() {
-                                return nixScope.absolutePath(
-                                  nixScope.dirOf(nixScope.path),
-                                )(nixScope.lib["head"](nixScope.m));
-                              },
-                            });
-                            Object.defineProperty(nixScope, "commonDir''", {
-                              enumerable: true,
-                              get() {
-                                return (operators.ifThenElse(
-                                  nixScope.pathIsRegularFile(
-                                    new InterpolatedString(["", "/commondir"], [
-                                      () => (nixScope.gitDir),
-                                    ]),
-                                  ),
-                                  () => (nixScope.lib["fileContents"](
-                                    new InterpolatedString(["", "/commondir"], [
-                                      () => (nixScope.gitDir),
-                                    ]),
-                                  )),
+                          )),
+                        )
+                      ))
+                    )));
+                  return (operators.ifThenElse(
+                    nixScope.pathIsRegularFile(nixScope.path),
+                    () => (/*let*/ createScope((nixScope) => {
+                      defGetter(
+                        nixScope,
+                        "m",
+                        (nixScope) =>
+                          nixScope.match("^gitdir: (.*)$")(
+                            nixScope.lib["fileContents"](nixScope.path),
+                          ),
+                      );
+                      return (operators.ifThenElse(
+                        operators.equal(nixScope.m, null),
+                        () => ({
+                          "error": operators.add(
+                            "File contains no gitdir reference: ",
+                            nixScope.path,
+                          ),
+                        }),
+                        () => (/*let*/ createScope((nixScope) => {
+                          defGetter(nixScope, "gitDir", (nixScope) =>
+                            nixScope.absolutePath(
+                              nixScope.dirOf(nixScope.path),
+                            )(nixScope.lib["head"](nixScope.m)));
+                          defGetter(
+                            nixScope,
+                            "commonDir''",
+                            (
+                              nixScope,
+                            ) => (operators.ifThenElse(
+                              nixScope.pathIsRegularFile(
+                                new InterpolatedString(["", "/commondir"], [
                                   () => (nixScope.gitDir),
-                                ));
-                              },
-                            });
-                            Object.defineProperty(nixScope, "commonDir'", {
-                              enumerable: true,
-                              get() {
-                                return nixScope.lib["removeSuffix"]("/")(
-                                  nixScope["commonDir''"],
-                                );
-                              },
-                            });
-                            Object.defineProperty(nixScope, "commonDir", {
-                              enumerable: true,
-                              get() {
-                                return nixScope.absolutePath(nixScope.gitDir)(
-                                  nixScope["commonDir'"],
-                                );
-                              },
-                            });
-                            Object.defineProperty(nixScope, "refFile", {
-                              enumerable: true,
-                              get() {
-                                return nixScope.lib["removePrefix"](
-                                  new InterpolatedString(["", "/"], [
-                                    () => (nixScope.commonDir),
-                                  ]),
-                                )(
-                                  new InterpolatedString(["", "/", ""], [
-                                    () => (nixScope.gitDir),
-                                    () => (nixScope.file),
-                                  ]),
-                                );
-                              },
-                            });
-                            return nixScope.readCommitFromFile(
-                              nixScope.refFile,
-                            )(nixScope.commonDir);
-                          })),
+                                ]),
+                              ),
+                              () => (nixScope.lib["fileContents"](
+                                new InterpolatedString(["", "/commondir"], [
+                                  () => (nixScope.gitDir),
+                                ]),
+                              )),
+                              () => (nixScope.gitDir),
+                            )),
+                          );
+                          defGetter(nixScope, "commonDir'", (nixScope) =>
+                            nixScope.lib["removeSuffix"]("/")(
+                              nixScope["commonDir''"],
+                            ));
+                          defGetter(nixScope, "commonDir", (nixScope) =>
+                            nixScope.absolutePath(nixScope.gitDir)(
+                              nixScope["commonDir'"],
+                            ));
+                          defGetter(nixScope, "refFile", (nixScope) =>
+                            nixScope.lib["removePrefix"](
+                              new InterpolatedString(["", "/"], [
+                                () => (nixScope.commonDir),
+                              ]),
+                            )(
+                              new InterpolatedString(["", "/", ""], [
+                                () => (nixScope.gitDir),
+                                () => (nixScope.file),
+                              ]),
+                            ));
+                          return nixScope.readCommitFromFile(nixScope.refFile)(
+                            nixScope.commonDir,
+                          );
+                        })),
+                      ));
+                    })),
+                    () => (operators.ifThenElse(
+                      nixScope.pathIsRegularFile(nixScope.fileName),
+                      () => (/*let*/ createScope((nixScope) => {
+                        defGetter(
+                          nixScope,
+                          "fileContent",
+                          (nixScope) =>
+                            nixScope.lib["fileContents"](nixScope.fileName),
+                        );
+                        defGetter(
+                          nixScope,
+                          "matchRef",
+                          (nixScope) =>
+                            nixScope.match("^ref: (.*)$")(nixScope.fileContent),
+                        );
+                        return (operators.ifThenElse(
+                          operators.equal(nixScope.matchRef, null),
+                          () => ({ "value": nixScope.fileContent }),
+                          () => (nixScope.readCommitFromFile(
+                            nixScope.lib["head"](nixScope.matchRef),
+                          )(nixScope.path)),
                         ));
                       })),
                       () => (operators.ifThenElse(
-                        nixScope.pathIsRegularFile(nixScope.fileName),
+                        nixScope.pathIsRegularFile(nixScope.packedRefsName),
                         () => (/*let*/ createScope((nixScope) => {
-                          Object.defineProperty(nixScope, "fileContent", {
-                            enumerable: true,
-                            get() {
-                              return nixScope.lib["fileContents"](
-                                nixScope.fileName,
-                              );
-                            },
-                          });
-                          Object.defineProperty(nixScope, "matchRef", {
-                            enumerable: true,
-                            get() {
-                              return nixScope.match("^ref: (.*)$")(
-                                nixScope.fileContent,
-                              );
-                            },
-                          });
+                          defGetter(
+                            nixScope,
+                            "fileContent",
+                            (nixScope) =>
+                              nixScope.readFile(nixScope.packedRefsName),
+                          );
+                          defGetter(
+                            nixScope,
+                            "matchRef",
+                            (nixScope) =>
+                              nixScope.match(
+                                new InterpolatedString(["([a-z0-9]+) ", ""], [
+                                  () => (nixScope.file),
+                                ]),
+                              ),
+                          );
+                          defGetter(
+                            nixScope,
+                            "isRef",
+                            (nixScope) =>
+                              createFunc(/*arg:*/ "s", null, {}, (nixScope) => (
+                                operators.and(
+                                  nixScope.isString(nixScope.s),
+                                  operators.notEqual(
+                                    nixScope.matchRef(nixScope.s),
+                                    null,
+                                  ),
+                                )
+                              )),
+                          );
+                          defGetter(
+                            nixScope,
+                            "refs",
+                            (nixScope) =>
+                              nixScope.filter(nixScope.isRef)(
+                                nixScope.split("")(nixScope.fileContent),
+                              ),
+                          );
                           return (operators.ifThenElse(
-                            operators.equal(nixScope.matchRef, null),
-                            () => ({ "value": nixScope.fileContent }),
-                            () => (nixScope.readCommitFromFile(
-                              nixScope.lib["head"](nixScope.matchRef),
-                            )(nixScope.path)),
+                            operators.equal(nixScope.refs, []),
+                            () => ({
+                              "error": operators.add(
+                                operators.add(
+                                  operators.add(
+                                    "Could not find ",
+                                    nixScope.file,
+                                  ),
+                                  " in ",
+                                ),
+                                nixScope.packedRefsName,
+                              ),
+                            }),
+                            () => ({
+                              "value": nixScope.lib["head"](
+                                nixScope.matchRef(
+                                  nixScope.lib["head"](nixScope.refs),
+                                ),
+                              ),
+                            }),
                           ));
                         })),
-                        () => (operators.ifThenElse(
-                          nixScope.pathIsRegularFile(nixScope.packedRefsName),
-                          () => (/*let*/ createScope((nixScope) => {
-                            Object.defineProperty(nixScope, "fileContent", {
-                              enumerable: true,
-                              get() {
-                                return nixScope.readFile(
-                                  nixScope.packedRefsName,
-                                );
-                              },
-                            });
-                            Object.defineProperty(nixScope, "matchRef", {
-                              enumerable: true,
-                              get() {
-                                return nixScope.match(
-                                  new InterpolatedString(["([a-z0-9]+) ", ""], [
-                                    () => (nixScope.file),
-                                  ]),
-                                );
-                              },
-                            });
-                            Object.defineProperty(nixScope, "isRef", {
-                              enumerable: true,
-                              get() {
-                                return createFunc(
-                                  /*arg:*/ "s",
-                                  null,
-                                  {},
-                                  (nixScope) => (
-                                    operators.and(
-                                      nixScope.isString(nixScope.s),
-                                      operators.notEqual(
-                                        nixScope.matchRef(nixScope.s),
-                                        null,
-                                      ),
-                                    )
-                                  ),
-                                );
-                              },
-                            });
-                            Object.defineProperty(nixScope, "refs", {
-                              enumerable: true,
-                              get() {
-                                return nixScope.filter(nixScope.isRef)(
-                                  nixScope.split("")(nixScope.fileContent),
-                                );
-                              },
-                            });
-                            return (operators.ifThenElse(
-                              operators.equal(nixScope.refs, []),
-                              () => ({
-                                "error": operators.add(
-                                  operators.add(
-                                    operators.add(
-                                      "Could not find ",
-                                      nixScope.file,
-                                    ),
-                                    " in ",
-                                  ),
-                                  nixScope.packedRefsName,
-                                ),
-                              }),
-                              () => ({
-                                "value": nixScope.lib["head"](
-                                  nixScope.matchRef(
-                                    nixScope.lib["head"](nixScope.refs),
-                                  ),
-                                ),
-                              }),
-                            ));
-                          })),
-                          () => ({
-                            "error": operators.add(
-                              "Not a .git directory: ",
-                              nixScope.toString(nixScope.path),
-                            ),
-                          }),
-                        )),
+                        () => ({
+                          "error": operators.add(
+                            "Not a .git directory: ",
+                            nixScope.toString(nixScope.path),
+                          ),
+                        }),
                       )),
-                    ));
-                  })
-                ))
-              ));
-            },
-          });
+                    )),
+                  ));
+                })
+              ))
+            )));
           return nixScope.readCommitFromFile("HEAD");
-        });
-      },
-    });
-    Object.defineProperty(nixScope, "pathHasContext", {
-      enumerable: true,
-      get() {
-        return operators.selectOrDefault(
+        }),
+    );
+    defGetter(
+      nixScope,
+      "pathHasContext",
+      (nixScope) =>
+        operators.selectOrDefault(
           nixScope.builtins,
           ["hasContext"],
           nixScope.lib["hasPrefix"](nixScope.storeDir),
-        );
-      },
-    });
-    Object.defineProperty(nixScope, "canCleanSource", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "src", null, {}, (nixScope) => (
+        ),
+    );
+    defGetter(
+      nixScope,
+      "canCleanSource",
+      (nixScope) =>
+        createFunc(/*arg:*/ "src", null, {}, (nixScope) => (
           operators.or(
             operators.hasAttr(nixScope.src, "_isLibCleanSourceWith"),
             operators.negate(
               nixScope.pathHasContext(nixScope.toString(nixScope.src)),
             ),
           )
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "toSourceAttributes", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "src", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "toSourceAttributes",
+      (nixScope) =>
+        createFunc(/*arg:*/ "src", null, {}, (nixScope) => (
           /*let*/ createScope((nixScope) => {
-            Object.defineProperty(nixScope, "isFiltered", {
-              enumerable: true,
-              get() {
-                return operators.hasAttr(nixScope.src, "_isLibCleanSourceWith");
-              },
-            });
+            defGetter(
+              nixScope,
+              "isFiltered",
+              (nixScope) =>
+                operators.hasAttr(nixScope.src, "_isLibCleanSourceWith"),
+            );
             return ({
               "origSrc":
                 (operators.ifThenElse(
@@ -654,13 +591,13 @@ createFunc({}, null, {}, (nixScope) => (
                 )),
             });
           })
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "fromSourceAttributes", {
-      enumerable: true,
-      get() {
-        return createFunc({}, null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "fromSourceAttributes",
+      (nixScope) =>
+        createFunc({}, null, {}, (nixScope) => (
           {
             "_isLibCleanSourceWith": true,
             "origSrc": nixScope.origSrc,
@@ -674,104 +611,89 @@ createFunc({}, null, {}, (nixScope) => (
               },
             ),
           }
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "urlToName", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "url", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "urlToName",
+      (nixScope) =>
+        createFunc(/*arg:*/ "url", null, {}, (nixScope) => (
           /*let*/ createScope((nixScope) => {
             nixScope.stringLength = nixScope.lib["strings"]["stringLength"];
-            Object.defineProperty(nixScope, "base", {
-              enumerable: true,
-              get() {
-                return nixScope.baseNameOf(
-                  nixScope.lib["removeSuffix"]("/")(
-                    nixScope.lib["last"](
-                      nixScope.lib["splitString"](":")(
-                        nixScope.toString(nixScope.url),
-                      ),
+            defGetter(nixScope, "base", (nixScope) =>
+              nixScope.baseNameOf(
+                nixScope.lib["removeSuffix"]("/")(
+                  nixScope.lib["last"](
+                    nixScope.lib["splitString"](":")(
+                      nixScope.toString(nixScope.url),
                     ),
                   ),
-                );
-              },
-            });
-            Object.defineProperty(nixScope, "removeExt", {
-              enumerable: true,
-              get() {
-                return createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
+                ),
+              ));
+            defGetter(nixScope, "removeExt", (nixScope) =>
+              createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
+                /*let*/ createScope((nixScope) => {
+                  defGetter(
+                    nixScope,
+                    "matchExt",
+                    (nixScope) => nixScope.match("(.*)")(nixScope.name),
+                  );
+                  return (operators.ifThenElse(
+                    operators.notEqual(nixScope.matchExt, null),
+                    () => (nixScope.lib["head"](nixScope.matchExt)),
+                    () => (nixScope.name),
+                  ));
+                })
+              )));
+            defGetter(nixScope, "shrink", (nixScope) =>
+              createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
+                createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
                   /*let*/ createScope((nixScope) => {
-                    Object.defineProperty(nixScope, "matchExt", {
-                      enumerable: true,
-                      get() {
-                        return nixScope.match("(.*)")(nixScope.name);
-                      },
-                    });
+                    defGetter(
+                      nixScope,
+                      "v",
+                      (nixScope) => nixScope.f(nixScope.x),
+                    );
                     return (operators.ifThenElse(
-                      operators.notEqual(nixScope.matchExt, null),
-                      () => (nixScope.lib["head"](nixScope.matchExt)),
-                      () => (nixScope.name),
+                      operators.lessThan(
+                        nixScope.stringLength(nixScope.v),
+                        nixScope.stringLength(nixScope.x),
+                      ),
+                      () => (nixScope.shrink(nixScope.f)(nixScope.v)),
+                      () => (nixScope.x),
                     ));
                   })
-                ));
-              },
-            });
-            Object.defineProperty(nixScope, "shrink", {
-              enumerable: true,
-              get() {
-                return createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
-                  createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
-                    /*let*/ createScope((nixScope) => {
-                      Object.defineProperty(nixScope, "v", {
-                        enumerable: true,
-                        get() {
-                          return nixScope.f(nixScope.x);
-                        },
-                      });
-                      return (operators.ifThenElse(
-                        operators.lessThan(
-                          nixScope.stringLength(nixScope.v),
-                          nixScope.stringLength(nixScope.x),
-                        ),
-                        () => (nixScope.shrink(nixScope.f)(nixScope.v)),
-                        () => (nixScope.x),
-                      ));
-                    })
-                  ))
-                ));
-              },
-            });
+                ))
+              )));
             return nixScope.shrink(nixScope.removeExt)(nixScope.base);
           })
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "shortRev", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "rev", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "shortRev",
+      (nixScope) =>
+        createFunc(/*arg:*/ "rev", null, {}, (nixScope) => (
           /*let*/ createScope((nixScope) => {
-            Object.defineProperty(nixScope, "baseRev", {
-              enumerable: true,
-              get() {
-                return nixScope.baseNameOf(nixScope.toString(nixScope.rev));
-              },
-            });
-            Object.defineProperty(nixScope, "matchHash", {
-              enumerable: true,
-              get() {
-                return nixScope.match("[a-f0-9]+")(nixScope.baseRev);
-              },
-            });
-            Object.defineProperty(nixScope, "matchVer", {
-              enumerable: true,
-              get() {
-                return nixScope.match("([A-Za-z]+[-_. ]?)*(v)?([0-9.]+.*)")(
+            defGetter(
+              nixScope,
+              "baseRev",
+              (nixScope) =>
+                nixScope.baseNameOf(nixScope.toString(nixScope.rev)),
+            );
+            defGetter(
+              nixScope,
+              "matchHash",
+              (nixScope) => nixScope.match("[a-f0-9]+")(nixScope.baseRev),
+            );
+            defGetter(
+              nixScope,
+              "matchVer",
+              (nixScope) =>
+                nixScope.match("([A-Za-z]+[-_. ]?)*(v)?([0-9.]+.*)")(
                   nixScope.baseRev,
-                );
-              },
-            });
+                ),
+            );
             return (operators.ifThenElse(
               operators.notEqual(nixScope.matchHash, null),
               () => (nixScope.builtins["substring"](0n)(7n)(nixScope.baseRev)),
@@ -782,13 +704,13 @@ createFunc({}, null, {}, (nixScope) => (
               )),
             ));
           })
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "revOrTag", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "rev", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "revOrTag",
+      (nixScope) =>
+        createFunc(/*arg:*/ "rev", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "tag", null, {}, (nixScope) => (
             operators.ifThenElse(
               operators.notEqual(nixScope.tag, null),
@@ -800,46 +722,47 @@ createFunc({}, null, {}, (nixScope) => (
               )),
             )
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "repoRevToNameFull", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "repo_", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "repoRevToNameFull",
+      (nixScope) =>
+        createFunc(/*arg:*/ "repo_", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "rev_", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "suffix_", null, {}, (nixScope) => (
               /*let*/ createScope((nixScope) => {
-                Object.defineProperty(nixScope, "repo", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.urlToName(nixScope.repo_);
-                  },
-                });
-                Object.defineProperty(nixScope, "rev", {
-                  enumerable: true,
-                  get() {
-                    return (operators.ifThenElse(
-                      operators.notEqual(nixScope.rev_, null),
-                      () => (new InterpolatedString(["-", ""], [
-                        () => (nixScope.shortRev(nixScope.rev_)),
-                      ])),
-                      () => (""),
-                    ));
-                  },
-                });
-                Object.defineProperty(nixScope, "suffix", {
-                  enumerable: true,
-                  get() {
-                    return (operators.ifThenElse(
-                      operators.notEqual(nixScope.suffix_, null),
-                      () => (new InterpolatedString(["-", ""], [
-                        () => (nixScope.suffix_),
-                      ])),
-                      () => (""),
-                    ));
-                  },
-                });
+                defGetter(
+                  nixScope,
+                  "repo",
+                  (nixScope) => nixScope.urlToName(nixScope.repo_),
+                );
+                defGetter(
+                  nixScope,
+                  "rev",
+                  (
+                    nixScope,
+                  ) => (operators.ifThenElse(
+                    operators.notEqual(nixScope.rev_, null),
+                    () => (new InterpolatedString(["-", ""], [
+                      () => (nixScope.shortRev(nixScope.rev_)),
+                    ])),
+                    () => (""),
+                  )),
+                );
+                defGetter(
+                  nixScope,
+                  "suffix",
+                  (
+                    nixScope,
+                  ) => (operators.ifThenElse(
+                    operators.notEqual(nixScope.suffix_, null),
+                    () => (new InterpolatedString(["-", ""], [
+                      () => (nixScope.suffix_),
+                    ])),
+                    () => (""),
+                  )),
+                );
                 return (new InterpolatedString(["", "", "", "-source"], [
                   () => (nixScope.repo),
                   () => (nixScope.rev),
@@ -848,13 +771,13 @@ createFunc({}, null, {}, (nixScope) => (
               })
             ))
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "repoRevToName", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "kind", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "repoRevToName",
+      (nixScope) =>
+        createFunc(/*arg:*/ "kind", null, {}, (nixScope) => (
           operators.ifThenElse(
             operators.equal(nixScope.kind, "source"),
             () => (createFunc(/*arg:*/ "repo", null, {}, (nixScope) => (
@@ -882,9 +805,8 @@ createFunc({}, null, {}, (nixScope) => (
               )),
             )),
           )
-        ));
-      },
-    });
+        )),
+    );
     return ({
       "pathType": nixScope.lib["warnIf"](
         nixScope.lib["oldestSupportedReleaseIsAtLeast"](2305n),

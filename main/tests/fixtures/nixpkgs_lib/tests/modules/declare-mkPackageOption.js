@@ -36,17 +36,16 @@ export default createFunc({}, null, {}, (nixScope) => (
           "hello",
         )({ "pkgsText": "myPkgs" }),
         "packageFromOtherSet": /*let*/ createScope((nixScope) => {
-          Object.defineProperty(nixScope, "myPkgs", {
-            enumerable: true,
-            get() {
-              return ({
-                "hello": operators.merge(
-                  nixScope.pkgs["hello"],
-                  { "pname": "hello-other" },
-                ),
-              });
-            },
-          });
+          defGetter(
+            nixScope,
+            "myPkgs",
+            (nixScope) => ({
+              "hello": operators.merge(
+                nixScope.pkgs["hello"],
+                { "pname": "hello-other" },
+              ),
+            }),
+          );
           return nixScope.lib["mkPackageOption"](nixScope.myPkgs)("hello")({});
         }),
         "packageInvalidIdentifier": /*let*/ createScope((nixScope) => {
@@ -54,7 +53,7 @@ export default createFunc({}, null, {}, (nixScope) => (
           nixScope.myPkgs['"123"']['"with\\"quote"'] = createScope(
             (nixScope) => {
               const obj = {};
-              obj["hello"] = nixScope.pkgs["hello"];
+              obj.hello = nixScope.pkgs.hello;
               return obj;
             },
           );

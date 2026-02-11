@@ -1,5 +1,5 @@
 import { createRuntime } from "../../../../../../../../../../../../runtime.js";
-const { runtime, createFunc, createScope } = createRuntime();
+const { runtime, createFunc, createScope, defGetter } = createRuntime();
 const operators = runtime.operators;
 
 export default /**
@@ -35,50 +35,41 @@ export default /**
     nixScope.mkOptionType = nixScope.lib["types"]["mkOptionType"];
     nixScope.last = nixScope.lib["lists"]["last"];
     nixScope.toList = nixScope.lib["lists"]["toList"];
-    Object.defineProperty(nixScope, "prioritySuggestion", {
-      enumerable: true,
-      get() {
-        return `
+    defGetter(nixScope, "prioritySuggestion", (nixScope) => `
         Use \`lib.mkForce value\` or \`lib.mkDefault value\` to change the priority on any of these definitions.
-      `;
-      },
-    });
+      `);
     return /*rec*/ createScope((nixScope) => {
       nixScope.unknownModule = "<unknown-file>";
-      Object.defineProperty(nixScope, "isOption", {
-        enumerable: true,
-        get() {
-          return nixScope.lib["isType"]("option");
-        },
-      });
-      Object.defineProperty(nixScope, "mkOption", {
-        enumerable: true,
-        get() {
-          return createFunc(
-            {
-              "default": (nixScope) => (null),
-              "defaultText": (nixScope) => (null),
-              "example": (nixScope) => (null),
-              "description": (nixScope) => (null),
-              "relatedPackages": (nixScope) => (null),
-              "type": (nixScope) => (null),
-              "apply": (nixScope) => (null),
-              "internal": (nixScope) => (null),
-              "visible": (nixScope) => (null),
-              "readOnly": (nixScope) => (null),
-            },
-            "attrs",
-            {},
-            (nixScope) => (
-              operators.merge(nixScope.attrs, { "_type": "option" })
-            ),
-          );
-        },
-      });
-      Object.defineProperty(nixScope, "mkEnableOption", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
+      defGetter(
+        nixScope,
+        "isOption",
+        (nixScope) => nixScope.lib["isType"]("option"),
+      );
+      defGetter(nixScope, "mkOption", (nixScope) =>
+        createFunc(
+          {
+            "default": (nixScope) => (null),
+            "defaultText": (nixScope) => (null),
+            "example": (nixScope) => (null),
+            "description": (nixScope) => (null),
+            "relatedPackages": (nixScope) => (null),
+            "type": (nixScope) => (null),
+            "apply": (nixScope) => (null),
+            "internal": (nixScope) => (null),
+            "visible": (nixScope) => (null),
+            "readOnly": (nixScope) => (null),
+          },
+          "attrs",
+          {},
+          (nixScope) => (
+            operators.merge(nixScope.attrs, { "_type": "option" })
+          ),
+        ));
+      defGetter(
+        nixScope,
+        "mkEnableOption",
+        (nixScope) =>
+          createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
             nixScope.mkOption(
               {
                 "default": false,
@@ -90,13 +81,13 @@ export default /**
                 "type": nixScope.lib["types"]["bool"],
               },
             )
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "mkPackageOption", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "pkgs", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "mkPackageOption",
+        (nixScope) =>
+          createFunc(/*arg:*/ "pkgs", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
               createFunc(
                 {
@@ -110,65 +101,61 @@ export default /**
                 {},
                 (nixScope) => (
                   /*let*/ createScope((nixScope) => {
-                    Object.defineProperty(nixScope, "name'", {
-                      enumerable: true,
-                      get() {
-                        return (operators.ifThenElse(
-                          nixScope.isList(nixScope.name),
-                          () => (nixScope.last(nixScope.name)),
-                          () => (nixScope.name),
-                        ));
-                      },
-                    });
-                    Object.defineProperty(nixScope, "default'", {
-                      enumerable: true,
-                      get() {
-                        return nixScope.toList(nixScope.default);
-                      },
-                    });
-                    Object.defineProperty(nixScope, "defaultText", {
-                      enumerable: true,
-                      get() {
-                        return nixScope.showAttrPath(nixScope["default'"]);
-                      },
-                    });
-                    Object.defineProperty(nixScope, "defaultValue", {
-                      enumerable: true,
-                      get() {
-                        return nixScope.attrByPath(nixScope["default'"])(
-                          nixScope.throw(
-                            new InterpolatedString([
-                              "",
-                              " cannot be found in ",
-                              "",
-                            ], [
-                              () => (nixScope.defaultText),
+                    defGetter(
+                      nixScope,
+                      "name'",
+                      (
+                        nixScope,
+                      ) => (operators.ifThenElse(
+                        nixScope.isList(nixScope.name),
+                        () => (nixScope.last(nixScope.name)),
+                        () => (nixScope.name),
+                      )),
+                    );
+                    defGetter(
+                      nixScope,
+                      "default'",
+                      (nixScope) => nixScope.toList(nixScope.default),
+                    );
+                    defGetter(
+                      nixScope,
+                      "defaultText",
+                      (nixScope) => nixScope.showAttrPath(nixScope["default'"]),
+                    );
+                    defGetter(nixScope, "defaultValue", (nixScope) =>
+                      nixScope.attrByPath(nixScope["default'"])(
+                        nixScope.throw(
+                          new InterpolatedString([
+                            "",
+                            " cannot be found in ",
+                            "",
+                          ], [
+                            () => (nixScope.defaultText),
+                            () => (nixScope.pkgsText),
+                          ]),
+                        ),
+                      )(nixScope.pkgs));
+                    defGetter(
+                      nixScope,
+                      "defaults",
+                      (
+                        nixScope,
+                      ) => (operators.ifThenElse(
+                        operators.notEqual(nixScope.default, null),
+                        () => ({
+                          "default": nixScope.defaultValue,
+                          "defaultText": nixScope.literalExpression(
+                            new InterpolatedString(["", ".", ""], [
                               () => (nixScope.pkgsText),
+                              () => (nixScope.defaultText),
                             ]),
                           ),
-                        )(nixScope.pkgs);
-                      },
-                    });
-                    Object.defineProperty(nixScope, "defaults", {
-                      enumerable: true,
-                      get() {
-                        return (operators.ifThenElse(
-                          operators.notEqual(nixScope.default, null),
-                          () => ({
-                            "default": nixScope.defaultValue,
-                            "defaultText": nixScope.literalExpression(
-                              new InterpolatedString(["", ".", ""], [
-                                () => (nixScope.pkgsText),
-                                () => (nixScope.defaultText),
-                              ]),
-                            ),
-                          }),
-                          () => (nixScope.optionalAttrs(nixScope.nullable)(
-                            { "default": null },
-                          )),
-                        ));
-                      },
-                    });
+                        }),
+                        () => (nixScope.optionalAttrs(nixScope.nullable)(
+                          { "default": null },
+                        )),
+                      )),
+                    );
                     return nixScope.mkOption(
                       operators.merge(
                         nixScope.defaults,
@@ -231,21 +218,21 @@ export default /**
                 ),
               )
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "mkPackageOptionMD", {
-        enumerable: true,
-        get() {
-          return nixScope.lib["warn"](
+          )),
+      );
+      defGetter(
+        nixScope,
+        "mkPackageOptionMD",
+        (nixScope) =>
+          nixScope.lib["warn"](
             "mkPackageOptionMD is deprecated and will be removed in 25.05; please use mkPackageOption.",
-          )(nixScope.mkPackageOption);
-        },
-      });
-      Object.defineProperty(nixScope, "mkSinkUndeclaredOptions", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "attrs", null, {}, (nixScope) => (
+          )(nixScope.mkPackageOption),
+      );
+      defGetter(
+        nixScope,
+        "mkSinkUndeclaredOptions",
+        (nixScope) =>
+          createFunc(/*arg:*/ "attrs", null, {}, (nixScope) => (
             nixScope.mkOption(operators.merge({
               "internal": true,
               "visible": false,
@@ -270,21 +257,20 @@ export default /**
                 )
               )),
             }, nixScope.attrs))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "mergeDefaultOption", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "loc", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "mergeDefaultOption",
+        (nixScope) =>
+          createFunc(/*arg:*/ "loc", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "defs", null, {}, (nixScope) => (
               /*let*/ createScope((nixScope) => {
-                Object.defineProperty(nixScope, "list", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.getValues(nixScope.defs);
-                  },
-                });
+                defGetter(
+                  nixScope,
+                  "list",
+                  (nixScope) => nixScope.getValues(nixScope.defs),
+                );
                 return (operators.ifThenElse(
                   operators.equal(nixScope.length(nixScope.list), 1n),
                   () => (nixScope.head(nixScope.list)),
@@ -354,19 +340,18 @@ export default /**
                 ));
               })
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "mergeOneOption", {
-        enumerable: true,
-        get() {
-          return nixScope.mergeUniqueOption({ "message": "" });
-        },
-      });
-      Object.defineProperty(nixScope, "mergeUniqueOption", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "args", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "mergeOneOption",
+        (nixScope) => nixScope.mergeUniqueOption({ "message": "" }),
+      );
+      defGetter(
+        nixScope,
+        "mergeUniqueOption",
+        (nixScope) =>
+          createFunc(/*arg:*/ "args", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "loc", null, {}, (nixScope) => (
               createFunc(/*arg:*/ "defs", null, {}, (nixScope) => (
                 operators.ifThenElse(
@@ -396,13 +381,13 @@ export default /**
                 )
               ))
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "mergeEqualOption", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "loc", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "mergeEqualOption",
+        (nixScope) =>
+          createFunc(/*arg:*/ "loc", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "defs", null, {}, (nixScope) => (
               operators.ifThenElse(
                 operators.equal(nixScope.defs, []),
@@ -443,199 +428,171 @@ export default /**
                 )),
               )
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "getValues", {
-        enumerable: true,
-        get() {
-          return nixScope.map(createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "getValues",
+        (nixScope) =>
+          nixScope.map(createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
             nixScope.x["value"]
-          )));
-        },
-      });
-      Object.defineProperty(nixScope, "getFiles", {
-        enumerable: true,
-        get() {
-          return nixScope.map(createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+          ))),
+      );
+      defGetter(
+        nixScope,
+        "getFiles",
+        (nixScope) =>
+          nixScope.map(createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
             nixScope.x["file"]
-          )));
-        },
-      });
-      Object.defineProperty(nixScope, "optionAttrSetToDocList", {
-        enumerable: true,
-        get() {
-          return nixScope["optionAttrSetToDocList'"]([]);
-        },
-      });
-      Object.defineProperty(nixScope, "optionAttrSetToDocList'", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "_", null, {}, (nixScope) => (
+          ))),
+      );
+      defGetter(
+        nixScope,
+        "optionAttrSetToDocList",
+        (nixScope) => nixScope["optionAttrSetToDocList'"]([]),
+      );
+      defGetter(
+        nixScope,
+        "optionAttrSetToDocList'",
+        (nixScope) =>
+          createFunc(/*arg:*/ "_", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "options", null, {}, (nixScope) => (
               nixScope.concatMap(
                 createFunc(/*arg:*/ "opt", null, {}, (nixScope) => (
                   /*let*/ createScope((nixScope) => {
-                    Object.defineProperty(nixScope, "name", {
-                      enumerable: true,
-                      get() {
-                        return nixScope.showOption(nixScope.opt["loc"]);
-                      },
-                    });
-                    Object.defineProperty(nixScope, "docOption", {
-                      enumerable: true,
-                      get() {
-                        return operators.merge(
-                          {
-                            "loc": nixScope.opt["loc"],
-                            "name": nixScope.name,
-                            "description": operators.selectOrDefault(
-                              nixScope.opt,
-                              ["description"],
-                              null,
-                            ),
-                            "declarations": nixScope.filter(
-                              createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
-                                operators.notEqual(
-                                  nixScope.x,
-                                  nixScope.unknownModule,
-                                )
-                              )),
-                            )(nixScope.opt["declarations"]),
-                            "internal": operators.selectOrDefault(
-                              nixScope.opt,
-                              ["internal"],
-                              false,
-                            ),
-                            "visible":
-                              (operators.ifThenElse(
-                                operators.and(
-                                  operators.hasAttr(nixScope.opt, "visible"),
-                                  operators.equal(
-                                    nixScope.opt["visible"],
-                                    "shallow",
-                                  ),
+                    defGetter(nixScope, "name", (nixScope) =>
+                      nixScope.showOption(nixScope.opt["loc"]));
+                    defGetter(nixScope, "docOption", (nixScope) =>
+                      operators.merge(
+                        {
+                          "loc": nixScope.opt["loc"],
+                          "name": nixScope.name,
+                          "description": operators.selectOrDefault(
+                            nixScope.opt,
+                            ["description"],
+                            null,
+                          ),
+                          "declarations": nixScope.filter(
+                            createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+                              operators.notEqual(
+                                nixScope.x,
+                                nixScope.unknownModule,
+                              )
+                            )),
+                          )(nixScope.opt["declarations"]),
+                          "internal": operators.selectOrDefault(nixScope.opt, [
+                            "internal",
+                          ], false),
+                          "visible":
+                            (operators.ifThenElse(
+                              operators.and(
+                                operators.hasAttr(nixScope.opt, "visible"),
+                                operators.equal(
+                                  nixScope.opt["visible"],
+                                  "shallow",
                                 ),
-                                () => (true),
-                                () => (operators.selectOrDefault(nixScope.opt, [
-                                  "visible",
-                                ], true)),
-                              )),
-                            "readOnly": operators.selectOrDefault(
-                              nixScope.opt,
-                              ["readOnly"],
-                              false,
-                            ),
-                            "type": operators.selectOrDefault(nixScope.opt, [
-                              "type",
-                              "description",
-                            ], "unspecified"),
-                          },
+                              ),
+                              () => (true),
+                              () => (operators.selectOrDefault(nixScope.opt, [
+                                "visible",
+                              ], true)),
+                            )),
+                          "readOnly": operators.selectOrDefault(nixScope.opt, [
+                            "readOnly",
+                          ], false),
+                          "type": operators.selectOrDefault(nixScope.opt, [
+                            "type",
+                            "description",
+                          ], "unspecified"),
+                        },
+                        operators.merge(
+                          nixScope.optionalAttrs(
+                            operators.hasAttr(nixScope.opt, "example"),
+                          )({
+                            "example": nixScope.builtins["addErrorContext"](
+                              new InterpolatedString([
+                                "while evaluating the example of option `",
+                                "`",
+                              ], [() => (nixScope.name)]),
+                            )(nixScope.renderOptionValue(
+                              nixScope.opt["example"],
+                            )),
+                          }),
                           operators.merge(
                             nixScope.optionalAttrs(
-                              operators.hasAttr(nixScope.opt, "example"),
+                              operators.or(
+                                operators.hasAttr(nixScope.opt, "defaultText"),
+                                operators.hasAttr(nixScope.opt, "default"),
+                              ),
                             )({
-                              "example": nixScope.builtins["addErrorContext"](
+                              "default": nixScope.builtins["addErrorContext"](
                                 new InterpolatedString([
-                                  "while evaluating the example of option `",
+                                  "while evaluating the ",
+                                  " of option `",
                                   "`",
-                                ], [() => (nixScope.name)]),
+                                ], [
+                                  () => (operators.ifThenElse(
+                                    operators.hasAttr(
+                                      nixScope.opt,
+                                      "defaultText",
+                                    ),
+                                    () => ("defaultText"),
+                                    () => ("default value"),
+                                  )),
+                                  () => (nixScope.name),
+                                ]),
                               )(nixScope.renderOptionValue(
-                                nixScope.opt["example"],
+                                operators.selectOrDefault(nixScope.opt, [
+                                  "defaultText",
+                                ], nixScope.opt["default"]),
                               )),
                             }),
-                            operators.merge(
-                              nixScope.optionalAttrs(
-                                operators.or(
-                                  operators.hasAttr(
-                                    nixScope.opt,
-                                    "defaultText",
-                                  ),
-                                  operators.hasAttr(nixScope.opt, "default"),
+                            nixScope.optionalAttrs(
+                              operators.and(
+                                operators.hasAttr(
+                                  nixScope.opt,
+                                  "relatedPackages",
                                 ),
-                              )({
-                                "default": nixScope.builtins["addErrorContext"](
-                                  new InterpolatedString([
-                                    "while evaluating the ",
-                                    " of option `",
-                                    "`",
-                                  ], [
-                                    () => (operators.ifThenElse(
-                                      operators.hasAttr(
-                                        nixScope.opt,
-                                        "defaultText",
-                                      ),
-                                      () => ("defaultText"),
-                                      () => ("default value"),
-                                    )),
-                                    () => (nixScope.name),
-                                  ]),
-                                )(nixScope.renderOptionValue(
-                                  operators.selectOrDefault(nixScope.opt, [
-                                    "defaultText",
-                                  ], nixScope.opt["default"]),
-                                )),
-                              }),
-                              nixScope.optionalAttrs(
-                                operators.and(
-                                  operators.hasAttr(
-                                    nixScope.opt,
-                                    "relatedPackages",
-                                  ),
-                                  operators.notEqual(
-                                    nixScope.opt["relatedPackages"],
-                                    null,
-                                  ),
+                                operators.notEqual(
+                                  nixScope.opt["relatedPackages"],
+                                  null,
                                 ),
-                              )(createScope((nixScope) => {
-                                const obj = {};
-                                obj["relatedPackages"] =
-                                  nixScope.opt["relatedPackages"];
-                                return obj;
-                              })),
-                            ),
+                              ),
+                            )(createScope((nixScope) => {
+                              const obj = {};
+                              obj.relatedPackages =
+                                nixScope.opt.relatedPackages;
+                              return obj;
+                            })),
                           ),
-                        );
-                      },
-                    });
-                    Object.defineProperty(nixScope, "subOptions", {
-                      enumerable: true,
-                      get() {
-                        return /*let*/ createScope((nixScope) => {
-                          Object.defineProperty(nixScope, "ss", {
-                            enumerable: true,
-                            get() {
-                              return nixScope.opt["type"]["getSubOptions"](
-                                nixScope.opt["loc"],
-                              );
-                            },
-                          });
-                          return (operators.ifThenElse(
-                            operators.notEqual(nixScope.ss, {}),
-                            () => (nixScope["optionAttrSetToDocList'"](
-                              nixScope.opt["loc"],
-                            )(nixScope.ss)),
-                            () => [],
+                        ),
+                      ));
+                    defGetter(nixScope, "subOptions", (nixScope) =>
+                      /*let*/ createScope((nixScope) => {
+                        defGetter(nixScope, "ss", (nixScope) =>
+                          nixScope.opt["type"]["getSubOptions"](
+                            nixScope.opt["loc"],
                           ));
-                        });
-                      },
-                    });
-                    Object.defineProperty(nixScope, "subOptionsVisible", {
-                      enumerable: true,
-                      get() {
-                        return operators.and(
-                          nixScope.docOption["visible"],
-                          operators.notEqual(
-                            operators.selectOrDefault(
-                              nixScope.opt,
-                              ["visible"],
-                              null,
-                            ),
-                            "shallow",
+                        return (operators.ifThenElse(
+                          operators.notEqual(nixScope.ss, {}),
+                          () => (nixScope["optionAttrSetToDocList'"](
+                            nixScope.opt["loc"],
+                          )(nixScope.ss)),
+                          () => [],
+                        ));
+                      }));
+                    defGetter(nixScope, "subOptionsVisible", (nixScope) =>
+                      operators.and(
+                        nixScope.docOption["visible"],
+                        operators.notEqual(
+                          operators.selectOrDefault(
+                            nixScope.opt,
+                            ["visible"],
+                            null,
                           ),
-                        );
-                      },
-                    });
+                          "shallow",
+                        ),
+                      ));
                     return operators.listConcat(
                       [nixScope.docOption],
                       nixScope.optionals(nixScope.subOptionsVisible)(
@@ -646,13 +603,13 @@ export default /**
                 )),
               )(nixScope.collect(nixScope.isOption)(nixScope.options))
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "scrubOptionValue", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "scrubOptionValue",
+        (nixScope) =>
+          createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
             operators.ifThenElse(
               nixScope.isDerivation(nixScope.x),
               () => ({
@@ -677,13 +634,13 @@ export default /**
                 )),
               )),
             )
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "renderOptionValue", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "v", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "renderOptionValue",
+        (nixScope) =>
+          createFunc(/*arg:*/ "v", null, {}, (nixScope) => (
             operators.ifThenElse(
               operators.and(
                 operators.hasAttr(nixScope.v, "_type"),
@@ -696,157 +653,141 @@ export default /**
                 )(nixScope.v),
               )),
             )
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "literalExpression", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "text", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "literalExpression",
+        (nixScope) =>
+          createFunc(/*arg:*/ "text", null, {}, (nixScope) => (
             operators.ifThenElse(
               operators.negate(nixScope.isString(nixScope.text)),
               () => (nixScope.throw("literalExpression expects a string.")),
               () => ({ "_type": "literalExpression", "text": nixScope.text }),
             )
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "literalExample", {
-        enumerable: true,
-        get() {
-          return nixScope.lib["warn"](
+          )),
+      );
+      defGetter(
+        nixScope,
+        "literalExample",
+        (nixScope) =>
+          nixScope.lib["warn"](
             "lib.literalExample is deprecated, use lib.literalExpression instead, or use lib.literalMD for a non-Nix description.",
-          )(nixScope.literalExpression);
-        },
-      });
-      Object.defineProperty(nixScope, "literalMD", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "text", null, {}, (nixScope) => (
+          )(nixScope.literalExpression),
+      );
+      defGetter(
+        nixScope,
+        "literalMD",
+        (nixScope) =>
+          createFunc(/*arg:*/ "text", null, {}, (nixScope) => (
             operators.ifThenElse(
               operators.negate(nixScope.isString(nixScope.text)),
               () => (nixScope.throw("literalMD expects a string.")),
               () => ({ "_type": "literalMD", "text": nixScope.text }),
             )
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "showOption", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "parts", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "showOption",
+        (nixScope) =>
+          createFunc(/*arg:*/ "parts", null, {}, (nixScope) => (
             /*let*/ createScope((nixScope) => {
-              Object.defineProperty(nixScope, "isNamedPlaceholder", {
-                enumerable: true,
-                get() {
-                  return nixScope.builtins["match"]("<(.*)>");
-                },
-              });
-              Object.defineProperty(nixScope, "escapeOptionPart", {
-                enumerable: true,
-                get() {
-                  return createFunc(/*arg:*/ "part", null, {}, (nixScope) => (
-                    operators.ifThenElse(
-                      operators.or(
-                        operators.equal(nixScope.part, "*"),
-                        operators.notEqual(
-                          nixScope.isNamedPlaceholder(nixScope.part),
-                          null,
-                        ),
+              defGetter(
+                nixScope,
+                "isNamedPlaceholder",
+                (nixScope) => nixScope.builtins["match"]("<(.*)>"),
+              );
+              defGetter(nixScope, "escapeOptionPart", (nixScope) =>
+                createFunc(/*arg:*/ "part", null, {}, (nixScope) => (
+                  operators.ifThenElse(
+                    operators.or(
+                      operators.equal(nixScope.part, "*"),
+                      operators.notEqual(
+                        nixScope.isNamedPlaceholder(nixScope.part),
+                        null,
                       ),
-                      () => (nixScope.part),
-                      () => (nixScope.lib["strings"]["escapeNixIdentifier"](
-                        nixScope.part,
-                      )),
-                    )
-                  ));
-                },
-              });
+                    ),
+                    () => (nixScope.part),
+                    () => (nixScope.lib["strings"]["escapeNixIdentifier"](
+                      nixScope.part,
+                    )),
+                  )
+                )));
               return (nixScope.concatStringsSep("."))(
                 nixScope.map(nixScope.escapeOptionPart)(nixScope.parts),
               );
             })
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "showFiles", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "files", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "showFiles",
+        (nixScope) =>
+          createFunc(/*arg:*/ "files", null, {}, (nixScope) => (
             nixScope.concatStringsSep(" and ")(
               nixScope.map(createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
                 new InterpolatedString(["`", "'"], [() => (nixScope.f)])
               )))(nixScope.files),
             )
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "showDefs", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "defs", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "showDefs",
+        (nixScope) =>
+          createFunc(/*arg:*/ "defs", null, {}, (nixScope) => (
             nixScope.concatMapStrings(
               createFunc(/*arg:*/ "def", null, {}, (nixScope) => (
                 /*let*/ createScope((nixScope) => {
-                  Object.defineProperty(nixScope, "prettyEval", {
-                    enumerable: true,
-                    get() {
-                      return nixScope.builtins["tryEval"](
-                        nixScope.lib["generators"]["toPretty"]({})(
-                          nixScope.lib["generators"]["withRecursion"](
-                            { "depthLimit": 10n, "throwOnDepthLimit": false },
-                          )(nixScope.def["value"]),
-                        ),
-                      );
-                    },
-                  });
-                  Object.defineProperty(nixScope, "lines", {
-                    enumerable: true,
-                    get() {
-                      return nixScope.filter(
-                        createFunc(/*arg:*/ "v", null, {}, (nixScope) => (
-                          operators.negate(nixScope.isList(nixScope.v))
-                        )),
-                      )(
-                        nixScope.builtins["split"]("")(
-                          nixScope.prettyEval["value"],
-                        ),
-                      );
-                    },
-                  });
-                  Object.defineProperty(nixScope, "value", {
-                    enumerable: true,
-                    get() {
-                      return nixScope.concatStringsSep("    ")(
-                        operators.listConcat(
-                          nixScope.take(5n)(nixScope.lines),
-                          nixScope.optional(
-                            operators.greaterThan(
-                              nixScope.length(nixScope.lines),
-                              5n,
-                            ),
-                          )("..."),
-                        ),
-                      );
-                    },
-                  });
-                  Object.defineProperty(nixScope, "result", {
-                    enumerable: true,
-                    get() {
-                      return (operators.ifThenElse(
-                        operators.negate(nixScope.prettyEval["success"]),
-                        () => (""),
-                        () => (operators.ifThenElse(
+                  defGetter(nixScope, "prettyEval", (nixScope) =>
+                    nixScope.builtins["tryEval"](
+                      nixScope.lib["generators"]["toPretty"]({})(
+                        nixScope.lib["generators"]["withRecursion"](
+                          { "depthLimit": 10n, "throwOnDepthLimit": false },
+                        )(nixScope.def["value"]),
+                      ),
+                    ));
+                  defGetter(nixScope, "lines", (nixScope) =>
+                    nixScope.filter(
+                      createFunc(/*arg:*/ "v", null, {}, (nixScope) => (
+                        operators.negate(nixScope.isList(nixScope.v))
+                      )),
+                    )(
+                      nixScope.builtins["split"]("")(
+                        nixScope.prettyEval["value"],
+                      ),
+                    ));
+                  defGetter(nixScope, "value", (nixScope) =>
+                    nixScope.concatStringsSep("    ")(
+                      operators.listConcat(
+                        nixScope.take(5n)(nixScope.lines),
+                        nixScope.optional(
                           operators.greaterThan(
                             nixScope.length(nixScope.lines),
-                            1n,
+                            5n,
                           ),
-                          () => (operators.add(":", nixScope.value)),
-                          () => (operators.add(": ", nixScope.value)),
-                        )),
-                      ));
-                    },
-                  });
+                        )("..."),
+                      ),
+                    ));
+                  defGetter(
+                    nixScope,
+                    "result",
+                    (
+                      nixScope,
+                    ) => (operators.ifThenElse(
+                      operators.negate(nixScope.prettyEval["success"]),
+                      () => (""),
+                      () => (operators.ifThenElse(
+                        operators.greaterThan(
+                          nixScope.length(nixScope.lines),
+                          1n,
+                        ),
+                        () => (operators.add(":", nixScope.value)),
+                        () => (operators.add(": ", nixScope.value)),
+                      )),
+                    )),
+                  );
                   return (new InterpolatedString(["- In `", "'", ""], [
                     () => (nixScope.def["file"]),
                     () => (nixScope.result),
@@ -854,13 +795,13 @@ export default /**
                 })
               )),
             )(nixScope.defs)
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "showOptionWithDefLocs", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "opt", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "showOptionWithDefLocs",
+        (nixScope) =>
+          createFunc(/*arg:*/ "opt", null, {}, (nixScope) => (
             new InterpolatedString([
               "\n    ",
               ", with values defined in:\n    ",
@@ -875,9 +816,8 @@ export default /**
                 )),
               )(nixScope.opt["files"])),
             ])
-          ));
-        },
-      });
+          )),
+      );
       return nixScope;
     });
   })

@@ -1,21 +1,22 @@
 export default createFunc({}, null, {}, (nixScope) => (
   /*rec*/ createScope((nixScope) => {
-    Object.defineProperty(nixScope, "toGNUCommandLineShell", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "options", null, {}, (nixScope) => (
+    defGetter(
+      nixScope,
+      "toGNUCommandLineShell",
+      (nixScope) =>
+        createFunc(/*arg:*/ "options", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "attrs", null, {}, (nixScope) => (
             nixScope.lib["escapeShellArgs"](
               nixScope.toGNUCommandLine(nixScope.options)(nixScope.attrs),
             )
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "toGNUCommandLine", {
-      enumerable: true,
-      get() {
-        return createFunc(
+        )),
+    );
+    defGetter(
+      nixScope,
+      "toGNUCommandLine",
+      (nixScope) =>
+        createFunc(
           {
             "mkOptionName": (
               nixScope,
@@ -83,24 +84,20 @@ export default createFunc({}, null, {}, (nixScope) => (
           (nixScope) => (
             createFunc(/*arg:*/ "options", null, {}, (nixScope) => (
               /*let*/ createScope((nixScope) => {
-                Object.defineProperty(nixScope, "render", {
-                  enumerable: true,
-                  get() {
-                    return createFunc(/*arg:*/ "k", null, {}, (nixScope) => (
-                      createFunc(/*arg:*/ "v", null, {}, (nixScope) => (
-                        operators.ifThenElse(
-                          nixScope.builtins["isBool"](nixScope.v),
-                          () => (nixScope.mkBool(nixScope.k)(nixScope.v)),
-                          () => (operators.ifThenElse(
-                            nixScope.builtins["isList"](nixScope.v),
-                            () => (nixScope.mkList(nixScope.k)(nixScope.v)),
-                            () => (nixScope.mkOption(nixScope.k)(nixScope.v)),
-                          )),
-                        )
-                      ))
-                    ));
-                  },
-                });
+                defGetter(nixScope, "render", (nixScope) =>
+                  createFunc(/*arg:*/ "k", null, {}, (nixScope) => (
+                    createFunc(/*arg:*/ "v", null, {}, (nixScope) => (
+                      operators.ifThenElse(
+                        nixScope.builtins["isBool"](nixScope.v),
+                        () => (nixScope.mkBool(nixScope.k)(nixScope.v)),
+                        () => (operators.ifThenElse(
+                          nixScope.builtins["isList"](nixScope.v),
+                          () => (nixScope.mkList(nixScope.k)(nixScope.v)),
+                          () => (nixScope.mkOption(nixScope.k)(nixScope.v)),
+                        )),
+                      )
+                    ))
+                  )));
                 return nixScope.builtins["concatLists"](
                   nixScope.lib["mapAttrsToList"](nixScope.render)(
                     nixScope.options,
@@ -109,9 +106,8 @@ export default createFunc({}, null, {}, (nixScope) => (
               })
             ))
           ),
-        );
-      },
-    });
+        ),
+    );
     return nixScope;
   })
 ));

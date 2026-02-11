@@ -1,7 +1,7 @@
 export default createFunc({}, null, {}, (nixScope) => (
   createScope((nixScope) => {
     const obj = {};
-    obj["config"] = nixScope.lib["mkMerge"]([
+    obj.config = nixScope.lib["mkMerge"]([
       createScope((nixScope) => {
         const obj = {};
         if (obj["value"] === undefined) obj["value"] = {};

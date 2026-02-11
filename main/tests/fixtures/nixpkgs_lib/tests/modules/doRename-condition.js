@@ -19,7 +19,7 @@ export default /**
     return ({
       "options": createScope((nixScope) => {
         const obj = {};
-        obj["result"] = nixScope.mkOption({});
+        obj.result = nixScope.mkOption({});
         if (obj["services"] === undefined) obj["services"] = {};
         if (obj["services"]["foo"] === undefined) obj["services"]["foo"] = {};
         obj["services"]["foo"]["enable"] = nixScope.mkEnableOption("foo");

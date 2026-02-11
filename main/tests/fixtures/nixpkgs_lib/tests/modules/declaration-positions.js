@@ -1,22 +1,22 @@
 import { createRuntime } from "../../../../../../../../../../../../../../runtime.js";
-const { runtime, createFunc, createScope } = createRuntime();
+const { runtime, createFunc, createScope, defGetter } = createRuntime();
 const operators = runtime.operators;
 const builtins = runtime.builtins;
 
 export default createFunc({}, null, {}, (nixScope) => (
   /*let*/ createScope((nixScope) => {
-    Object.defineProperty(nixScope, "discardPositions", {
-      enumerable: true,
-      get() {
-        return nixScope.lib["mapAttrs"](
+    defGetter(
+      nixScope,
+      "discardPositions",
+      (nixScope) =>
+        nixScope.lib["mapAttrs"](
           createFunc(/*arg:*/ "k", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "v", null, {}, (nixScope) => (
               nixScope.v
             ))
           )),
-        );
-      },
-    });
+        ),
+    );
     return ((_cond) => {
       if (!_cond) {
         throw new Error(
@@ -32,7 +32,7 @@ export default createFunc({}, null, {}, (nixScope) => (
         }
         return createScope((nixScope) => {
           const obj = {};
-          obj["imports"] = [createScope((nixScope) => {
+          obj.imports = [createScope((nixScope) => {
             const obj = {};
             if (obj["options"] === undefined) obj["options"] = {};
             if (obj["options"]["imported"] === undefined) {
@@ -59,7 +59,7 @@ export default createFunc({}, null, {}, (nixScope) => (
               );
             return obj;
           })];
-          obj["config"] = createScope((nixScope) => {
+          obj.config = createScope((nixScope) => {
             const obj = {};
             if (obj["submoduleLine38"] === undefined) {
               obj["submoduleLine38"] = {};

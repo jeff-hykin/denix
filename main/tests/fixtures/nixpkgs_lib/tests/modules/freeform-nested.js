@@ -1,9 +1,10 @@
 export default createFunc({}, null, {}, (nixScope) => (
   /*let*/ createScope((nixScope) => {
-    Object.defineProperty(nixScope, "deathtrapArgs", {
-      enumerable: true,
-      get() {
-        return nixScope.lib["mapAttrs"](
+    defGetter(
+      nixScope,
+      "deathtrapArgs",
+      (nixScope) =>
+        nixScope.lib["mapAttrs"](
           createFunc(/*arg:*/ "k", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "_", null, {}, (nixScope) => (
               nixScope.throw(
@@ -14,9 +15,8 @@ export default createFunc({}, null, {}, (nixScope) => (
               )
             ))
           )),
-        )(nixScope.lib["functionArgs"](nixScope.lib["mkOption"]));
-      },
-    });
+        )(nixScope.lib["functionArgs"](nixScope.lib["mkOption"])),
+    );
     return createScope((nixScope) => {
       const obj = {};
       if (obj["options"] === undefined) obj["options"] = {};

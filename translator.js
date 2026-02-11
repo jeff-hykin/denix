@@ -1153,7 +1153,7 @@ const nixNodeToJs = (node)=>{
         // Add nested bindings
         for (const [baseName, nestedBindings] of Object.entries(bindingsByBase)) {
             for (const {path, value} of nestedBindings) {
-                let accessor = varAccess(baseName)
+                let accessor = `nixScope${varAccess(baseName)}`
                 for (let i = 0; i < path.length - 1; i++) {
                     accessor += `[${JSON.stringify(path[i].text)}]`
                 }

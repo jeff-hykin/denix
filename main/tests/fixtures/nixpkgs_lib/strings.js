@@ -4,12 +4,11 @@ export default /**
   /*let*/ createScope((nixScope) => {
     nixScope.length = nixScope.builtins["length"];
     nixScope.warnIf = nixScope.lib["trivial"]["warnIf"];
-    Object.defineProperty(nixScope, "asciiTable", {
-      enumerable: true,
-      get() {
-        return nixScope.import(new Path(["./ascii-table.nix"], []));
-      },
-    });
+    defGetter(
+      nixScope,
+      "asciiTable",
+      (nixScope) => nixScope.import(new Path(["./ascii-table.nix"], [])),
+    );
     return /*rec*/ createScope((nixScope) => {
       nixScope.compareVersions = nixScope.builtins["compareVersions"];
       nixScope.elem = nixScope.builtins["elem"];
@@ -36,38 +35,38 @@ export default /**
       nixScope.typeOf = nixScope.builtins["typeOf"];
       nixScope.unsafeDiscardStringContext =
         nixScope.builtins["unsafeDiscardStringContext"];
-      Object.defineProperty(nixScope, "concatStrings", {
-        enumerable: true,
-        get() {
-          return nixScope.builtins["concatStringsSep"]("");
-        },
-      });
-      Object.defineProperty(nixScope, "concatMapStrings", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
+      defGetter(
+        nixScope,
+        "concatStrings",
+        (nixScope) => nixScope.builtins["concatStringsSep"](""),
+      );
+      defGetter(
+        nixScope,
+        "concatMapStrings",
+        (nixScope) =>
+          createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "list", null, {}, (nixScope) => (
               nixScope.concatStrings(nixScope.map(nixScope.f)(nixScope.list))
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "concatImapStrings", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "concatImapStrings",
+        (nixScope) =>
+          createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "list", null, {}, (nixScope) => (
               nixScope.concatStrings(
                 nixScope.lib["imap1"](nixScope.f)(nixScope.list),
               )
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "intersperse", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "separator", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "intersperse",
+        (nixScope) =>
+          createFunc(/*arg:*/ "separator", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "list", null, {}, (nixScope) => (
               operators.ifThenElse(
                 operators.or(
@@ -87,19 +86,18 @@ export default /**
                 )),
               )
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "concatStringsSep", {
-        enumerable: true,
-        get() {
-          return nixScope.builtins["concatStringsSep"];
-        },
-      });
-      Object.defineProperty(nixScope, "concatMapStringsSep", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "sep", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "concatStringsSep",
+        (nixScope) => nixScope.builtins["concatStringsSep"],
+      );
+      defGetter(
+        nixScope,
+        "concatMapStringsSep",
+        (nixScope) =>
+          createFunc(/*arg:*/ "sep", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
               createFunc(/*arg:*/ "list", null, {}, (nixScope) => (
                 nixScope.concatStringsSep(nixScope.sep)(
@@ -107,13 +105,13 @@ export default /**
                 )
               ))
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "concatImapStringsSep", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "sep", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "concatImapStringsSep",
+        (nixScope) =>
+          createFunc(/*arg:*/ "sep", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
               createFunc(/*arg:*/ "list", null, {}, (nixScope) => (
                 nixScope.concatStringsSep(nixScope.sep)(
@@ -121,13 +119,13 @@ export default /**
                 )
               ))
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "concatMapAttrsStringSep", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "sep", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "concatMapAttrsStringSep",
+        (nixScope) =>
+          createFunc(/*arg:*/ "sep", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
               createFunc(/*arg:*/ "attrs", null, {}, (nixScope) => (
                 nixScope.concatStringsSep(nixScope.sep)(
@@ -137,97 +135,94 @@ export default /**
                 )
               ))
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "concatLines", {
-        enumerable: true,
-        get() {
-          return nixScope.concatMapStrings(
+          )),
+      );
+      defGetter(
+        nixScope,
+        "concatLines",
+        (nixScope) =>
+          nixScope.concatMapStrings(
             createFunc(/*arg:*/ "s", null, {}, (nixScope) => (
               operators.add(nixScope.s, "")
             )),
-          );
-        },
-      });
-      Object.defineProperty(nixScope, "replaceString", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "from", null, {}, (nixScope) => (
+          ),
+      );
+      defGetter(
+        nixScope,
+        "replaceString",
+        (nixScope) =>
+          createFunc(/*arg:*/ "from", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "to", null, {}, (nixScope) => (
               nixScope.replaceStrings([nixScope.from])([nixScope.to])
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "replicate", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "n", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "replicate",
+        (nixScope) =>
+          createFunc(/*arg:*/ "n", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "s", null, {}, (nixScope) => (
               nixScope.concatStrings(
                 nixScope.lib["lists"]["replicate"](nixScope.n)(nixScope.s),
               )
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "trim", {
-        enumerable: true,
-        get() {
-          return nixScope.trimWith({ "start": true, "end": true });
-        },
-      });
-      Object.defineProperty(nixScope, "trimWith", {
-        enumerable: true,
-        get() {
-          return createFunc(
+          )),
+      );
+      defGetter(
+        nixScope,
+        "trim",
+        (nixScope) => nixScope.trimWith({ "start": true, "end": true }),
+      );
+      defGetter(
+        nixScope,
+        "trimWith",
+        (nixScope) =>
+          createFunc(
             { "start": (nixScope) => (false), "end": (nixScope) => (false) },
             null,
             {},
             (nixScope) => (
               /*let*/ createScope((nixScope) => {
                 nixScope.chars = " ";
-                Object.defineProperty(nixScope, "regex", {
-                  enumerable: true,
-                  get() {
-                    return (operators.ifThenElse(
-                      operators.and(nixScope.start, nixScope.end),
-                      () => (new InterpolatedString([
-                        "[",
-                        "]*(.*[^",
-                        "])[",
-                        "]*",
-                      ], [
+                defGetter(
+                  nixScope,
+                  "regex",
+                  (
+                    nixScope,
+                  ) => (operators.ifThenElse(
+                    operators.and(nixScope.start, nixScope.end),
+                    () => (new InterpolatedString(
+                      ["[", "]*(.*[^", "])[", "]*"],
+                      [
                         () => (nixScope.chars),
                         () => (nixScope.chars),
+                        () => (nixScope.chars),
+                      ],
+                    )),
+                    () => (operators.ifThenElse(
+                      nixScope.start,
+                      () => (new InterpolatedString(["[", "]*(.*)"], [
                         () => (nixScope.chars),
                       ])),
                       () => (operators.ifThenElse(
-                        nixScope.start,
-                        () => (new InterpolatedString(["[", "]*(.*)"], [
+                        nixScope.end,
+                        () => (new InterpolatedString(["(.*[^", "])[", "]*"], [
+                          () => (nixScope.chars),
                           () => (nixScope.chars),
                         ])),
-                        () => (operators.ifThenElse(
-                          nixScope.end,
-                          () => (new InterpolatedString(
-                            ["(.*[^", "])[", "]*"],
-                            [() => (nixScope.chars), () => (nixScope.chars)],
-                          )),
-                          () => ("(.*)"),
-                        )),
+                        () => ("(.*)"),
                       )),
-                    ));
-                  },
-                });
+                    )),
+                  )),
+                );
                 return createFunc(/*arg:*/ "s", null, {}, (nixScope) => (
                   /*let*/ createScope((nixScope) => {
-                    Object.defineProperty(nixScope, "res", {
-                      enumerable: true,
-                      get() {
-                        return nixScope.match(nixScope.regex)(nixScope.s);
-                      },
-                    });
+                    defGetter(
+                      nixScope,
+                      "res",
+                      (nixScope) => nixScope.match(nixScope.regex)(nixScope.s),
+                    );
                     return nixScope.optionalString(
                       operators.notEqual(nixScope.res, null),
                     )(nixScope.head(nixScope.res));
@@ -235,13 +230,13 @@ export default /**
                 ));
               })
             ),
-          );
-        },
-      });
-      Object.defineProperty(nixScope, "makeSearchPath", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "subDir", null, {}, (nixScope) => (
+          ),
+      );
+      defGetter(
+        nixScope,
+        "makeSearchPath",
+        (nixScope) =>
+          createFunc(/*arg:*/ "subDir", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "paths", null, {}, (nixScope) => (
               nixScope.concatStringsSep(":")(
                 nixScope.map(
@@ -260,13 +255,13 @@ export default /**
                 ),
               )
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "makeSearchPathOutput", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "output", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "makeSearchPathOutput",
+        (nixScope) =>
+          createFunc(/*arg:*/ "output", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "subDir", null, {}, (nixScope) => (
               createFunc(/*arg:*/ "pkgs", null, {}, (nixScope) => (
                 nixScope.makeSearchPath(nixScope.subDir)(
@@ -276,31 +271,28 @@ export default /**
                 )
               ))
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "makeLibraryPath", {
-        enumerable: true,
-        get() {
-          return nixScope.makeSearchPathOutput("lib")("lib");
-        },
-      });
-      Object.defineProperty(nixScope, "makeIncludePath", {
-        enumerable: true,
-        get() {
-          return nixScope.makeSearchPathOutput("dev")("include");
-        },
-      });
-      Object.defineProperty(nixScope, "makeBinPath", {
-        enumerable: true,
-        get() {
-          return nixScope.makeSearchPathOutput("bin")("bin");
-        },
-      });
-      Object.defineProperty(nixScope, "normalizePath", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "s", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "makeLibraryPath",
+        (nixScope) => nixScope.makeSearchPathOutput("lib")("lib"),
+      );
+      defGetter(
+        nixScope,
+        "makeIncludePath",
+        (nixScope) => nixScope.makeSearchPathOutput("dev")("include"),
+      );
+      defGetter(
+        nixScope,
+        "makeBinPath",
+        (nixScope) => nixScope.makeSearchPathOutput("bin")("bin"),
+      );
+      defGetter(
+        nixScope,
+        "normalizePath",
+        (nixScope) =>
+          createFunc(/*arg:*/ "s", null, {}, (nixScope) => (
             nixScope.warnIf(nixScope.isPath(nixScope.s))(
               new InterpolatedString([
                 "\n        lib.strings.normalizePath: The argument (",
@@ -322,13 +314,13 @@ export default /**
                 )),
               )("")(nixScope.stringToCharacters(nixScope.s)),
             )
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "optionalString", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "cond", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "optionalString",
+        (nixScope) =>
+          createFunc(/*arg:*/ "cond", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "string", null, {}, (nixScope) => (
               operators.ifThenElse(
                 nixScope.cond,
@@ -336,13 +328,13 @@ export default /**
                 () => (""),
               )
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "hasPrefix", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "pref", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "hasPrefix",
+        (nixScope) =>
+          createFunc(/*arg:*/ "pref", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "str", null, {}, (nixScope) => (
               nixScope.warnIf(nixScope.isPath(nixScope.pref))(
                 new InterpolatedString([
@@ -356,27 +348,25 @@ export default /**
                 nixScope.pref,
               ))
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "hasSuffix", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "suffix", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "hasSuffix",
+        (nixScope) =>
+          createFunc(/*arg:*/ "suffix", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "content", null, {}, (nixScope) => (
               /*let*/ createScope((nixScope) => {
-                Object.defineProperty(nixScope, "lenContent", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.stringLength(nixScope.content);
-                  },
-                });
-                Object.defineProperty(nixScope, "lenSuffix", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.stringLength(nixScope.suffix);
-                  },
-                });
+                defGetter(
+                  nixScope,
+                  "lenContent",
+                  (nixScope) => nixScope.stringLength(nixScope.content),
+                );
+                defGetter(
+                  nixScope,
+                  "lenSuffix",
+                  (nixScope) => nixScope.stringLength(nixScope.suffix),
+                );
                 return nixScope.warnIf(nixScope.isPath(nixScope.suffix))(
                   new InterpolatedString([
                     "\n        lib.strings.hasSuffix: The first argument (",
@@ -399,13 +389,13 @@ export default /**
                 ));
               })
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "hasInfix", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "infix", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "hasInfix",
+        (nixScope) =>
+          createFunc(/*arg:*/ "infix", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "content", null, {}, (nixScope) => (
               nixScope.warnIf(nixScope.isPath(nixScope.infix))(
                 new InterpolatedString([
@@ -421,23 +411,23 @@ export default /**
                 null,
               ))
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "stringToCharacters", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "s", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "stringToCharacters",
+        (nixScope) =>
+          createFunc(/*arg:*/ "s", null, {}, (nixScope) => (
             nixScope.genList(createFunc(/*arg:*/ "p", null, {}, (nixScope) => (
               nixScope.substring(nixScope.p)(1n)(nixScope.s)
             )))(nixScope.stringLength(nixScope.s))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "stringAsChars", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "stringAsChars",
+        (nixScope) =>
+          createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "s", null, {}, (nixScope) => (
               nixScope.concatStrings(
                 nixScope.map(nixScope.f)(
@@ -445,33 +435,33 @@ export default /**
                 ),
               )
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "charToInt", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "c", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "charToInt",
+        (nixScope) =>
+          createFunc(/*arg:*/ "c", null, {}, (nixScope) => (
             nixScope.builtins["getAttr"](nixScope.c)(nixScope.asciiTable)
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "escape", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "list", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "escape",
+        (nixScope) =>
+          createFunc(/*arg:*/ "list", null, {}, (nixScope) => (
             nixScope.replaceStrings(nixScope.list)(
               nixScope.map(createFunc(/*arg:*/ "c", null, {}, (nixScope) => (
                 new InterpolatedString(["", ""], [() => (nixScope.c)])
               )))(nixScope.list),
             )
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "escapeC", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "list", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "escapeC",
+        (nixScope) =>
+          createFunc(/*arg:*/ "list", null, {}, (nixScope) => (
             nixScope.replaceStrings(nixScope.list)(
               nixScope.map(createFunc(/*arg:*/ "c", null, {}, (nixScope) => (
                 new InterpolatedString(["x", ""], [
@@ -485,13 +475,13 @@ export default /**
                 ])
               )))(nixScope.list),
             )
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "escapeURL", {
-        enumerable: true,
-        get() {
-          return /*let*/ createScope((nixScope) => {
+          )),
+      );
+      defGetter(
+        nixScope,
+        "escapeURL",
+        (nixScope) =>
+          /*let*/ createScope((nixScope) => {
             nixScope.unreserved = [
               "A",
               "B",
@@ -560,14 +550,10 @@ export default /**
               ".",
               "~",
             ];
-            Object.defineProperty(nixScope, "toEscape", {
-              enumerable: true,
-              get() {
-                return nixScope.builtins["removeAttrs"](nixScope.asciiTable)(
-                  nixScope.unreserved,
-                );
-              },
-            });
+            defGetter(nixScope, "toEscape", (nixScope) =>
+              nixScope.builtins["removeAttrs"](nixScope.asciiTable)(
+                nixScope.unreserved,
+              ));
             return nixScope.replaceStrings(
               nixScope.builtins["attrNames"](nixScope.toEscape),
             )(
@@ -583,20 +569,19 @@ export default /**
                 )),
               )(nixScope.toEscape),
             );
-          });
-        },
-      });
-      Object.defineProperty(nixScope, "escapeShellArg", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "arg", null, {}, (nixScope) => (
+          }),
+      );
+      defGetter(
+        nixScope,
+        "escapeShellArg",
+        (nixScope) =>
+          createFunc(/*arg:*/ "arg", null, {}, (nixScope) => (
             /*let*/ createScope((nixScope) => {
-              Object.defineProperty(nixScope, "string", {
-                enumerable: true,
-                get() {
-                  return nixScope.toString(nixScope.arg);
-                },
-              });
+              defGetter(
+                nixScope,
+                "string",
+                (nixScope) => nixScope.toString(nixScope.arg),
+              );
               return (operators.ifThenElse(
                 operators.equal(
                   nixScope.match("[[:alnum:],._+:@%/-]+")(nixScope.string),
@@ -608,30 +593,30 @@ export default /**
                 () => (nixScope.string),
               ));
             })
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "escapeShellArgs", {
-        enumerable: true,
-        get() {
-          return nixScope.concatMapStringsSep(" ")(nixScope.escapeShellArg);
-        },
-      });
-      Object.defineProperty(nixScope, "isValidPosixName", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "escapeShellArgs",
+        (nixScope) =>
+          nixScope.concatMapStringsSep(" ")(nixScope.escapeShellArg),
+      );
+      defGetter(
+        nixScope,
+        "isValidPosixName",
+        (nixScope) =>
+          createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
             operators.notEqual(
               nixScope.match("[a-zA-Z_][a-zA-Z0-9_]*")(nixScope.name),
               null,
             )
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "toShellVar", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "toShellVar",
+        (nixScope) =>
+          createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "value", null, {}, (nixScope) => (
               nixScope.lib["throwIfNot"](
                 nixScope.isValidPosixName(nixScope.name),
@@ -673,39 +658,39 @@ export default /**
                 )),
               ))
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "toShellVars", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "vars", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "toShellVars",
+        (nixScope) =>
+          createFunc(/*arg:*/ "vars", null, {}, (nixScope) => (
             nixScope.concatStringsSep("")(
               nixScope.lib["mapAttrsToList"](nixScope.toShellVar)(
                 nixScope.vars,
               ),
             )
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "escapeNixString", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "s", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "escapeNixString",
+        (nixScope) =>
+          createFunc(/*arg:*/ "s", null, {}, (nixScope) => (
             nixScope.escape(["$"])(nixScope.toJSON(nixScope.s))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "escapeRegex", {
-        enumerable: true,
-        get() {
-          return nixScope.escape(nixScope.stringToCharacters("[{()^$?*+|."));
-        },
-      });
-      Object.defineProperty(nixScope, "escapeNixIdentifier", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "s", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "escapeRegex",
+        (nixScope) =>
+          nixScope.escape(nixScope.stringToCharacters("[{()^$?*+|.")),
+      );
+      defGetter(
+        nixScope,
+        "escapeNixIdentifier",
+        (nixScope) =>
+          createFunc(/*arg:*/ "s", null, {}, (nixScope) => (
             operators.ifThenElse(
               operators.notEqual(
                 nixScope.match("[a-zA-Z_][a-zA-Z0-9_'-]*")(nixScope.s),
@@ -714,81 +699,74 @@ export default /**
               () => (nixScope.s),
               () => (nixScope.escapeNixString(nixScope.s)),
             )
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "escapeXML", {
-        enumerable: true,
-        get() {
-          return nixScope.builtins["replaceStrings"](["", "'", "<", ">", "&"])([
+          )),
+      );
+      defGetter(
+        nixScope,
+        "escapeXML",
+        (nixScope) =>
+          nixScope.builtins["replaceStrings"](["", "'", "<", ">", "&"])([
             "&quot;",
             "&apos;",
             "&lt;",
             "&gt;",
             "&amp;",
-          ]);
-        },
-      });
-      Object.defineProperty(nixScope, "replaceChars", {
-        enumerable: true,
-        get() {
-          return nixScope.lib["warn"](
+          ]),
+      );
+      defGetter(
+        nixScope,
+        "replaceChars",
+        (nixScope) =>
+          nixScope.lib["warn"](
             "lib.replaceChars is a deprecated alias of lib.replaceStrings.",
-          )(nixScope.builtins["replaceStrings"]);
-        },
-      });
-      Object.defineProperty(nixScope, "lowerChars", {
-        enumerable: true,
-        get() {
-          return nixScope.stringToCharacters("abcdefghijklmnopqrstuvwxyz");
-        },
-      });
-      Object.defineProperty(nixScope, "upperChars", {
-        enumerable: true,
-        get() {
-          return nixScope.stringToCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZ");
-        },
-      });
-      Object.defineProperty(nixScope, "toLower", {
-        enumerable: true,
-        get() {
-          return nixScope.replaceStrings(nixScope.upperChars)(
-            nixScope.lowerChars,
-          );
-        },
-      });
-      Object.defineProperty(nixScope, "toUpper", {
-        enumerable: true,
-        get() {
-          return nixScope.replaceStrings(nixScope.lowerChars)(
-            nixScope.upperChars,
-          );
-        },
-      });
-      Object.defineProperty(nixScope, "toSentenceCase", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "str", null, {}, (nixScope) => (
+          )(nixScope.builtins["replaceStrings"]),
+      );
+      defGetter(
+        nixScope,
+        "lowerChars",
+        (nixScope) => nixScope.stringToCharacters("abcdefghijklmnopqrstuvwxyz"),
+      );
+      defGetter(
+        nixScope,
+        "upperChars",
+        (nixScope) => nixScope.stringToCharacters("ABCDEFGHIJKLMNOPQRSTUVWXYZ"),
+      );
+      defGetter(
+        nixScope,
+        "toLower",
+        (nixScope) =>
+          nixScope.replaceStrings(nixScope.upperChars)(nixScope.lowerChars),
+      );
+      defGetter(
+        nixScope,
+        "toUpper",
+        (nixScope) =>
+          nixScope.replaceStrings(nixScope.lowerChars)(nixScope.upperChars),
+      );
+      defGetter(
+        nixScope,
+        "toSentenceCase",
+        (nixScope) =>
+          createFunc(/*arg:*/ "str", null, {}, (nixScope) => (
             nixScope.lib["throwIfNot"](nixScope.isString(nixScope.str))(
               new InterpolatedString([
                 "toSentenceCase does only accepts string values, but got ",
                 "",
               ], [() => (nixScope.typeOf(nixScope.str))]),
             )(/*let*/ createScope((nixScope) => {
-              Object.defineProperty(nixScope, "firstChar", {
-                enumerable: true,
-                get() {
-                  return nixScope.substring(0n)(1n)(nixScope.str);
-                },
-              });
-              Object.defineProperty(nixScope, "rest", {
-                enumerable: true,
-                get() {
-                  return nixScope.substring(1n)(
-                    nixScope.stringLength(nixScope.str),
-                  )(nixScope.str);
-                },
-              });
+              defGetter(
+                nixScope,
+                "firstChar",
+                (nixScope) => nixScope.substring(0n)(1n)(nixScope.str),
+              );
+              defGetter(
+                nixScope,
+                "rest",
+                (nixScope) =>
+                  nixScope.substring(1n)(nixScope.stringLength(nixScope.str))(
+                    nixScope.str,
+                  ),
+              );
               return nixScope.addContextFrom(nixScope.str)(
                 operators.add(
                   nixScope.toUpper(nixScope.firstChar),
@@ -796,265 +774,208 @@ export default /**
                 ),
               );
             }))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "toCamelCase", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "str", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "toCamelCase",
+        (nixScope) =>
+          createFunc(/*arg:*/ "str", null, {}, (nixScope) => (
             nixScope.lib["throwIfNot"](nixScope.isString(nixScope.str))(
               new InterpolatedString([
                 "toCamelCase does only accepts string values, but got ",
                 "",
               ], [() => (nixScope.typeOf(nixScope.str))]),
             )(/*let*/ createScope((nixScope) => {
-              Object.defineProperty(nixScope, "separators", {
-                enumerable: true,
-                get() {
-                  return nixScope.splitStringBy(
-                    createFunc(/*arg:*/ "prev", null, {}, (nixScope) => (
-                      createFunc(/*arg:*/ "curr", null, {}, (nixScope) => (
-                        nixScope.elem(nixScope.curr)(["-", "_", " "])
-                      ))
-                    )),
-                  )(false)(nixScope.str);
-                },
-              });
-              Object.defineProperty(nixScope, "parts", {
-                enumerable: true,
-                get() {
-                  return nixScope.lib["flatten"](
-                    nixScope.map(
-                      nixScope.splitStringBy(
-                        createFunc(/*arg:*/ "prev", null, {}, (nixScope) => (
-                          createFunc(/*arg:*/ "curr", null, {}, (nixScope) => (
-                            operators.and(
-                              operators.notEqual(
-                                nixScope.match("[a-z]")(nixScope.prev),
-                                null,
-                              ),
-                              operators.notEqual(
-                                nixScope.match("[A-Z]")(nixScope.curr),
-                                null,
-                              ),
-                            )
-                          ))
-                        )),
-                      )(true),
-                    )(nixScope.separators),
-                  );
-                },
-              });
-              Object.defineProperty(nixScope, "first", {
-                enumerable: true,
-                get() {
-                  return (operators.ifThenElse(
-                    operators.greaterThan(nixScope.length(nixScope.parts), 0n),
-                    () => (nixScope.toLower(nixScope.head(nixScope.parts))),
-                    () => (""),
-                  ));
-                },
-              });
-              Object.defineProperty(nixScope, "rest", {
-                enumerable: true,
-                get() {
-                  return (operators.ifThenElse(
-                    operators.greaterThan(nixScope.length(nixScope.parts), 1n),
-                    () => (nixScope.map(nixScope.toSentenceCase)(
-                      nixScope.tail(nixScope.parts),
-                    )),
-                    () => [],
-                  ));
-                },
-              });
+              defGetter(nixScope, "separators", (nixScope) =>
+                nixScope.splitStringBy(
+                  createFunc(/*arg:*/ "prev", null, {}, (nixScope) => (
+                    createFunc(/*arg:*/ "curr", null, {}, (nixScope) => (
+                      nixScope.elem(nixScope.curr)(["-", "_", " "])
+                    ))
+                  )),
+                )(false)(nixScope.str));
+              defGetter(nixScope, "parts", (nixScope) =>
+                nixScope.lib["flatten"](
+                  nixScope.map(
+                    nixScope.splitStringBy(
+                      createFunc(/*arg:*/ "prev", null, {}, (nixScope) => (
+                        createFunc(/*arg:*/ "curr", null, {}, (nixScope) => (
+                          operators.and(
+                            operators.notEqual(
+                              nixScope.match("[a-z]")(nixScope.prev),
+                              null,
+                            ),
+                            operators.notEqual(
+                              nixScope.match("[A-Z]")(nixScope.curr),
+                              null,
+                            ),
+                          )
+                        ))
+                      )),
+                    )(true),
+                  )(nixScope.separators),
+                ));
+              defGetter(
+                nixScope,
+                "first",
+                (
+                  nixScope,
+                ) => (operators.ifThenElse(
+                  operators.greaterThan(nixScope.length(nixScope.parts), 0n),
+                  () => (nixScope.toLower(nixScope.head(nixScope.parts))),
+                  () => (""),
+                )),
+              );
+              defGetter(
+                nixScope,
+                "rest",
+                (
+                  nixScope,
+                ) => (operators.ifThenElse(
+                  operators.greaterThan(nixScope.length(nixScope.parts), 1n),
+                  () => (nixScope.map(nixScope.toSentenceCase)(
+                    nixScope.tail(nixScope.parts),
+                  )),
+                  () => [],
+                )),
+              );
               return nixScope.concatStrings(
                 nixScope.map(nixScope.addContextFrom(nixScope.str))(
                   operators.listConcat([nixScope.first], nixScope.rest),
                 ),
               );
             }))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "addContextFrom", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "src", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "addContextFrom",
+        (nixScope) =>
+          createFunc(/*arg:*/ "src", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "target", null, {}, (nixScope) => (
               operators.add(
                 nixScope.substring(0n)(0n)(nixScope.src),
                 nixScope.target,
               )
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "splitString", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "sep", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "splitString",
+        (nixScope) =>
+          createFunc(/*arg:*/ "sep", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "s", null, {}, (nixScope) => (
               /*let*/ createScope((nixScope) => {
-                Object.defineProperty(nixScope, "splits", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.builtins["filter"](
-                      nixScope.builtins["isString"],
-                    )(
-                      nixScope.builtins["split"](
-                        nixScope.escapeRegex(nixScope.toString(nixScope.sep)),
-                      )(nixScope.toString(nixScope.s)),
-                    );
-                  },
-                });
+                defGetter(nixScope, "splits", (nixScope) =>
+                  nixScope.builtins["filter"](nixScope.builtins["isString"])(
+                    nixScope.builtins["split"](
+                      nixScope.escapeRegex(nixScope.toString(nixScope.sep)),
+                    )(nixScope.toString(nixScope.s)),
+                  ));
                 return nixScope.map(nixScope.addContextFrom(nixScope.s))(
                   nixScope.splits,
                 );
               })
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "splitStringBy", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "predicate", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "splitStringBy",
+        (nixScope) =>
+          createFunc(/*arg:*/ "predicate", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "keepSplit", null, {}, (nixScope) => (
               createFunc(/*arg:*/ "str", null, {}, (nixScope) => (
                 /*let*/ createScope((nixScope) => {
-                  Object.defineProperty(nixScope, "len", {
-                    enumerable: true,
-                    get() {
-                      return nixScope.stringLength(nixScope.str);
-                    },
-                  });
-                  Object.defineProperty(nixScope, "go", {
-                    enumerable: true,
-                    get() {
-                      return createFunc(
-                        /*arg:*/ "pos",
+                  defGetter(
+                    nixScope,
+                    "len",
+                    (nixScope) => nixScope.stringLength(nixScope.str),
+                  );
+                  defGetter(nixScope, "go", (nixScope) =>
+                    createFunc(/*arg:*/ "pos", null, {}, (nixScope) => (
+                      createFunc(
+                        /*arg:*/ "currentPart",
                         null,
                         {},
                         (nixScope) => (
                           createFunc(
-                            /*arg:*/ "currentPart",
+                            /*arg:*/ "result",
                             null,
                             {},
                             (nixScope) => (
-                              createFunc(
-                                /*arg:*/ "result",
-                                null,
-                                {},
-                                (nixScope) => (
-                                  operators.ifThenElse(
-                                    operators.equal(nixScope.pos, nixScope.len),
-                                    () => (operators.listConcat(
-                                      nixScope.result,
-                                      [nixScope.currentPart],
+                              operators.ifThenElse(
+                                operators.equal(nixScope.pos, nixScope.len),
+                                () => (operators.listConcat(nixScope.result, [
+                                  nixScope.currentPart,
+                                ])),
+                                () => (/*let*/ createScope((nixScope) => {
+                                  defGetter(nixScope, "currChar", (nixScope) =>
+                                    nixScope.substring(nixScope.pos)(1n)(
+                                      nixScope.str,
+                                    ));
+                                  defGetter(
+                                    nixScope,
+                                    "prevChar",
+                                    (
+                                      nixScope,
+                                    ) => (operators.ifThenElse(
+                                      operators.greaterThan(nixScope.pos, 0n),
+                                      () => (nixScope.substring(
+                                        operators.subtract(nixScope.pos, 1n),
+                                      )(1n)(nixScope.str)),
+                                      () => (""),
                                     )),
+                                  );
+                                  defGetter(nixScope, "isSplit", (nixScope) =>
+                                    nixScope.predicate(nixScope.prevChar)(
+                                      nixScope.currChar,
+                                    ));
+                                  return (operators.ifThenElse(
+                                    nixScope.isSplit,
                                     () => (/*let*/ createScope((nixScope) => {
-                                      Object.defineProperty(
+                                      defGetter(
                                         nixScope,
-                                        "currChar",
-                                        {
-                                          enumerable: true,
-                                          get() {
-                                            return nixScope.substring(
-                                              nixScope.pos,
-                                            )(1n)(nixScope.str);
-                                          },
-                                        },
+                                        "newResult",
+                                        (nixScope) =>
+                                          operators.listConcat(
+                                            nixScope.result,
+                                            [nixScope.currentPart],
+                                          ),
                                       );
-                                      Object.defineProperty(
+                                      defGetter(
                                         nixScope,
-                                        "prevChar",
-                                        {
-                                          enumerable: true,
-                                          get() {
-                                            return (operators.ifThenElse(
-                                              operators.greaterThan(
-                                                nixScope.pos,
-                                                0n,
-                                              ),
-                                              () => (nixScope.substring(
-                                                operators.subtract(
-                                                  nixScope.pos,
-                                                  1n,
-                                                ),
-                                              )(1n)(nixScope.str)),
-                                              () => (""),
-                                            ));
-                                          },
-                                        },
-                                      );
-                                      Object.defineProperty(
-                                        nixScope,
-                                        "isSplit",
-                                        {
-                                          enumerable: true,
-                                          get() {
-                                            return nixScope.predicate(
-                                              nixScope.prevChar,
-                                            )(nixScope.currChar);
-                                          },
-                                        },
-                                      );
-                                      return (operators.ifThenElse(
-                                        nixScope.isSplit,
-                                        () => (/*let*/ createScope(
-                                          (nixScope) => {
-                                            Object.defineProperty(
-                                              nixScope,
-                                              "newResult",
-                                              {
-                                                enumerable: true,
-                                                get() {
-                                                  return operators.listConcat(
-                                                    nixScope.result,
-                                                    [nixScope.currentPart],
-                                                  );
-                                                },
-                                              },
-                                            );
-                                            Object.defineProperty(
-                                              nixScope,
-                                              "newCurrentPart",
-                                              {
-                                                enumerable: true,
-                                                get() {
-                                                  return (operators.ifThenElse(
-                                                    nixScope.keepSplit,
-                                                    () => (nixScope.currChar),
-                                                    () => (""),
-                                                  ));
-                                                },
-                                              },
-                                            );
-                                            return nixScope.go(
-                                              operators.add(nixScope.pos, 1n),
-                                            )(nixScope.newCurrentPart)(
-                                              nixScope.newResult,
-                                            );
-                                          },
+                                        "newCurrentPart",
+                                        (
+                                          nixScope,
+                                        ) => (operators.ifThenElse(
+                                          nixScope.keepSplit,
+                                          () => (nixScope.currChar),
+                                          () => (""),
                                         )),
-                                        () => (nixScope.go(
-                                          operators.add(nixScope.pos, 1n),
-                                        )(operators.add(
-                                          nixScope.currentPart,
-                                          nixScope.currChar,
-                                        ))(nixScope.result)),
-                                      ));
+                                      );
+                                      return nixScope.go(
+                                        operators.add(nixScope.pos, 1n),
+                                      )(nixScope.newCurrentPart)(
+                                        nixScope.newResult,
+                                      );
                                     })),
-                                  )
-                                ),
+                                    () => (nixScope.go(
+                                      operators.add(nixScope.pos, 1n),
+                                    )(operators.add(
+                                      nixScope.currentPart,
+                                      nixScope.currChar,
+                                    ))(nixScope.result)),
+                                  ));
+                                })),
                               )
                             ),
                           )
                         ),
-                      );
-                    },
-                  });
+                      )
+                    )));
                   return (operators.ifThenElse(
                     operators.equal(nixScope.len, 0n),
                     () => [nixScope.addContextFrom(nixScope.str)("")],
@@ -1065,13 +986,13 @@ export default /**
                 })
               ))
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "removePrefix", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "prefix", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "removePrefix",
+        (nixScope) =>
+          createFunc(/*arg:*/ "prefix", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "str", null, {}, (nixScope) => (
               nixScope.warnIf(nixScope.isPath(nixScope.prefix))(
                 new InterpolatedString([
@@ -1079,12 +1000,11 @@ export default /**
                   ") is a path value, but only strings are supported.\n            There is almost certainly a bug in the calling code, since this function never removes any prefix in such a case.\n            This function also copies the path to the Nix store, which may not be what you want.\n            This behavior is deprecated and will throw an error in the future.",
                 ], [() => (nixScope.toString(nixScope.prefix))]),
               )(/*let*/ createScope((nixScope) => {
-                Object.defineProperty(nixScope, "preLen", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.stringLength(nixScope.prefix);
-                  },
-                });
+                defGetter(
+                  nixScope,
+                  "preLen",
+                  (nixScope) => nixScope.stringLength(nixScope.prefix),
+                );
                 return (operators.ifThenElse(
                   operators.equal(
                     nixScope.substring(0n)(nixScope.preLen)(nixScope.str),
@@ -1097,13 +1017,13 @@ export default /**
                 ));
               }))
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "removeSuffix", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "suffix", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "removeSuffix",
+        (nixScope) =>
+          createFunc(/*arg:*/ "suffix", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "str", null, {}, (nixScope) => (
               nixScope.warnIf(nixScope.isPath(nixScope.suffix))(
                 new InterpolatedString([
@@ -1111,18 +1031,16 @@ export default /**
                   ") is a path value, but only strings are supported.\n            There is almost certainly a bug in the calling code, since this function never removes any suffix in such a case.\n            This function also copies the path to the Nix store, which may not be what you want.\n            This behavior is deprecated and will throw an error in the future.",
                 ], [() => (nixScope.toString(nixScope.suffix))]),
               )(/*let*/ createScope((nixScope) => {
-                Object.defineProperty(nixScope, "sufLen", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.stringLength(nixScope.suffix);
-                  },
-                });
-                Object.defineProperty(nixScope, "sLen", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.stringLength(nixScope.str);
-                  },
-                });
+                defGetter(
+                  nixScope,
+                  "sufLen",
+                  (nixScope) => nixScope.stringLength(nixScope.suffix),
+                );
+                defGetter(
+                  nixScope,
+                  "sLen",
+                  (nixScope) => nixScope.stringLength(nixScope.str),
+                );
                 return (operators.ifThenElse(
                   operators.and(
                     operators.lessThanOrEqual(nixScope.sufLen, nixScope.sLen),
@@ -1140,44 +1058,40 @@ export default /**
                 ));
               }))
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "versionOlder", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "v1", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "versionOlder",
+        (nixScope) =>
+          createFunc(/*arg:*/ "v1", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "v2", null, {}, (nixScope) => (
               operators.equal(
                 nixScope.compareVersions(nixScope.v2)(nixScope.v1),
                 1n,
               )
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "versionAtLeast", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "v1", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "versionAtLeast",
+        (nixScope) =>
+          createFunc(/*arg:*/ "v1", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "v2", null, {}, (nixScope) => (
               operators.negate(nixScope.versionOlder(nixScope.v1)(nixScope.v2))
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "getName", {
-        enumerable: true,
-        get() {
-          return /*let*/ createScope((nixScope) => {
-            Object.defineProperty(nixScope, "parse", {
-              enumerable: true,
-              get() {
-                return createFunc(/*arg:*/ "drv", null, {}, (nixScope) => (
-                  (nixScope.parseDrvName(nixScope.drv))["name"]
-                ));
-              },
-            });
+          )),
+      );
+      defGetter(
+        nixScope,
+        "getName",
+        (nixScope) =>
+          /*let*/ createScope((nixScope) => {
+            defGetter(nixScope, "parse", (nixScope) =>
+              createFunc(/*arg:*/ "drv", null, {}, (nixScope) => (
+                (nixScope.parseDrvName(nixScope.drv))["name"]
+              )));
             return createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
               operators.ifThenElse(
                 nixScope.isString(nixScope.x),
@@ -1189,21 +1103,17 @@ export default /**
                 )),
               )
             ));
-          });
-        },
-      });
-      Object.defineProperty(nixScope, "getVersion", {
-        enumerable: true,
-        get() {
-          return /*let*/ createScope((nixScope) => {
-            Object.defineProperty(nixScope, "parse", {
-              enumerable: true,
-              get() {
-                return createFunc(/*arg:*/ "drv", null, {}, (nixScope) => (
-                  (nixScope.parseDrvName(nixScope.drv))["version"]
-                ));
-              },
-            });
+          }),
+      );
+      defGetter(
+        nixScope,
+        "getVersion",
+        (nixScope) =>
+          /*let*/ createScope((nixScope) => {
+            defGetter(nixScope, "parse", (nixScope) =>
+              createFunc(/*arg:*/ "drv", null, {}, (nixScope) => (
+                (nixScope.parseDrvName(nixScope.drv))["version"]
+              )));
             return createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
               operators.ifThenElse(
                 nixScope.isString(nixScope.x),
@@ -1215,35 +1125,33 @@ export default /**
                 )),
               )
             ));
-          });
-        },
-      });
-      Object.defineProperty(nixScope, "nameFromURL", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "url", null, {}, (nixScope) => (
+          }),
+      );
+      defGetter(
+        nixScope,
+        "nameFromURL",
+        (nixScope) =>
+          createFunc(/*arg:*/ "url", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "sep", null, {}, (nixScope) => (
               /*let*/ createScope((nixScope) => {
-                Object.defineProperty(nixScope, "components", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.splitString("/")(nixScope.url);
-                  },
-                });
-                Object.defineProperty(nixScope, "filename", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.lib["last"](nixScope.components);
-                  },
-                });
-                Object.defineProperty(nixScope, "name", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.head(
+                defGetter(
+                  nixScope,
+                  "components",
+                  (nixScope) => nixScope.splitString("/")(nixScope.url),
+                );
+                defGetter(
+                  nixScope,
+                  "filename",
+                  (nixScope) => nixScope.lib["last"](nixScope.components),
+                );
+                defGetter(
+                  nixScope,
+                  "name",
+                  (nixScope) =>
+                    nixScope.head(
                       nixScope.splitString(nixScope.sep)(nixScope.filename),
-                    );
-                  },
-                });
+                    ),
+                );
                 return ((_cond) => {
                   if (!_cond) {
                     throw new Error("assertion failed: " + "name != filename");
@@ -1252,13 +1160,13 @@ export default /**
                 })(operators.notEqual(nixScope.name, nixScope.filename));
               })
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "cmakeOptionType", {
-        enumerable: true,
-        get() {
-          return /*let*/ createScope((nixScope) => {
+          )),
+      );
+      defGetter(
+        nixScope,
+        "cmakeOptionType",
+        (nixScope) =>
+          /*let*/ createScope((nixScope) => {
             nixScope.types = [
               "BOOL",
               "FILEPATH",
@@ -1303,13 +1211,13 @@ export default /**
                 ))
               ))
             ));
-          });
-        },
-      });
-      Object.defineProperty(nixScope, "cmakeBool", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "condition", null, {}, (nixScope) => (
+          }),
+      );
+      defGetter(
+        nixScope,
+        "cmakeBool",
+        (nixScope) =>
+          createFunc(/*arg:*/ "condition", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "flag", null, {}, (nixScope) => (
               ((_cond) => {
                 if (!_cond) {
@@ -1329,13 +1237,13 @@ export default /**
                 })(nixScope.lib["isBool"](nixScope.flag));
               })(nixScope.lib["isString"](nixScope.condition))
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "cmakeFeature", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "feature", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "cmakeFeature",
+        (nixScope) =>
+          createFunc(/*arg:*/ "feature", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "value", null, {}, (nixScope) => (
               ((_cond) => {
                 if (!_cond) {
@@ -1355,13 +1263,13 @@ export default /**
                 })(nixScope.lib["isString"](nixScope.value));
               })(nixScope.lib["isString"](nixScope.feature))
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "mesonOption", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "feature", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "mesonOption",
+        (nixScope) =>
+          createFunc(/*arg:*/ "feature", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "value", null, {}, (nixScope) => (
               ((_cond) => {
                 if (!_cond) {
@@ -1382,13 +1290,13 @@ export default /**
                 })(nixScope.lib["isString"](nixScope.value));
               })(nixScope.lib["isString"](nixScope.feature))
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "mesonBool", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "condition", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "mesonBool",
+        (nixScope) =>
+          createFunc(/*arg:*/ "condition", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "flag", null, {}, (nixScope) => (
               ((_cond) => {
                 if (!_cond) {
@@ -1406,13 +1314,13 @@ export default /**
                 })(nixScope.lib["isBool"](nixScope.flag));
               })(nixScope.lib["isString"](nixScope.condition))
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "mesonEnable", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "feature", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "mesonEnable",
+        (nixScope) =>
+          createFunc(/*arg:*/ "feature", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "flag", null, {}, (nixScope) => (
               ((_cond) => {
                 if (!_cond) {
@@ -1434,13 +1342,13 @@ export default /**
                 })(nixScope.lib["isBool"](nixScope.flag));
               })(nixScope.lib["isString"](nixScope.feature))
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "enableFeature", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "flag", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "enableFeature",
+        (nixScope) =>
+          createFunc(/*arg:*/ "flag", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "feature", null, {}, (nixScope) => (
               ((_cond) => {
                 if (!_cond) {
@@ -1463,13 +1371,13 @@ export default /**
                 })(nixScope.lib["isString"](nixScope.feature));
               })(nixScope.lib["isBool"](nixScope.flag))
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "enableFeatureAs", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "flag", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "enableFeatureAs",
+        (nixScope) =>
+          createFunc(/*arg:*/ "flag", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "feature", null, {}, (nixScope) => (
               createFunc(/*arg:*/ "value", null, {}, (nixScope) => (
                 operators.add(
@@ -1480,13 +1388,13 @@ export default /**
                 )
               ))
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "withFeature", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "flag", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "withFeature",
+        (nixScope) =>
+          createFunc(/*arg:*/ "flag", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "feature", null, {}, (nixScope) => (
               ((_cond) => {
                 if (!_cond) {
@@ -1502,13 +1410,13 @@ export default /**
                 ]));
               })(nixScope.isString(nixScope.feature))
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "withFeatureAs", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "flag", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "withFeatureAs",
+        (nixScope) =>
+          createFunc(/*arg:*/ "flag", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "feature", null, {}, (nixScope) => (
               createFunc(/*arg:*/ "value", null, {}, (nixScope) => (
                 operators.add(
@@ -1519,31 +1427,30 @@ export default /**
                 )
               ))
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "fixedWidthString", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "width", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "fixedWidthString",
+        (nixScope) =>
+          createFunc(/*arg:*/ "width", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "filler", null, {}, (nixScope) => (
               createFunc(/*arg:*/ "str", null, {}, (nixScope) => (
                 /*let*/ createScope((nixScope) => {
-                  Object.defineProperty(nixScope, "strw", {
-                    enumerable: true,
-                    get() {
-                      return nixScope.lib["stringLength"](nixScope.str);
-                    },
-                  });
-                  Object.defineProperty(nixScope, "reqWidth", {
-                    enumerable: true,
-                    get() {
-                      return operators.subtract(
+                  defGetter(
+                    nixScope,
+                    "strw",
+                    (nixScope) => nixScope.lib["stringLength"](nixScope.str),
+                  );
+                  defGetter(
+                    nixScope,
+                    "reqWidth",
+                    (nixScope) =>
+                      operators.subtract(
                         nixScope.width,
                         nixScope.lib["stringLength"](nixScope.filler),
-                      );
-                    },
-                  });
+                      ),
+                  );
                   return ((_cond) => {
                     if (!_cond) {
                       throw new Error(
@@ -1578,41 +1485,40 @@ export default /**
                 })
               ))
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "fixedWidthNumber", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "width", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "fixedWidthNumber",
+        (nixScope) =>
+          createFunc(/*arg:*/ "width", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "n", null, {}, (nixScope) => (
               nixScope.fixedWidthString(nixScope.width)("0")(
                 nixScope.toString(nixScope.n),
               )
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "floatToString", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "float", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "floatToString",
+        (nixScope) =>
+          createFunc(/*arg:*/ "float", null, {}, (nixScope) => (
             /*let*/ createScope((nixScope) => {
-              Object.defineProperty(nixScope, "result", {
-                enumerable: true,
-                get() {
-                  return nixScope.toString(nixScope.float);
-                },
-              });
-              Object.defineProperty(nixScope, "precise", {
-                enumerable: true,
-                get() {
-                  return operators.equal(
+              defGetter(
+                nixScope,
+                "result",
+                (nixScope) => nixScope.toString(nixScope.float),
+              );
+              defGetter(
+                nixScope,
+                "precise",
+                (nixScope) =>
+                  operators.equal(
                     nixScope.float,
                     nixScope.fromJSON(nixScope.result),
-                  );
-                },
-              });
+                  ),
+              );
               return nixScope.lib["warnIf"](operators.negate(nixScope.precise))(
                 new InterpolatedString([
                   "Imprecise conversion from float to string ",
@@ -1620,23 +1526,23 @@ export default /**
                 ], [() => (nixScope.result)]),
               )(nixScope.result);
             })
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "isCoercibleToString", {
-        enumerable: true,
-        get() {
-          return nixScope.lib["warnIf"](
+          )),
+      );
+      defGetter(
+        nixScope,
+        "isCoercibleToString",
+        (nixScope) =>
+          nixScope.lib["warnIf"](
             nixScope.lib["oldestSupportedReleaseIsAtLeast"](2305n),
           )("lib.strings.isCoercibleToString is deprecated in favor of either isStringLike or isConvertibleWithToString. Only use the latter if it needs to return true for null, numbers, booleans and list of similarly coercibles.")(
             nixScope.isConvertibleWithToString,
-          );
-        },
-      });
-      Object.defineProperty(nixScope, "isConvertibleWithToString", {
-        enumerable: true,
-        get() {
-          return /*let*/ createScope((nixScope) => {
+          ),
+      );
+      defGetter(
+        nixScope,
+        "isConvertibleWithToString",
+        (nixScope) =>
+          /*let*/ createScope((nixScope) => {
             nixScope.types = ["null", "int", "float", "bool"];
             return createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
               operators.or(
@@ -1652,13 +1558,13 @@ export default /**
                 ),
               )
             ));
-          });
-        },
-      });
-      Object.defineProperty(nixScope, "isStringLike", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+          }),
+      );
+      defGetter(
+        nixScope,
+        "isStringLike",
+        (nixScope) =>
+          createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
             operators.or(
               operators.or(
                 operators.or(
@@ -1669,22 +1575,21 @@ export default /**
               ),
               operators.hasAttr(nixScope.x, "__toString"),
             )
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "isStorePath", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "isStorePath",
+        (nixScope) =>
+          createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
             operators.ifThenElse(
               nixScope.isStringLike(nixScope.x),
               () => (/*let*/ createScope((nixScope) => {
-                Object.defineProperty(nixScope, "str", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.toString(nixScope.x);
-                  },
-                });
+                defGetter(
+                  nixScope,
+                  "str",
+                  (nixScope) => nixScope.toString(nixScope.x),
+                );
                 return operators.and(
                   operators.equal(
                     nixScope.substring(0n)(1n)(nixScope.str),
@@ -1704,58 +1609,52 @@ export default /**
               })),
               () => (false),
             )
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "toInt", {
-        enumerable: true,
-        get() {
-          return /*let*/ createScope((nixScope) => {
-            Object.defineProperty(nixScope, "matchStripInput", {
-              enumerable: true,
-              get() {
-                return nixScope.match(
-                  "[[:space:]]*(-?[[:digit:]]+)[[:space:]]*",
-                );
-              },
-            });
-            Object.defineProperty(nixScope, "matchLeadingZero", {
-              enumerable: true,
-              get() {
-                return nixScope.match("0[[:digit:]]+");
-              },
-            });
+          )),
+      );
+      defGetter(
+        nixScope,
+        "toInt",
+        (nixScope) =>
+          /*let*/ createScope((nixScope) => {
+            defGetter(
+              nixScope,
+              "matchStripInput",
+              (nixScope) =>
+                nixScope.match("[[:space:]]*(-?[[:digit:]]+)[[:space:]]*"),
+            );
+            defGetter(
+              nixScope,
+              "matchLeadingZero",
+              (nixScope) => nixScope.match("0[[:digit:]]+"),
+            );
             return createFunc(/*arg:*/ "str", null, {}, (nixScope) => (
               /*let*/ createScope((nixScope) => {
                 nixScope.generalError = new InterpolatedString([
                   "toInt: Could not convert ",
                   " to int.",
                 ], [() => (nixScope.escapeNixString(nixScope.str))]);
-                Object.defineProperty(nixScope, "strippedInput", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.matchStripInput(nixScope.str);
-                  },
-                });
-                Object.defineProperty(nixScope, "isLeadingZero", {
-                  enumerable: true,
-                  get() {
-                    return operators.equal(
+                defGetter(
+                  nixScope,
+                  "strippedInput",
+                  (nixScope) => nixScope.matchStripInput(nixScope.str),
+                );
+                defGetter(
+                  nixScope,
+                  "isLeadingZero",
+                  (nixScope) =>
+                    operators.equal(
                       nixScope.matchLeadingZero(
                         nixScope.head(nixScope.strippedInput),
                       ),
                       [],
-                    );
-                  },
-                });
-                Object.defineProperty(nixScope, "parsedInput", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.fromJSON(
-                      nixScope.head(nixScope.strippedInput),
-                    );
-                  },
-                });
+                    ),
+                );
+                defGetter(
+                  nixScope,
+                  "parsedInput",
+                  (nixScope) =>
+                    nixScope.fromJSON(nixScope.head(nixScope.strippedInput)),
+                );
                 return (operators.ifThenElse(
                   operators.equal(nixScope.strippedInput, null),
                   () => (nixScope.throw(nixScope.generalError)),
@@ -1776,56 +1675,50 @@ export default /**
                 ));
               })
             ));
-          });
-        },
-      });
-      Object.defineProperty(nixScope, "toIntBase10", {
-        enumerable: true,
-        get() {
-          return /*let*/ createScope((nixScope) => {
-            Object.defineProperty(nixScope, "matchStripInput", {
-              enumerable: true,
-              get() {
-                return nixScope.match(
-                  "[[:space:]]*0*(-?[[:digit:]]+)[[:space:]]*",
-                );
-              },
-            });
-            Object.defineProperty(nixScope, "matchZero", {
-              enumerable: true,
-              get() {
-                return nixScope.match("0+");
-              },
-            });
+          }),
+      );
+      defGetter(
+        nixScope,
+        "toIntBase10",
+        (nixScope) =>
+          /*let*/ createScope((nixScope) => {
+            defGetter(
+              nixScope,
+              "matchStripInput",
+              (nixScope) =>
+                nixScope.match("[[:space:]]*0*(-?[[:digit:]]+)[[:space:]]*"),
+            );
+            defGetter(
+              nixScope,
+              "matchZero",
+              (nixScope) => nixScope.match("0+"),
+            );
             return createFunc(/*arg:*/ "str", null, {}, (nixScope) => (
               /*let*/ createScope((nixScope) => {
                 nixScope.generalError = new InterpolatedString([
                   "toIntBase10: Could not convert ",
                   " to int.",
                 ], [() => (nixScope.escapeNixString(nixScope.str))]);
-                Object.defineProperty(nixScope, "strippedInput", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.matchStripInput(nixScope.str);
-                  },
-                });
-                Object.defineProperty(nixScope, "isZero", {
-                  enumerable: true,
-                  get() {
-                    return operators.equal(
+                defGetter(
+                  nixScope,
+                  "strippedInput",
+                  (nixScope) => nixScope.matchStripInput(nixScope.str),
+                );
+                defGetter(
+                  nixScope,
+                  "isZero",
+                  (nixScope) =>
+                    operators.equal(
                       nixScope.matchZero(nixScope.head(nixScope.strippedInput)),
                       [],
-                    );
-                  },
-                });
-                Object.defineProperty(nixScope, "parsedInput", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.fromJSON(
-                      nixScope.head(nixScope.strippedInput),
-                    );
-                  },
-                });
+                    ),
+                );
+                defGetter(
+                  nixScope,
+                  "parsedInput",
+                  (nixScope) =>
+                    nixScope.fromJSON(nixScope.head(nixScope.strippedInput)),
+                );
                 return (operators.ifThenElse(
                   operators.equal(nixScope.strippedInput, null),
                   () => (nixScope.throw(nixScope.generalError)),
@@ -1841,85 +1734,69 @@ export default /**
                 ));
               })
             ));
-          });
-        },
-      });
-      Object.defineProperty(nixScope, "readPathsFromFile", {
-        enumerable: true,
-        get() {
-          return nixScope.lib["warn"](
+          }),
+      );
+      defGetter(
+        nixScope,
+        "readPathsFromFile",
+        (nixScope) =>
+          nixScope.lib["warn"](
             "lib.readPathsFromFile is deprecated, use a list instead.",
           )(createFunc(/*arg:*/ "rootPath", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "file", null, {}, (nixScope) => (
               /*let*/ createScope((nixScope) => {
-                Object.defineProperty(nixScope, "lines", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.lib["splitString"]("")(
-                      nixScope.readFile(nixScope.file),
-                    );
-                  },
-                });
-                Object.defineProperty(nixScope, "removeComments", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.lib["filter"](
-                      createFunc(/*arg:*/ "line", null, {}, (nixScope) => (
-                        operators.and(
-                          operators.notEqual(nixScope.line, ""),
-                          operators.negate(
-                            nixScope.lib["hasPrefix"]("#")(nixScope.line),
-                          ),
-                        )
-                      )),
-                    );
-                  },
-                });
-                Object.defineProperty(nixScope, "relativePaths", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.removeComments(nixScope.lines);
-                  },
-                });
-                Object.defineProperty(nixScope, "absolutePaths", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.map(
-                      createFunc(/*arg:*/ "path", null, {}, (nixScope) => (
-                        operators.add(
-                          nixScope.rootPath,
-                          new InterpolatedString(["/", ""], [
-                            () => (nixScope.path),
-                          ]),
-                        )
-                      )),
-                    )(nixScope.relativePaths);
-                  },
-                });
+                defGetter(nixScope, "lines", (nixScope) =>
+                  nixScope.lib["splitString"]("")(
+                    nixScope.readFile(nixScope.file),
+                  ));
+                defGetter(nixScope, "removeComments", (nixScope) =>
+                  nixScope.lib["filter"](
+                    createFunc(/*arg:*/ "line", null, {}, (nixScope) => (
+                      operators.and(
+                        operators.notEqual(nixScope.line, ""),
+                        operators.negate(
+                          nixScope.lib["hasPrefix"]("#")(nixScope.line),
+                        ),
+                      )
+                    )),
+                  ));
+                defGetter(nixScope, "relativePaths", (nixScope) =>
+                  nixScope.removeComments(nixScope.lines));
+                defGetter(nixScope, "absolutePaths", (nixScope) =>
+                  nixScope.map(
+                    createFunc(/*arg:*/ "path", null, {}, (nixScope) => (
+                      operators.add(
+                        nixScope.rootPath,
+                        new InterpolatedString(["/", ""], [
+                          () => (nixScope.path),
+                        ]),
+                      )
+                    )),
+                  )(nixScope.relativePaths));
                 return nixScope.absolutePaths;
               })
             ))
-          )));
-        },
-      });
-      Object.defineProperty(nixScope, "fileContents", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "file", null, {}, (nixScope) => (
+          ))),
+      );
+      defGetter(
+        nixScope,
+        "fileContents",
+        (nixScope) =>
+          createFunc(/*arg:*/ "file", null, {}, (nixScope) => (
             nixScope.removeSuffix("")(nixScope.readFile(nixScope.file))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "sanitizeDerivationName", {
-        enumerable: true,
-        get() {
-          return /*let*/ createScope((nixScope) => {
-            Object.defineProperty(nixScope, "okRegex", {
-              enumerable: true,
-              get() {
-                return nixScope.match("[[:alnum:]+_?=-][[:alnum:]+._?=-]*");
-              },
-            });
+          )),
+      );
+      defGetter(
+        nixScope,
+        "sanitizeDerivationName",
+        (nixScope) =>
+          /*let*/ createScope((nixScope) => {
+            defGetter(
+              nixScope,
+              "okRegex",
+              (nixScope) =>
+                nixScope.match("[[:alnum:]+_?=-][[:alnum:]+._?=-]*"),
+            );
             return createFunc(/*arg:*/ "string", null, {}, (nixScope) => (
               operators.ifThenElse(
                 operators.and(
@@ -1965,320 +1842,280 @@ export default /**
                 ])),
               )
             ));
-          });
-        },
-      });
-      Object.defineProperty(nixScope, "levenshtein", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "a", null, {}, (nixScope) => (
+          }),
+      );
+      defGetter(
+        nixScope,
+        "levenshtein",
+        (nixScope) =>
+          createFunc(/*arg:*/ "a", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "b", null, {}, (nixScope) => (
               /*let*/ createScope((nixScope) => {
-                Object.defineProperty(nixScope, "arr", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.lib["genList"](
-                      createFunc(/*arg:*/ "i", null, {}, (nixScope) => (
-                        nixScope.lib["genList"](
-                          createFunc(/*arg:*/ "j", null, {}, (nixScope) => (
-                            nixScope.dist(nixScope.i)(nixScope.j)
+                defGetter(nixScope, "arr", (nixScope) =>
+                  nixScope.lib["genList"](
+                    createFunc(/*arg:*/ "i", null, {}, (nixScope) => (
+                      nixScope.lib["genList"](
+                        createFunc(/*arg:*/ "j", null, {}, (nixScope) => (
+                          nixScope.dist(nixScope.i)(nixScope.j)
+                        )),
+                      )(operators.add(nixScope.stringLength(nixScope.b), 1n))
+                    )),
+                  )(operators.add(nixScope.stringLength(nixScope.a), 1n)));
+                defGetter(nixScope, "d", (nixScope) =>
+                  createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+                    createFunc(/*arg:*/ "y", null, {}, (nixScope) => (
+                      nixScope.lib["elemAt"](
+                        nixScope.lib["elemAt"](nixScope.arr)(nixScope.x),
+                      )(nixScope.y)
+                    ))
+                  )));
+                defGetter(nixScope, "dist", (nixScope) =>
+                  createFunc(/*arg:*/ "i", null, {}, (nixScope) => (
+                    createFunc(/*arg:*/ "j", null, {}, (nixScope) => (
+                      /*let*/ createScope((nixScope) => {
+                        defGetter(
+                          nixScope,
+                          "c",
+                          (
+                            nixScope,
+                          ) => (operators.ifThenElse(
+                            operators.equal(
+                              nixScope.substring(
+                                operators.subtract(nixScope.i, 1n),
+                              )(1n)(nixScope.a),
+                              nixScope.substring(
+                                operators.subtract(nixScope.j, 1n),
+                              )(1n)(nixScope.b),
+                            ),
+                            () => (0n),
+                            () => (1n),
                           )),
-                        )(operators.add(nixScope.stringLength(nixScope.b), 1n))
-                      )),
-                    )(operators.add(nixScope.stringLength(nixScope.a), 1n));
-                  },
-                });
-                Object.defineProperty(nixScope, "d", {
-                  enumerable: true,
-                  get() {
-                    return createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
-                      createFunc(/*arg:*/ "y", null, {}, (nixScope) => (
-                        nixScope.lib["elemAt"](
-                          nixScope.lib["elemAt"](nixScope.arr)(nixScope.x),
-                        )(nixScope.y)
-                      ))
-                    ));
-                  },
-                });
-                Object.defineProperty(nixScope, "dist", {
-                  enumerable: true,
-                  get() {
-                    return createFunc(/*arg:*/ "i", null, {}, (nixScope) => (
-                      createFunc(/*arg:*/ "j", null, {}, (nixScope) => (
-                        /*let*/ createScope((nixScope) => {
-                          Object.defineProperty(nixScope, "c", {
-                            enumerable: true,
-                            get() {
-                              return (operators.ifThenElse(
-                                operators.equal(
-                                  nixScope.substring(
+                        );
+                        return (operators.ifThenElse(
+                          operators.equal(nixScope.j, 0n),
+                          () => (nixScope.i),
+                          () => (operators.ifThenElse(
+                            operators.equal(nixScope.i, 0n),
+                            () => (nixScope.j),
+                            () => (nixScope.lib["min"](
+                              nixScope.lib["min"](
+                                operators.add(
+                                  nixScope.d(
                                     operators.subtract(nixScope.i, 1n),
-                                  )(1n)(nixScope.a),
-                                  nixScope.substring(
-                                    operators.subtract(nixScope.j, 1n),
-                                  )(1n)(nixScope.b),
-                                ),
-                                () => (0n),
-                                () => (1n),
-                              ));
-                            },
-                          });
-                          return (operators.ifThenElse(
-                            operators.equal(nixScope.j, 0n),
-                            () => (nixScope.i),
-                            () => (operators.ifThenElse(
-                              operators.equal(nixScope.i, 0n),
-                              () => (nixScope.j),
-                              () => (nixScope.lib["min"](
-                                nixScope.lib["min"](
-                                  operators.add(
-                                    nixScope.d(
-                                      operators.subtract(nixScope.i, 1n),
-                                    )(nixScope.j),
-                                    1n,
-                                  ),
-                                )(operators.add(
-                                  nixScope.d(nixScope.i)(
-                                    operators.subtract(nixScope.j, 1n),
-                                  ),
+                                  )(nixScope.j),
                                   1n,
-                                )),
+                                ),
                               )(operators.add(
-                                nixScope.d(operators.subtract(nixScope.i, 1n))(
+                                nixScope.d(nixScope.i)(
                                   operators.subtract(nixScope.j, 1n),
                                 ),
-                                nixScope.c,
-                              ))),
-                            )),
-                          ));
-                        })
-                      ))
-                    ));
-                  },
-                });
+                                1n,
+                              )),
+                            )(operators.add(
+                              nixScope.d(operators.subtract(nixScope.i, 1n))(
+                                operators.subtract(nixScope.j, 1n),
+                              ),
+                              nixScope.c,
+                            ))),
+                          )),
+                        ));
+                      })
+                    ))
+                  )));
                 return nixScope.d(nixScope.stringLength(nixScope.a))(
                   nixScope.stringLength(nixScope.b),
                 );
               })
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "commonPrefixLength", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "a", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "commonPrefixLength",
+        (nixScope) =>
+          createFunc(/*arg:*/ "a", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "b", null, {}, (nixScope) => (
               /*let*/ createScope((nixScope) => {
-                Object.defineProperty(nixScope, "m", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.lib["min"](
-                      nixScope.stringLength(nixScope.a),
-                    )(nixScope.stringLength(nixScope.b));
-                  },
-                });
-                Object.defineProperty(nixScope, "go", {
-                  enumerable: true,
-                  get() {
-                    return createFunc(/*arg:*/ "i", null, {}, (nixScope) => (
-                      operators.ifThenElse(
-                        operators.greaterThanOrEqual(nixScope.i, nixScope.m),
-                        () => (nixScope.m),
-                        () => (operators.ifThenElse(
-                          operators.equal(
-                            nixScope.substring(nixScope.i)(1n)(nixScope.a),
-                            nixScope.substring(nixScope.i)(1n)(nixScope.b),
-                          ),
-                          () => (nixScope.go(operators.add(nixScope.i, 1n))),
-                          () => (nixScope.i),
-                        )),
-                      )
-                    ));
-                  },
-                });
-                return nixScope.go(0n);
-              })
-            ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "commonSuffixLength", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "a", null, {}, (nixScope) => (
-            createFunc(/*arg:*/ "b", null, {}, (nixScope) => (
-              /*let*/ createScope((nixScope) => {
-                Object.defineProperty(nixScope, "m", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.lib["min"](
-                      nixScope.stringLength(nixScope.a),
-                    )(nixScope.stringLength(nixScope.b));
-                  },
-                });
-                Object.defineProperty(nixScope, "go", {
-                  enumerable: true,
-                  get() {
-                    return createFunc(/*arg:*/ "i", null, {}, (nixScope) => (
-                      operators.ifThenElse(
-                        operators.greaterThanOrEqual(nixScope.i, nixScope.m),
-                        () => (nixScope.m),
-                        () => (operators.ifThenElse(
-                          operators.equal(
-                            nixScope.substring(
-                              operators.subtract(
-                                operators.subtract(
-                                  nixScope.stringLength(nixScope.a),
-                                  nixScope.i,
-                                ),
-                                1n,
-                              ),
-                            )(1n)(nixScope.a),
-                            nixScope.substring(
-                              operators.subtract(
-                                operators.subtract(
-                                  nixScope.stringLength(nixScope.b),
-                                  nixScope.i,
-                                ),
-                                1n,
-                              ),
-                            )(1n)(nixScope.b),
-                          ),
-                          () => (nixScope.go(operators.add(nixScope.i, 1n))),
-                          () => (nixScope.i),
-                        )),
-                      )
-                    ));
-                  },
-                });
-                return nixScope.go(0n);
-              })
-            ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "levenshteinAtMost", {
-        enumerable: true,
-        get() {
-          return /*let*/ createScope((nixScope) => {
-            Object.defineProperty(nixScope, "infixDifferAtMost1", {
-              enumerable: true,
-              get() {
-                return createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
-                  createFunc(/*arg:*/ "y", null, {}, (nixScope) => (
-                    operators.and(
-                      operators.lessThanOrEqual(
-                        nixScope.stringLength(nixScope.x),
-                        1n,
-                      ),
-                      operators.lessThanOrEqual(
-                        nixScope.stringLength(nixScope.y),
-                        1n,
-                      ),
+                defGetter(nixScope, "m", (nixScope) =>
+                  nixScope.lib["min"](nixScope.stringLength(nixScope.a))(
+                    nixScope.stringLength(nixScope.b),
+                  ));
+                defGetter(nixScope, "go", (nixScope) =>
+                  createFunc(/*arg:*/ "i", null, {}, (nixScope) => (
+                    operators.ifThenElse(
+                      operators.greaterThanOrEqual(nixScope.i, nixScope.m),
+                      () => (nixScope.m),
+                      () => (operators.ifThenElse(
+                        operators.equal(
+                          nixScope.substring(nixScope.i)(1n)(nixScope.a),
+                          nixScope.substring(nixScope.i)(1n)(nixScope.b),
+                        ),
+                        () => (nixScope.go(operators.add(nixScope.i, 1n))),
+                        () => (nixScope.i),
+                      )),
                     )
-                  ))
-                ));
-              },
-            });
-            Object.defineProperty(nixScope, "infixDifferAtMost2", {
-              enumerable: true,
-              get() {
-                return createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
-                  createFunc(/*arg:*/ "y", null, {}, (nixScope) => (
-                    /*let*/ createScope((nixScope) => {
-                      Object.defineProperty(nixScope, "xlen", {
-                        enumerable: true,
-                        get() {
-                          return nixScope.stringLength(nixScope.x);
-                        },
-                      });
-                      Object.defineProperty(nixScope, "ylen", {
-                        enumerable: true,
-                        get() {
-                          return nixScope.stringLength(nixScope.y);
-                        },
-                      });
-                      Object.defineProperty(nixScope, "diff", {
-                        enumerable: true,
-                        get() {
-                          return operators.subtract(
-                            nixScope.xlen,
-                            nixScope.ylen,
-                          );
-                        },
-                      });
-                      Object.defineProperty(nixScope, "xinfix", {
-                        enumerable: true,
-                        get() {
-                          return nixScope.substring(1n)(
-                            operators.subtract(nixScope.xlen, 2n),
-                          )(nixScope.x);
-                        },
-                      });
-                      Object.defineProperty(nixScope, "yinfix", {
-                        enumerable: true,
-                        get() {
-                          return nixScope.substring(1n)(
-                            operators.subtract(nixScope.ylen, 2n),
-                          )(nixScope.y);
-                        },
-                      });
-                      Object.defineProperty(nixScope, "xdelr", {
-                        enumerable: true,
-                        get() {
-                          return nixScope.substring(0n)(
-                            operators.subtract(nixScope.xlen, 1n),
-                          )(nixScope.x);
-                        },
-                      });
-                      Object.defineProperty(nixScope, "xdell", {
-                        enumerable: true,
-                        get() {
-                          return nixScope.substring(1n)(
-                            operators.subtract(nixScope.xlen, 1n),
-                          )(nixScope.x);
-                        },
-                      });
-                      Object.defineProperty(nixScope, "ydelr", {
-                        enumerable: true,
-                        get() {
-                          return nixScope.substring(0n)(
-                            operators.subtract(nixScope.ylen, 1n),
-                          )(nixScope.y);
-                        },
-                      });
-                      Object.defineProperty(nixScope, "ydell", {
-                        enumerable: true,
-                        get() {
-                          return nixScope.substring(1n)(
-                            operators.subtract(nixScope.ylen, 1n),
-                          )(nixScope.y);
-                        },
-                      });
-                      return (operators.ifThenElse(
-                        operators.equal(nixScope.diff, 2n),
-                        () => (operators.equal(nixScope.xinfix, nixScope.y)),
-                        () => (operators.ifThenElse(
-                          operators.equal(nixScope.diff, 1n),
-                          () => (operators.or(
-                            operators.equal(nixScope.xinfix, nixScope.ydelr),
-                            operators.equal(nixScope.xinfix, nixScope.ydell),
-                          )),
-                          () => (operators.or(
-                            operators.or(
-                              operators.equal(nixScope.xinfix, nixScope.yinfix),
-                              operators.equal(nixScope.xdelr, nixScope.ydell),
+                  )));
+                return nixScope.go(0n);
+              })
+            ))
+          )),
+      );
+      defGetter(
+        nixScope,
+        "commonSuffixLength",
+        (nixScope) =>
+          createFunc(/*arg:*/ "a", null, {}, (nixScope) => (
+            createFunc(/*arg:*/ "b", null, {}, (nixScope) => (
+              /*let*/ createScope((nixScope) => {
+                defGetter(nixScope, "m", (nixScope) =>
+                  nixScope.lib["min"](nixScope.stringLength(nixScope.a))(
+                    nixScope.stringLength(nixScope.b),
+                  ));
+                defGetter(nixScope, "go", (nixScope) =>
+                  createFunc(/*arg:*/ "i", null, {}, (nixScope) => (
+                    operators.ifThenElse(
+                      operators.greaterThanOrEqual(nixScope.i, nixScope.m),
+                      () => (nixScope.m),
+                      () => (operators.ifThenElse(
+                        operators.equal(
+                          nixScope.substring(
+                            operators.subtract(
+                              operators.subtract(
+                                nixScope.stringLength(nixScope.a),
+                                nixScope.i,
+                              ),
+                              1n,
                             ),
-                            operators.equal(nixScope.xdell, nixScope.ydelr),
-                          )),
+                          )(1n)(nixScope.a),
+                          nixScope.substring(
+                            operators.subtract(
+                              operators.subtract(
+                                nixScope.stringLength(nixScope.b),
+                                nixScope.i,
+                              ),
+                              1n,
+                            ),
+                          )(1n)(nixScope.b),
+                        ),
+                        () => (nixScope.go(operators.add(nixScope.i, 1n))),
+                        () => (nixScope.i),
+                      )),
+                    )
+                  )));
+                return nixScope.go(0n);
+              })
+            ))
+          )),
+      );
+      defGetter(
+        nixScope,
+        "levenshteinAtMost",
+        (nixScope) =>
+          /*let*/ createScope((nixScope) => {
+            defGetter(nixScope, "infixDifferAtMost1", (nixScope) =>
+              createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+                createFunc(/*arg:*/ "y", null, {}, (nixScope) => (
+                  operators.and(
+                    operators.lessThanOrEqual(
+                      nixScope.stringLength(nixScope.x),
+                      1n,
+                    ),
+                    operators.lessThanOrEqual(
+                      nixScope.stringLength(nixScope.y),
+                      1n,
+                    ),
+                  )
+                ))
+              )));
+            defGetter(nixScope, "infixDifferAtMost2", (nixScope) =>
+              createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+                createFunc(/*arg:*/ "y", null, {}, (nixScope) => (
+                  /*let*/ createScope((nixScope) => {
+                    defGetter(
+                      nixScope,
+                      "xlen",
+                      (nixScope) => nixScope.stringLength(nixScope.x),
+                    );
+                    defGetter(
+                      nixScope,
+                      "ylen",
+                      (nixScope) => nixScope.stringLength(nixScope.y),
+                    );
+                    defGetter(
+                      nixScope,
+                      "diff",
+                      (nixScope) =>
+                        operators.subtract(nixScope.xlen, nixScope.ylen),
+                    );
+                    defGetter(
+                      nixScope,
+                      "xinfix",
+                      (nixScope) =>
+                        nixScope.substring(1n)(
+                          operators.subtract(nixScope.xlen, 2n),
+                        )(nixScope.x),
+                    );
+                    defGetter(
+                      nixScope,
+                      "yinfix",
+                      (nixScope) =>
+                        nixScope.substring(1n)(
+                          operators.subtract(nixScope.ylen, 2n),
+                        )(nixScope.y),
+                    );
+                    defGetter(
+                      nixScope,
+                      "xdelr",
+                      (nixScope) =>
+                        nixScope.substring(0n)(
+                          operators.subtract(nixScope.xlen, 1n),
+                        )(nixScope.x),
+                    );
+                    defGetter(
+                      nixScope,
+                      "xdell",
+                      (nixScope) =>
+                        nixScope.substring(1n)(
+                          operators.subtract(nixScope.xlen, 1n),
+                        )(nixScope.x),
+                    );
+                    defGetter(
+                      nixScope,
+                      "ydelr",
+                      (nixScope) =>
+                        nixScope.substring(0n)(
+                          operators.subtract(nixScope.ylen, 1n),
+                        )(nixScope.y),
+                    );
+                    defGetter(
+                      nixScope,
+                      "ydell",
+                      (nixScope) =>
+                        nixScope.substring(1n)(
+                          operators.subtract(nixScope.ylen, 1n),
+                        )(nixScope.y),
+                    );
+                    return (operators.ifThenElse(
+                      operators.equal(nixScope.diff, 2n),
+                      () => (operators.equal(nixScope.xinfix, nixScope.y)),
+                      () => (operators.ifThenElse(
+                        operators.equal(nixScope.diff, 1n),
+                        () => (operators.or(
+                          operators.equal(nixScope.xinfix, nixScope.ydelr),
+                          operators.equal(nixScope.xinfix, nixScope.ydell),
                         )),
-                      ));
-                    })
-                  ))
-                ));
-              },
-            });
+                        () => (operators.or(
+                          operators.or(
+                            operators.equal(nixScope.xinfix, nixScope.yinfix),
+                            operators.equal(nixScope.xdelr, nixScope.ydell),
+                          ),
+                          operators.equal(nixScope.xdell, nixScope.ydelr),
+                        )),
+                      )),
+                    ));
+                  })
+                ))
+              )));
             return createFunc(/*arg:*/ "k", null, {}, (nixScope) => (
               operators.ifThenElse(
                 operators.lessThanOrEqual(nixScope.k, 0n),
@@ -2288,115 +2125,79 @@ export default /**
                   ))
                 ))),
                 () => (/*let*/ createScope((nixScope) => {
-                  Object.defineProperty(nixScope, "f", {
-                    enumerable: true,
-                    get() {
-                      return createFunc(/*arg:*/ "a", null, {}, (nixScope) => (
-                        createFunc(/*arg:*/ "b", null, {}, (nixScope) => (
-                          /*let*/ createScope((nixScope) => {
-                            Object.defineProperty(nixScope, "alen", {
-                              enumerable: true,
-                              get() {
-                                return nixScope.stringLength(nixScope.a);
-                              },
-                            });
-                            Object.defineProperty(nixScope, "blen", {
-                              enumerable: true,
-                              get() {
-                                return nixScope.stringLength(nixScope.b);
-                              },
-                            });
-                            Object.defineProperty(nixScope, "prelen", {
-                              enumerable: true,
-                              get() {
-                                return nixScope.commonPrefixLength(nixScope.a)(
-                                  nixScope.b,
-                                );
-                              },
-                            });
-                            Object.defineProperty(nixScope, "suflen", {
-                              enumerable: true,
-                              get() {
-                                return nixScope.commonSuffixLength(nixScope.a)(
-                                  nixScope.b,
-                                );
-                              },
-                            });
-                            Object.defineProperty(nixScope, "presuflen", {
-                              enumerable: true,
-                              get() {
-                                return operators.add(
-                                  nixScope.prelen,
-                                  nixScope.suflen,
-                                );
-                              },
-                            });
-                            Object.defineProperty(nixScope, "ainfix", {
-                              enumerable: true,
-                              get() {
-                                return nixScope.substring(nixScope.prelen)(
-                                  operators.subtract(
-                                    nixScope.alen,
-                                    nixScope.presuflen,
-                                  ),
-                                )(nixScope.a);
-                              },
-                            });
-                            Object.defineProperty(nixScope, "binfix", {
-                              enumerable: true,
-                              get() {
-                                return nixScope.substring(nixScope.prelen)(
-                                  operators.subtract(
-                                    nixScope.blen,
-                                    nixScope.presuflen,
-                                  ),
-                                )(nixScope.b);
-                              },
-                            });
-                            return (operators.ifThenElse(
-                              operators.lessThan(nixScope.alen, nixScope.blen),
-                              () => (nixScope.f(nixScope.b)(nixScope.a)),
-                              () => (operators.ifThenElse(
-                                operators.greaterThan(
-                                  operators.subtract(
-                                    nixScope.alen,
-                                    nixScope.blen,
-                                  ),
-                                  nixScope.k,
+                  defGetter(nixScope, "f", (nixScope) =>
+                    createFunc(/*arg:*/ "a", null, {}, (nixScope) => (
+                      createFunc(/*arg:*/ "b", null, {}, (nixScope) => (
+                        /*let*/ createScope((nixScope) => {
+                          defGetter(nixScope, "alen", (nixScope) =>
+                            nixScope.stringLength(nixScope.a));
+                          defGetter(nixScope, "blen", (nixScope) =>
+                            nixScope.stringLength(nixScope.b));
+                          defGetter(nixScope, "prelen", (nixScope) =>
+                            nixScope.commonPrefixLength(nixScope.a)(
+                              nixScope.b,
+                            ));
+                          defGetter(nixScope, "suflen", (nixScope) =>
+                            nixScope.commonSuffixLength(nixScope.a)(
+                              nixScope.b,
+                            ));
+                          defGetter(nixScope, "presuflen", (nixScope) =>
+                            operators.add(nixScope.prelen, nixScope.suflen));
+                          defGetter(nixScope, "ainfix", (nixScope) =>
+                            nixScope.substring(nixScope.prelen)(
+                              operators.subtract(
+                                nixScope.alen,
+                                nixScope.presuflen,
+                              ),
+                            )(nixScope.a));
+                          defGetter(nixScope, "binfix", (nixScope) =>
+                            nixScope.substring(nixScope.prelen)(
+                              operators.subtract(
+                                nixScope.blen,
+                                nixScope.presuflen,
+                              ),
+                            )(nixScope.b));
+                          return (operators.ifThenElse(
+                            operators.lessThan(nixScope.alen, nixScope.blen),
+                            () => (nixScope.f(nixScope.b)(nixScope.a)),
+                            () => (operators.ifThenElse(
+                              operators.greaterThan(
+                                operators.subtract(
+                                  nixScope.alen,
+                                  nixScope.blen,
                                 ),
-                                () => (false),
+                                nixScope.k,
+                              ),
+                              () => (false),
+                              () => (operators.ifThenElse(
+                                operators.equal(nixScope.k, 1n),
+                                () => (nixScope.infixDifferAtMost1(
+                                  nixScope.ainfix,
+                                )(nixScope.binfix)),
                                 () => (operators.ifThenElse(
-                                  operators.equal(nixScope.k, 1n),
-                                  () => (nixScope.infixDifferAtMost1(
+                                  operators.equal(nixScope.k, 2n),
+                                  () => (nixScope.infixDifferAtMost2(
                                     nixScope.ainfix,
                                   )(nixScope.binfix)),
-                                  () => (operators.ifThenElse(
-                                    operators.equal(nixScope.k, 2n),
-                                    () => (nixScope.infixDifferAtMost2(
-                                      nixScope.ainfix,
-                                    )(nixScope.binfix)),
-                                    () => (operators.lessThanOrEqual(
-                                      nixScope.levenshtein(nixScope.ainfix)(
-                                        nixScope.binfix,
-                                      ),
-                                      nixScope.k,
-                                    )),
+                                  () => (operators.lessThanOrEqual(
+                                    nixScope.levenshtein(nixScope.ainfix)(
+                                      nixScope.binfix,
+                                    ),
+                                    nixScope.k,
                                   )),
                                 )),
                               )),
-                            ));
-                          })
-                        ))
-                      ));
-                    },
-                  });
+                            )),
+                          ));
+                        })
+                      ))
+                    )));
                   return nixScope.f;
                 })),
               )
             ));
-          });
-        },
-      });
+          }),
+      );
       return nixScope;
     });
   })

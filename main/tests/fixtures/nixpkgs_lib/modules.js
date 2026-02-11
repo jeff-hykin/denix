@@ -58,10 +58,11 @@ export default createFunc({}, null, {}, (nixScope) => (
       nixScope.lib["strings"]["isConvertibleWithToString"];
     nixScope.defaultOverridePriority = 100n;
     nixScope.defaultOrderPriority = 1000n;
-    Object.defineProperty(nixScope, "showDeclPrefix", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "loc", null, {}, (nixScope) => (
+    defGetter(
+      nixScope,
+      "showDeclPrefix",
+      (nixScope) =>
+        createFunc(/*arg:*/ "loc", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "decl", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "prefix", null, {}, (nixScope) => (
               new InterpolatedString([
@@ -76,13 +77,13 @@ export default createFunc({}, null, {}, (nixScope) => (
               ])
             ))
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "showRawDecls", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "loc", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "showRawDecls",
+      (nixScope) =>
+        createFunc(/*arg:*/ "loc", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "decls", null, {}, (nixScope) => (
             nixScope.concatStringsSep("")(
               nixScope.sort(createFunc(/*arg:*/ "a", null, {}, (nixScope) => (
@@ -100,90 +101,69 @@ export default createFunc({}, null, {}, (nixScope) => (
               ),
             )
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "evalModules", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "evalModulesArgs", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "evalModules",
+      (nixScope) =>
+        createFunc(/*arg:*/ "evalModulesArgs", null, {}, (nixScope) => (
           /*let*/ createScope((nixScope) => {
-            Object.defineProperty(nixScope, "withWarnings", {
-              enumerable: true,
-              get() {
-                return createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
-                  nixScope.warnIf(
-                    operators.hasAttr(nixScope.evalModulesArgs, "args"),
-                  )("The args argument to evalModules is deprecated. Please set config._module.args instead.")(
-                    nixScope.warnIf,
-                  )(operators.hasAttr(nixScope.evalModulesArgs, "check"))(
-                    "The check argument to evalModules is deprecated. Please set config._module.check instead.",
-                  )(nixScope.x)
-                ));
-              },
-            });
-            Object.defineProperty(nixScope, "legacyModules", {
-              enumerable: true,
-              get() {
-                return operators.listConcat(
-                  nixScope.optional(
-                    operators.hasAttr(nixScope.evalModulesArgs, "args"),
-                  )({
-                    "config": createScope((nixScope) => {
-                      const obj = {};
-                      if (obj["_module"] === undefined) obj["_module"] = {};
-                      obj["_module"]["args"] = nixScope.args;
-                      return obj;
-                    }),
+            defGetter(nixScope, "withWarnings", (nixScope) =>
+              createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+                nixScope.warnIf(
+                  operators.hasAttr(nixScope.evalModulesArgs, "args"),
+                )("The args argument to evalModules is deprecated. Please set config._module.args instead.")(
+                  nixScope.warnIf,
+                )(operators.hasAttr(nixScope.evalModulesArgs, "check"))(
+                  "The check argument to evalModules is deprecated. Please set config._module.check instead.",
+                )(nixScope.x)
+              )));
+            defGetter(nixScope, "legacyModules", (nixScope) =>
+              operators.listConcat(
+                nixScope.optional(
+                  operators.hasAttr(nixScope.evalModulesArgs, "args"),
+                )({
+                  "config": createScope((nixScope) => {
+                    const obj = {};
+                    if (obj["_module"] === undefined) obj["_module"] = {};
+                    obj["_module"]["args"] = nixScope.args;
+                    return obj;
                   }),
-                  nixScope.optional(
-                    operators.hasAttr(nixScope.evalModulesArgs, "check"),
-                  )({
-                    "config": createScope((nixScope) => {
-                      const obj = {};
-                      if (obj["_module"] === undefined) obj["_module"] = {};
-                      obj["_module"]["check"] = nixScope.mkDefault(
-                        nixScope.check,
-                      );
-                      return obj;
-                    }),
+                }),
+                nixScope.optional(
+                  operators.hasAttr(nixScope.evalModulesArgs, "check"),
+                )({
+                  "config": createScope((nixScope) => {
+                    const obj = {};
+                    if (obj["_module"] === undefined) obj["_module"] = {};
+                    obj["_module"]["check"] = nixScope.mkDefault(
+                      nixScope.check,
+                    );
+                    return obj;
                   }),
-                );
-              },
-            });
-            Object.defineProperty(nixScope, "regularModules", {
-              enumerable: true,
-              get() {
-                return operators.listConcat(
-                  nixScope.modules,
-                  nixScope.legacyModules,
-                );
-              },
-            });
-            Object.defineProperty(nixScope, "internalModule", {
-              enumerable: true,
-              get() {
-                return /*rec*/ createScope((nixScope) => {
-                  nixScope._file = "lib/modules.nix";
-                  Object.defineProperty(nixScope, "key", {
-                    enumerable: true,
-                    get() {
-                      return nixScope._file;
-                    },
-                  });
-                  Object.defineProperty(nixScope, "options", {
-                    enumerable: true,
-                    get() {
-                      return createScope((nixScope) => {
+                }),
+              ));
+            defGetter(nixScope, "regularModules", (nixScope) =>
+              operators.listConcat(nixScope.modules, nixScope.legacyModules));
+            defGetter(nixScope, "internalModule", (nixScope) =>
+              /*rec*/ createScope((nixScope) => {
+                nixScope._file = "lib/modules.nix";
+                defGetter(nixScope, "key", (nixScope) =>
+                  nixScope._file);
+                defGetter(nixScope, "options", (nixScope) =>
+                  createScope((nixScope) => {
+                    const obj = {};
+                    if (obj["_module"] === undefined) {
+                      obj["_module"] = {};
+                    }
+                    obj["_module"]["args"] = nixScope.mkOption(
+                      createScope((nixScope) => {
                         const obj = {};
-                        if (obj["_module"] === undefined) obj["_module"] = {};
-                        obj["_module"]["args"] = nixScope.mkOption(
-                          createScope((nixScope) => {
-                            const obj = {};
-                            obj["type"] = nixScope.types["lazyAttrsOf"](
-                              nixScope.types["raw"],
-                            );
-                            obj["description"] = `
+                        obj.type = nixScope.types["lazyAttrsOf"](
+                          nixScope.types["raw"],
+                        );
+                        obj.description = `
                       Additional arguments passed to each module in addition to ones
                       like \`lib\`, \`config\`,
                       and \`pkgs\`, \`modulesPath\`.
@@ -228,35 +208,39 @@ export default createFunc({}, null, {}, (nixScope) => (
                       - {var}\`pkgs\`: The nixpkgs package set according to
                         the {option}\`nixpkgs.pkgs\` option.
                     `;
-                            obj[
-                              operators.ifThenElse(
-                                operators.equal(nixScope.prefix, []),
-                                () => (null),
-                                () => ("internal"),
-                              )
-                            ] = true;
-                            return obj;
-                          }),
-                        );
-                        if (obj["_module"] === undefined) obj["_module"] = {};
-                        obj["_module"]["check"] = nixScope.mkOption(
-                          {
-                            "type": nixScope.types["bool"],
-                            "internal": true,
-                            "default": true,
-                            "description":
-                              "Whether to check whether all option definitions have matching declarations.",
-                          },
-                        );
-                        if (obj["_module"] === undefined) obj["_module"] = {};
-                        obj["_module"]["freeformType"] = nixScope.mkOption(
-                          {
-                            "type": nixScope.types["nullOr"](
-                              nixScope.types["optionType"],
-                            ),
-                            "internal": true,
-                            "default": null,
-                            "description": `
+                        obj[
+                          operators.ifThenElse(
+                            operators.equal(nixScope.prefix, []),
+                            () => (null),
+                            () => ("internal"),
+                          )
+                        ] = true;
+                        return obj;
+                      }),
+                    );
+                    if (obj["_module"] === undefined) {
+                      obj["_module"] = {};
+                    }
+                    obj["_module"]["check"] = nixScope.mkOption(
+                      {
+                        "type": nixScope.types["bool"],
+                        "internal": true,
+                        "default": true,
+                        "description":
+                          "Whether to check whether all option definitions have matching declarations.",
+                      },
+                    );
+                    if (obj["_module"] === undefined) {
+                      obj["_module"] = {};
+                    }
+                    obj["_module"]["freeformType"] = nixScope.mkOption(
+                      {
+                        "type": nixScope.types["nullOr"](
+                          nixScope.types["optionType"],
+                        ),
+                        "internal": true,
+                        "default": null,
+                        "description": `
                       If set, merge all definitions that don't have an associated option
                       together using this type. The result then gets combined with the
                       values of all declared options to produce the final \`
@@ -266,879 +250,672 @@ export default createFunc({}, null, {}, (nixScope) => (
                       will throw an error unless {option}\`_module.check\` is
                       turned off.
                     `,
-                          },
-                        );
-                        if (obj["_module"] === undefined) obj["_module"] = {};
-                        obj["_module"]["specialArgs"] = nixScope.mkOption(
-                          {
-                            "readOnly": true,
-                            "internal": true,
-                            "description": `
+                      },
+                    );
+                    if (obj["_module"] === undefined) {
+                      obj["_module"] = {};
+                    }
+                    obj["_module"]["specialArgs"] = nixScope.mkOption(
+                      {
+                        "readOnly": true,
+                        "internal": true,
+                        "description": `
                       Externally provided module arguments that can't be modified from
                       within a configuration, but can be used in module imports.
                     `,
-                          },
-                        );
-                        return obj;
-                      });
-                    },
-                  });
-                  Object.defineProperty(nixScope, "config", {
-                    enumerable: true,
-                    get() {
-                      return createScope((nixScope) => {
-                        const obj = {};
-                        if (obj["_module"] === undefined) obj["_module"] = {};
-                        obj["_module"]["args"] = {
-                          "extendModules": nixScope.extendModules,
-                          "moduleType": nixScope.type,
-                        };
-                        if (obj["_module"] === undefined) obj["_module"] = {};
-                        obj["_module"]["specialArgs"] = nixScope.specialArgs;
-                        return obj;
-                      });
-                    },
-                  });
-                  return nixScope;
-                });
-              },
-            });
-            Object.defineProperty(nixScope, "doCollect", {
-              enumerable: true,
-              get() {
-                return createFunc({}, null, {}, (nixScope) => (
-                  nixScope.collectModules(nixScope.class)(
-                    operators.selectOrDefault(nixScope.specialArgs, [
-                      "modulesPath",
-                    ], ""),
-                  )(operators.listConcat(nixScope.regularModules, [
-                    nixScope.internalModule,
-                  ]))(operators.merge({
-                    "lib": nixScope.lib,
-                    "options": nixScope.options,
-                    "specialArgs": nixScope.specialArgs,
-                    "_class": nixScope.class,
-                    "_prefix": nixScope.prefix,
-                    "config": nixScope.addErrorContext(
-                      "if you get an infinite recursion here, you probably reference `config` in `imports`. If you are trying to achieve a conditional import behavior dependent on `config`, consider importing unconditionally, and using `mkEnableOption` and `mkIf` to control its effect.",
-                    )(nixScope.config),
-                  }, nixScope.specialArgs))
-                ));
-              },
-            });
-            Object.defineProperty(nixScope, "merged", {
-              enumerable: true,
-              get() {
-                return nixScope.mergeModules(nixScope.prefix)(
-                  nixScope.reverseList((nixScope.doCollect({}))["modules"]),
-                );
-              },
-            });
-            Object.defineProperty(nixScope, "options", {
-              enumerable: true,
-              get() {
-                return nixScope.merged["matchedOptions"];
-              },
-            });
-            Object.defineProperty(nixScope, "config", {
-              enumerable: true,
-              get() {
-                return /*let*/ createScope((nixScope) => {
-                  Object.defineProperty(nixScope, "declaredConfig", {
-                    enumerable: true,
-                    get() {
-                      return nixScope.mapAttrsRecursiveCond(
-                        createFunc(/*arg:*/ "v", null, {}, (nixScope) => (
-                          operators.negate(nixScope.isOption(nixScope.v))
+                      },
+                    );
+                    return obj;
+                  }));
+                defGetter(nixScope, "config", (nixScope) =>
+                  createScope((nixScope) => {
+                    const obj = {};
+                    if (obj["_module"] === undefined) {
+                      obj["_module"] = {};
+                    }
+                    obj["_module"]["args"] = {
+                      "extendModules": nixScope.extendModules,
+                      "moduleType": nixScope.type,
+                    };
+                    if (obj["_module"] === undefined) {
+                      obj["_module"] = {};
+                    }
+                    obj["_module"]["specialArgs"] = nixScope.specialArgs;
+                    return obj;
+                  }));
+                return nixScope;
+              }));
+            defGetter(nixScope, "doCollect", (nixScope) =>
+              createFunc({}, null, {}, (nixScope) => (
+                nixScope.collectModules(nixScope.class)(
+                  operators.selectOrDefault(nixScope.specialArgs, [
+                    "modulesPath",
+                  ], ""),
+                )(operators.listConcat(nixScope.regularModules, [
+                  nixScope.internalModule,
+                ]))(operators.merge({
+                  "lib": nixScope.lib,
+                  "options": nixScope.options,
+                  "specialArgs": nixScope.specialArgs,
+                  "_class": nixScope.class,
+                  "_prefix": nixScope.prefix,
+                  "config": nixScope.addErrorContext(
+                    "if you get an infinite recursion here, you probably reference `config` in `imports`. If you are trying to achieve a conditional import behavior dependent on `config`, consider importing unconditionally, and using `mkEnableOption` and `mkIf` to control its effect.",
+                  )(nixScope.config),
+                }, nixScope.specialArgs))
+              )));
+            defGetter(nixScope, "merged", (nixScope) =>
+              nixScope.mergeModules(nixScope.prefix)(
+                nixScope.reverseList((nixScope.doCollect({}))["modules"]),
+              ));
+            defGetter(nixScope, "options", (nixScope) =>
+              nixScope.merged["matchedOptions"]);
+            defGetter(nixScope, "config", (nixScope) =>
+              /*let*/ createScope((nixScope) => {
+                defGetter(nixScope, "declaredConfig", (nixScope) =>
+                  nixScope.mapAttrsRecursiveCond(
+                    createFunc(/*arg:*/ "v", null, {}, (nixScope) => (
+                      operators.negate(nixScope.isOption(nixScope.v))
+                    )),
+                  )(createFunc(/*arg:*/ "_", null, {}, (nixScope) => (
+                    createFunc(/*arg:*/ "v", null, {}, (nixScope) => (
+                      nixScope.v["value"]
+                    ))
+                  )))(nixScope.options));
+                defGetter(nixScope, "freeformConfig", (nixScope) =>
+                  /*let*/ createScope((nixScope) => {
+                    defGetter(nixScope, "defs", (nixScope) =>
+                      nixScope.map(
+                        createFunc(/*arg:*/ "def", null, {}, (nixScope) => (
+                          {
+                            "file": nixScope.def["file"],
+                            "value": nixScope.setAttrByPath(
+                              nixScope.def["prefix"],
+                            )(nixScope.def["value"]),
+                          }
                         )),
-                      )(createFunc(/*arg:*/ "_", null, {}, (nixScope) => (
-                        createFunc(/*arg:*/ "v", null, {}, (nixScope) => (
-                          nixScope.v["value"]
-                        ))
-                      )))(nixScope.options);
-                    },
-                  });
-                  Object.defineProperty(nixScope, "freeformConfig", {
-                    enumerable: true,
-                    get() {
-                      return /*let*/ createScope((nixScope) => {
-                        Object.defineProperty(nixScope, "defs", {
-                          enumerable: true,
-                          get() {
-                            return nixScope.map(
-                              createFunc(
-                                /*arg:*/ "def",
-                                null,
-                                {},
-                                (nixScope) => (
-                                  {
-                                    "file": nixScope.def["file"],
-                                    "value": nixScope.setAttrByPath(
-                                      nixScope.def["prefix"],
-                                    )(nixScope.def["value"]),
-                                  }
-                                ),
-                              ),
-                            )(nixScope.merged["unmatchedDefns"]);
-                          },
-                        });
-                        return (operators.ifThenElse(
-                          operators.equal(nixScope.defs, []),
-                          () => ({}),
-                          () => (nixScope
-                            .declaredConfig["_module"]["freeformType"]["merge"](
-                              nixScope.prefix,
-                            )(nixScope.defs)),
-                        ));
-                      });
-                    },
-                  });
-                  return (operators.ifThenElse(
+                      )(nixScope.merged["unmatchedDefns"]));
+                    return (operators.ifThenElse(
+                      operators.equal(nixScope.defs, []),
+                      () => ({}),
+                      () => (nixScope.declaredConfig["_module"]["freeformType"]
+                        ["merge"](nixScope.prefix)(nixScope.defs)),
+                    ));
+                  }));
+                return (operators.ifThenElse(
+                  operators.equal(
+                    nixScope.declaredConfig["_module"]["freeformType"],
+                    null,
+                  ),
+                  () => (nixScope.declaredConfig),
+                  () => (nixScope.recursiveUpdate(nixScope.freeformConfig)(
+                    nixScope.declaredConfig,
+                  )),
+                ));
+              }));
+            defGetter(
+              nixScope,
+              "checkUnmatched",
+              (
+                nixScope,
+              ) => (operators.ifThenElse(
+                operators.and(
+                  operators.and(
+                    nixScope.config["_module"]["check"],
                     operators.equal(
-                      nixScope.declaredConfig["_module"]["freeformType"],
+                      nixScope.config["_module"]["freeformType"],
                       null,
                     ),
-                    () => (nixScope.declaredConfig),
-                    () => (nixScope.recursiveUpdate(nixScope.freeformConfig)(
-                      nixScope.declaredConfig,
-                    )),
-                  ));
-                });
-              },
-            });
-            Object.defineProperty(nixScope, "checkUnmatched", {
-              enumerable: true,
-              get() {
-                return (operators.ifThenElse(
-                  operators.and(
-                    operators.and(
-                      nixScope.config["_module"]["check"],
-                      operators.equal(
-                        nixScope.config["_module"]["freeformType"],
-                        null,
-                      ),
-                    ),
-                    operators.notEqual(nixScope.merged["unmatchedDefns"], []),
                   ),
-                  () => (/*let*/ createScope((nixScope) => {
-                    Object.defineProperty(nixScope, "firstDef", {
-                      enumerable: true,
-                      get() {
-                        return nixScope.head(nixScope.merged["unmatchedDefns"]);
-                      },
-                    });
-                    Object.defineProperty(nixScope, "baseMsg", {
-                      enumerable: true,
-                      get() {
-                        return /*let*/ createScope((nixScope) => {
-                          Object.defineProperty(nixScope, "optText", {
-                            enumerable: true,
-                            get() {
-                              return nixScope.showOption(
-                                operators.listConcat(
-                                  nixScope.prefix,
-                                  nixScope.firstDef["prefix"],
-                                ),
-                              );
-                            },
-                          });
-                          Object.defineProperty(nixScope, "defText", {
-                            enumerable: true,
-                            get() {
-                              return nixScope.addErrorContext(
-                                new InterpolatedString([
-                                  "while evaluating the error message for definitions for `",
-                                  "', which is an option that does not exist",
-                                ], [() => (nixScope.optText)]),
-                              )(
-                                nixScope.addErrorContext(
-                                  new InterpolatedString([
-                                    "while evaluating a definition from `",
-                                    "'",
-                                  ], [() => (nixScope.firstDef["file"])]),
-                                )(nixScope.showDefs([nixScope.firstDef])),
-                              );
-                            },
-                          });
-                          return (new InterpolatedString([
-                            "The option `",
-                            "' does not exist. Definition values:",
-                            "",
-                          ], [
-                            () => (nixScope.optText),
-                            () => (nixScope.defText),
-                          ]));
-                        });
-                      },
-                    });
-                    return (operators.ifThenElse(
-                      operators.equal(nixScope.attrNames(nixScope.options), [
-                        "_module",
-                      ]),
-                      () => (/*let*/ createScope((nixScope) => {
-                        Object.defineProperty(nixScope, "optionName", {
-                          enumerable: true,
-                          get() {
-                            return nixScope.showOption(nixScope.prefix);
-                          },
-                        });
-                        return (operators.ifThenElse(
-                          operators.equal(nixScope.optionName, ""),
-                          () => (nixScope.throw(
-                            new InterpolatedString([
-                              "\n                ",
-                              "\n\n                It seems as if you're trying to declare an option by placing it into \\`config' rather than \\`options'!\n              ",
-                            ], [() => (nixScope.baseMsg)]),
-                          )),
-                          () => (nixScope.throw(
-                            new InterpolatedString([
-                              "\n                ",
-                              "\n\n                However there are no options defined in \\`",
-                              "'. Are you sure you've\n                declared your options properly? This can happen if you e.g. declared your options in \\`types.submodule'\n                under \\`config' rather than \\`options'.\n              ",
-                            ], [
-                              () => (nixScope.baseMsg),
-                              () => (nixScope.showOption(nixScope.prefix)),
-                            ]),
-                          )),
-                        ));
-                      })),
-                      () => (nixScope.throw(nixScope.baseMsg)),
-                    ));
-                  })),
-                  () => (null),
-                ));
-              },
-            });
-            Object.defineProperty(nixScope, "checked", {
-              enumerable: true,
-              get() {
-                return nixScope.seq(nixScope.checkUnmatched);
-              },
-            });
-            Object.defineProperty(nixScope, "extendModules", {
-              enumerable: true,
-              get() {
-                return createFunc(
-                  /*arg:*/ "extendArgs",
-                  null,
-                  {},
-                  (nixScope) => (
-                    nixScope.evalModules(
-                      operators.merge(nixScope.evalModulesArgs, {
-                        "modules": operators.listConcat(
-                          nixScope.regularModules,
-                          nixScope.modules,
-                        ),
-                        "specialArgs": operators.merge(
-                          operators.selectOrDefault(nixScope.evalModulesArgs, [
-                            "specialArgs",
-                          ], {}),
-                          nixScope.specialArgs,
-                        ),
-                        "prefix": operators.selectOrDefault(
-                          nixScope.extendArgs,
-                          ["prefix"],
-                          operators.selectOrDefault(nixScope.evalModulesArgs, [
-                            "prefix",
-                          ], []),
-                        ),
-                      }),
-                    )
-                  ),
-                );
-              },
-            });
-            Object.defineProperty(nixScope, "type", {
-              enumerable: true,
-              get() {
-                return nixScope.types["submoduleWith"](
-                  {
-                    "modules": nixScope.modules,
-                    "specialArgs": nixScope.specialArgs,
-                    "class": nixScope.class,
-                  },
-                );
-              },
-            });
-            Object.defineProperty(nixScope, "result", {
-              enumerable: true,
-              get() {
-                return nixScope.withWarnings(createScope((nixScope) => {
-                  const obj = {};
-                  obj["_type"] = "configuration";
-                  obj["options"] = nixScope.checked(nixScope.options);
-                  obj["config"] = nixScope.checked(
-                    nixScope.removeAttrs(nixScope.config)(["_module"]),
+                  operators.notEqual(nixScope.merged["unmatchedDefns"], []),
+                ),
+                () => (/*let*/ createScope((nixScope) => {
+                  defGetter(
+                    nixScope,
+                    "firstDef",
+                    (nixScope) =>
+                      nixScope.head(nixScope.merged["unmatchedDefns"]),
                   );
-                  obj["_module"] = nixScope.checked(nixScope.config["_module"]);
-                  obj["graph"] = nixScope.doCollect({})["graph"];
-                  obj["extendModules"] = nixScope.extendModules;
-                  obj["type"] = nixScope.type;
-                  obj["class"] = nixScope.class;
-                  return obj;
-                }));
-              },
-            });
+                  defGetter(nixScope, "baseMsg", (nixScope) =>
+                    /*let*/ createScope((nixScope) => {
+                      defGetter(nixScope, "optText", (nixScope) =>
+                        nixScope.showOption(
+                          operators.listConcat(
+                            nixScope.prefix,
+                            nixScope.firstDef["prefix"],
+                          ),
+                        ));
+                      defGetter(nixScope, "defText", (nixScope) =>
+                        nixScope.addErrorContext(
+                          new InterpolatedString([
+                            "while evaluating the error message for definitions for `",
+                            "', which is an option that does not exist",
+                          ], [() => (nixScope.optText)]),
+                        )(
+                          nixScope.addErrorContext(
+                            new InterpolatedString([
+                              "while evaluating a definition from `",
+                              "'",
+                            ], [() => (nixScope.firstDef["file"])]),
+                          )(nixScope.showDefs([nixScope.firstDef])),
+                        ));
+                      return (new InterpolatedString([
+                        "The option `",
+                        "' does not exist. Definition values:",
+                        "",
+                      ], [() => (nixScope.optText), () => (nixScope.defText)]));
+                    }));
+                  return (operators.ifThenElse(
+                    operators.equal(nixScope.attrNames(nixScope.options), [
+                      "_module",
+                    ]),
+                    () => (/*let*/ createScope((nixScope) => {
+                      defGetter(nixScope, "optionName", (nixScope) =>
+                        nixScope.showOption(nixScope.prefix));
+                      return (operators.ifThenElse(
+                        operators.equal(nixScope.optionName, ""),
+                        () => (nixScope.throw(
+                          new InterpolatedString([
+                            "\n                ",
+                            "\n\n                It seems as if you're trying to declare an option by placing it into \\`config' rather than \\`options'!\n              ",
+                          ], [() => (nixScope.baseMsg)]),
+                        )),
+                        () => (nixScope.throw(
+                          new InterpolatedString([
+                            "\n                ",
+                            "\n\n                However there are no options defined in \\`",
+                            "'. Are you sure you've\n                declared your options properly? This can happen if you e.g. declared your options in \\`types.submodule'\n                under \\`config' rather than \\`options'.\n              ",
+                          ], [
+                            () => (nixScope.baseMsg),
+                            () => (nixScope.showOption(nixScope.prefix)),
+                          ]),
+                        )),
+                      ));
+                    })),
+                    () => (nixScope.throw(nixScope.baseMsg)),
+                  ));
+                })),
+                () => (null),
+              )),
+            );
+            defGetter(nixScope, "checked", (nixScope) =>
+              nixScope.seq(nixScope.checkUnmatched));
+            defGetter(nixScope, "extendModules", (nixScope) =>
+              createFunc(/*arg:*/ "extendArgs", null, {}, (nixScope) => (
+                nixScope.evalModules(operators.merge(nixScope.evalModulesArgs, {
+                  "modules": operators.listConcat(
+                    nixScope.regularModules,
+                    nixScope.modules,
+                  ),
+                  "specialArgs": operators.merge(
+                    operators.selectOrDefault(nixScope.evalModulesArgs, [
+                      "specialArgs",
+                    ], {}),
+                    nixScope.specialArgs,
+                  ),
+                  "prefix": operators.selectOrDefault(
+                    nixScope.extendArgs,
+                    ["prefix"],
+                    operators.selectOrDefault(nixScope.evalModulesArgs, [
+                      "prefix",
+                    ], []),
+                  ),
+                }))
+              )));
+            defGetter(nixScope, "type", (nixScope) =>
+              nixScope.types["submoduleWith"](
+                {
+                  "modules": nixScope.modules,
+                  "specialArgs": nixScope.specialArgs,
+                  "class": nixScope.class,
+                },
+              ));
+            defGetter(nixScope, "result", (nixScope) =>
+              nixScope.withWarnings(createScope((nixScope) => {
+                const obj = {};
+                obj._type = "configuration";
+                obj.options = nixScope.checked(nixScope.options);
+                obj.config = nixScope.checked(
+                  nixScope.removeAttrs(nixScope.config)(["_module"]),
+                );
+                obj._module = nixScope.checked(nixScope.config["_module"]);
+                obj.graph = nixScope.doCollect({}).graph;
+                obj.extendModules = nixScope.extendModules;
+                obj.type = nixScope.type;
+                obj.class = nixScope.class;
+                return obj;
+              })));
             return nixScope.result;
           })
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "collectModules", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "class", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "collectModules",
+      (nixScope) =>
+        createFunc(/*arg:*/ "class", null, {}, (nixScope) => (
           /*let*/ createScope((nixScope) => {
-            Object.defineProperty(nixScope, "loadModule", {
-              enumerable: true,
-              get() {
-                return createFunc(/*arg:*/ "args", null, {}, (nixScope) => (
-                  createFunc(/*arg:*/ "fallbackFile", null, {}, (nixScope) => (
-                    createFunc(/*arg:*/ "fallbackKey", null, {}, (nixScope) => (
-                      createFunc(/*arg:*/ "m", null, {}, (nixScope) => (
-                        operators.ifThenElse(
-                          nixScope.isFunction(nixScope.m),
-                          () => (nixScope.unifyModuleSyntax(
-                            nixScope.fallbackFile,
-                          )(nixScope.fallbackKey)(
-                            nixScope.applyModuleArgs(nixScope.fallbackKey)(
-                              nixScope.m,
-                            )(nixScope.args),
-                          )),
+            defGetter(nixScope, "loadModule", (nixScope) =>
+              createFunc(/*arg:*/ "args", null, {}, (nixScope) => (
+                createFunc(/*arg:*/ "fallbackFile", null, {}, (nixScope) => (
+                  createFunc(/*arg:*/ "fallbackKey", null, {}, (nixScope) => (
+                    createFunc(/*arg:*/ "m", null, {}, (nixScope) => (
+                      operators.ifThenElse(
+                        nixScope.isFunction(nixScope.m),
+                        () => (nixScope.unifyModuleSyntax(
+                          nixScope.fallbackFile,
+                        )(nixScope.fallbackKey)(
+                          nixScope.applyModuleArgs(nixScope.fallbackKey)(
+                            nixScope.m,
+                          )(nixScope.args),
+                        )),
+                        () => (operators.ifThenElse(
+                          nixScope.isAttrs(nixScope.m),
                           () => (operators.ifThenElse(
-                            nixScope.isAttrs(nixScope.m),
-                            () => (operators.ifThenElse(
-                              operators.equal(
-                                operators.selectOrDefault(
-                                  nixScope.m,
-                                  ["_type"],
-                                  "module",
-                                ),
+                            operators.equal(
+                              operators.selectOrDefault(
+                                nixScope.m,
+                                ["_type"],
                                 "module",
                               ),
-                              () => (nixScope.unifyModuleSyntax(
-                                nixScope.fallbackFile,
-                              )(nixScope.fallbackKey)(nixScope.m)),
-                              () => (operators.ifThenElse(
-                                operators.or(
-                                  operators.equal(nixScope.m["_type"], "if"),
-                                  operators.equal(
-                                    nixScope.m["_type"],
-                                    "override",
-                                  ),
+                              "module",
+                            ),
+                            () => (nixScope.unifyModuleSyntax(
+                              nixScope.fallbackFile,
+                            )(nixScope.fallbackKey)(nixScope.m)),
+                            () => (operators.ifThenElse(
+                              operators.or(
+                                operators.equal(nixScope.m["_type"], "if"),
+                                operators.equal(
+                                  nixScope.m["_type"],
+                                  "override",
                                 ),
-                                () => (nixScope.loadModule(nixScope.args)(
-                                  nixScope.fallbackFile,
-                                )(nixScope.fallbackKey)(
-                                  { "config": nixScope.m },
-                                )),
-                                () => (nixScope.throw(
-                                  nixScope.messages["not_a_module"](
-                                    {
-                                      "fallbackFile": nixScope.fallbackFile,
-                                      "value": nixScope.m,
-                                      "_type": nixScope.m["_type"],
-                                      "expectedClass": nixScope.class,
-                                      "prefix": nixScope.args["_prefix"],
-                                    },
-                                  ),
-                                )),
+                              ),
+                              () => (nixScope.loadModule(nixScope.args)(
+                                nixScope.fallbackFile,
+                              )(nixScope.fallbackKey)(
+                                { "config": nixScope.m },
+                              )),
+                              () => (nixScope.throw(
+                                nixScope.messages["not_a_module"](
+                                  {
+                                    "fallbackFile": nixScope.fallbackFile,
+                                    "value": nixScope.m,
+                                    "_type": nixScope.m["_type"],
+                                    "expectedClass": nixScope.class,
+                                    "prefix": nixScope.args["_prefix"],
+                                  },
+                                ),
+                              )),
+                            )),
+                          )),
+                          () => (operators.ifThenElse(
+                            nixScope.isList(nixScope.m),
+                            () => (/*let*/ createScope((nixScope) => {
+                              defGetter(
+                                nixScope,
+                                "defs",
+                                (
+                                  nixScope,
+                                ) => [
+                                  {
+                                    "file": nixScope.fallbackFile,
+                                    "value": nixScope.m,
+                                  },
+                                ],
+                              );
+                              return nixScope.throw(
+                                new InterpolatedString([
+                                  "Module imports can't be nested lists. Perhaps you meant to remove one level of lists? Definitions: ",
+                                  "",
+                                ], [() => (nixScope.showDefs(nixScope.defs))]),
+                              );
+                            })),
+                            () => (nixScope.unifyModuleSyntax(
+                              nixScope.toString(nixScope.m),
+                            )(nixScope.toString(nixScope.m))(
+                              nixScope.applyModuleArgsIfFunction(
+                                nixScope.toString(nixScope.m),
+                              )(nixScope.import(nixScope.m))(nixScope.args),
+                            )),
+                          )),
+                        )),
+                      )
+                    ))
+                  ))
+                ))
+              )));
+            defGetter(
+              nixScope,
+              "checkModule",
+              (
+                nixScope,
+              ) => (operators.ifThenElse(
+                operators.notEqual(nixScope.class, null),
+                () => (createFunc(/*arg:*/ "m", null, {}, (nixScope) => (
+                  operators.ifThenElse(
+                    operators.or(
+                      operators.equal(nixScope.m["_class"], null),
+                      operators.equal(nixScope.m["_class"], nixScope.class),
+                    ),
+                    () => (nixScope.m),
+                    () => (nixScope.throw(
+                      new InterpolatedString([
+                        "\n              The module \\`",
+                        "\\` (class: ",
+                        ") cannot be imported into a module evaluation that expects class ",
+                        ".\n\n              Help:\n              - Ensure that you are importing the correct module.\n              - Verify that the module's \\`_class\\`, ",
+                        " matches the expected \\`class\\` ",
+                        ".\n              - If you are using a custom class, make sure it is correctly defined and used consistently across your modules.\n            ",
+                      ], [
+                        () => (operators.selectOrDefault(
+                          nixScope.m,
+                          ["_file"],
+                          nixScope.m["key"],
+                        )),
+                        () => (nixScope.lib["strings"]["escapeNixString"](
+                          nixScope.m["_class"],
+                        )),
+                        () => (nixScope.lib["strings"]["escapeNixString"](
+                          nixScope.class,
+                        )),
+                        () => (nixScope.lib["strings"]["escapeNixString"](
+                          nixScope.m["_class"],
+                        )),
+                        () => (nixScope.lib["strings"]["escapeNixString"](
+                          nixScope.class,
+                        )),
+                      ]),
+                    )),
+                  )
+                ))),
+                () => (createFunc(/*arg:*/ "m", null, {}, (nixScope) => (
+                  nixScope.m
+                ))),
+              )),
+            );
+            defGetter(nixScope, "isDisabled", (nixScope) =>
+              createFunc(/*arg:*/ "modulesPath", null, {}, (nixScope) => (
+                createFunc(/*arg:*/ "disabledList", null, {}, (nixScope) => (
+                  /*let*/ createScope((nixScope) => {
+                    defGetter(nixScope, "moduleKey", (nixScope) =>
+                      createFunc(/*arg:*/ "file", null, {}, (nixScope) => (
+                        createFunc(/*arg:*/ "m", null, {}, (nixScope) => (
+                          operators.ifThenElse(
+                            nixScope.isString(nixScope.m),
+                            () => (operators.ifThenElse(
+                              operators.equal(
+                                nixScope.substring(0n)(1n)(nixScope.m),
+                                "/",
+                              ),
+                              () => (nixScope.m),
+                              () => (operators.add(
+                                operators.add(
+                                  nixScope.toString(nixScope.modulesPath),
+                                  "/",
+                                ),
+                                nixScope.m,
                               )),
                             )),
                             () => (operators.ifThenElse(
-                              nixScope.isList(nixScope.m),
-                              () => (/*let*/ createScope((nixScope) => {
-                                Object.defineProperty(nixScope, "defs", {
-                                  enumerable: true,
-                                  get() {
-                                    return [
-                                      {
-                                        "file": nixScope.fallbackFile,
-                                        "value": nixScope.m,
-                                      },
-                                    ];
-                                  },
-                                });
-                                return nixScope.throw(
+                              nixScope.isConvertibleWithToString(nixScope.m),
+                              () => (operators.ifThenElse(
+                                operators.and(
+                                  operators.hasAttr(nixScope.m, "key"),
+                                  operators.notEqual(
+                                    nixScope.m["key"],
+                                    nixScope.toString(nixScope.m),
+                                  ),
+                                ),
+                                () => (nixScope.throw(
                                   new InterpolatedString([
-                                    "Module imports can't be nested lists. Perhaps you meant to remove one level of lists? Definitions: ",
-                                    "",
+                                    "Module `",
+                                    "` contains a disabledModules item that is an attribute set that can be converted to a string (",
+                                    ") but also has a `.key` attribute (",
+                                    ") with a different value. This makes it ambiguous which module should be disabled.",
                                   ], [
-                                    () => (nixScope.showDefs(nixScope.defs)),
+                                    () => (nixScope.file),
+                                    () => (nixScope.toString(nixScope.m)),
+                                    () => (nixScope.m["key"]),
                                   ]),
-                                );
-                              })),
-                              () => (nixScope.unifyModuleSyntax(
-                                nixScope.toString(nixScope.m),
-                              )(nixScope.toString(nixScope.m))(
-                                nixScope.applyModuleArgsIfFunction(
-                                  nixScope.toString(nixScope.m),
-                                )(nixScope.import(nixScope.m))(nixScope.args),
+                                )),
+                                () => (nixScope.toString(nixScope.m)),
+                              )),
+                              () => (operators.ifThenElse(
+                                operators.hasAttr(nixScope.m, "key"),
+                                () => (nixScope.m["key"]),
+                                () => (operators.ifThenElse(
+                                  nixScope.isAttrs(nixScope.m),
+                                  () => (nixScope.throw(
+                                    new InterpolatedString([
+                                      "Module `",
+                                      "` contains a disabledModules item that is an attribute set, presumably a module, that does not have a `key` attribute. This means that the module system doesn't have any means to identify the module that should be disabled. Make sure that you've put the correct value in disabledModules: a string path relative to modulesPath, a path value, or an attribute set with a `key` attribute.",
+                                    ], [() => (nixScope.file)]),
+                                  )),
+                                  () => (nixScope.throw(
+                                    new InterpolatedString([
+                                      "Each disabledModules item must be a path, string, or a attribute set with a key attribute, or a value supported by toString. However, one of the disabledModules items in `",
+                                      "` is none of that, but is of type ",
+                                      ".",
+                                    ], [
+                                      () => (nixScope.toString(nixScope.file)),
+                                      () => (nixScope.typeOf(nixScope.m)),
+                                    ]),
+                                  )),
+                                )),
                               )),
                             )),
-                          )),
-                        )
-                      ))
-                    ))
-                  ))
-                ));
-              },
-            });
-            Object.defineProperty(nixScope, "checkModule", {
-              enumerable: true,
-              get() {
-                return (operators.ifThenElse(
-                  operators.notEqual(nixScope.class, null),
-                  () => (createFunc(/*arg:*/ "m", null, {}, (nixScope) => (
-                    operators.ifThenElse(
-                      operators.or(
-                        operators.equal(nixScope.m["_class"], null),
-                        operators.equal(nixScope.m["_class"], nixScope.class),
-                      ),
-                      () => (nixScope.m),
-                      () => (nixScope.throw(
-                        new InterpolatedString([
-                          "\n              The module \\`",
-                          "\\` (class: ",
-                          ") cannot be imported into a module evaluation that expects class ",
-                          ".\n\n              Help:\n              - Ensure that you are importing the correct module.\n              - Verify that the module's \\`_class\\`, ",
-                          " matches the expected \\`class\\` ",
-                          ".\n              - If you are using a custom class, make sure it is correctly defined and used consistently across your modules.\n            ",
-                        ], [
-                          () => (operators.selectOrDefault(nixScope.m, [
-                            "_file",
-                          ], nixScope.m["key"])),
-                          () => (nixScope.lib["strings"]["escapeNixString"](
-                            nixScope.m["_class"],
-                          )),
-                          () => (nixScope.lib["strings"]["escapeNixString"](
-                            nixScope.class,
-                          )),
-                          () => (nixScope.lib["strings"]["escapeNixString"](
-                            nixScope.m["_class"],
-                          )),
-                          () => (nixScope.lib["strings"]["escapeNixString"](
-                            nixScope.class,
-                          )),
-                        ]),
-                      )),
-                    )
-                  ))),
-                  () => (createFunc(/*arg:*/ "m", null, {}, (nixScope) => (
-                    nixScope.m
-                  ))),
-                ));
-              },
-            });
-            Object.defineProperty(nixScope, "isDisabled", {
-              enumerable: true,
-              get() {
-                return createFunc(
-                  /*arg:*/ "modulesPath",
-                  null,
-                  {},
-                  (nixScope) => (
-                    createFunc(
-                      /*arg:*/ "disabledList",
+                          )
+                        ))
+                      )));
+                    defGetter(nixScope, "disabledKeys", (nixScope) =>
+                      nixScope.concatMap(
+                        createFunc({}, null, {}, (nixScope) => (
+                          nixScope.map(nixScope.moduleKey(nixScope.file))(
+                            nixScope.disabled,
+                          )
+                        )),
+                      )(nixScope.disabledList));
+                    return createFunc(
+                      /*arg:*/ "structuredModule",
                       null,
                       {},
                       (nixScope) => (
-                        /*let*/ createScope((nixScope) => {
-                          Object.defineProperty(nixScope, "moduleKey", {
-                            enumerable: true,
-                            get() {
-                              return createFunc(
-                                /*arg:*/ "file",
-                                null,
-                                {},
-                                (nixScope) => (
-                                  createFunc(
-                                    /*arg:*/ "m",
-                                    null,
-                                    {},
-                                    (nixScope) => (
-                                      operators.ifThenElse(
-                                        nixScope.isString(nixScope.m),
-                                        () => (operators.ifThenElse(
-                                          operators.equal(
-                                            nixScope.substring(0n)(1n)(
-                                              nixScope.m,
-                                            ),
-                                            "/",
-                                          ),
-                                          () => (nixScope.m),
-                                          () => (operators.add(
-                                            operators.add(
-                                              nixScope.toString(
-                                                nixScope.modulesPath,
-                                              ),
-                                              "/",
-                                            ),
-                                            nixScope.m,
-                                          )),
-                                        )),
-                                        () => (operators.ifThenElse(
-                                          nixScope.isConvertibleWithToString(
-                                            nixScope.m,
-                                          ),
-                                          () => (operators.ifThenElse(
-                                            operators.and(
-                                              operators.hasAttr(
-                                                nixScope.m,
-                                                "key",
-                                              ),
-                                              operators.notEqual(
-                                                nixScope.m["key"],
-                                                nixScope.toString(nixScope.m),
-                                              ),
-                                            ),
-                                            () => (nixScope.throw(
-                                              new InterpolatedString([
-                                                "Module `",
-                                                "` contains a disabledModules item that is an attribute set that can be converted to a string (",
-                                                ") but also has a `.key` attribute (",
-                                                ") with a different value. This makes it ambiguous which module should be disabled.",
-                                              ], [
-                                                () => (nixScope.file),
-                                                () => (nixScope.toString(
-                                                  nixScope.m,
-                                                )),
-                                                () => (nixScope.m["key"]),
-                                              ]),
-                                            )),
-                                            () => (nixScope.toString(
-                                              nixScope.m,
-                                            )),
-                                          )),
-                                          () => (operators.ifThenElse(
-                                            operators.hasAttr(
-                                              nixScope.m,
-                                              "key",
-                                            ),
-                                            () => (nixScope.m["key"]),
-                                            () => (operators.ifThenElse(
-                                              nixScope.isAttrs(nixScope.m),
-                                              () => (nixScope.throw(
-                                                new InterpolatedString([
-                                                  "Module `",
-                                                  "` contains a disabledModules item that is an attribute set, presumably a module, that does not have a `key` attribute. This means that the module system doesn't have any means to identify the module that should be disabled. Make sure that you've put the correct value in disabledModules: a string path relative to modulesPath, a path value, or an attribute set with a `key` attribute.",
-                                                ], [() => (nixScope.file)]),
-                                              )),
-                                              () => (nixScope.throw(
-                                                new InterpolatedString([
-                                                  "Each disabledModules item must be a path, string, or a attribute set with a key attribute, or a value supported by toString. However, one of the disabledModules items in `",
-                                                  "` is none of that, but is of type ",
-                                                  ".",
-                                                ], [
-                                                  () => (nixScope.toString(
-                                                    nixScope.file,
-                                                  )),
-                                                  () => (nixScope.typeOf(
-                                                    nixScope.m,
-                                                  )),
-                                                ]),
-                                              )),
-                                            )),
-                                          )),
-                                        )),
-                                      )
-                                    ),
-                                  )
-                                ),
-                              );
-                            },
-                          });
-                          Object.defineProperty(nixScope, "disabledKeys", {
-                            enumerable: true,
-                            get() {
-                              return nixScope.concatMap(
-                                createFunc({}, null, {}, (nixScope) => (
-                                  nixScope.map(
-                                    nixScope.moduleKey(nixScope.file),
-                                  )(nixScope.disabled)
-                                )),
-                              )(nixScope.disabledList);
-                            },
-                          });
-                          return createFunc(
-                            /*arg:*/ "structuredModule",
-                            null,
-                            {},
-                            (nixScope) => (
-                              nixScope.elem(nixScope.structuredModule["key"])(
-                                nixScope.disabledKeys,
-                              )
-                            ),
-                          );
-                        })
+                        nixScope.elem(nixScope.structuredModule["key"])(
+                          nixScope.disabledKeys,
+                        )
                       ),
-                    )
-                  ),
-                );
-              },
-            });
-            Object.defineProperty(nixScope, "collectStructuredModules", {
-              enumerable: true,
-              get() {
-                return /*let*/ createScope((nixScope) => {
-                  Object.defineProperty(nixScope, "collectResults", {
-                    enumerable: true,
-                    get() {
-                      return createFunc(
-                        /*arg:*/ "modules",
+                    );
+                  })
+                ))
+              )));
+            defGetter(nixScope, "collectStructuredModules", (nixScope) =>
+              /*let*/ createScope((nixScope) => {
+                defGetter(nixScope, "collectResults", (nixScope) =>
+                  createFunc(/*arg:*/ "modules", null, {}, (nixScope) => (
+                    {
+                      "disabled": nixScope.concatLists(
+                        nixScope.catAttrs("disabled")(nixScope.modules),
+                      ),
+                      "modules": nixScope.modules,
+                    }
+                  )));
+                return createFunc(
+                  /*arg:*/ "parentFile",
+                  null,
+                  {},
+                  (nixScope) => (
+                    createFunc(/*arg:*/ "parentKey", null, {}, (nixScope) => (
+                      createFunc(
+                        /*arg:*/ "initialModules",
                         null,
                         {},
                         (nixScope) => (
-                          {
-                            "disabled": nixScope.concatLists(
-                              nixScope.catAttrs("disabled")(nixScope.modules),
-                            ),
-                            "modules": nixScope.modules,
-                          }
-                        ),
-                      );
-                    },
-                  });
-                  return createFunc(
-                    /*arg:*/ "parentFile",
-                    null,
-                    {},
-                    (nixScope) => (
-                      createFunc(/*arg:*/ "parentKey", null, {}, (nixScope) => (
-                        createFunc(
-                          /*arg:*/ "initialModules",
-                          null,
-                          {},
-                          (nixScope) => (
-                            createFunc(
-                              /*arg:*/ "args",
-                              null,
-                              {},
-                              (nixScope) => (
-                                nixScope.collectResults(
-                                  nixScope.imap1(
+                          createFunc(/*arg:*/ "args", null, {}, (nixScope) => (
+                            nixScope.collectResults(
+                              nixScope.imap1(
+                                createFunc(
+                                  /*arg:*/ "n",
+                                  null,
+                                  {},
+                                  (nixScope) => (
                                     createFunc(
-                                      /*arg:*/ "n",
+                                      /*arg:*/ "x",
                                       null,
                                       {},
                                       (nixScope) => (
-                                        createFunc(
-                                          /*arg:*/ "x",
-                                          null,
-                                          {},
-                                          (nixScope) => (
-                                            /*let*/ createScope((nixScope) => {
-                                              Object.defineProperty(
-                                                nixScope,
-                                                "module",
-                                                {
-                                                  enumerable: true,
-                                                  get() {
-                                                    return nixScope.checkModule(
-                                                      nixScope.loadModule(
-                                                        nixScope.args,
-                                                      )(nixScope.parentFile)(
-                                                        new InterpolatedString([
-                                                          "",
-                                                          ":anon-",
-                                                          "",
-                                                        ], [
-                                                          () => (nixScope
-                                                            .parentKey),
-                                                          () => (nixScope
-                                                            .toString(
-                                                              nixScope.n,
-                                                            )),
-                                                        ]),
-                                                      )(nixScope.x),
-                                                    );
-                                                  },
-                                                },
-                                              );
-                                              Object.defineProperty(
-                                                nixScope,
-                                                "collectedImports",
-                                                {
-                                                  enumerable: true,
-                                                  get() {
-                                                    return nixScope
-                                                      .collectStructuredModules(
-                                                        nixScope
-                                                          .module["_file"],
-                                                      )(nixScope.module["key"])(
-                                                        nixScope
-                                                          .module["imports"],
-                                                      )(nixScope.args);
-                                                  },
-                                                },
-                                              );
-                                              return ({
-                                                "key": nixScope.module["key"],
-                                                "module": nixScope.module,
-                                                "modules":
+                                        /*let*/ createScope((nixScope) => {
+                                          defGetter(
+                                            nixScope,
+                                            "module",
+                                            (nixScope) =>
+                                              nixScope.checkModule(
+                                                nixScope.loadModule(
+                                                  nixScope.args,
+                                                )(nixScope.parentFile)(
+                                                  new InterpolatedString([
+                                                    "",
+                                                    ":anon-",
+                                                    "",
+                                                  ], [
+                                                    () => (nixScope.parentKey),
+                                                    () => (nixScope.toString(
+                                                      nixScope.n,
+                                                    )),
+                                                  ]),
+                                                )(nixScope.x),
+                                              ),
+                                          );
+                                          defGetter(
+                                            nixScope,
+                                            "collectedImports",
+                                            (nixScope) =>
+                                              nixScope.collectStructuredModules(
+                                                nixScope.module["_file"],
+                                              )(nixScope.module["key"])(
+                                                nixScope.module["imports"],
+                                              )(nixScope.args),
+                                          );
+                                          return ({
+                                            "key": nixScope.module["key"],
+                                            "module": nixScope.module,
+                                            "modules":
+                                              nixScope
+                                                .collectedImports["modules"],
+                                            "disabled": operators.listConcat(
+                                              operators.ifThenElse(
+                                                operators.notEqual(
                                                   nixScope
-                                                    .collectedImports[
-                                                      "modules"
-                                                    ],
-                                                "disabled": operators
-                                                  .listConcat(
-                                                    operators.ifThenElse(
-                                                      operators.notEqual(
-                                                        nixScope
-                                                          .module[
-                                                            "disabledModules"
-                                                          ],
-                                                        [],
-                                                      ),
-                                                      () => [
-                                                        {
-                                                          "file":
-                                                            nixScope
-                                                              .module["_file"],
-                                                          "disabled":
-                                                            nixScope
-                                                              .module[
-                                                                "disabledModules"
-                                                              ],
-                                                        },
-                                                      ],
-                                                      () => [],
-                                                    ),
-                                                    nixScope
-                                                      .collectedImports[
-                                                        "disabled"
-                                                      ],
-                                                  ),
-                                              });
-                                            })
-                                          ),
-                                        )
+                                                    .module["disabledModules"],
+                                                  [],
+                                                ),
+                                                () => [
+                                                  {
+                                                    "file":
+                                                      nixScope.module["_file"],
+                                                    "disabled":
+                                                      nixScope
+                                                        .module[
+                                                          "disabledModules"
+                                                        ],
+                                                  },
+                                                ],
+                                                () => [],
+                                              ),
+                                              nixScope
+                                                .collectedImports["disabled"],
+                                            ),
+                                          });
+                                        })
                                       ),
-                                    ),
-                                  )(nixScope.initialModules),
-                                )
-                              ),
-                            )
-                          ),
-                        )
-                      ))
-                    ),
-                  );
-                });
-              },
-            });
-            Object.defineProperty(nixScope, "filterModules", {
-              enumerable: true,
-              get() {
-                return createFunc(
-                  /*arg:*/ "modulesPath",
-                  null,
-                  {},
-                  (nixScope) => (
-                    createFunc({}, null, {}, (nixScope) => (
-                      /*let*/ createScope((nixScope) => {
-                        Object.defineProperty(nixScope, "keyFilter", {
-                          enumerable: true,
-                          get() {
-                            return nixScope.filter(
-                              createFunc(
-                                /*arg:*/ "attrs",
-                                null,
-                                {},
-                                (nixScope) => (
-                                  operators.negate(
-                                    nixScope.isDisabled(nixScope.modulesPath)(
-                                      nixScope.disabled,
-                                    )(nixScope.attrs),
-                                  )
+                                    )
+                                  ),
                                 ),
-                              ),
-                            );
-                          },
-                        });
-                        return nixScope.map(
-                          createFunc(/*arg:*/ "attrs", null, {}, (nixScope) => (
-                            nixScope.attrs["module"]
-                          )),
-                        )(nixScope.genericClosure(
-                          {
-                            "startSet": nixScope.keyFilter(nixScope.modules),
-                            "operator": createFunc(
-                              /*arg:*/ "attrs",
-                              null,
-                              {},
-                              (nixScope) => (
-                                nixScope.keyFilter(nixScope.attrs["modules"])
-                              ),
-                            ),
-                          },
-                        ));
-                      })
+                              )(nixScope.initialModules),
+                            )
+                          ))
+                        ),
+                      )
                     ))
                   ),
                 );
-              },
-            });
-            Object.defineProperty(nixScope, "toGraph", {
-              enumerable: true,
-              get() {
-                return createFunc(
-                  /*arg:*/ "modulesPath",
-                  null,
-                  {},
-                  (nixScope) => (
-                    createFunc({}, null, {}, (nixScope) => (
-                      /*let*/ createScope((nixScope) => {
-                        Object.defineProperty(nixScope, "isDisabledModule", {
-                          enumerable: true,
-                          get() {
-                            return nixScope.isDisabled(nixScope.modulesPath)(
+              }));
+            defGetter(nixScope, "filterModules", (nixScope) =>
+              createFunc(/*arg:*/ "modulesPath", null, {}, (nixScope) => (
+                createFunc({}, null, {}, (nixScope) => (
+                  /*let*/ createScope((nixScope) => {
+                    defGetter(nixScope, "keyFilter", (nixScope) =>
+                      nixScope.filter(
+                        createFunc(/*arg:*/ "attrs", null, {}, (nixScope) => (
+                          operators.negate(
+                            nixScope.isDisabled(nixScope.modulesPath)(
                               nixScope.disabled,
+                            )(nixScope.attrs),
+                          )
+                        )),
+                      ));
+                    return nixScope.map(
+                      createFunc(/*arg:*/ "attrs", null, {}, (nixScope) => (
+                        nixScope.attrs["module"]
+                      )),
+                    )(nixScope.genericClosure(
+                      {
+                        "startSet": nixScope.keyFilter(nixScope.modules),
+                        "operator": createFunc(
+                          /*arg:*/ "attrs",
+                          null,
+                          {},
+                          (nixScope) => (
+                            nixScope.keyFilter(nixScope.attrs["modules"])
+                          ),
+                        ),
+                      },
+                    ));
+                  })
+                ))
+              )));
+            defGetter(nixScope, "toGraph", (nixScope) =>
+              createFunc(/*arg:*/ "modulesPath", null, {}, (nixScope) => (
+                createFunc({}, null, {}, (nixScope) => (
+                  /*let*/ createScope((nixScope) => {
+                    defGetter(nixScope, "isDisabledModule", (nixScope) =>
+                      nixScope.isDisabled(nixScope.modulesPath)(
+                        nixScope.disabled,
+                      ));
+                    defGetter(nixScope, "toModuleGraph", (nixScope) =>
+                      createFunc(
+                        /*arg:*/ "structuredModule",
+                        null,
+                        {},
+                        (nixScope) => (
+                          createScope((nixScope) => {
+                            const obj = {};
+                            obj.disabled = nixScope.isDisabledModule(
+                              nixScope.structuredModule,
                             );
-                          },
-                        });
-                        Object.defineProperty(nixScope, "toModuleGraph", {
-                          enumerable: true,
-                          get() {
-                            return createFunc(
-                              /*arg:*/ "structuredModule",
-                              null,
-                              {},
-                              (nixScope) => (
-                                createScope((nixScope) => {
-                                  const obj = {};
-                                  obj["disabled"] = nixScope.isDisabledModule(
-                                    nixScope.structuredModule,
-                                  );
-                                  obj["key"] = nixScope.structuredModule["key"];
-                                  obj["file"] =
-                                    nixScope
-                                      .structuredModule["module"]["_file"];
-                                  obj["imports"] = nixScope.map(
-                                    nixScope.toModuleGraph,
-                                  )(nixScope.structuredModule["modules"]);
-                                  return obj;
-                                })
-                              ),
+                            obj.key = nixScope.structuredModule.key;
+                            obj.file =
+                              nixScope.structuredModule["module"]["_file"];
+                            obj.imports = nixScope.map(nixScope.toModuleGraph)(
+                              nixScope.structuredModule["modules"],
                             );
-                          },
-                        });
-                        return nixScope.map(nixScope.toModuleGraph)(
-                          nixScope.filter(
-                            createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
-                              operators.notEqual(
-                                nixScope.x["key"],
-                                "lib/modules.nix",
-                              )
-                            )),
-                          )(nixScope.modules),
-                        );
-                      })
-                    ))
-                  ),
-                );
-              },
-            });
+                            return obj;
+                          })
+                        ),
+                      ));
+                    return nixScope.map(nixScope.toModuleGraph)(
+                      nixScope.filter(
+                        createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+                          operators.notEqual(
+                            nixScope.x["key"],
+                            "lib/modules.nix",
+                          )
+                        )),
+                      )(nixScope.modules),
+                    );
+                  })
+                ))
+              )));
             return createFunc(/*arg:*/ "modulesPath", null, {}, (nixScope) => (
               createFunc(/*arg:*/ "initialModules", null, {}, (nixScope) => (
                 createFunc(/*arg:*/ "args", null, {}, (nixScope) => (
@@ -1158,96 +935,74 @@ export default createFunc({}, null, {}, (nixScope) => (
               ))
             ));
           })
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "setDefaultModuleLocation", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "file", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "setDefaultModuleLocation",
+      (nixScope) =>
+        createFunc(/*arg:*/ "file", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "m", null, {}, (nixScope) => (
             { "_file": nixScope.file, "imports": [nixScope.m] }
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "unifyModuleSyntax", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "file", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "unifyModuleSyntax",
+      (nixScope) =>
+        createFunc(/*arg:*/ "file", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "key", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "m", null, {}, (nixScope) => (
               /*let*/ createScope((nixScope) => {
-                Object.defineProperty(nixScope, "addMeta", {
-                  enumerable: true,
-                  get() {
-                    return createFunc(
-                      /*arg:*/ "config",
-                      null,
-                      {},
-                      (nixScope) => (
-                        operators.ifThenElse(
-                          operators.hasAttr(nixScope.m, "meta"),
-                          () => (nixScope.mkMerge([
-                            nixScope.config,
-                            { "meta": nixScope.m["meta"] },
-                          ])),
-                          () => (nixScope.config),
-                        )
-                      ),
-                    );
-                  },
-                });
-                Object.defineProperty(nixScope, "addFreeformType", {
-                  enumerable: true,
-                  get() {
-                    return createFunc(
-                      /*arg:*/ "config",
-                      null,
-                      {},
-                      (nixScope) => (
-                        operators.ifThenElse(
-                          operators.hasAttr(nixScope.m, "freeformType"),
-                          () => (nixScope.mkMerge([
-                            nixScope.config,
-                            createScope((nixScope) => {
-                              const obj = {};
-                              if (obj["_module"] === undefined) {
-                                obj["_module"] = {};
-                              }
-                              obj["_module"]["freeformType"] =
-                                nixScope.m["freeformType"];
-                              return obj;
-                            }),
-                          ])),
-                          () => (nixScope.config),
-                        )
-                      ),
-                    );
-                  },
-                });
+                defGetter(nixScope, "addMeta", (nixScope) =>
+                  createFunc(/*arg:*/ "config", null, {}, (nixScope) => (
+                    operators.ifThenElse(
+                      operators.hasAttr(nixScope.m, "meta"),
+                      () => (nixScope.mkMerge([
+                        nixScope.config,
+                        { "meta": nixScope.m["meta"] },
+                      ])),
+                      () => (nixScope.config),
+                    )
+                  )));
+                defGetter(nixScope, "addFreeformType", (nixScope) =>
+                  createFunc(/*arg:*/ "config", null, {}, (nixScope) => (
+                    operators.ifThenElse(
+                      operators.hasAttr(nixScope.m, "freeformType"),
+                      () => (nixScope.mkMerge([
+                        nixScope.config,
+                        createScope((nixScope) => {
+                          const obj = {};
+                          if (obj["_module"] === undefined) {
+                            obj["_module"] = {};
+                          }
+                          obj["_module"]["freeformType"] =
+                            nixScope.m["freeformType"];
+                          return obj;
+                        }),
+                      ])),
+                      () => (nixScope.config),
+                    )
+                  )));
                 return (operators.ifThenElse(
                   operators.or(
                     operators.hasAttr(nixScope.m, "config"),
                     operators.hasAttr(nixScope.m, "options"),
                   ),
                   () => (/*let*/ createScope((nixScope) => {
-                    Object.defineProperty(nixScope, "badAttrs", {
-                      enumerable: true,
-                      get() {
-                        return nixScope.removeAttrs(nixScope.m)([
-                          "_class",
-                          "_file",
-                          "key",
-                          "disabledModules",
-                          "imports",
-                          "options",
-                          "config",
-                          "meta",
-                          "freeformType",
-                        ]);
-                      },
-                    });
+                    defGetter(nixScope, "badAttrs", (nixScope) =>
+                      nixScope.removeAttrs(nixScope.m)([
+                        "_class",
+                        "_file",
+                        "key",
+                        "disabledModules",
+                        "imports",
+                        "options",
+                        "config",
+                        "meta",
+                        "freeformType",
+                      ]));
                     return (operators.ifThenElse(
                       operators.notEqual(nixScope.badAttrs, {}),
                       () => (nixScope.throw(
@@ -1357,13 +1112,13 @@ export default createFunc({}, null, {}, (nixScope) => (
               })
             ))
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "applyModuleArgsIfFunction", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "key", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "applyModuleArgsIfFunction",
+      (nixScope) =>
+        createFunc(/*arg:*/ "key", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "args", null, {}, (nixScope) => (
               operators.ifThenElse(
@@ -1375,66 +1130,56 @@ export default createFunc({}, null, {}, (nixScope) => (
               )
             ))
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "applyModuleArgs", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "key", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "applyModuleArgs",
+      (nixScope) =>
+        createFunc(/*arg:*/ "key", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "args", null, {}, (nixScope) => (
               /*let*/ createScope((nixScope) => {
-                Object.defineProperty(nixScope, "context", {
-                  enumerable: true,
-                  get() {
-                    return createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
-                      new InterpolatedString([
-                        "while evaluating the module argument \\`",
-                        "' in \"",
-                        '":',
-                      ], [() => (nixScope.name), () => (nixScope.key)])
-                    ));
-                  },
-                });
-                Object.defineProperty(nixScope, "extraArgs", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.mapAttrs(
-                      createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
-                        createFunc(/*arg:*/ "_", null, {}, (nixScope) => (
+                defGetter(nixScope, "context", (nixScope) =>
+                  createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
+                    new InterpolatedString([
+                      "while evaluating the module argument \\`",
+                      "' in \"",
+                      '":',
+                    ], [() => (nixScope.name), () => (nixScope.key)])
+                  )));
+                defGetter(nixScope, "extraArgs", (nixScope) =>
+                  nixScope.mapAttrs(
+                    createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
+                      createFunc(/*arg:*/ "_", null, {}, (nixScope) => (
+                        nixScope.addErrorContext(
+                          nixScope.context(nixScope.name),
+                        )(operators.selectOrDefault(
+                          nixScope.args,
+                          [nixScope.name],
                           nixScope.addErrorContext(
-                            nixScope.context(nixScope.name),
-                          )(operators.selectOrDefault(
-                            nixScope.args,
-                            [nixScope.name],
-                            nixScope.addErrorContext(
-                              new InterpolatedString([
-                                "noting that argument `",
-                                "` is not externally provided, so querying `_module.args` instead, requiring `config`",
-                              ], [() => (nixScope.name)]),
-                            )(
-                              nixScope.config["_module"]["args"][nixScope.name],
-                            ),
-                          ))
+                            new InterpolatedString([
+                              "noting that argument `",
+                              "` is not externally provided, so querying `_module.args` instead, requiring `config`",
+                            ], [() => (nixScope.name)]),
+                          )(nixScope.config["_module"]["args"][nixScope.name]),
                         ))
-                      )),
-                    )(nixScope.functionArgs(nixScope.f));
-                  },
-                });
+                      ))
+                    )),
+                  )(nixScope.functionArgs(nixScope.f)));
                 return nixScope.f(
                   operators.merge(nixScope.args, nixScope.extraArgs),
                 );
               })
             ))
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "mergeModules", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "prefix", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "mergeModules",
+      (nixScope) =>
+        createFunc(/*arg:*/ "prefix", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "modules", null, {}, (nixScope) => (
             nixScope["mergeModules'"](nixScope.prefix)(nixScope.modules)(
               nixScope.concatMap(
@@ -1448,451 +1193,366 @@ export default createFunc({}, null, {}, (nixScope) => (
               )(nixScope.modules),
             )
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "mergeModules'", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "prefix", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "mergeModules'",
+      (nixScope) =>
+        createFunc(/*arg:*/ "prefix", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "modules", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "configs", null, {}, (nixScope) => (
               /*let*/ createScope((nixScope) => {
-                Object.defineProperty(nixScope, "declsByName", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.zipAttrsWith(
-                      createFunc(/*arg:*/ "n", null, {}, (nixScope) => (
-                        createFunc(/*arg:*/ "v", null, {}, (nixScope) => (
-                          nixScope.v
-                        ))
-                      )),
-                    )(
-                      nixScope.map(
-                        createFunc(/*arg:*/ "module", null, {}, (nixScope) => (
-                          /*let*/ createScope((nixScope) => {
-                            Object.defineProperty(nixScope, "subtree", {
-                              enumerable: true,
-                              get() {
-                                return nixScope.module["options"];
-                              },
-                            });
-                            return (operators.ifThenElse(
-                              operators.negate(
-                                nixScope.isAttrs(nixScope.subtree),
-                              ),
-                              () => (nixScope.throw(
-                                new InterpolatedString([
-                                  "\n              An option declaration for \\`",
-                                  "' has type\n              \\`",
-                                  "' rather than an attribute set.\n              Did you mean to define this outside of \\`options'?\n            ",
-                                ], [
-                                  () => (nixScope.concatStringsSep(".")(
-                                    nixScope.prefix,
-                                  )),
-                                  () => (nixScope.typeOf(nixScope.subtree)),
-                                ]),
-                              )),
-                              () => (nixScope.mapAttrs(
+                defGetter(nixScope, "declsByName", (nixScope) =>
+                  nixScope.zipAttrsWith(
+                    createFunc(/*arg:*/ "n", null, {}, (nixScope) => (
+                      createFunc(/*arg:*/ "v", null, {}, (nixScope) => (
+                        nixScope.v
+                      ))
+                    )),
+                  )(
+                    nixScope.map(
+                      createFunc(/*arg:*/ "module", null, {}, (nixScope) => (
+                        /*let*/ createScope((nixScope) => {
+                          defGetter(nixScope, "subtree", (nixScope) =>
+                            nixScope.module["options"]);
+                          return (operators.ifThenElse(
+                            operators.negate(
+                              nixScope.isAttrs(nixScope.subtree),
+                            ),
+                            () => (nixScope.throw(
+                              new InterpolatedString([
+                                "\n              An option declaration for \\`",
+                                "' has type\n              \\`",
+                                "' rather than an attribute set.\n              Did you mean to define this outside of \\`options'?\n            ",
+                              ], [
+                                () => (nixScope.concatStringsSep(".")(
+                                  nixScope.prefix,
+                                )),
+                                () => (nixScope.typeOf(nixScope.subtree)),
+                              ]),
+                            )),
+                            () => (nixScope.mapAttrs(
+                              createFunc(/*arg:*/ "n", null, {}, (nixScope) => (
                                 createFunc(
-                                  /*arg:*/ "n",
+                                  /*arg:*/ "option",
                                   null,
                                   {},
                                   (nixScope) => (
-                                    createFunc(
-                                      /*arg:*/ "option",
-                                      null,
-                                      {},
-                                      (nixScope) => (
-                                        createScope((nixScope) => {
-                                          const obj = {};
-                                          obj["_file"] =
-                                            nixScope.module["_file"];
-                                          obj["pos"] = nixScope
-                                            .unsafeGetAttrPos(nixScope.n)(
-                                              nixScope.subtree,
-                                            );
-                                          obj["options"] = nixScope.option;
-                                          return obj;
-                                        })
-                                      ),
-                                    )
+                                    createScope((nixScope) => {
+                                      const obj = {};
+                                      obj._file = nixScope.module._file;
+                                      obj.pos = nixScope.unsafeGetAttrPos(
+                                        nixScope.n,
+                                      )(nixScope.subtree);
+                                      obj.options = nixScope.option;
+                                      return obj;
+                                    })
                                   ),
-                                ),
-                              )(nixScope.subtree)),
-                            ));
-                          })
-                        )),
-                      )(nixScope.modules),
-                    );
-                  },
-                });
-                Object.defineProperty(nixScope, "checkedConfigs", {
-                  enumerable: true,
-                  get() {
-                    return ((_cond) => {
-                      if (!_cond) {
-                        throw new Error(
-                          "assertion failed: " +
-                            "all (\n          c:\n          # TODO: I have my doubts that this error would occur when option definitions are not matched.\n          #       The implementation of this check used to be tied to a superficially similar check for\n          #       options, so maybe that's why this is here.\n          isAttrs c.config\n          || throw ''\n            In module `${c.file}', you're trying to define a value of type `${typeOf c.config}'\n            rather than an attribute set for the option\n            `${concatStringsSep \".\" prefix}'!\n\n            This usually happens if `${concatStringsSep \".\" prefix}' has option\n            definitions inside that are not matched. Please check how to properly define\n            this option by e.g. referring to `man 5 configuration.nix'!\n          ''\n        ) configs",
-                        );
-                      }
-                      return nixScope.configs;
-                    })(
-                      nixScope.all(
-                        createFunc(/*arg:*/ "c", null, {}, (nixScope) => (
-                          operators.or(
-                            nixScope.isAttrs(nixScope.c["config"]),
-                            nixScope.throw(
-                              new InterpolatedString([
-                                "\n            In module \\`",
-                                "', you're trying to define a value of type \\`",
-                                "'\n            rather than an attribute set for the option\n            \\`",
-                                "'!\n\n            This usually happens if \\`",
-                                "' has option\n            definitions inside that are not matched. Please check how to properly define\n            this option by e.g. referring to \\`man 5 configuration.nix'!\n          ",
-                              ], [
-                                () => (nixScope.c["file"]),
-                                () => (nixScope.typeOf(nixScope.c["config"])),
-                                () => (nixScope.concatStringsSep(".")(
-                                  nixScope.prefix,
-                                )),
-                                () => (nixScope.concatStringsSep(".")(
-                                  nixScope.prefix,
-                                )),
-                              ]),
-                            ),
-                          )
-                        )),
-                      )(nixScope.configs),
-                    );
-                  },
-                });
-                Object.defineProperty(nixScope, "pushedDownDefinitionsByName", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.zipAttrsWith(
-                      createFunc(/*arg:*/ "n", null, {}, (nixScope) => (
-                        nixScope.concatLists
+                                )
+                              )),
+                            )(nixScope.subtree)),
+                          ));
+                        })
                       )),
-                    )(
-                      nixScope.map(
-                        createFunc(/*arg:*/ "module", null, {}, (nixScope) => (
-                          nixScope.mapAttrs(
-                            createFunc(/*arg:*/ "n", null, {}, (nixScope) => (
-                              createFunc(
-                                /*arg:*/ "value",
-                                null,
-                                {},
-                                (nixScope) => (
-                                  nixScope.map(
-                                    createFunc(
-                                      /*arg:*/ "config",
-                                      null,
-                                      {},
-                                      (nixScope) => (
-                                        createScope((nixScope) => {
-                                          const obj = {};
-                                          obj["file"] = nixScope.module["file"];
-                                          obj["config"] = nixScope.config;
-                                          return obj;
-                                        })
-                                      ),
-                                    ),
-                                  )(nixScope.pushDownProperties(nixScope.value))
-                                ),
-                              )
-                            )),
-                          )(nixScope.module["config"])
-                        )),
-                      )(nixScope.checkedConfigs),
-                    );
-                  },
-                });
-                Object.defineProperty(nixScope, "rawDefinitionsByName", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.zipAttrsWith(
-                      createFunc(/*arg:*/ "n", null, {}, (nixScope) => (
-                        createFunc(/*arg:*/ "v", null, {}, (nixScope) => (
-                          nixScope.v
-                        ))
-                      )),
-                    )(
-                      nixScope.map(
-                        createFunc(/*arg:*/ "module", null, {}, (nixScope) => (
-                          nixScope.mapAttrs(
-                            createFunc(/*arg:*/ "n", null, {}, (nixScope) => (
-                              createFunc(
-                                /*arg:*/ "value",
-                                null,
-                                {},
-                                (nixScope) => (
-                                  createScope((nixScope) => {
-                                    const obj = {};
-                                    obj["file"] = nixScope.module["file"];
-                                    obj["value"] = nixScope.value;
-                                    return obj;
-                                  })
-                                ),
-                              )
-                            )),
-                          )(nixScope.module["config"])
-                        )),
-                      )(nixScope.checkedConfigs),
-                    );
-                  },
-                });
-                Object.defineProperty(nixScope, "optionTreeToOption", {
-                  enumerable: true,
-                  get() {
-                    return createFunc(/*arg:*/ "decl", null, {}, (nixScope) => (
-                      operators.ifThenElse(
-                        nixScope.isOption(nixScope.decl["options"]),
-                        () => (nixScope.decl),
-                        () => (operators.merge(nixScope.decl, {
-                          "options": nixScope.mkOption(
-                            {
-                              "type": nixScope.types["submoduleWith"](
-                                {
-                                  "modules": [
-                                    { "options": nixScope.decl["options"] },
-                                  ],
-                                  "shorthandOnlyDefinesConfig": null,
-                                },
-                              ),
-                            },
+                    )(nixScope.modules),
+                  ));
+                defGetter(nixScope, "checkedConfigs", (nixScope) =>
+                  ((_cond) => {
+                    if (!_cond) {
+                      throw new Error(
+                        "assertion failed: " +
+                          "all (\n          c:\n          # TODO: I have my doubts that this error would occur when option definitions are not matched.\n          #       The implementation of this check used to be tied to a superficially similar check for\n          #       options, so maybe that's why this is here.\n          isAttrs c.config\n          || throw ''\n            In module `${c.file}', you're trying to define a value of type `${typeOf c.config}'\n            rather than an attribute set for the option\n            `${concatStringsSep \".\" prefix}'!\n\n            This usually happens if `${concatStringsSep \".\" prefix}' has option\n            definitions inside that are not matched. Please check how to properly define\n            this option by e.g. referring to `man 5 configuration.nix'!\n          ''\n        ) configs",
+                      );
+                    }
+                    return nixScope.configs;
+                  })(
+                    nixScope.all(
+                      createFunc(/*arg:*/ "c", null, {}, (nixScope) => (
+                        operators.or(
+                          nixScope.isAttrs(nixScope.c["config"]),
+                          nixScope.throw(
+                            new InterpolatedString([
+                              "\n            In module \\`",
+                              "', you're trying to define a value of type \\`",
+                              "'\n            rather than an attribute set for the option\n            \\`",
+                              "'!\n\n            This usually happens if \\`",
+                              "' has option\n            definitions inside that are not matched. Please check how to properly define\n            this option by e.g. referring to \\`man 5 configuration.nix'!\n          ",
+                            ], [
+                              () => (nixScope.c["file"]),
+                              () => (nixScope.typeOf(nixScope.c["config"])),
+                              () => (nixScope.concatStringsSep(".")(
+                                nixScope.prefix,
+                              )),
+                              () => (nixScope.concatStringsSep(".")(
+                                nixScope.prefix,
+                              )),
+                            ]),
                           ),
-                        })),
-                      )
-                    ));
-                  },
-                });
-                Object.defineProperty(nixScope, "resultsByName", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.mapAttrs(
-                      createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
-                        createFunc(/*arg:*/ "decls", null, {}, (nixScope) => (
-                          /*let*/ createScope((nixScope) => {
-                            Object.defineProperty(nixScope, "loc", {
-                              enumerable: true,
-                              get() {
-                                return operators.listConcat(nixScope.prefix, [
-                                  nixScope.name,
-                                ]);
-                              },
-                            });
-                            Object.defineProperty(nixScope, "defns", {
-                              enumerable: true,
-                              get() {
-                                return operators.selectOrDefault(
-                                  nixScope.pushedDownDefinitionsByName,
-                                  [nixScope.name],
-                                  [],
-                                );
-                              },
-                            });
-                            Object.defineProperty(nixScope, "defns'", {
-                              enumerable: true,
-                              get() {
-                                return operators.selectOrDefault(
-                                  nixScope.rawDefinitionsByName,
-                                  [nixScope.name],
-                                  [],
-                                );
-                              },
-                            });
-                            Object.defineProperty(nixScope, "optionDecls", {
-                              enumerable: true,
-                              get() {
-                                return nixScope.filter(
+                        )
+                      )),
+                    )(nixScope.configs),
+                  ));
+                defGetter(nixScope, "pushedDownDefinitionsByName", (nixScope) =>
+                  nixScope.zipAttrsWith(
+                    createFunc(/*arg:*/ "n", null, {}, (nixScope) => (
+                      nixScope.concatLists
+                    )),
+                  )(
+                    nixScope.map(
+                      createFunc(/*arg:*/ "module", null, {}, (nixScope) => (
+                        nixScope.mapAttrs(
+                          createFunc(/*arg:*/ "n", null, {}, (nixScope) => (
+                            createFunc(
+                              /*arg:*/ "value",
+                              null,
+                              {},
+                              (nixScope) => (
+                                nixScope.map(
                                   createFunc(
-                                    /*arg:*/ "m",
+                                    /*arg:*/ "config",
                                     null,
                                     {},
                                     (nixScope) => (
-                                      operators.and(
-                                        operators.hasAttr(
-                                          nixScope.m["options"],
-                                          "_type",
-                                        ),
-                                        operators.or(
-                                          operators.equal(
-                                            nixScope.m["options"]["_type"],
-                                            "option",
-                                          ),
-                                          nixScope.throwDeclarationTypeError(
-                                            nixScope.loc,
-                                          )(nixScope.m["options"]["_type"])(
-                                            nixScope.m["_file"],
-                                          ),
-                                        ),
+                                      createScope((nixScope) => {
+                                        const obj = {};
+                                        obj.file = nixScope.module.file;
+                                        obj.config = nixScope.config;
+                                        return obj;
+                                      })
+                                    ),
+                                  ),
+                                )(nixScope.pushDownProperties(nixScope.value))
+                              ),
+                            )
+                          )),
+                        )(nixScope.module["config"])
+                      )),
+                    )(nixScope.checkedConfigs),
+                  ));
+                defGetter(nixScope, "rawDefinitionsByName", (nixScope) =>
+                  nixScope.zipAttrsWith(
+                    createFunc(/*arg:*/ "n", null, {}, (nixScope) => (
+                      createFunc(/*arg:*/ "v", null, {}, (nixScope) => (
+                        nixScope.v
+                      ))
+                    )),
+                  )(
+                    nixScope.map(
+                      createFunc(/*arg:*/ "module", null, {}, (nixScope) => (
+                        nixScope.mapAttrs(
+                          createFunc(/*arg:*/ "n", null, {}, (nixScope) => (
+                            createFunc(
+                              /*arg:*/ "value",
+                              null,
+                              {},
+                              (nixScope) => (
+                                createScope((nixScope) => {
+                                  const obj = {};
+                                  obj.file = nixScope.module.file;
+                                  obj.value = nixScope.value;
+                                  return obj;
+                                })
+                              ),
+                            )
+                          )),
+                        )(nixScope.module["config"])
+                      )),
+                    )(nixScope.checkedConfigs),
+                  ));
+                defGetter(nixScope, "optionTreeToOption", (nixScope) =>
+                  createFunc(/*arg:*/ "decl", null, {}, (nixScope) => (
+                    operators.ifThenElse(
+                      nixScope.isOption(nixScope.decl["options"]),
+                      () => (nixScope.decl),
+                      () => (operators.merge(nixScope.decl, {
+                        "options": nixScope.mkOption(
+                          {
+                            "type": nixScope.types["submoduleWith"](
+                              {
+                                "modules": [
+                                  { "options": nixScope.decl["options"] },
+                                ],
+                                "shorthandOnlyDefinesConfig": null,
+                              },
+                            ),
+                          },
+                        ),
+                      })),
+                    )
+                  )));
+                defGetter(nixScope, "resultsByName", (nixScope) =>
+                  nixScope.mapAttrs(
+                    createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
+                      createFunc(/*arg:*/ "decls", null, {}, (nixScope) => (
+                        /*let*/ createScope((nixScope) => {
+                          defGetter(nixScope, "loc", (nixScope) =>
+                            operators.listConcat(nixScope.prefix, [
+                              nixScope.name,
+                            ]));
+                          defGetter(nixScope, "defns", (nixScope) =>
+                            operators.selectOrDefault(
+                              nixScope.pushedDownDefinitionsByName,
+                              [nixScope.name],
+                              [],
+                            ));
+                          defGetter(nixScope, "defns'", (nixScope) =>
+                            operators.selectOrDefault(
+                              nixScope.rawDefinitionsByName,
+                              [nixScope.name],
+                              [],
+                            ));
+                          defGetter(nixScope, "optionDecls", (nixScope) =>
+                            nixScope.filter(
+                              createFunc(/*arg:*/ "m", null, {}, (nixScope) => (
+                                operators.and(
+                                  operators.hasAttr(
+                                    nixScope.m["options"],
+                                    "_type",
+                                  ),
+                                  operators.or(
+                                    operators.equal(
+                                      nixScope.m["options"]["_type"],
+                                      "option",
+                                    ),
+                                    nixScope.throwDeclarationTypeError(
+                                      nixScope.loc,
+                                    )(nixScope.m["options"]["_type"])(
+                                      nixScope.m["_file"],
+                                    ),
+                                  ),
+                                )
+                              )),
+                            )(nixScope.decls));
+                          return (operators.ifThenElse(
+                            operators.equal(
+                              nixScope.length(nixScope.optionDecls),
+                              nixScope.length(nixScope.decls),
+                            ),
+                            () => (/*let*/ createScope((nixScope) => {
+                              defGetter(nixScope, "opt", (nixScope) =>
+                                nixScope.fixupOptionType(nixScope.loc)(
+                                  nixScope.mergeOptionDecls(nixScope.loc)(
+                                    nixScope.decls,
+                                  ),
+                                ));
+                              return ({
+                                "matchedOptions": nixScope.evalOptionValue(
+                                  nixScope.loc,
+                                )(nixScope.opt)(nixScope["defns'"]),
+                                "unmatchedDefns": [],
+                              });
+                            })),
+                            () => (operators.ifThenElse(
+                              operators.notEqual(nixScope.optionDecls, []),
+                              () => (operators.ifThenElse(
+                                nixScope.all(
+                                  createFunc(
+                                    /*arg:*/ "x",
+                                    null,
+                                    {},
+                                    (nixScope) => (
+                                      operators.equal(
+                                        operators.selectOrDefault(nixScope.x, [
+                                          "options",
+                                          "type",
+                                          "name",
+                                        ], null),
+                                        "submodule",
                                       )
                                     ),
                                   ),
-                                )(nixScope.decls);
-                              },
-                            });
-                            return (operators.ifThenElse(
-                              operators.equal(
-                                nixScope.length(nixScope.optionDecls),
-                                nixScope.length(nixScope.decls),
-                              ),
-                              () => (/*let*/ createScope((nixScope) => {
-                                Object.defineProperty(nixScope, "opt", {
-                                  enumerable: true,
-                                  get() {
-                                    return nixScope.fixupOptionType(
-                                      nixScope.loc,
-                                    )(
+                                )(nixScope.optionDecls),
+                                () => (/*let*/ createScope((nixScope) => {
+                                  defGetter(nixScope, "opt", (nixScope) =>
+                                    nixScope.fixupOptionType(nixScope.loc)(
                                       nixScope.mergeOptionDecls(nixScope.loc)(
-                                        nixScope.decls,
+                                        nixScope.map(
+                                          nixScope.optionTreeToOption,
+                                        )(nixScope.decls),
                                       ),
-                                    );
-                                  },
-                                });
-                                return ({
-                                  "matchedOptions": nixScope.evalOptionValue(
-                                    nixScope.loc,
-                                  )(nixScope.opt)(nixScope["defns'"]),
-                                  "unmatchedDefns": [],
-                                });
-                              })),
-                              () => (operators.ifThenElse(
-                                operators.notEqual(nixScope.optionDecls, []),
-                                () => (operators.ifThenElse(
-                                  nixScope.all(
-                                    createFunc(
-                                      /*arg:*/ "x",
-                                      null,
-                                      {},
-                                      (nixScope) => (
-                                        operators.equal(
-                                          operators.selectOrDefault(
-                                            nixScope.x,
-                                            ["options", "type", "name"],
-                                            null,
-                                          ),
-                                          "submodule",
-                                        )
-                                      ),
-                                    ),
-                                  )(nixScope.optionDecls),
-                                  () => (/*let*/ createScope((nixScope) => {
-                                    Object.defineProperty(nixScope, "opt", {
-                                      enumerable: true,
-                                      get() {
-                                        return nixScope.fixupOptionType(
-                                          nixScope.loc,
-                                        )(
-                                          nixScope.mergeOptionDecls(
-                                            nixScope.loc,
-                                          )(
-                                            nixScope.map(
-                                              nixScope.optionTreeToOption,
-                                            )(nixScope.decls),
-                                          ),
-                                        );
-                                      },
-                                    });
-                                    return ({
-                                      "matchedOptions": nixScope
-                                        .evalOptionValue(nixScope.loc)(
-                                          nixScope.opt,
-                                        )(nixScope["defns'"]),
-                                      "unmatchedDefns": [],
-                                    });
-                                  })),
-                                  () => (/*let*/ createScope((nixScope) => {
-                                    Object.defineProperty(
-                                      nixScope,
-                                      "nonOptions",
-                                      {
-                                        enumerable: true,
-                                        get() {
-                                          return nixScope.filter(
-                                            createFunc(
-                                              /*arg:*/ "m",
-                                              null,
-                                              {},
-                                              (nixScope) => (
-                                                operators.negate(
-                                                  nixScope.isOption(
-                                                    nixScope.m["options"],
-                                                  ),
-                                                )
+                                    ));
+                                  return ({
+                                    "matchedOptions": nixScope.evalOptionValue(
+                                      nixScope.loc,
+                                    )(nixScope.opt)(nixScope["defns'"]),
+                                    "unmatchedDefns": [],
+                                  });
+                                })),
+                                () => (/*let*/ createScope((nixScope) => {
+                                  defGetter(
+                                    nixScope,
+                                    "nonOptions",
+                                    (nixScope) =>
+                                      nixScope.filter(
+                                        createFunc(
+                                          /*arg:*/ "m",
+                                          null,
+                                          {},
+                                          (nixScope) => (
+                                            operators.negate(
+                                              nixScope.isOption(
+                                                nixScope.m["options"],
                                               ),
-                                            ),
-                                          )(nixScope.decls);
-                                        },
-                                      },
-                                    );
-                                    return nixScope.throw(
-                                      new InterpolatedString([
-                                        "The option `",
-                                        "' in module `",
-                                        "' would be a parent of the following options, but its type `",
-                                        "' does not support nested options.",
-                                        "",
-                                      ], [
-                                        () => (nixScope.showOption(
-                                          nixScope.loc,
-                                        )),
-                                        () => ((nixScope.head(
-                                          nixScope.optionDecls,
-                                        ))["_file"]),
-                                        () => (operators.selectOrDefault(
-                                          nixScope.head(nixScope.optionDecls),
-                                          ["options", "type", "description"],
-                                          "<no description>",
-                                        )),
-                                        () => (nixScope.showRawDecls(
-                                          nixScope.loc,
-                                        )(nixScope.nonOptions)),
-                                      ]),
-                                    );
-                                  })),
-                                )),
-                                () => (nixScope["mergeModules'"](nixScope.loc)(
-                                  nixScope.decls,
-                                )(nixScope.defns)),
+                                            )
+                                          ),
+                                        ),
+                                      )(nixScope.decls),
+                                  );
+                                  return nixScope.throw(
+                                    new InterpolatedString([
+                                      "The option `",
+                                      "' in module `",
+                                      "' would be a parent of the following options, but its type `",
+                                      "' does not support nested options.",
+                                      "",
+                                    ], [
+                                      () => (nixScope.showOption(nixScope.loc)),
+                                      () => ((nixScope.head(
+                                        nixScope.optionDecls,
+                                      ))["_file"]),
+                                      () => (operators.selectOrDefault(
+                                        nixScope.head(nixScope.optionDecls),
+                                        ["options", "type", "description"],
+                                        "<no description>",
+                                      )),
+                                      () => (nixScope.showRawDecls(
+                                        nixScope.loc,
+                                      )(nixScope.nonOptions)),
+                                    ]),
+                                  );
+                                })),
                               )),
-                            ));
-                          })
-                        ))
-                      )),
-                    )(nixScope.declsByName);
-                  },
-                });
-                Object.defineProperty(nixScope, "matchedOptions", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.mapAttrs(
+                              () => (nixScope["mergeModules'"](nixScope.loc)(
+                                nixScope.decls,
+                              )(nixScope.defns)),
+                            )),
+                          ));
+                        })
+                      ))
+                    )),
+                  )(nixScope.declsByName));
+                defGetter(nixScope, "matchedOptions", (nixScope) =>
+                  nixScope.mapAttrs(
+                    createFunc(/*arg:*/ "n", null, {}, (nixScope) => (
+                      createFunc(/*arg:*/ "v", null, {}, (nixScope) => (
+                        nixScope.v["matchedOptions"]
+                      ))
+                    )),
+                  )(nixScope.resultsByName));
+                defGetter(nixScope, "unmatchedDefnsByName", (nixScope) =>
+                  operators.merge(
+                    nixScope.mapAttrs(
                       createFunc(/*arg:*/ "n", null, {}, (nixScope) => (
                         createFunc(/*arg:*/ "v", null, {}, (nixScope) => (
-                          nixScope.v["matchedOptions"]
+                          nixScope.v["unmatchedDefns"]
                         ))
                       )),
-                    )(nixScope.resultsByName);
-                  },
-                });
-                Object.defineProperty(nixScope, "unmatchedDefnsByName", {
-                  enumerable: true,
-                  get() {
-                    return operators.merge(
-                      nixScope.mapAttrs(
-                        createFunc(/*arg:*/ "n", null, {}, (nixScope) => (
-                          createFunc(/*arg:*/ "v", null, {}, (nixScope) => (
-                            nixScope.v["unmatchedDefns"]
-                          ))
-                        )),
-                      )(nixScope.resultsByName),
-                      nixScope.removeAttrs(nixScope.rawDefinitionsByName)(
-                        nixScope.attrNames(nixScope.matchedOptions),
-                      ),
-                    );
-                  },
-                });
+                    )(nixScope.resultsByName),
+                    nixScope.removeAttrs(nixScope.rawDefinitionsByName)(
+                      nixScope.attrNames(nixScope.matchedOptions),
+                    ),
+                  ));
                 return ({
                   "matchedOptions": nixScope.matchedOptions,
                   "unmatchedDefns":
@@ -1939,226 +1599,181 @@ export default createFunc({}, null, {}, (nixScope) => (
               })
             ))
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "throwDeclarationTypeError", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "loc", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "throwDeclarationTypeError",
+      (nixScope) =>
+        createFunc(/*arg:*/ "loc", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "actualTag", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "file", null, {}, (nixScope) => (
               /*let*/ createScope((nixScope) => {
-                Object.defineProperty(nixScope, "name", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.lib["strings"]["escapeNixIdentifier"](
-                      nixScope.lib["lists"]["last"](nixScope.loc),
-                    );
-                  },
-                });
-                Object.defineProperty(nixScope, "path", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.showOption(nixScope.loc);
-                  },
-                });
-                Object.defineProperty(nixScope, "depth", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.length(nixScope.loc);
-                  },
-                });
-                Object.defineProperty(nixScope, "paragraphs", {
-                  enumerable: true,
-                  get() {
-                    return operators.listConcat(
-                      [
-                        new InterpolatedString([
-                          "In module ",
-                          ": expected an option declaration at option path `",
-                          "` but got an attribute set with type ",
-                          "",
-                        ], [
-                          () => (nixScope.file),
-                          () => (nixScope.path),
-                          () => (nixScope.actualTag),
-                        ]),
-                      ],
-                      nixScope.optional(
-                        operators.equal(nixScope.actualTag, "option-type"),
-                      )(
-                        new InterpolatedString([
-                          "\n        When declaring an option, you must wrap the type in a \\`mkOption\\` call. It should look somewhat like:\n            ",
-                          "\n            ",
-                          " = lib.mkOption {\n              description = ...;\n              type = <the type you wrote for ",
-                          ">;\n              ...\n            };\n      ",
-                        ], [
-                          () => (nixScope.comment),
-                          () => (nixScope.name),
-                          () => (nixScope.name),
-                        ]),
-                      ),
-                    );
-                  },
-                });
-                Object.defineProperty(nixScope, "comment", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.optionalString(
+                defGetter(nixScope, "name", (nixScope) =>
+                  nixScope.lib["strings"]["escapeNixIdentifier"](
+                    nixScope.lib["lists"]["last"](nixScope.loc),
+                  ));
+                defGetter(
+                  nixScope,
+                  "path",
+                  (nixScope) => nixScope.showOption(nixScope.loc),
+                );
+                defGetter(
+                  nixScope,
+                  "depth",
+                  (nixScope) => nixScope.length(nixScope.loc),
+                );
+                defGetter(nixScope, "paragraphs", (nixScope) =>
+                  operators.listConcat(
+                    [
+                      new InterpolatedString([
+                        "In module ",
+                        ": expected an option declaration at option path `",
+                        "` but got an attribute set with type ",
+                        "",
+                      ], [
+                        () => (nixScope.file),
+                        () => (nixScope.path),
+                        () => (nixScope.actualTag),
+                      ]),
+                    ],
+                    nixScope.optional(
+                      operators.equal(nixScope.actualTag, "option-type"),
+                    )(
+                      new InterpolatedString([
+                        "\n        When declaring an option, you must wrap the type in a \\`mkOption\\` call. It should look somewhat like:\n            ",
+                        "\n            ",
+                        " = lib.mkOption {\n              description = ...;\n              type = <the type you wrote for ",
+                        ">;\n              ...\n            };\n      ",
+                      ], [
+                        () => (nixScope.comment),
+                        () => (nixScope.name),
+                        () => (nixScope.name),
+                      ]),
+                    ),
+                  ));
+                defGetter(
+                  nixScope,
+                  "comment",
+                  (nixScope) =>
+                    nixScope.optionalString(
                       operators.greaterThan(nixScope.depth, 1n),
                     )(
                       new InterpolatedString(["    # ", ""], [
                         () => (nixScope.showOption(nixScope.loc)),
                       ]),
-                    );
-                  },
-                });
+                    ),
+                );
                 return nixScope.throw(
                   nixScope.concatStringsSep("")(nixScope.paragraphs),
                 );
               })
             ))
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "mergeOptionDecls", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "loc", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "mergeOptionDecls",
+      (nixScope) =>
+        createFunc(/*arg:*/ "loc", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "opts", null, {}, (nixScope) => (
             nixScope["foldl'"](
               createFunc(/*arg:*/ "res", null, {}, (nixScope) => (
                 createFunc(/*arg:*/ "opt", null, {}, (nixScope) => (
                   /*let*/ createScope((nixScope) => {
-                    Object.defineProperty(nixScope, "t", {
-                      enumerable: true,
-                      get() {
-                        return nixScope.res["type"];
-                      },
-                    });
-                    Object.defineProperty(nixScope, "t'", {
-                      enumerable: true,
-                      get() {
-                        return nixScope.opt["options"]["type"];
-                      },
-                    });
-                    Object.defineProperty(nixScope, "mergedType", {
-                      enumerable: true,
-                      get() {
-                        return nixScope.t["typeMerge"](
-                          nixScope["t'"]["functor"],
-                        );
-                      },
-                    });
-                    Object.defineProperty(nixScope, "typesMergeable", {
-                      enumerable: true,
-                      get() {
-                        return operators.notEqual(nixScope.mergedType, null);
-                      },
-                    });
-                    Object.defineProperty(nixScope, "addDeprecatedWrapped", {
-                      enumerable: true,
-                      get() {
-                        return createFunc(
-                          /*arg:*/ "t",
-                          null,
-                          {},
-                          (nixScope) => (
-                            operators.merge(
-                              nixScope.t,
+                    defGetter(nixScope, "t", (nixScope) =>
+                      nixScope.res["type"]);
+                    defGetter(nixScope, "t'", (nixScope) =>
+                      nixScope.opt["options"]["type"]);
+                    defGetter(nixScope, "mergedType", (nixScope) =>
+                      nixScope.t["typeMerge"](nixScope["t'"]["functor"]));
+                    defGetter(nixScope, "typesMergeable", (nixScope) =>
+                      operators.notEqual(nixScope.mergedType, null));
+                    defGetter(nixScope, "addDeprecatedWrapped", (nixScope) =>
+                      createFunc(/*arg:*/ "t", null, {}, (nixScope) => (
+                        operators.merge(
+                          nixScope.t,
+                          {
+                            "functor": operators.merge(
+                              nixScope.t["functor"],
                               {
-                                "functor": operators.merge(
-                                  nixScope.t["functor"],
-                                  {
-                                    "wrapped": nixScope.t["functor"]
-                                      ["wrappedDeprecationMessage"](
-                                        { "loc": nixScope.loc },
-                                      ),
-                                  },
-                                ),
+                                "wrapped": nixScope.t["functor"]
+                                  ["wrappedDeprecationMessage"](
+                                    { "loc": nixScope.loc },
+                                  ),
                               },
-                            )
-                          ),
-                        );
-                      },
-                    });
-                    Object.defineProperty(nixScope, "typeSet", {
-                      enumerable: true,
-                      get() {
-                        return (operators.ifThenElse(
-                          operators.hasAttr(nixScope.opt["options"], "type"),
+                            ),
+                          },
+                        )
+                      )));
+                    defGetter(
+                      nixScope,
+                      "typeSet",
+                      (
+                        nixScope,
+                      ) => (operators.ifThenElse(
+                        operators.hasAttr(nixScope.opt["options"], "type"),
+                        () => (operators.ifThenElse(
+                          operators.hasAttr(nixScope.res, "type"),
                           () => (operators.ifThenElse(
-                            operators.hasAttr(nixScope.res, "type"),
-                            () => (operators.ifThenElse(
-                              nixScope.typesMergeable,
-                              () => ({
-                                "type":
-                                  (operators.ifThenElse(
-                                    operators.hasAttrPath(
-                                      nixScope.mergedType,
-                                      "functor",
-                                      "wrappedDeprecationMessage",
-                                    ),
-                                    () => (nixScope.addDeprecatedWrapped(
-                                      nixScope.mergedType,
-                                    )),
-                                    () => (nixScope.mergedType),
+                            nixScope.typesMergeable,
+                            () => ({
+                              "type":
+                                (operators.ifThenElse(
+                                  operators.hasAttrPath(
+                                    nixScope.mergedType,
+                                    "functor",
+                                    "wrappedDeprecationMessage",
+                                  ),
+                                  () => (nixScope.addDeprecatedWrapped(
+                                    nixScope.mergedType,
                                   )),
-                              }),
-                              () => (nixScope.throw(
-                                new InterpolatedString([
-                                  "The option `",
-                                  "' in `",
-                                  "' is already declared in ",
-                                  ".",
-                                ], [
-                                  () => (nixScope.showOption(nixScope.loc)),
-                                  () => (nixScope.opt["_file"]),
-                                  () => (nixScope.showFiles(
-                                    nixScope.res["declarations"],
-                                  )),
-                                ]),
-                              )),
-                            )),
-                            () => (operators.ifThenElse(
-                              operators.hasAttrPath(
-                                nixScope.opt["options"]["type"],
-                                "functor",
-                                "wrappedDeprecationMessage",
-                              ),
-                              () => ({
-                                "type": nixScope.addDeprecatedWrapped(
-                                  nixScope.opt["options"]["type"],
-                                ),
-                              }),
-                              () => ({}),
+                                  () => (nixScope.mergedType),
+                                )),
+                            }),
+                            () => (nixScope.throw(
+                              new InterpolatedString([
+                                "The option `",
+                                "' in `",
+                                "' is already declared in ",
+                                ".",
+                              ], [
+                                () => (nixScope.showOption(nixScope.loc)),
+                                () => (nixScope.opt["_file"]),
+                                () => (nixScope.showFiles(
+                                  nixScope.res["declarations"],
+                                )),
+                              ]),
                             )),
                           )),
-                          () => ({}),
-                        ));
-                      },
-                    });
-                    Object.defineProperty(nixScope, "bothHave", {
-                      enumerable: true,
-                      get() {
-                        return createFunc(
-                          /*arg:*/ "k",
-                          null,
-                          {},
-                          (nixScope) => (
-                            operators.and(
-                              operators.hasAttr(
-                                nixScope.opt["options"],
-                                nixScope.k,
+                          () => (operators.ifThenElse(
+                            operators.hasAttrPath(
+                              nixScope.opt["options"]["type"],
+                              "functor",
+                              "wrappedDeprecationMessage",
+                            ),
+                            () => ({
+                              "type": nixScope.addDeprecatedWrapped(
+                                nixScope.opt["options"]["type"],
                               ),
-                              operators.hasAttr(nixScope.res, nixScope.k),
-                            )
+                            }),
+                            () => ({}),
+                          )),
+                        )),
+                        () => ({}),
+                      )),
+                    );
+                    defGetter(nixScope, "bothHave", (nixScope) =>
+                      createFunc(/*arg:*/ "k", null, {}, (nixScope) => (
+                        operators.and(
+                          operators.hasAttr(
+                            nixScope.opt["options"],
+                            nixScope.k,
                           ),
-                        );
-                      },
-                    });
+                          operators.hasAttr(nixScope.res, nixScope.k),
+                        )
+                      )));
                     return (operators.ifThenElse(
                       operators.or(
                         operators.or(
@@ -2185,33 +1800,30 @@ export default createFunc({}, null, {}, (nixScope) => (
                         ]),
                       )),
                       () => (/*let*/ createScope((nixScope) => {
-                        Object.defineProperty(nixScope, "getSubModules", {
-                          enumerable: true,
-                          get() {
-                            return operators.selectOrDefault(nixScope.opt, [
-                              "options",
-                              "type",
-                              "getSubModules",
-                            ], null);
-                          },
-                        });
-                        Object.defineProperty(nixScope, "submodules", {
-                          enumerable: true,
-                          get() {
-                            return (operators.ifThenElse(
-                              operators.notEqual(nixScope.getSubModules, null),
-                              () => (operators.listConcat(
-                                nixScope.map(
-                                  nixScope.setDefaultModuleLocation(
-                                    nixScope.opt["_file"],
-                                  ),
-                                )(nixScope.getSubModules),
-                                nixScope.res["options"],
-                              )),
-                              () => (nixScope.res["options"]),
-                            ));
-                          },
-                        });
+                        defGetter(nixScope, "getSubModules", (nixScope) =>
+                          operators.selectOrDefault(nixScope.opt, [
+                            "options",
+                            "type",
+                            "getSubModules",
+                          ], null));
+                        defGetter(
+                          nixScope,
+                          "submodules",
+                          (
+                            nixScope,
+                          ) => (operators.ifThenElse(
+                            operators.notEqual(nixScope.getSubModules, null),
+                            () => (operators.listConcat(
+                              nixScope.map(
+                                nixScope.setDefaultModuleLocation(
+                                  nixScope.opt["_file"],
+                                ),
+                              )(nixScope.getSubModules),
+                              nixScope.res["options"],
+                            )),
+                            () => (nixScope.res["options"]),
+                          )),
+                        );
                         return operators.merge(
                           nixScope.opt["options"],
                           operators.merge(
@@ -2251,153 +1863,131 @@ export default createFunc({}, null, {}, (nixScope) => (
               "options": [],
             })(nixScope.opts)
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "evalOptionValue", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "loc", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "evalOptionValue",
+      (nixScope) =>
+        createFunc(/*arg:*/ "loc", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "opt", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "defs", null, {}, (nixScope) => (
               /*let*/ createScope((nixScope) => {
-                Object.defineProperty(nixScope, "defs'", {
-                  enumerable: true,
-                  get() {
-                    return operators.listConcat(
-                      nixScope.optional(
-                        operators.hasAttr(nixScope.opt, "default"),
-                      )({
-                        "file": nixScope.head(nixScope.opt["declarations"]),
-                        "value": nixScope.mkOptionDefault(
-                          nixScope.opt["default"],
-                        ),
-                      }),
-                      nixScope.defs,
-                    );
-                  },
-                });
-                Object.defineProperty(nixScope, "res", {
-                  enumerable: true,
-                  get() {
-                    return (operators.ifThenElse(
-                      operators.and(
-                        operators.selectOrDefault(
-                          nixScope.opt,
-                          ["readOnly"],
-                          false,
-                        ),
-                        operators.greaterThan(
-                          nixScope.length(nixScope["defs'"]),
-                          1n,
-                        ),
+                defGetter(nixScope, "defs'", (nixScope) =>
+                  operators.listConcat(
+                    nixScope.optional(
+                      operators.hasAttr(nixScope.opt, "default"),
+                    )({
+                      "file": nixScope.head(nixScope.opt["declarations"]),
+                      "value": nixScope.mkOptionDefault(
+                        nixScope.opt["default"],
                       ),
-                      () => (/*let*/ createScope((nixScope) => {
-                        Object.defineProperty(nixScope, "separateDefs", {
-                          enumerable: true,
-                          get() {
-                            return nixScope.map(
-                              createFunc(
-                                /*arg:*/ "def",
-                                null,
-                                {},
-                                (nixScope) => (
-                                  operators.merge(
-                                    nixScope.def,
-                                    {
-                                      "value":
-                                        (nixScope.mergeDefinitions(
-                                          nixScope.loc,
-                                        )(nixScope.opt["type"])([
-                                          nixScope.def,
-                                        ]))["mergedValue"],
-                                    },
-                                  )
-                                ),
-                              ),
-                            )(nixScope["defs'"]);
-                          },
-                        });
-                        return nixScope.throw(
-                          new InterpolatedString([
-                            "The option `",
-                            "' is read-only, but it's set multiple times. Definition values:",
-                            "",
-                          ], [
-                            () => (nixScope.showOption(nixScope.loc)),
-                            () => (nixScope.showDefs(nixScope.separateDefs)),
-                          ]),
-                        );
-                      })),
-                      () => (nixScope.mergeDefinitions(nixScope.loc)(
-                        nixScope.opt["type"],
-                      )(nixScope["defs'"])),
-                    ));
-                  },
-                });
-                Object.defineProperty(nixScope, "value", {
-                  enumerable: true,
-                  get() {
-                    return (operators.ifThenElse(
-                      operators.hasAttr(nixScope.opt, "apply"),
-                      () => (nixScope.opt["apply"](
-                        nixScope.res["mergedValue"],
-                      )),
-                      () => (nixScope.res["mergedValue"]),
-                    ));
-                  },
-                });
-                Object.defineProperty(nixScope, "warnDeprecation", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.warnIf(
-                      operators.notEqual(
-                        nixScope.opt["type"]["deprecationMessage"],
-                        null,
+                    }),
+                    nixScope.defs,
+                  ));
+                defGetter(
+                  nixScope,
+                  "res",
+                  (
+                    nixScope,
+                  ) => (operators.ifThenElse(
+                    operators.and(
+                      operators.selectOrDefault(
+                        nixScope.opt,
+                        ["readOnly"],
+                        false,
                       ),
-                    )(
-                      new InterpolatedString([
-                        "The type `types.",
-                        "' of option `",
-                        "' defined in ",
-                        " is deprecated. ",
-                        "",
-                      ], [
-                        () => (nixScope.opt["type"]["name"]),
-                        () => (nixScope.showOption(nixScope.loc)),
-                        () => (nixScope.showFiles(
-                          nixScope.opt["declarations"],
-                        )),
-                        () => (nixScope.opt["type"]["deprecationMessage"]),
-                      ]),
-                    );
-                  },
-                });
+                      operators.greaterThan(
+                        nixScope.length(nixScope["defs'"]),
+                        1n,
+                      ),
+                    ),
+                    () => (/*let*/ createScope((nixScope) => {
+                      defGetter(nixScope, "separateDefs", (nixScope) =>
+                        nixScope.map(
+                          createFunc(/*arg:*/ "def", null, {}, (nixScope) => (
+                            operators.merge(
+                              nixScope.def,
+                              {
+                                "value":
+                                  (nixScope.mergeDefinitions(nixScope.loc)(
+                                    nixScope.opt["type"],
+                                  )([nixScope.def]))["mergedValue"],
+                              },
+                            )
+                          )),
+                        )(nixScope["defs'"]));
+                      return nixScope.throw(
+                        new InterpolatedString([
+                          "The option `",
+                          "' is read-only, but it's set multiple times. Definition values:",
+                          "",
+                        ], [
+                          () => (nixScope.showOption(nixScope.loc)),
+                          () => (nixScope.showDefs(nixScope.separateDefs)),
+                        ]),
+                      );
+                    })),
+                    () => (nixScope.mergeDefinitions(nixScope.loc)(
+                      nixScope.opt["type"],
+                    )(nixScope["defs'"])),
+                  )),
+                );
+                defGetter(
+                  nixScope,
+                  "value",
+                  (
+                    nixScope,
+                  ) => (operators.ifThenElse(
+                    operators.hasAttr(nixScope.opt, "apply"),
+                    () => (nixScope.opt["apply"](nixScope.res["mergedValue"])),
+                    () => (nixScope.res["mergedValue"]),
+                  )),
+                );
+                defGetter(nixScope, "warnDeprecation", (nixScope) =>
+                  nixScope.warnIf(
+                    operators.notEqual(
+                      nixScope.opt["type"]["deprecationMessage"],
+                      null,
+                    ),
+                  )(
+                    new InterpolatedString([
+                      "The type `types.",
+                      "' of option `",
+                      "' defined in ",
+                      " is deprecated. ",
+                      "",
+                    ], [
+                      () => (nixScope.opt["type"]["name"]),
+                      () => (nixScope.showOption(nixScope.loc)),
+                      () => (nixScope.showFiles(nixScope.opt["declarations"])),
+                      () => (nixScope.opt["type"]["deprecationMessage"]),
+                    ]),
+                  ));
                 return operators.merge(
                   nixScope.warnDeprecation(nixScope.opt),
                   createScope((nixScope) => {
                     const obj = {};
-                    obj["value"] = nixScope.addErrorContext(
+                    obj.value = nixScope.addErrorContext(
                       new InterpolatedString([
                         "while evaluating the option `",
                         "':",
                       ], [() => (nixScope.showOption(nixScope.loc))]),
                     )(nixScope.value);
-                    obj["highestPrio"] =
-                      nixScope.res["defsFinal'"]["highestPrio"];
-                    obj["definitions"] = nixScope.map(
+                    obj.highestPrio = nixScope.res["defsFinal'"].highestPrio;
+                    obj.definitions = nixScope.map(
                       createFunc(/*arg:*/ "def", null, {}, (nixScope) => (
                         nixScope.def["value"]
                       )),
                     )(nixScope.res["defsFinal"]);
-                    obj["files"] = nixScope.map(
+                    obj.files = nixScope.map(
                       createFunc(/*arg:*/ "def", null, {}, (nixScope) => (
                         nixScope.def["file"]
                       )),
                     )(nixScope.res["defsFinal"]);
-                    obj["definitionsWithLocations"] = nixScope.res["defsFinal"];
-                    obj["isDefined"] = nixScope.res["isDefined"];
-                    obj["__toString"] = createFunc(
+                    obj.definitionsWithLocations = nixScope.res["defsFinal"];
+                    obj.isDefined = nixScope.res.isDefined;
+                    obj.__toString = createFunc(
                       /*arg:*/ "_",
                       null,
                       {},
@@ -2411,198 +2001,171 @@ export default createFunc({}, null, {}, (nixScope) => (
               })
             ))
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "mergeDefinitions", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "loc", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "mergeDefinitions",
+      (nixScope) =>
+        createFunc(/*arg:*/ "loc", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "type", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "defs", null, {}, (nixScope) => (
               /*rec*/ createScope((nixScope) => {
-                Object.defineProperty(nixScope, "defsFinal'", {
-                  enumerable: true,
-                  get() {
-                    return /*let*/ createScope((nixScope) => {
-                      Object.defineProperty(nixScope, "defs'", {
-                        enumerable: true,
-                        get() {
-                          return nixScope.concatMap(
-                            createFunc(/*arg:*/ "m", null, {}, (nixScope) => (
-                              nixScope.map(
-                                createFunc(
-                                  /*arg:*/ "value",
-                                  null,
-                                  {},
-                                  (nixScope) => (
-                                    operators.ifThenElse(
-                                      operators.equal(
-                                        operators.selectOrDefault(
-                                          nixScope.value,
-                                          ["_type"],
-                                          null,
-                                        ),
-                                        "definition",
-                                      ),
-                                      () => (nixScope.value),
-                                      () => (createScope((nixScope) => {
-                                        const obj = {};
-                                        obj["file"] = nixScope.m["file"];
-                                        obj["value"] = nixScope.value;
-                                        return obj;
-                                      })),
-                                    )
+                defGetter(nixScope, "defsFinal'", (nixScope) =>
+                  /*let*/ createScope((nixScope) => {
+                    defGetter(nixScope, "defs'", (nixScope) =>
+                      nixScope.concatMap(
+                        createFunc(/*arg:*/ "m", null, {}, (nixScope) => (
+                          nixScope.map(
+                            createFunc(
+                              /*arg:*/ "value",
+                              null,
+                              {},
+                              (nixScope) => (
+                                operators.ifThenElse(
+                                  operators.equal(
+                                    operators.selectOrDefault(nixScope.value, [
+                                      "_type",
+                                    ], null),
+                                    "definition",
                                   ),
-                                ),
-                              )(
-                                nixScope.addErrorContext(
-                                  new InterpolatedString([
-                                    "while evaluating definitions from `",
-                                    "':",
-                                  ], [() => (nixScope.m["file"])]),
-                                )(nixScope.dischargeProperties(
-                                  nixScope.m["value"],
-                                )),
+                                  () => (nixScope.value),
+                                  () => (createScope((nixScope) => {
+                                    const obj = {};
+                                    obj.file = nixScope.m.file;
+                                    obj.value = nixScope.value;
+                                    return obj;
+                                  })),
+                                )
+                              ),
+                            ),
+                          )(
+                            nixScope.addErrorContext(
+                              new InterpolatedString([
+                                "while evaluating definitions from `",
+                                "':",
+                              ], [() => (nixScope.m["file"])]),
+                            )(nixScope.dischargeProperties(
+                              nixScope.m["value"],
+                            )),
+                          )
+                        )),
+                      )(nixScope.defs));
+                    defGetter(
+                      nixScope,
+                      "defs''",
+                      (nixScope) =>
+                        nixScope["filterOverrides'"](nixScope["defs'"]),
+                    );
+                    defGetter(
+                      nixScope,
+                      "defs'''",
+                      (
+                        nixScope,
+                      ) => (operators.ifThenElse(
+                        nixScope.any(
+                          createFunc(/*arg:*/ "def", null, {}, (nixScope) => (
+                            operators.equal(
+                              operators.selectOrDefault(nixScope.def, [
+                                "value",
+                                "_type",
+                              ], ""),
+                              "order",
+                            )
+                          )),
+                        )(nixScope["defs''"]["values"]),
+                        () => (nixScope.sortProperties(
+                          nixScope["defs''"]["values"],
+                        )),
+                        () => (nixScope["defs''"]["values"]),
+                      )),
+                    );
+                    return createScope((nixScope) => {
+                      const obj = {};
+                      obj.values = nixScope["defs'''"];
+                      obj.highestPrio = nixScope["defs''"].highestPrio;
+                      return obj;
+                    });
+                  }));
+                defGetter(
+                  nixScope,
+                  "defsFinal",
+                  (nixScope) => nixScope["defsFinal'"]["values"],
+                );
+                defGetter(
+                  nixScope,
+                  "mergedValue",
+                  (
+                    nixScope,
+                  ) => (operators.ifThenElse(
+                    nixScope.isDefined,
+                    () => (operators.ifThenElse(
+                      nixScope.all(
+                        createFunc(/*arg:*/ "def", null, {}, (nixScope) => (
+                          nixScope.type["check"](nixScope.def["value"])
+                        )),
+                      )(nixScope.defsFinal),
+                      () => (nixScope.type["merge"](nixScope.loc)(
+                        nixScope.defsFinal,
+                      )),
+                      () => (/*let*/ createScope((nixScope) => {
+                        defGetter(nixScope, "allInvalid", (nixScope) =>
+                          nixScope.filter(
+                            createFunc(/*arg:*/ "def", null, {}, (nixScope) => (
+                              operators.negate(
+                                nixScope.type["check"](nixScope.def["value"]),
                               )
                             )),
-                          )(nixScope.defs);
-                        },
-                      });
-                      Object.defineProperty(nixScope, "defs''", {
-                        enumerable: true,
-                        get() {
-                          return nixScope["filterOverrides'"](
-                            nixScope["defs'"],
-                          );
-                        },
-                      });
-                      Object.defineProperty(nixScope, "defs'''", {
-                        enumerable: true,
-                        get() {
-                          return (operators.ifThenElse(
-                            nixScope.any(
-                              createFunc(
-                                /*arg:*/ "def",
-                                null,
-                                {},
-                                (nixScope) => (
-                                  operators.equal(
-                                    operators.selectOrDefault(nixScope.def, [
-                                      "value",
-                                      "_type",
-                                    ], ""),
-                                    "order",
-                                  )
-                                ),
-                              ),
-                            )(nixScope["defs''"]["values"]),
-                            () => (nixScope.sortProperties(
-                              nixScope["defs''"]["values"],
-                            )),
-                            () => (nixScope["defs''"]["values"]),
-                          ));
-                        },
-                      });
-                      return createScope((nixScope) => {
-                        const obj = {};
-                        obj["values"] = nixScope["defs'''"];
-                        obj["highestPrio"] = nixScope["defs''"]["highestPrio"];
-                        return obj;
-                      });
-                    });
-                  },
-                });
-                Object.defineProperty(nixScope, "defsFinal", {
-                  enumerable: true,
-                  get() {
-                    return nixScope["defsFinal'"]["values"];
-                  },
-                });
-                Object.defineProperty(nixScope, "mergedValue", {
-                  enumerable: true,
-                  get() {
-                    return (operators.ifThenElse(
-                      nixScope.isDefined,
-                      () => (operators.ifThenElse(
-                        nixScope.all(
-                          createFunc(/*arg:*/ "def", null, {}, (nixScope) => (
-                            nixScope.type["check"](nixScope.def["value"])
-                          )),
-                        )(nixScope.defsFinal),
-                        () => (nixScope.type["merge"](nixScope.loc)(
-                          nixScope.defsFinal,
-                        )),
-                        () => (/*let*/ createScope((nixScope) => {
-                          Object.defineProperty(nixScope, "allInvalid", {
-                            enumerable: true,
-                            get() {
-                              return nixScope.filter(
-                                createFunc(
-                                  /*arg:*/ "def",
-                                  null,
-                                  {},
-                                  (nixScope) => (
-                                    operators.negate(
-                                      nixScope.type["check"](
-                                        nixScope.def["value"],
-                                      ),
-                                    )
-                                  ),
-                                ),
-                              )(nixScope.defsFinal);
-                            },
-                          });
-                          return nixScope.throw(
-                            new InterpolatedString([
-                              "A definition for option `",
-                              "' is not of type `",
-                              "'. Definition values:",
-                              "",
-                            ], [
-                              () => (nixScope.showOption(nixScope.loc)),
-                              () => (nixScope.type["description"]),
-                              () => (nixScope.showDefs(nixScope.allInvalid)),
-                            ]),
-                          );
-                        })),
-                      )),
-                      () => (nixScope.throw(
-                        new InterpolatedString([
-                          "The option `",
-                          "' was accessed but has no value defined. Try setting the option.",
-                        ], [() => (nixScope.showOption(nixScope.loc))]),
-                      )),
-                    ));
-                  },
-                });
-                Object.defineProperty(nixScope, "isDefined", {
-                  enumerable: true,
-                  get() {
-                    return operators.notEqual(nixScope.defsFinal, []);
-                  },
-                });
-                Object.defineProperty(nixScope, "optionalValue", {
-                  enumerable: true,
-                  get() {
-                    return (operators.ifThenElse(
-                      nixScope.isDefined,
-                      () => ({ "value": nixScope.mergedValue }),
-                      () => ({}),
-                    ));
-                  },
-                });
+                          )(nixScope.defsFinal));
+                        return nixScope.throw(
+                          new InterpolatedString([
+                            "A definition for option `",
+                            "' is not of type `",
+                            "'. Definition values:",
+                            "",
+                          ], [
+                            () => (nixScope.showOption(nixScope.loc)),
+                            () => (nixScope.type["description"]),
+                            () => (nixScope.showDefs(nixScope.allInvalid)),
+                          ]),
+                        );
+                      })),
+                    )),
+                    () => (nixScope.throw(
+                      new InterpolatedString([
+                        "The option `",
+                        "' was accessed but has no value defined. Try setting the option.",
+                      ], [() => (nixScope.showOption(nixScope.loc))]),
+                    )),
+                  )),
+                );
+                defGetter(
+                  nixScope,
+                  "isDefined",
+                  (nixScope) => operators.notEqual(nixScope.defsFinal, []),
+                );
+                defGetter(
+                  nixScope,
+                  "optionalValue",
+                  (
+                    nixScope,
+                  ) => (operators.ifThenElse(
+                    nixScope.isDefined,
+                    () => ({ "value": nixScope.mergedValue }),
+                    () => ({}),
+                  )),
+                );
                 return nixScope;
               })
             ))
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "pushDownProperties", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "cfg", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "pushDownProperties",
+      (nixScope) =>
+        createFunc(/*arg:*/ "cfg", null, {}, (nixScope) => (
           operators.ifThenElse(
             operators.equal(
               operators.selectOrDefault(nixScope.cfg, ["_type"], ""),
@@ -2645,13 +2208,13 @@ export default createFunc({}, null, {}, (nixScope) => (
               )),
             )),
           )
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "dischargeProperties", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "def", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "dischargeProperties",
+      (nixScope) =>
+        createFunc(/*arg:*/ "def", null, {}, (nixScope) => (
           operators.ifThenElse(
             operators.equal(
               operators.selectOrDefault(nixScope.def, ["_type"], ""),
@@ -2679,75 +2242,63 @@ export default createFunc({}, null, {}, (nixScope) => (
               () => [nixScope.def],
             )),
           )
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "filterOverrides", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "defs", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "filterOverrides",
+      (nixScope) =>
+        createFunc(/*arg:*/ "defs", null, {}, (nixScope) => (
           (nixScope["filterOverrides'"](nixScope.defs))["values"]
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "filterOverrides'", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "defs", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "filterOverrides'",
+      (nixScope) =>
+        createFunc(/*arg:*/ "defs", null, {}, (nixScope) => (
           /*let*/ createScope((nixScope) => {
-            Object.defineProperty(nixScope, "getPrio", {
-              enumerable: true,
-              get() {
-                return createFunc(/*arg:*/ "def", null, {}, (nixScope) => (
-                  operators.ifThenElse(
-                    operators.equal(
-                      operators.selectOrDefault(nixScope.def, [
-                        "value",
-                        "_type",
-                      ], ""),
-                      "override",
-                    ),
-                    () => (nixScope.def["value"]["priority"]),
-                    () => (nixScope.defaultOverridePriority),
-                  )
-                ));
-              },
-            });
-            Object.defineProperty(nixScope, "highestPrio", {
-              enumerable: true,
-              get() {
-                return nixScope["foldl'"](
-                  createFunc(/*arg:*/ "prio", null, {}, (nixScope) => (
-                    createFunc(/*arg:*/ "def", null, {}, (nixScope) => (
-                      nixScope.min(nixScope.getPrio(nixScope.def))(
-                        nixScope.prio,
-                      )
-                    ))
-                  )),
-                )(9999n)(nixScope.defs);
-              },
-            });
-            Object.defineProperty(nixScope, "strip", {
-              enumerable: true,
-              get() {
-                return createFunc(/*arg:*/ "def", null, {}, (nixScope) => (
-                  operators.ifThenElse(
-                    operators.equal(
-                      operators.selectOrDefault(nixScope.def, [
-                        "value",
-                        "_type",
-                      ], ""),
-                      "override",
-                    ),
-                    () => (operators.merge(
+            defGetter(nixScope, "getPrio", (nixScope) =>
+              createFunc(/*arg:*/ "def", null, {}, (nixScope) => (
+                operators.ifThenElse(
+                  operators.equal(
+                    operators.selectOrDefault(
                       nixScope.def,
-                      { "value": nixScope.def["value"]["content"] },
-                    )),
-                    () => (nixScope.def),
-                  )
-                ));
-              },
-            });
+                      ["value", "_type"],
+                      "",
+                    ),
+                    "override",
+                  ),
+                  () => (nixScope.def["value"]["priority"]),
+                  () => (nixScope.defaultOverridePriority),
+                )
+              )));
+            defGetter(nixScope, "highestPrio", (nixScope) =>
+              nixScope["foldl'"](
+                createFunc(/*arg:*/ "prio", null, {}, (nixScope) => (
+                  createFunc(/*arg:*/ "def", null, {}, (nixScope) => (
+                    nixScope.min(nixScope.getPrio(nixScope.def))(nixScope.prio)
+                  ))
+                )),
+              )(9999n)(nixScope.defs));
+            defGetter(nixScope, "strip", (nixScope) =>
+              createFunc(/*arg:*/ "def", null, {}, (nixScope) => (
+                operators.ifThenElse(
+                  operators.equal(
+                    operators.selectOrDefault(
+                      nixScope.def,
+                      ["value", "_type"],
+                      "",
+                    ),
+                    "override",
+                  ),
+                  () => (operators.merge(
+                    nixScope.def,
+                    { "value": nixScope.def["value"]["content"] },
+                  )),
+                  () => (nixScope.def),
+                )
+              )));
             return ({
               "values": nixScope.concatMap(
                 createFunc(/*arg:*/ "def", null, {}, (nixScope) => (
@@ -2764,76 +2315,68 @@ export default createFunc({}, null, {}, (nixScope) => (
               "highestPrio": nixScope.highestPrio,
             });
           })
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "sortProperties", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "defs", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "sortProperties",
+      (nixScope) =>
+        createFunc(/*arg:*/ "defs", null, {}, (nixScope) => (
           /*let*/ createScope((nixScope) => {
-            Object.defineProperty(nixScope, "strip", {
-              enumerable: true,
-              get() {
-                return createFunc(/*arg:*/ "def", null, {}, (nixScope) => (
-                  operators.ifThenElse(
-                    operators.equal(
-                      operators.selectOrDefault(nixScope.def, [
-                        "value",
-                        "_type",
-                      ], ""),
-                      "order",
-                    ),
-                    () => (operators.merge(
+            defGetter(nixScope, "strip", (nixScope) =>
+              createFunc(/*arg:*/ "def", null, {}, (nixScope) => (
+                operators.ifThenElse(
+                  operators.equal(
+                    operators.selectOrDefault(
                       nixScope.def,
-                      createScope((nixScope) => {
-                        const obj = {};
-                        obj["value"] = nixScope.def["value"]["content"];
-                        obj["priority"] = nixScope.def["value"]["priority"];
-                        return obj;
-                      }),
-                    )),
-                    () => (nixScope.def),
+                      ["value", "_type"],
+                      "",
+                    ),
+                    "order",
+                  ),
+                  () => (operators.merge(
+                    nixScope.def,
+                    createScope((nixScope) => {
+                      const obj = {};
+                      obj.value = nixScope.def["value"]["content"];
+                      obj.priority = nixScope.def["value"].priority;
+                      return obj;
+                    }),
+                  )),
+                  () => (nixScope.def),
+                )
+              )));
+            defGetter(
+              nixScope,
+              "defs'",
+              (nixScope) => nixScope.map(nixScope.strip)(nixScope.defs),
+            );
+            defGetter(nixScope, "compare", (nixScope) =>
+              createFunc(/*arg:*/ "a", null, {}, (nixScope) => (
+                createFunc(/*arg:*/ "b", null, {}, (nixScope) => (
+                  operators.lessThan(
+                    operators.selectOrDefault(
+                      nixScope.a,
+                      ["priority"],
+                      nixScope.defaultOrderPriority,
+                    ),
+                    operators.selectOrDefault(
+                      nixScope.b,
+                      ["priority"],
+                      nixScope.defaultOrderPriority,
+                    ),
                   )
-                ));
-              },
-            });
-            Object.defineProperty(nixScope, "defs'", {
-              enumerable: true,
-              get() {
-                return nixScope.map(nixScope.strip)(nixScope.defs);
-              },
-            });
-            Object.defineProperty(nixScope, "compare", {
-              enumerable: true,
-              get() {
-                return createFunc(/*arg:*/ "a", null, {}, (nixScope) => (
-                  createFunc(/*arg:*/ "b", null, {}, (nixScope) => (
-                    operators.lessThan(
-                      operators.selectOrDefault(
-                        nixScope.a,
-                        ["priority"],
-                        nixScope.defaultOrderPriority,
-                      ),
-                      operators.selectOrDefault(
-                        nixScope.b,
-                        ["priority"],
-                        nixScope.defaultOrderPriority,
-                      ),
-                    )
-                  ))
-                ));
-              },
-            });
+                ))
+              )));
             return nixScope.sort(nixScope.compare)(nixScope["defs'"]);
           })
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "fixupOptionType", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "loc", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "fixupOptionType",
+      (nixScope) =>
+        createFunc(/*arg:*/ "loc", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "opt", null, {}, (nixScope) => (
             operators.ifThenElse(
               operators.equal(
@@ -2864,46 +2407,37 @@ export default createFunc({}, null, {}, (nixScope) => (
               )),
             )
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "mergeAttrDefinitionsWithPrio", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "opt", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "mergeAttrDefinitionsWithPrio",
+      (nixScope) =>
+        createFunc(/*arg:*/ "opt", null, {}, (nixScope) => (
           /*let*/ createScope((nixScope) => {
-            Object.defineProperty(nixScope, "defsByAttr", {
-              enumerable: true,
-              get() {
-                return nixScope.zipAttrs(
-                  nixScope.concatLists(
-                    nixScope.concatMap(createFunc({}, "def", {}, (nixScope) => (
-                      nixScope.map(
-                        nixScope.mapAttrsToList(
-                          createFunc(/*arg:*/ "k", null, {}, (nixScope) => (
-                            createFunc(
-                              /*arg:*/ "value",
-                              null,
-                              {},
-                              (nixScope) => (
-                                createScope((nixScope) => {
-                                  const obj = {};
-                                  obj[nixScope.k] = operators.merge(
-                                    nixScope.def,
-                                    { "value": nixScope.value },
-                                  );
-                                  return obj;
-                                })
-                              ),
-                            )
-                          )),
-                        ),
-                      )(nixScope.pushDownProperties(nixScope.value))
-                    )))(nixScope.opt["definitionsWithLocations"]),
-                  ),
-                );
-              },
-            });
+            defGetter(nixScope, "defsByAttr", (nixScope) =>
+              nixScope.zipAttrs(
+                nixScope.concatLists(
+                  nixScope.concatMap(createFunc({}, "def", {}, (nixScope) => (
+                    nixScope.map(
+                      nixScope.mapAttrsToList(
+                        createFunc(/*arg:*/ "k", null, {}, (nixScope) => (
+                          createFunc(/*arg:*/ "value", null, {}, (nixScope) => (
+                            createScope((nixScope) => {
+                              const obj = {};
+                              obj[nixScope.k] = operators.merge(
+                                nixScope.def,
+                                { "value": nixScope.value },
+                              );
+                              return obj;
+                            })
+                          ))
+                        )),
+                      ),
+                    )(nixScope.pushDownProperties(nixScope.value))
+                  )))(nixScope.opt["definitionsWithLocations"]),
+                ),
+              ));
             return ((_cond) => {
               if (!_cond) {
                 throw new Error(
@@ -2915,23 +2449,19 @@ export default createFunc({}, null, {}, (nixScope) => (
                 createFunc(/*arg:*/ "k", null, {}, (nixScope) => (
                   createFunc(/*arg:*/ "v", null, {}, (nixScope) => (
                     /*let*/ createScope((nixScope) => {
-                      Object.defineProperty(nixScope, "merging", {
-                        enumerable: true,
-                        get() {
-                          return nixScope.mergeDefinitions(
-                            operators.listConcat(nixScope.opt["loc"], [
-                              nixScope.k,
-                            ]),
-                          )(nixScope.opt["type"]["nestedTypes"]["elemType"])(
-                            nixScope.v,
-                          );
-                        },
-                      });
+                      defGetter(nixScope, "merging", (nixScope) =>
+                        nixScope.mergeDefinitions(
+                          operators.listConcat(nixScope.opt["loc"], [
+                            nixScope.k,
+                          ]),
+                        )(nixScope.opt["type"]["nestedTypes"]["elemType"])(
+                          nixScope.v,
+                        ));
                       return createScope((nixScope) => {
                         const obj = {};
-                        obj["value"] = nixScope.merging["mergedValue"];
-                        obj["highestPrio"] =
-                          nixScope.merging["defsFinal'"]["highestPrio"];
+                        obj.value = nixScope.merging["mergedValue"];
+                        obj.highestPrio =
+                          nixScope.merging["defsFinal'"].highestPrio;
                         return obj;
                       });
                     })
@@ -2945,13 +2475,13 @@ export default createFunc({}, null, {}, (nixScope) => (
               ),
             );
           })
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "mkIf", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "condition", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "mkIf",
+      (nixScope) =>
+        createFunc(/*arg:*/ "condition", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "content", null, {}, (nixScope) => (
             {
               "_type": "if",
@@ -2959,13 +2489,13 @@ export default createFunc({}, null, {}, (nixScope) => (
               "content": nixScope.content,
             }
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "mkAssert", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "assertion", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "mkAssert",
+      (nixScope) =>
+        createFunc(/*arg:*/ "assertion", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "message", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "content", null, {}, (nixScope) => (
               nixScope.mkIf(
@@ -2981,29 +2511,29 @@ export default createFunc({}, null, {}, (nixScope) => (
               )(nixScope.content)
             ))
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "mkMerge", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "contents", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "mkMerge",
+      (nixScope) =>
+        createFunc(/*arg:*/ "contents", null, {}, (nixScope) => (
           { "_type": "merge", "contents": nixScope.contents }
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "mkDefinition", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "args", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "mkDefinition",
+      (nixScope) =>
+        createFunc(/*arg:*/ "args", null, {}, (nixScope) => (
           operators.merge(nixScope.args, { "_type": "definition" })
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "mkOverride", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "priority", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "mkOverride",
+      (nixScope) =>
+        createFunc(/*arg:*/ "priority", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "content", null, {}, (nixScope) => (
             {
               "_type": "override",
@@ -3011,59 +2541,42 @@ export default createFunc({}, null, {}, (nixScope) => (
               "content": nixScope.content,
             }
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "mkOptionDefault", {
-      enumerable: true,
-      get() {
-        return nixScope.mkOverride(1500n);
-      },
-    });
-    Object.defineProperty(nixScope, "mkDefault", {
-      enumerable: true,
-      get() {
-        return nixScope.mkOverride(1000n);
-      },
-    });
-    Object.defineProperty(nixScope, "mkImageMediaOverride", {
-      enumerable: true,
-      get() {
-        return nixScope.mkOverride(60n);
-      },
-    });
-    Object.defineProperty(nixScope, "mkForce", {
-      enumerable: true,
-      get() {
-        return nixScope.mkOverride(50n);
-      },
-    });
-    Object.defineProperty(nixScope, "mkVMOverride", {
-      enumerable: true,
-      get() {
-        return nixScope.mkOverride(10n);
-      },
-    });
-    Object.defineProperty(nixScope, "defaultPriority", {
-      enumerable: true,
-      get() {
-        return nixScope.warnIf(nixScope.oldestSupportedReleaseIsAtLeast(2305n))(
+        )),
+    );
+    defGetter(
+      nixScope,
+      "mkOptionDefault",
+      (nixScope) => nixScope.mkOverride(1500n),
+    );
+    defGetter(nixScope, "mkDefault", (nixScope) => nixScope.mkOverride(1000n));
+    defGetter(
+      nixScope,
+      "mkImageMediaOverride",
+      (nixScope) => nixScope.mkOverride(60n),
+    );
+    defGetter(nixScope, "mkForce", (nixScope) => nixScope.mkOverride(50n));
+    defGetter(nixScope, "mkVMOverride", (nixScope) => nixScope.mkOverride(10n));
+    defGetter(
+      nixScope,
+      "defaultPriority",
+      (nixScope) =>
+        nixScope.warnIf(nixScope.oldestSupportedReleaseIsAtLeast(2305n))(
           "lib.modules.defaultPriority is deprecated, please use lib.modules.defaultOverridePriority instead.",
-        )(nixScope.defaultOverridePriority);
-      },
-    });
-    Object.defineProperty(nixScope, "mkFixStrictness", {
-      enumerable: true,
-      get() {
-        return nixScope.warn(
+        )(nixScope.defaultOverridePriority),
+    );
+    defGetter(
+      nixScope,
+      "mkFixStrictness",
+      (nixScope) =>
+        nixScope.warn(
           "lib.mkFixStrictness has no effect and will be removed. It returns its argument unmodified, so you can just remove any calls.",
-        )(nixScope.id);
-      },
-    });
-    Object.defineProperty(nixScope, "mkOrder", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "priority", null, {}, (nixScope) => (
+        )(nixScope.id),
+    );
+    defGetter(
+      nixScope,
+      "mkOrder",
+      (nixScope) =>
+        createFunc(/*arg:*/ "priority", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "content", null, {}, (nixScope) => (
             {
               "_type": "order",
@@ -3071,86 +2584,69 @@ export default createFunc({}, null, {}, (nixScope) => (
               "content": nixScope.content,
             }
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "mkBefore", {
-      enumerable: true,
-      get() {
-        return nixScope.mkOrder(500n);
-      },
-    });
-    Object.defineProperty(nixScope, "mkAfter", {
-      enumerable: true,
-      get() {
-        return nixScope.mkOrder(1500n);
-      },
-    });
-    Object.defineProperty(nixScope, "mkAliasDefinitions", {
-      enumerable: true,
-      get() {
-        return nixScope.mkAliasAndWrapDefinitions(nixScope.id);
-      },
-    });
-    Object.defineProperty(nixScope, "mkAliasAndWrapDefinitions", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "wrap", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(nixScope, "mkBefore", (nixScope) => nixScope.mkOrder(500n));
+    defGetter(nixScope, "mkAfter", (nixScope) => nixScope.mkOrder(1500n));
+    defGetter(
+      nixScope,
+      "mkAliasDefinitions",
+      (nixScope) => nixScope.mkAliasAndWrapDefinitions(nixScope.id),
+    );
+    defGetter(
+      nixScope,
+      "mkAliasAndWrapDefinitions",
+      (nixScope) =>
+        createFunc(/*arg:*/ "wrap", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "option", null, {}, (nixScope) => (
             nixScope.mkAliasIfDef(nixScope.option)(
               nixScope.wrap(nixScope.mkMerge(nixScope.option["definitions"])),
             )
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "mkAliasAndWrapDefsWithPriority", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "wrap", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "mkAliasAndWrapDefsWithPriority",
+      (nixScope) =>
+        createFunc(/*arg:*/ "wrap", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "option", null, {}, (nixScope) => (
             /*let*/ createScope((nixScope) => {
-              Object.defineProperty(nixScope, "prio", {
-                enumerable: true,
-                get() {
-                  return operators.selectOrDefault(nixScope.option, [
-                    "highestPrio",
-                  ], nixScope.defaultOverridePriority);
-                },
-              });
-              Object.defineProperty(nixScope, "defsWithPrio", {
-                enumerable: true,
-                get() {
-                  return nixScope.map(nixScope.mkOverride(nixScope.prio))(
-                    nixScope.option["definitions"],
-                  );
-                },
-              });
+              defGetter(nixScope, "prio", (nixScope) =>
+                operators.selectOrDefault(
+                  nixScope.option,
+                  ["highestPrio"],
+                  nixScope.defaultOverridePriority,
+                ));
+              defGetter(nixScope, "defsWithPrio", (nixScope) =>
+                nixScope.map(nixScope.mkOverride(nixScope.prio))(
+                  nixScope.option["definitions"],
+                ));
               return nixScope.mkAliasIfDef(nixScope.option)(
                 nixScope.wrap(nixScope.mkMerge(nixScope.defsWithPrio)),
               );
             })
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "mkAliasIfDef", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "option", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "mkAliasIfDef",
+      (nixScope) =>
+        createFunc(/*arg:*/ "option", null, {}, (nixScope) => (
           nixScope.mkIf(
             operators.and(
               nixScope.isOption(nixScope.option),
               nixScope.option["isDefined"],
             ),
           )
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "fixMergeModules", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "modules", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "fixMergeModules",
+      (nixScope) =>
+        createFunc(/*arg:*/ "modules", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "args", null, {}, (nixScope) => (
             nixScope.evalModules(
               {
@@ -3160,13 +2656,13 @@ export default createFunc({}, null, {}, (nixScope) => (
               },
             )
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "mkRemovedOptionModule", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "optionName", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "mkRemovedOptionModule",
+      (nixScope) =>
+        createFunc(/*arg:*/ "optionName", null, {}, (nixScope) => (
           createFunc(
             /*arg:*/ "replacementInstructions",
             null,
@@ -3175,7 +2671,7 @@ export default createFunc({}, null, {}, (nixScope) => (
               createFunc({}, null, {}, (nixScope) => (
                 createScope((nixScope) => {
                   const obj = {};
-                  obj["options"] = nixScope.setAttrByPath(nixScope.optionName)(
+                  obj.options = nixScope.setAttrByPath(nixScope.optionName)(
                     nixScope.mkOption(
                       {
                         "visible": false,
@@ -3204,14 +2700,10 @@ export default createFunc({}, null, {}, (nixScope) => (
                   if (obj["config"] === undefined) obj["config"] = {};
                   obj["config"]["assertions"] = /*let*/ createScope(
                     (nixScope) => {
-                      Object.defineProperty(nixScope, "opt", {
-                        enumerable: true,
-                        get() {
-                          return nixScope.getAttrFromPath(nixScope.optionName)(
-                            nixScope.options,
-                          );
-                        },
-                      });
+                      defGetter(nixScope, "opt", (nixScope) =>
+                        nixScope.getAttrFromPath(nixScope.optionName)(
+                          nixScope.options,
+                        ));
                       return [{
                         "assertion": operators.negate(
                           nixScope.opt["isDefined"],
@@ -3235,13 +2727,13 @@ export default createFunc({}, null, {}, (nixScope) => (
               ))
             ),
           )
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "mkRenamedOptionModule", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "from", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "mkRenamedOptionModule",
+      (nixScope) =>
+        createFunc(/*arg:*/ "from", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "to", null, {}, (nixScope) => (
             nixScope.doRename({
               "from": nixScope.from,
@@ -3260,13 +2752,13 @@ export default createFunc({}, null, {}, (nixScope) => (
               ),
             })
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "mkRenamedOptionModuleWith", {
-      enumerable: true,
-      get() {
-        return createFunc({}, null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "mkRenamedOptionModuleWith",
+      (nixScope) =>
+        createFunc({}, null, {}, (nixScope) => (
           nixScope.doRename({
             "from": nixScope.from,
             "to": nixScope.to,
@@ -3287,13 +2779,13 @@ export default createFunc({}, null, {}, (nixScope) => (
               ]),
             ),
           })
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "mkMergedOptionModule", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "from", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "mkMergedOptionModule",
+      (nixScope) =>
+        createFunc(/*arg:*/ "from", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "to", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "mergeFn", null, {}, (nixScope) => (
               createFunc({}, null, {}, (nixScope) => (
@@ -3322,22 +2814,14 @@ export default createFunc({}, null, {}, (nixScope) => (
                         nixScope.map(
                           createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
                             /*let*/ createScope((nixScope) => {
-                              Object.defineProperty(nixScope, "val", {
-                                enumerable: true,
-                                get() {
-                                  return nixScope.getAttrFromPath(nixScope.f)(
-                                    nixScope.config,
-                                  );
-                                },
-                              });
-                              Object.defineProperty(nixScope, "opt", {
-                                enumerable: true,
-                                get() {
-                                  return nixScope.getAttrFromPath(nixScope.f)(
-                                    nixScope.options,
-                                  );
-                                },
-                              });
+                              defGetter(nixScope, "val", (nixScope) =>
+                                nixScope.getAttrFromPath(nixScope.f)(
+                                  nixScope.config,
+                                ));
+                              defGetter(nixScope, "opt", (nixScope) =>
+                                nixScope.getAttrFromPath(nixScope.f)(
+                                  nixScope.options,
+                                ));
                               return nixScope.optionalString(
                                 operators.notEqual(
                                   nixScope.val,
@@ -3385,13 +2869,13 @@ export default createFunc({}, null, {}, (nixScope) => (
               ))
             ))
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "mkChangedOptionModule", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "from", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "mkChangedOptionModule",
+      (nixScope) =>
+        createFunc(/*arg:*/ "from", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "to", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "changeFn", null, {}, (nixScope) => (
               nixScope.mkMergedOptionModule([nixScope.from])(nixScope.to)(
@@ -3399,13 +2883,13 @@ export default createFunc({}, null, {}, (nixScope) => (
               )
             ))
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "mkAliasOptionModule", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "from", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "mkAliasOptionModule",
+      (nixScope) =>
+        createFunc(/*arg:*/ "from", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "to", null, {}, (nixScope) => (
             nixScope.doRename(
               {
@@ -3417,19 +2901,18 @@ export default createFunc({}, null, {}, (nixScope) => (
               },
             )
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "mkAliasOptionModuleMD", {
-      enumerable: true,
-      get() {
-        return nixScope.mkAliasOptionModule;
-      },
-    });
-    Object.defineProperty(nixScope, "mkDerivedConfig", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "opt", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "mkAliasOptionModuleMD",
+      (nixScope) => nixScope.mkAliasOptionModule,
+    );
+    defGetter(
+      nixScope,
+      "mkDerivedConfig",
+      (nixScope) =>
+        createFunc(/*arg:*/ "opt", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
             nixScope.mkOverride(
               operators.selectOrDefault(
@@ -3439,13 +2922,13 @@ export default createFunc({}, null, {}, (nixScope) => (
               ),
             )(nixScope.f(nixScope.opt["value"]))
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "doRename", {
-      enumerable: true,
-      get() {
-        return createFunc(
+        )),
+    );
+    defGetter(
+      nixScope,
+      "doRename",
+      (nixScope) =>
+        createFunc(
           {
             "withPriority": (nixScope) => (true),
             "condition": (nixScope) => (true),
@@ -3455,47 +2938,39 @@ export default createFunc({}, null, {}, (nixScope) => (
           (nixScope) => (
             createFunc({}, null, {}, (nixScope) => (
               /*let*/ createScope((nixScope) => {
-                Object.defineProperty(nixScope, "fromOpt", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.getAttrFromPath(nixScope.from)(
-                      nixScope.options,
-                    );
-                  },
-                });
-                Object.defineProperty(nixScope, "toOf", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.attrByPath(nixScope.to)(
+                defGetter(
+                  nixScope,
+                  "fromOpt",
+                  (nixScope) =>
+                    nixScope.getAttrFromPath(nixScope.from)(nixScope.options),
+                );
+                defGetter(
+                  nixScope,
+                  "toOf",
+                  (nixScope) =>
+                    nixScope.attrByPath(nixScope.to)(
                       nixScope.abort(
                         new InterpolatedString([
                           "Renaming error: option `",
                           "' does not exist.",
                         ], [() => (nixScope.showOption(nixScope.to))]),
                       ),
-                    );
-                  },
-                });
-                Object.defineProperty(nixScope, "toType", {
-                  enumerable: true,
-                  get() {
-                    return /*let*/ createScope((nixScope) => {
-                      Object.defineProperty(nixScope, "opt", {
-                        enumerable: true,
-                        get() {
-                          return nixScope.attrByPath(nixScope.to)({})(
-                            nixScope.options,
-                          );
-                        },
-                      });
+                    ),
+                );
+                defGetter(
+                  nixScope,
+                  "toType",
+                  (nixScope) =>
+                    /*let*/ createScope((nixScope) => {
+                      defGetter(nixScope, "opt", (nixScope) =>
+                        nixScope.attrByPath(nixScope.to)({})(nixScope.options));
                       return operators.selectOrDefault(
                         nixScope.opt,
                         ["type"],
                         nixScope.types["submodule"]({}),
                       );
-                    });
-                  },
-                });
+                    }),
+                );
                 return ({
                   "options": nixScope.setAttrByPath(nixScope.from)(
                     operators.merge(
@@ -3560,56 +3035,54 @@ export default createFunc({}, null, {}, (nixScope) => (
               })
             ))
           ),
-        );
-      },
-    });
-    Object.defineProperty(nixScope, "importApply", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "modulePath", null, {}, (nixScope) => (
+        ),
+    );
+    defGetter(
+      nixScope,
+      "importApply",
+      (nixScope) =>
+        createFunc(/*arg:*/ "modulePath", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "staticArg", null, {}, (nixScope) => (
             nixScope.lib["setDefaultModuleLocation"](nixScope.modulePath)(
               nixScope.import(nixScope.modulePath)(nixScope.staticArg),
             )
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "importJSON", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "file", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "importJSON",
+      (nixScope) =>
+        createFunc(/*arg:*/ "file", null, {}, (nixScope) => (
           {
             "_file": nixScope.file,
             "config": nixScope.lib["importJSON"](nixScope.file),
           }
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "importTOML", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "file", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "importTOML",
+      (nixScope) =>
+        createFunc(/*arg:*/ "file", null, {}, (nixScope) => (
           {
             "_file": nixScope.file,
             "config": nixScope.lib["importTOML"](nixScope.file),
           }
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "private", {
-      enumerable: true,
-      get() {
-        return nixScope.mapAttrs(
-          createFunc(/*arg:*/ "k", null, {}, (nixScope) => (
-            nixScope.warn(
-              new InterpolatedString([
-                "External use of `lib.modules.",
-                "` is deprecated. If your use case isn't covered by non-deprecated functions, we'd like to know more and perhaps support your use case well, instead of providing access to these low level functions. In this case please open an issue in https://github.com/nixos/nixpkgs/issues/.",
-              ], [() => (nixScope.k)]),
-            )
-          )),
-        )({
+        )),
+    );
+    defGetter(
+      nixScope,
+      "private",
+      (nixScope) =>
+        nixScope.mapAttrs(createFunc(/*arg:*/ "k", null, {}, (nixScope) => (
+          nixScope.warn(
+            new InterpolatedString([
+              "External use of `lib.modules.",
+              "` is deprecated. If your use case isn't covered by non-deprecated functions, we'd like to know more and perhaps support your use case well, instead of providing access to these low level functions. In this case please open an issue in https://github.com/nixos/nixpkgs/issues/.",
+            ], [() => (nixScope.k)]),
+          )
+        )))({
           "applyModuleArgsIfFunction": nixScope.applyModuleArgsIfFunction,
           "dischargeProperties": nixScope.dischargeProperties,
           "mergeModules": nixScope.mergeModules,
@@ -3617,123 +3090,106 @@ export default createFunc({}, null, {}, (nixScope) => (
           "pushDownProperties": nixScope.pushDownProperties,
           "unifyModuleSyntax": nixScope.unifyModuleSyntax,
           "collectModules": nixScope.collectModules(null),
-        });
-      },
-    });
-    Object.defineProperty(nixScope, "messages", {
-      enumerable: true,
-      get() {
-        return /*let*/ createScope((nixScope) => {
+        }),
+    );
+    defGetter(
+      nixScope,
+      "messages",
+      (nixScope) =>
+        /*let*/ createScope((nixScope) => {
           nixScope.concatMapStringsSep =
             nixScope.lib["strings"]["concatMapStringsSep"];
           nixScope.escapeNixString = nixScope.lib["strings"]["escapeNixString"];
           nixScope.trim = nixScope.lib["strings"]["trim"];
-          Object.defineProperty(nixScope, "into_fallback_file_maybe", {
-            enumerable: true,
-            get() {
-              return createFunc(/*arg:*/ "file", null, {}, (nixScope) => (
-                nixScope.optionalString(
+          defGetter(nixScope, "into_fallback_file_maybe", (nixScope) =>
+            createFunc(/*arg:*/ "file", null, {}, (nixScope) => (
+              nixScope.optionalString(
+                operators.and(
+                  operators.notEqual(nixScope.file, null),
+                  operators.notEqual(nixScope.file, nixScope.unknownModule),
+                ),
+              )(
+                new InterpolatedString([
+                  ", while trying to load a module into ",
+                  "",
+                ], [() => (nixScope.toString(nixScope.file))]),
+              )
+            )));
+          defGetter(nixScope, "into_prefix_maybe", (nixScope) =>
+            createFunc(/*arg:*/ "prefix", null, {}, (nixScope) => (
+              nixScope.optionalString(operators.notEqual(nixScope.prefix, []))(
+                new InterpolatedString([
+                  ", while trying to load a module into ",
+                  "",
+                ], [
+                  () => (nixScope.code(nixScope.showOption(nixScope.prefix))),
+                ]),
+              )
+            )));
+          defGetter(
+            nixScope,
+            "lines",
+            (nixScope) => nixScope.concatMapStringsSep("")(nixScope.trim),
+          );
+          defGetter(
+            nixScope,
+            "paragraphs",
+            (nixScope) => nixScope.concatMapStringsSep("")(nixScope.trim),
+          );
+          defGetter(nixScope, "optionalMatch", (nixScope) =>
+            createFunc(/*arg:*/ "cases", null, {}, (nixScope) => (
+              createFunc(/*arg:*/ "value", null, {}, (nixScope) => (
+                operators.ifThenElse(
                   operators.and(
-                    operators.notEqual(nixScope.file, null),
-                    operators.notEqual(nixScope.file, nixScope.unknownModule),
+                    nixScope.isString(nixScope.value),
+                    operators.hasAttr(nixScope.cases, nixScope.value),
                   ),
-                )(
-                  new InterpolatedString([
-                    ", while trying to load a module into ",
-                    "",
-                  ], [() => (nixScope.toString(nixScope.file))]),
+                  () => [nixScope.cases[nixScope.value]],
+                  () => [],
                 )
-              ));
-            },
-          });
-          Object.defineProperty(nixScope, "into_prefix_maybe", {
-            enumerable: true,
-            get() {
-              return createFunc(/*arg:*/ "prefix", null, {}, (nixScope) => (
-                nixScope.optionalString(
-                  operators.notEqual(nixScope.prefix, []),
-                )(
-                  new InterpolatedString([
-                    ", while trying to load a module into ",
-                    "",
-                  ], [
-                    () => (nixScope.code(nixScope.showOption(nixScope.prefix))),
-                  ]),
-                )
-              ));
-            },
-          });
-          Object.defineProperty(nixScope, "lines", {
-            enumerable: true,
-            get() {
-              return nixScope.concatMapStringsSep("")(nixScope.trim);
-            },
-          });
-          Object.defineProperty(nixScope, "paragraphs", {
-            enumerable: true,
-            get() {
-              return nixScope.concatMapStringsSep("")(nixScope.trim);
-            },
-          });
-          Object.defineProperty(nixScope, "optionalMatch", {
-            enumerable: true,
-            get() {
-              return createFunc(/*arg:*/ "cases", null, {}, (nixScope) => (
-                createFunc(/*arg:*/ "value", null, {}, (nixScope) => (
-                  operators.ifThenElse(
-                    operators.and(
-                      nixScope.isString(nixScope.value),
-                      operators.hasAttr(nixScope.cases, nixScope.value),
-                    ),
-                    () => [nixScope.cases[nixScope.value]],
-                    () => [],
-                  )
-                ))
-              ));
-            },
-          });
-          Object.defineProperty(nixScope, "esc", {
-            enumerable: true,
-            get() {
-              return nixScope.builtins["fromJSON"]("u001b");
-            },
-          });
-          Object.defineProperty(nixScope, "warn", {
-            enumerable: true,
-            get() {
-              return createFunc(/*arg:*/ "s", null, {}, (nixScope) => (
+              ))
+            )));
+          defGetter(
+            nixScope,
+            "esc",
+            (nixScope) => nixScope.builtins["fromJSON"]("u001b"),
+          );
+          defGetter(
+            nixScope,
+            "warn",
+            (nixScope) =>
+              createFunc(/*arg:*/ "s", null, {}, (nixScope) => (
                 new InterpolatedString(["", "[1;35m", "", "[0m"], [
                   () => (nixScope.esc),
                   () => (nixScope.s),
                   () => (nixScope.esc),
                 ])
-              ));
-            },
-          });
-          Object.defineProperty(nixScope, "good", {
-            enumerable: true,
-            get() {
-              return createFunc(/*arg:*/ "s", null, {}, (nixScope) => (
+              )),
+          );
+          defGetter(
+            nixScope,
+            "good",
+            (nixScope) =>
+              createFunc(/*arg:*/ "s", null, {}, (nixScope) => (
                 new InterpolatedString(["", "[1;32m", "", "[0m"], [
                   () => (nixScope.esc),
                   () => (nixScope.s),
                   () => (nixScope.esc),
                 ])
-              ));
-            },
-          });
-          Object.defineProperty(nixScope, "code", {
-            enumerable: true,
-            get() {
-              return createFunc(/*arg:*/ "s", null, {}, (nixScope) => (
+              )),
+          );
+          defGetter(
+            nixScope,
+            "code",
+            (nixScope) =>
+              createFunc(/*arg:*/ "s", null, {}, (nixScope) => (
                 new InterpolatedString(["", "[1m", "", "[0m"], [
                   () => (nixScope.esc),
                   () => (nixScope.s),
                   () => (nixScope.esc),
                 ])
-              ));
-            },
-          });
+              )),
+          );
           return ({
             "not_a_module": createFunc(
               { "expectedClass": (nixScope) => (null) },
@@ -3823,9 +3279,8 @@ export default createFunc({}, null, {}, (nixScope) => (
               ),
             ),
           });
-        });
-      },
-    });
+        }),
+    );
     return operators.merge(nixScope.private, {
       "defaultOrderPriority": nixScope.defaultOrderPriority,
       "defaultOverridePriority": nixScope.defaultOverridePriority,

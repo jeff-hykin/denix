@@ -1,22 +1,23 @@
 export default createFunc({}, null, {}, (nixScope) => (
   /*let*/ createScope((nixScope) => {
-    Object.defineProperty(nixScope, "typeless", {
-      enumerable: true,
-      get() {
-        return createFunc({}, null, {}, (nixScope) => (
+    defGetter(
+      nixScope,
+      "typeless",
+      (nixScope) =>
+        createFunc({}, null, {}, (nixScope) => (
           createScope((nixScope) => {
             const obj = {};
             if (obj["options"] === undefined) obj["options"] = {};
             obj["options"]["group"] = nixScope.lib["mkOption"]({});
             return obj;
           })
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "childOfTypeless", {
-      enumerable: true,
-      get() {
-        return createFunc({}, null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "childOfTypeless",
+      (nixScope) =>
+        createFunc({}, null, {}, (nixScope) => (
           createScope((nixScope) => {
             const obj = {};
             if (obj["options"] === undefined) obj["options"] = {};
@@ -28,12 +29,11 @@ export default createFunc({}, null, {}, (nixScope) => (
             );
             return obj;
           })
-        ));
-      },
-    });
+        )),
+    );
     return createScope((nixScope) => {
       const obj = {};
-      obj["imports"] = [nixScope.typeless, nixScope.childOfTypeless];
+      obj.imports = [nixScope.typeless, nixScope.childOfTypeless];
       if (obj["config"] === undefined) obj["config"] = {};
       if (obj["config"]["group"] === undefined) obj["config"]["group"] = {};
       obj["config"]["group"]["enable"] = false;

@@ -284,27 +284,24 @@ export default createFunc({}, null, {}, (nixScope) => (
       "mips32": [],
       "loongson2f": [],
     };
-    Object.defineProperty(nixScope, "inferiors", {
-      enumerable: true,
-      get() {
-        return /*let*/ createScope((nixScope) => {
-          Object.defineProperty(nixScope, "withInferiors", {
-            enumerable: true,
-            get() {
-              return createFunc(/*arg:*/ "archs", null, {}, (nixScope) => (
-                nixScope.lib["unique"](
-                  operators.listConcat(
-                    nixScope.archs,
-                    nixScope.lib["flatten"](
-                      nixScope.lib["attrVals"](nixScope.archs)(
-                        nixScope.inferiors,
-                      ),
+    defGetter(
+      nixScope,
+      "inferiors",
+      (nixScope) =>
+        /*let*/ createScope((nixScope) => {
+          defGetter(nixScope, "withInferiors", (nixScope) =>
+            createFunc(/*arg:*/ "archs", null, {}, (nixScope) => (
+              nixScope.lib["unique"](
+                operators.listConcat(
+                  nixScope.archs,
+                  nixScope.lib["flatten"](
+                    nixScope.lib["attrVals"](nixScope.archs)(
+                      nixScope.inferiors,
                     ),
                   ),
-                )
-              ));
-            },
-          });
+                ),
+              )
+            )));
           return ({
             "default": [],
             "x86-64": [],
@@ -551,13 +548,13 @@ export default createFunc({}, null, {}, (nixScope) => (
             "mips32": [],
             "loongson2f": [],
           });
-        });
-      },
-    });
-    Object.defineProperty(nixScope, "hasInferior", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "arch1", null, {}, (nixScope) => (
+        }),
+    );
+    defGetter(
+      nixScope,
+      "hasInferior",
+      (nixScope) =>
+        createFunc(/*arg:*/ "arch1", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "arch2", null, {}, (nixScope) => (
             operators.and(
               operators.hasAttr(nixScope.inferiors, nixScope.arch1),
@@ -566,42 +563,38 @@ export default createFunc({}, null, {}, (nixScope) => (
               ),
             )
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "canExecute", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "arch1", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "canExecute",
+      (nixScope) =>
+        createFunc(/*arg:*/ "arch1", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "arch2", null, {}, (nixScope) => (
             operators.or(
               operators.equal(nixScope.arch1, nixScope.arch2),
               nixScope.hasInferior(nixScope.arch1)(nixScope.arch2),
             )
           ))
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "predicates", {
-      enumerable: true,
-      get() {
-        return /*let*/ createScope((nixScope) => {
-          Object.defineProperty(nixScope, "featureSupport", {
-            enumerable: true,
-            get() {
-              return createFunc(/*arg:*/ "feature", null, {}, (nixScope) => (
-                createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
-                  nixScope.builtins["elem"](nixScope.feature)(
-                    operators.selectOrDefault(
-                      nixScope.features,
-                      [nixScope.x],
-                      [],
-                    ),
-                  )
-                ))
-              ));
-            },
-          });
+        )),
+    );
+    defGetter(
+      nixScope,
+      "predicates",
+      (nixScope) =>
+        /*let*/ createScope((nixScope) => {
+          defGetter(nixScope, "featureSupport", (nixScope) =>
+            createFunc(/*arg:*/ "feature", null, {}, (nixScope) => (
+              createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+                nixScope.builtins["elem"](nixScope.feature)(
+                  operators.selectOrDefault(
+                    nixScope.features,
+                    [nixScope.x],
+                    [],
+                  ),
+                )
+              ))
+            )));
           return ({
             "sse3Support": nixScope.featureSupport("sse3"),
             "ssse3Support": nixScope.featureSupport("ssse3"),
@@ -617,9 +610,8 @@ export default createFunc({}, null, {}, (nixScope) => (
             "lsxSupport": nixScope.featureSupport("lsx"),
             "lasxSupport": nixScope.featureSupport("lasx"),
           });
-        });
-      },
-    });
+        }),
+    );
     return nixScope;
   })
 ));

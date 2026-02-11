@@ -1,5 +1,5 @@
 import { createRuntime } from "../../../../../../../../../../../../../runtime.js";
-const { runtime, createFunc, createScope } = createRuntime();
+const { runtime, createFunc, createScope, defGetter } = createRuntime();
 const operators = runtime.operators;
 
 export default createFunc({}, null, {}, (nixScope) => (
@@ -22,23 +22,22 @@ export default createFunc({}, null, {}, (nixScope) => (
       nixScope.lib["systems"]["parse"]["significantBytes"];
     nixScope.cpuTypes = nixScope.lib["systems"]["parse"]["cpuTypes"];
     nixScope.execFormats = nixScope.lib["systems"]["parse"]["execFormats"];
-    Object.defineProperty(nixScope, "abis", {
-      enumerable: true,
-      get() {
-        return nixScope.mapAttrs(
-          createFunc(/*arg:*/ "_", null, {}, (nixScope) => (
-            createFunc(/*arg:*/ "abi", null, {}, (nixScope) => (
-              nixScope.removeAttrs(nixScope.abi)(["assertions"])
-            ))
-          )),
-        )(nixScope.lib["systems"]["parse"]["abis"]);
-      },
-    });
+    defGetter(
+      nixScope,
+      "abis",
+      (nixScope) =>
+        nixScope.mapAttrs(createFunc(/*arg:*/ "_", null, {}, (nixScope) => (
+          createFunc(/*arg:*/ "abi", null, {}, (nixScope) => (
+            nixScope.removeAttrs(nixScope.abi)(["assertions"])
+          ))
+        )))(nixScope.lib["systems"]["parse"]["abis"]),
+    );
     return /*rec*/ createScope((nixScope) => {
-      Object.defineProperty(nixScope, "patterns", {
-        enumerable: true,
-        get() {
-          return /*rec*/ createScope((nixScope) => {
+      defGetter(
+        nixScope,
+        "patterns",
+        (nixScope) =>
+          /*rec*/ createScope((nixScope) => {
             nixScope.isx86_32 = { "cpu": ({ "family": "x86", "bits": 32n }) };
             nixScope.isx86_64 = { "cpu": ({ "family": "x86", "bits": 64n }) };
             nixScope.isPower = { "cpu": ({ "family": "power" }) };
@@ -100,7 +99,7 @@ export default createFunc({}, null, {}, (nixScope) => (
               "kernel": ({
                 "families": createScope((nixScope) => {
                   const obj = {};
-                  obj["bsd"] = nixScope.kernelFamilies["bsd"];
+                  obj.bsd = nixScope.kernelFamilies.bsd;
                   return obj;
                 }),
               }),
@@ -109,7 +108,7 @@ export default createFunc({}, null, {}, (nixScope) => (
               "kernel": ({
                 "families": createScope((nixScope) => {
                   const obj = {};
-                  obj["darwin"] = nixScope.kernelFamilies["darwin"];
+                  obj.darwin = nixScope.kernelFamilies.darwin;
                   return obj;
                 }),
               }),
@@ -123,316 +122,267 @@ export default createFunc({}, null, {}, (nixScope) => (
               { "cpu": ({ "family": "x86" }) },
               { "cpu": ({ "family": "loongarch" }) },
             ];
-            Object.defineProperty(nixScope, "isi686", {
-              enumerable: true,
-              get() {
-                return ({ "cpu": nixScope.cpuTypes["i686"] });
-              },
-            });
-            Object.defineProperty(nixScope, "isArmv7", {
-              enumerable: true,
-              get() {
-                return nixScope.map(createFunc({}, null, {}, (nixScope) => (
-                  { "cpu": ({ "arch": nixScope.arch }) }
-                )))(
-                  nixScope.filter(
-                    createFunc(/*arg:*/ "cpu", null, {}, (nixScope) => (
-                      nixScope.hasPrefix("armv7")(
-                        operators.selectOrDefault(nixScope.cpu, ["arch"], ""),
-                      )
-                    )),
-                  )(nixScope.attrValues(nixScope.cpuTypes)),
-                );
-              },
-            });
-            Object.defineProperty(nixScope, "isJavaScript", {
-              enumerable: true,
-              get() {
-                return ({ "cpu": nixScope.cpuTypes["javascript"] });
-              },
-            });
-            Object.defineProperty(nixScope, "isILP32", {
-              enumerable: true,
-              get() {
-                return operators.listConcat(
-                  [{ "cpu": ({ "family": "wasm", "bits": 32n }) }],
-                  nixScope.map(
+            defGetter(
+              nixScope,
+              "isi686",
+              (nixScope) => ({ "cpu": nixScope.cpuTypes["i686"] }),
+            );
+            defGetter(nixScope, "isArmv7", (nixScope) =>
+              nixScope.map(createFunc({}, null, {}, (nixScope) => (
+                { "cpu": ({ "arch": nixScope.arch }) }
+              )))(
+                nixScope.filter(
+                  createFunc(/*arg:*/ "cpu", null, {}, (nixScope) => (
+                    nixScope.hasPrefix("armv7")(
+                      operators.selectOrDefault(nixScope.cpu, ["arch"], ""),
+                    )
+                  )),
+                )(nixScope.attrValues(nixScope.cpuTypes)),
+              ));
+            defGetter(
+              nixScope,
+              "isJavaScript",
+              (nixScope) => ({ "cpu": nixScope.cpuTypes["javascript"] }),
+            );
+            defGetter(nixScope, "isILP32", (nixScope) =>
+              operators.listConcat(
+                [{ "cpu": ({ "family": "wasm", "bits": 32n }) }],
+                nixScope.map(createFunc(/*arg:*/ "a", null, {}, (nixScope) => (
+                  { "abi": ({ "abi": nixScope.a }) }
+                )))(["n32", "ilp32", "x32"]),
+              ));
+            defGetter(
+              nixScope,
+              "isBigEndian",
+              (nixScope) => ({
+                "cpu":
+                  ({
+                    "significantByte": nixScope.significantBytes["bigEndian"],
+                  }),
+              }),
+            );
+            defGetter(
+              nixScope,
+              "isLittleEndian",
+              (nixScope) => ({
+                "cpu":
+                  ({
+                    "significantByte":
+                      nixScope.significantBytes["littleEndian"],
+                  }),
+              }),
+            );
+            defGetter(
+              nixScope,
+              "isUnix",
+              (
+                nixScope,
+              ) => [
+                nixScope.isBSD,
+                nixScope.isDarwin,
+                nixScope.isLinux,
+                nixScope.isSunOS,
+                nixScope.isCygwin,
+                nixScope.isRedox,
+              ],
+            );
+            defGetter(
+              nixScope,
+              "isMacOS",
+              (nixScope) => ({ "kernel": nixScope.kernels["macos"] }),
+            );
+            defGetter(
+              nixScope,
+              "isiOS",
+              (nixScope) => ({ "kernel": nixScope.kernels["ios"] }),
+            );
+            defGetter(
+              nixScope,
+              "isLinux",
+              (nixScope) => ({ "kernel": nixScope.kernels["linux"] }),
+            );
+            defGetter(
+              nixScope,
+              "isSunOS",
+              (nixScope) => ({ "kernel": nixScope.kernels["solaris"] }),
+            );
+            defGetter(
+              nixScope,
+              "isNetBSD",
+              (nixScope) => ({ "kernel": nixScope.kernels["netbsd"] }),
+            );
+            defGetter(
+              nixScope,
+              "isOpenBSD",
+              (nixScope) => ({ "kernel": nixScope.kernels["openbsd"] }),
+            );
+            defGetter(
+              nixScope,
+              "isWindows",
+              (nixScope) => ({ "kernel": nixScope.kernels["windows"] }),
+            );
+            defGetter(
+              nixScope,
+              "isCygwin",
+              (nixScope) => ({
+                "kernel": nixScope.kernels["windows"],
+                "abi": nixScope.abis["cygnus"],
+              }),
+            );
+            defGetter(
+              nixScope,
+              "isMinGW",
+              (nixScope) => ({
+                "kernel": nixScope.kernels["windows"],
+                "abi": nixScope.abis["gnu"],
+              }),
+            );
+            defGetter(
+              nixScope,
+              "isMsvc",
+              (nixScope) => ({
+                "kernel": nixScope.kernels["windows"],
+                "abi": nixScope.abis["msvc"],
+              }),
+            );
+            defGetter(
+              nixScope,
+              "isWasi",
+              (nixScope) => ({ "kernel": nixScope.kernels["wasi"] }),
+            );
+            defGetter(
+              nixScope,
+              "isRedox",
+              (nixScope) => ({ "kernel": nixScope.kernels["redox"] }),
+            );
+            defGetter(
+              nixScope,
+              "isGhcjs",
+              (nixScope) => ({ "kernel": nixScope.kernels["ghcjs"] }),
+            );
+            defGetter(
+              nixScope,
+              "isGenode",
+              (nixScope) => ({ "kernel": nixScope.kernels["genode"] }),
+            );
+            defGetter(
+              nixScope,
+              "isNone",
+              (nixScope) => ({ "kernel": nixScope.kernels["none"] }),
+            );
+            defGetter(
+              nixScope,
+              "isAndroid",
+              (
+                nixScope,
+              ) => [
+                { "abi": nixScope.abis["android"] },
+                { "abi": nixScope.abis["androideabi"] },
+              ],
+            );
+            defGetter(nixScope, "isGnu", (nixScope) =>
+              ((_withAttrs) => {
+                const nixScope = {
+                  ...runtime.scopeStack.slice(-1)[0],
+                  ..._withAttrs,
+                };
+                runtime.scopeStack.push(nixScope);
+                try {
+                  return nixScope.map(
                     createFunc(/*arg:*/ "a", null, {}, (nixScope) => (
-                      { "abi": ({ "abi": nixScope.a }) }
+                      { "abi": nixScope.a }
                     )),
-                  )(["n32", "ilp32", "x32"]),
-                );
-              },
-            });
-            Object.defineProperty(nixScope, "isBigEndian", {
-              enumerable: true,
-              get() {
-                return ({
-                  "cpu":
-                    ({
-                      "significantByte": nixScope.significantBytes["bigEndian"],
-                    }),
-                });
-              },
-            });
-            Object.defineProperty(nixScope, "isLittleEndian", {
-              enumerable: true,
-              get() {
-                return ({
-                  "cpu":
-                    ({
-                      "significantByte":
-                        nixScope.significantBytes["littleEndian"],
-                    }),
-                });
-              },
-            });
-            Object.defineProperty(nixScope, "isUnix", {
-              enumerable: true,
-              get() {
-                return [
-                  nixScope.isBSD,
-                  nixScope.isDarwin,
-                  nixScope.isLinux,
-                  nixScope.isSunOS,
-                  nixScope.isCygwin,
-                  nixScope.isRedox,
-                ];
-              },
-            });
-            Object.defineProperty(nixScope, "isMacOS", {
-              enumerable: true,
-              get() {
-                return ({ "kernel": nixScope.kernels["macos"] });
-              },
-            });
-            Object.defineProperty(nixScope, "isiOS", {
-              enumerable: true,
-              get() {
-                return ({ "kernel": nixScope.kernels["ios"] });
-              },
-            });
-            Object.defineProperty(nixScope, "isLinux", {
-              enumerable: true,
-              get() {
-                return ({ "kernel": nixScope.kernels["linux"] });
-              },
-            });
-            Object.defineProperty(nixScope, "isSunOS", {
-              enumerable: true,
-              get() {
-                return ({ "kernel": nixScope.kernels["solaris"] });
-              },
-            });
-            Object.defineProperty(nixScope, "isNetBSD", {
-              enumerable: true,
-              get() {
-                return ({ "kernel": nixScope.kernels["netbsd"] });
-              },
-            });
-            Object.defineProperty(nixScope, "isOpenBSD", {
-              enumerable: true,
-              get() {
-                return ({ "kernel": nixScope.kernels["openbsd"] });
-              },
-            });
-            Object.defineProperty(nixScope, "isWindows", {
-              enumerable: true,
-              get() {
-                return ({ "kernel": nixScope.kernels["windows"] });
-              },
-            });
-            Object.defineProperty(nixScope, "isCygwin", {
-              enumerable: true,
-              get() {
-                return ({
-                  "kernel": nixScope.kernels["windows"],
-                  "abi": nixScope.abis["cygnus"],
-                });
-              },
-            });
-            Object.defineProperty(nixScope, "isMinGW", {
-              enumerable: true,
-              get() {
-                return ({
-                  "kernel": nixScope.kernels["windows"],
-                  "abi": nixScope.abis["gnu"],
-                });
-              },
-            });
-            Object.defineProperty(nixScope, "isMsvc", {
-              enumerable: true,
-              get() {
-                return ({
-                  "kernel": nixScope.kernels["windows"],
-                  "abi": nixScope.abis["msvc"],
-                });
-              },
-            });
-            Object.defineProperty(nixScope, "isWasi", {
-              enumerable: true,
-              get() {
-                return ({ "kernel": nixScope.kernels["wasi"] });
-              },
-            });
-            Object.defineProperty(nixScope, "isRedox", {
-              enumerable: true,
-              get() {
-                return ({ "kernel": nixScope.kernels["redox"] });
-              },
-            });
-            Object.defineProperty(nixScope, "isGhcjs", {
-              enumerable: true,
-              get() {
-                return ({ "kernel": nixScope.kernels["ghcjs"] });
-              },
-            });
-            Object.defineProperty(nixScope, "isGenode", {
-              enumerable: true,
-              get() {
-                return ({ "kernel": nixScope.kernels["genode"] });
-              },
-            });
-            Object.defineProperty(nixScope, "isNone", {
-              enumerable: true,
-              get() {
-                return ({ "kernel": nixScope.kernels["none"] });
-              },
-            });
-            Object.defineProperty(nixScope, "isAndroid", {
-              enumerable: true,
-              get() {
-                return [
-                  { "abi": nixScope.abis["android"] },
-                  { "abi": nixScope.abis["androideabi"] },
-                ];
-              },
-            });
-            Object.defineProperty(nixScope, "isGnu", {
-              enumerable: true,
-              get() {
-                return ((_withAttrs) => {
-                  const nixScope = {
-                    ...runtime.scopeStack.slice(-1)[0],
-                    ..._withAttrs,
-                  };
-                  runtime.scopeStack.push(nixScope);
-                  try {
-                    return nixScope.map(
-                      createFunc(/*arg:*/ "a", null, {}, (nixScope) => (
-                        { "abi": nixScope.a }
-                      )),
-                    )([
-                      nixScope.gnuabi64,
-                      nixScope.gnuabin32,
-                      nixScope.gnu,
-                      nixScope.gnueabi,
-                      nixScope.gnueabihf,
-                      nixScope.gnuabielfv1,
-                      nixScope.gnuabielfv2,
-                    ]);
-                  } finally {
-                    runtime.scopeStack.pop();
-                  }
-                })(nixScope.abis);
-              },
-            });
-            Object.defineProperty(nixScope, "isMusl", {
-              enumerable: true,
-              get() {
-                return ((_withAttrs) => {
-                  const nixScope = {
-                    ...runtime.scopeStack.slice(-1)[0],
-                    ..._withAttrs,
-                  };
-                  runtime.scopeStack.push(nixScope);
-                  try {
-                    return nixScope.map(
-                      createFunc(/*arg:*/ "a", null, {}, (nixScope) => (
-                        { "abi": nixScope.a }
-                      )),
-                    )([
-                      nixScope.musl,
-                      nixScope.musleabi,
-                      nixScope.musleabihf,
-                      nixScope.muslabin32,
-                      nixScope.muslabi64,
-                    ]);
-                  } finally {
-                    runtime.scopeStack.pop();
-                  }
-                })(nixScope.abis);
-              },
-            });
-            Object.defineProperty(nixScope, "isUClibc", {
-              enumerable: true,
-              get() {
-                return ((_withAttrs) => {
-                  const nixScope = {
-                    ...runtime.scopeStack.slice(-1)[0],
-                    ..._withAttrs,
-                  };
-                  runtime.scopeStack.push(nixScope);
-                  try {
-                    return nixScope.map(
-                      createFunc(/*arg:*/ "a", null, {}, (nixScope) => (
-                        { "abi": nixScope.a }
-                      )),
-                    )([
-                      nixScope.uclibc,
-                      nixScope.uclibceabi,
-                      nixScope.uclibceabihf,
-                    ]);
-                  } finally {
-                    runtime.scopeStack.pop();
-                  }
-                })(nixScope.abis);
-              },
-            });
-            Object.defineProperty(nixScope, "isElf", {
-              enumerable: true,
-              get() {
-                return createScope((nixScope) => {
-                  const obj = {};
-                  if (obj["kernel"] === undefined) obj["kernel"] = {};
-                  obj["kernel"]["execFormat"] = nixScope.execFormats["elf"];
-                  return obj;
-                });
-              },
-            });
-            Object.defineProperty(nixScope, "isMacho", {
-              enumerable: true,
-              get() {
-                return createScope((nixScope) => {
-                  const obj = {};
-                  if (obj["kernel"] === undefined) obj["kernel"] = {};
-                  obj["kernel"]["execFormat"] = nixScope.execFormats["macho"];
-                  return obj;
-                });
-              },
-            });
+                  )([
+                    nixScope.gnuabi64,
+                    nixScope.gnuabin32,
+                    nixScope.gnu,
+                    nixScope.gnueabi,
+                    nixScope.gnueabihf,
+                    nixScope.gnuabielfv1,
+                    nixScope.gnuabielfv2,
+                  ]);
+                } finally {
+                  runtime.scopeStack.pop();
+                }
+              })(nixScope.abis));
+            defGetter(nixScope, "isMusl", (nixScope) =>
+              ((_withAttrs) => {
+                const nixScope = {
+                  ...runtime.scopeStack.slice(-1)[0],
+                  ..._withAttrs,
+                };
+                runtime.scopeStack.push(nixScope);
+                try {
+                  return nixScope.map(
+                    createFunc(/*arg:*/ "a", null, {}, (nixScope) => (
+                      { "abi": nixScope.a }
+                    )),
+                  )([
+                    nixScope.musl,
+                    nixScope.musleabi,
+                    nixScope.musleabihf,
+                    nixScope.muslabin32,
+                    nixScope.muslabi64,
+                  ]);
+                } finally {
+                  runtime.scopeStack.pop();
+                }
+              })(nixScope.abis));
+            defGetter(nixScope, "isUClibc", (nixScope) =>
+              ((_withAttrs) => {
+                const nixScope = {
+                  ...runtime.scopeStack.slice(-1)[0],
+                  ..._withAttrs,
+                };
+                runtime.scopeStack.push(nixScope);
+                try {
+                  return nixScope.map(
+                    createFunc(/*arg:*/ "a", null, {}, (nixScope) => (
+                      { "abi": nixScope.a }
+                    )),
+                  )([
+                    nixScope.uclibc,
+                    nixScope.uclibceabi,
+                    nixScope.uclibceabihf,
+                  ]);
+                } finally {
+                  runtime.scopeStack.pop();
+                }
+              })(nixScope.abis));
+            defGetter(nixScope, "isElf", (nixScope) =>
+              createScope((nixScope) => {
+                const obj = {};
+                if (obj["kernel"] === undefined) obj["kernel"] = {};
+                obj["kernel"]["execFormat"] = nixScope.execFormats["elf"];
+                return obj;
+              }));
+            defGetter(nixScope, "isMacho", (nixScope) =>
+              createScope((nixScope) => {
+                const obj = {};
+                if (obj["kernel"] === undefined) obj["kernel"] = {};
+                obj["kernel"]["execFormat"] = nixScope.execFormats["macho"];
+                return obj;
+              }));
             return nixScope;
-          });
-        },
-      });
-      Object.defineProperty(nixScope, "patternLogicalAnd", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "pat1_", null, {}, (nixScope) => (
+          }),
+      );
+      defGetter(
+        nixScope,
+        "patternLogicalAnd",
+        (nixScope) =>
+          createFunc(/*arg:*/ "pat1_", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "pat2_", null, {}, (nixScope) => (
               /*let*/ createScope((nixScope) => {
-                Object.defineProperty(nixScope, "pat1", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.toList(nixScope.pat1_);
-                  },
-                });
-                Object.defineProperty(nixScope, "pat2", {
-                  enumerable: true,
-                  get() {
-                    return nixScope.toList(nixScope.pat2_);
-                  },
-                });
+                defGetter(
+                  nixScope,
+                  "pat1",
+                  (nixScope) => nixScope.toList(nixScope.pat1_),
+                );
+                defGetter(
+                  nixScope,
+                  "pat2",
+                  (nixScope) => nixScope.toList(nixScope.pat2_),
+                );
                 return nixScope.concatMap(
                   createFunc(/*arg:*/ "attr1", null, {}, (nixScope) => (
                     nixScope.map(
@@ -494,13 +444,13 @@ export default createFunc({}, null, {}, (nixScope) => (
                 )(nixScope.pat1);
               })
             ))
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "matchAnyAttrs", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "patterns", null, {}, (nixScope) => (
+          )),
+      );
+      defGetter(
+        nixScope,
+        "matchAnyAttrs",
+        (nixScope) =>
+          createFunc(/*arg:*/ "patterns", null, {}, (nixScope) => (
             operators.ifThenElse(
               nixScope.isList(nixScope.patterns),
               () => (createFunc(/*arg:*/ "attrs", null, {}, (nixScope) => (
@@ -512,31 +462,26 @@ export default createFunc({}, null, {}, (nixScope) => (
               ))),
               () => (nixScope.matchAttrs(nixScope.patterns)),
             )
-          ));
-        },
-      });
-      Object.defineProperty(nixScope, "predicates", {
-        enumerable: true,
-        get() {
-          return nixScope.mapAttrs(
-            createFunc(/*arg:*/ "_", null, {}, (nixScope) => (
-              nixScope.matchAnyAttrs
-            )),
-          )(nixScope.patterns);
-        },
-      });
-      Object.defineProperty(nixScope, "platformPatterns", {
-        enumerable: true,
-        get() {
-          return nixScope.mapAttrs(
-            createFunc(/*arg:*/ "_", null, {}, (nixScope) => (
-              createFunc(/*arg:*/ "p", null, {}, (nixScope) => (
-                operators.merge({ "parsed": {} }, nixScope.p)
-              ))
-            )),
-          )({ "isStatic": ({ "isStatic": true }) });
-        },
-      });
+          )),
+      );
+      defGetter(
+        nixScope,
+        "predicates",
+        (nixScope) =>
+          nixScope.mapAttrs(createFunc(/*arg:*/ "_", null, {}, (nixScope) => (
+            nixScope.matchAnyAttrs
+          )))(nixScope.patterns),
+      );
+      defGetter(
+        nixScope,
+        "platformPatterns",
+        (nixScope) =>
+          nixScope.mapAttrs(createFunc(/*arg:*/ "_", null, {}, (nixScope) => (
+            createFunc(/*arg:*/ "p", null, {}, (nixScope) => (
+              operators.merge({ "parsed": {} }, nixScope.p)
+            ))
+          )))({ "isStatic": ({ "isStatic": true }) }),
+      );
       return nixScope;
     });
   })

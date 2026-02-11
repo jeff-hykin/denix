@@ -35,26 +35,21 @@ export default createFunc(
   {},
   (nixScope) => (
     /*let*/ createScope((nixScope) => {
-      Object.defineProperty(nixScope, "lib", {
-        enumerable: true,
-        get() {
-          return nixScope.import(new Path(["../."], []));
-        },
-      });
-      Object.defineProperty(nixScope, "testWithNix", {
-        enumerable: true,
-        get() {
-          return createFunc(/*arg:*/ "nix", null, {}, (nixScope) => (
-            nixScope.import(new Path(["./test-with-nix.nix"], []))(
-              {
-                "lib": nixScope.lib,
-                "nix": nixScope.nix,
-                "pkgs": nixScope.pkgsBB,
-              },
-            )
-          ));
-        },
-      });
+      defGetter(
+        nixScope,
+        "lib",
+        (nixScope) => nixScope.import(new Path(["../."], [])),
+      );
+      defGetter(nixScope, "testWithNix", (nixScope) =>
+        createFunc(/*arg:*/ "nix", null, {}, (nixScope) => (
+          nixScope.import(new Path(["./test-with-nix.nix"], []))(
+            {
+              "lib": nixScope.lib,
+              "nix": nixScope.nix,
+              "pkgs": nixScope.pkgsBB,
+            },
+          )
+        )));
       return nixScope.pkgsBB["symlinkJoin"]({
         "name": "nixpkgs-lib-tests",
         "paths": operators.listConcat(

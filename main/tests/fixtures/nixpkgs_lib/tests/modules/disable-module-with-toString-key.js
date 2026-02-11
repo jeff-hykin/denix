@@ -2,12 +2,11 @@ export default createFunc({}, null, {}, (nixScope) => (
   /*let*/ createScope((nixScope) => {
     nixScope.mkOption = nixScope.lib["mkOption"];
     nixScope.types = nixScope.lib["types"];
-    Object.defineProperty(nixScope, "moduleWithKey", {
-      enumerable: true,
-      get() {
-        return ({ "key": 123n, "config": ({ "enable": true }) });
-      },
-    });
+    defGetter(
+      nixScope,
+      "moduleWithKey",
+      (nixScope) => ({ "key": 123n, "config": ({ "enable": true }) }),
+    );
     return ({
       "options": ({
         "positive": nixScope.mkOption(

@@ -3,7 +3,7 @@ export default createFunc({}, null, {}, (nixScope) => (
     nixScope.types = nixScope.lib["types"];
     return createScope((nixScope) => {
       const obj = {};
-      obj["options"] = {
+      obj.options = {
         "fun": nixScope.lib["mkOption"](
           {
             "type": nixScope.types["functionTo"](
@@ -27,14 +27,14 @@ export default createFunc({}, null, {}, (nixScope) => (
         createFunc(/*arg:*/ "input", null, {}, (nixScope) => (
           createScope((nixScope) => {
             const obj = {};
-            obj["a"] = nixScope.input["a"];
+            obj.a = nixScope.input.a;
             return obj;
           })
         )),
         createFunc(/*arg:*/ "input", null, {}, (nixScope) => (
           createScope((nixScope) => {
             const obj = {};
-            obj["b"] = nixScope.input["b"];
+            obj.b = nixScope.input.b;
             return obj;
           })
         )),

@@ -5,7 +5,7 @@ export default createFunc({}, null, {}, (nixScope) => (
     nixScope.mkOption = nixScope.lib["mkOption"];
     return createScope((nixScope) => {
       const obj = {};
-      obj["imports"] = [{
+      obj.imports = [{
         "options": ({
           "pathInStore": nixScope.mkOption(
             {
@@ -64,8 +64,8 @@ export default createFunc({}, null, {}, (nixScope) => (
           ),
         }),
       }];
-      obj["conflictingPathOptionType"] = "/foo/bar";
-      obj["impossiblePathOptionType"] = "/foo/bar";
+      obj.conflictingPathOptionType = "/foo/bar";
+      obj.impossiblePathOptionType = "/foo/bar";
       if (obj["pathInStore"] === undefined) obj["pathInStore"] = {};
       obj["pathInStore"]["ok1"] = new InterpolatedString([
         "",

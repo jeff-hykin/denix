@@ -22,16 +22,16 @@ createFunc({}, null, {}, (nixScope) => (
     nixScope.substring = nixScope.lib["strings"]["substring"];
     nixScope.assertMsg = nixScope.lib["asserts"]["assertMsg"];
     nixScope.isValid = nixScope.lib["path"]["subpath"]["isValid"];
-    Object.defineProperty(nixScope, "listHasPrefix", {
-      enumerable: true,
-      get() {
-        return nixScope.lib["lists"]["hasPrefix"];
-      },
-    });
-    Object.defineProperty(nixScope, "subpathInvalidReason", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "value", null, {}, (nixScope) => (
+    defGetter(
+      nixScope,
+      "listHasPrefix",
+      (nixScope) => nixScope.lib["lists"]["hasPrefix"],
+    );
+    defGetter(
+      nixScope,
+      "subpathInvalidReason",
+      (nixScope) =>
+        createFunc(/*arg:*/ "value", null, {}, (nixScope) => (
           operators.ifThenElse(
             operators.negate(nixScope.isString(nixScope.value)),
             () => (new InterpolatedString([
@@ -64,61 +64,62 @@ createFunc({}, null, {}, (nixScope) => (
               )),
             )),
           )
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "splitRelPath", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "path", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "splitRelPath",
+      (nixScope) =>
+        createFunc(/*arg:*/ "path", null, {}, (nixScope) => (
           /*let*/ createScope((nixScope) => {
-            Object.defineProperty(nixScope, "parts", {
-              enumerable: true,
-              get() {
-                return nixScope.split("/+(")(nixScope.path);
-              },
-            });
-            Object.defineProperty(nixScope, "partCount", {
-              enumerable: true,
-              get() {
-                return operators.add(
+            defGetter(
+              nixScope,
+              "parts",
+              (nixScope) => nixScope.split("/+(")(nixScope.path),
+            );
+            defGetter(
+              nixScope,
+              "partCount",
+              (nixScope) =>
+                operators.add(
                   operators.divide(nixScope.length(nixScope.parts), 2n),
                   1n,
-                );
-              },
-            });
-            Object.defineProperty(nixScope, "skipStart", {
-              enumerable: true,
-              get() {
-                return (operators.ifThenElse(
-                  operators.equal(nixScope.head(nixScope.parts), "."),
-                  () => (1n),
-                  () => (0n),
-                ));
-              },
-            });
-            Object.defineProperty(nixScope, "skipEnd", {
-              enumerable: true,
-              get() {
-                return (operators.ifThenElse(
-                  operators.or(
-                    operators.equal(nixScope.last(nixScope.parts), "."),
-                    operators.equal(nixScope.last(nixScope.parts), ""),
-                  ),
-                  () => (1n),
-                  () => (0n),
-                ));
-              },
-            });
-            Object.defineProperty(nixScope, "componentCount", {
-              enumerable: true,
-              get() {
-                return operators.subtract(
+                ),
+            );
+            defGetter(
+              nixScope,
+              "skipStart",
+              (
+                nixScope,
+              ) => (operators.ifThenElse(
+                operators.equal(nixScope.head(nixScope.parts), "."),
+                () => (1n),
+                () => (0n),
+              )),
+            );
+            defGetter(
+              nixScope,
+              "skipEnd",
+              (
+                nixScope,
+              ) => (operators.ifThenElse(
+                operators.or(
+                  operators.equal(nixScope.last(nixScope.parts), "."),
+                  operators.equal(nixScope.last(nixScope.parts), ""),
+                ),
+                () => (1n),
+                () => (0n),
+              )),
+            );
+            defGetter(
+              nixScope,
+              "componentCount",
+              (nixScope) =>
+                operators.subtract(
                   operators.subtract(nixScope.partCount, nixScope.skipEnd),
                   nixScope.skipStart,
-                );
-              },
-            });
+                ),
+            );
             return (operators.ifThenElse(
               operators.equal(nixScope.path, "."),
               () => [],
@@ -134,13 +135,13 @@ createFunc({}, null, {}, (nixScope) => (
               )(nixScope.componentCount)),
             ));
           })
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "joinRelPath", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "components", null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "joinRelPath",
+      (nixScope) =>
+        createFunc(/*arg:*/ "components", null, {}, (nixScope) => (
           operators.add(
             "./",
             operators.ifThenElse(
@@ -149,58 +150,50 @@ createFunc({}, null, {}, (nixScope) => (
               () => (nixScope.concatStringsSep("/")(nixScope.components)),
             ),
           )
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "deconstructPath", {
-      enumerable: true,
-      get() {
-        return /*let*/ createScope((nixScope) => {
-          Object.defineProperty(nixScope, "recurse", {
-            enumerable: true,
-            get() {
-              return createFunc(/*arg:*/ "components", null, {}, (nixScope) => (
-                createFunc(/*arg:*/ "base", null, {}, (nixScope) => (
-                  operators.ifThenElse(
-                    operators.equal(
-                      nixScope.base,
-                      nixScope.dirOf(nixScope.base),
+        )),
+    );
+    defGetter(
+      nixScope,
+      "deconstructPath",
+      (nixScope) =>
+        /*let*/ createScope((nixScope) => {
+          defGetter(nixScope, "recurse", (nixScope) =>
+            createFunc(/*arg:*/ "components", null, {}, (nixScope) => (
+              createFunc(/*arg:*/ "base", null, {}, (nixScope) => (
+                operators.ifThenElse(
+                  operators.equal(nixScope.base, nixScope.dirOf(nixScope.base)),
+                  () => ({
+                    "root": nixScope.base,
+                    "components": nixScope.components,
+                  }),
+                  () => (nixScope.recurse(
+                    operators.listConcat(
+                      [nixScope.baseNameOf(nixScope.base)],
+                      nixScope.components,
                     ),
-                    () => ({
-                      "root": nixScope.base,
-                      "components": nixScope.components,
-                    }),
-                    () => (nixScope.recurse(
-                      operators.listConcat(
-                        [nixScope.baseNameOf(nixScope.base)],
-                        nixScope.components,
-                      ),
-                    )(nixScope.dirOf(nixScope.base))),
-                  )
-                ))
-              ));
-            },
-          });
+                  )(nixScope.dirOf(nixScope.base))),
+                )
+              ))
+            )));
           return nixScope.recurse([]);
-        });
-      },
-    });
-    Object.defineProperty(nixScope, "storeDirComponents", {
-      enumerable: true,
-      get() {
-        return nixScope.splitRelPath(operators.add("./", nixScope.storeDir));
-      },
-    });
-    Object.defineProperty(nixScope, "storeDirLength", {
-      enumerable: true,
-      get() {
-        return nixScope.length(nixScope.storeDirComponents);
-      },
-    });
-    Object.defineProperty(nixScope, "componentsHaveStorePathPrefix", {
-      enumerable: true,
-      get() {
-        return createFunc(/*arg:*/ "components", null, {}, (nixScope) => (
+        }),
+    );
+    defGetter(
+      nixScope,
+      "storeDirComponents",
+      (nixScope) =>
+        nixScope.splitRelPath(operators.add("./", nixScope.storeDir)),
+    );
+    defGetter(
+      nixScope,
+      "storeDirLength",
+      (nixScope) => nixScope.length(nixScope.storeDirComponents),
+    );
+    defGetter(
+      nixScope,
+      "componentsHaveStorePathPrefix",
+      (nixScope) =>
+        createFunc(/*arg:*/ "components", null, {}, (nixScope) => (
           operators.or(
             operators.and(
               operators.and(
@@ -229,12 +222,11 @@ createFunc({}, null, {}, (nixScope) => (
               ),
             ),
           )
-        ));
-      },
-    });
+        )),
+    );
     return createScope((nixScope) => {
       const obj = {};
-      obj["append"] = createFunc(/*arg:*/ "path", null, {}, (nixScope) => (
+      obj.append = createFunc(/*arg:*/ "path", null, {}, (nixScope) => (
         createFunc(/*arg:*/ "subpath", null, {}, (nixScope) => (
           ((_cond) => {
             if (!_cond) {
@@ -272,7 +264,7 @@ createFunc({}, null, {}, (nixScope) => (
           )
         ))
       ));
-      obj["hasPrefix"] = createFunc(/*arg:*/ "path1", null, {}, (nixScope) => (
+      obj.hasPrefix = createFunc(/*arg:*/ "path1", null, {}, (nixScope) => (
         ((_cond) => {
           if (!_cond) {
             throw new Error(
@@ -281,12 +273,11 @@ createFunc({}, null, {}, (nixScope) => (
             );
           }
           return /*let*/ createScope((nixScope) => {
-            Object.defineProperty(nixScope, "path1Deconstructed", {
-              enumerable: true,
-              get() {
-                return nixScope.deconstructPath(nixScope.path1);
-              },
-            });
+            defGetter(
+              nixScope,
+              "path1Deconstructed",
+              (nixScope) => nixScope.deconstructPath(nixScope.path1),
+            );
             return createFunc(/*arg:*/ "path2", null, {}, (nixScope) => (
               ((_cond) => {
                 if (!_cond) {
@@ -296,12 +287,11 @@ createFunc({}, null, {}, (nixScope) => (
                   );
                 }
                 return /*let*/ createScope((nixScope) => {
-                  Object.defineProperty(nixScope, "path2Deconstructed", {
-                    enumerable: true,
-                    get() {
-                      return nixScope.deconstructPath(nixScope.path2);
-                    },
-                  });
+                  defGetter(
+                    nixScope,
+                    "path2Deconstructed",
+                    (nixScope) => nixScope.deconstructPath(nixScope.path2),
+                  );
                   return ((_cond) => {
                     if (!_cond) {
                       throw new Error(
@@ -362,135 +352,127 @@ createFunc({}, null, {}, (nixScope) => (
           ),
         )
       ));
-      obj["removePrefix"] = createFunc(
-        /*arg:*/ "path1",
-        null,
-        {},
-        (nixScope) => (
-          ((_cond) => {
-            if (!_cond) {
-              throw new Error(
-                "assertion failed: " +
-                  'assertMsg (isPath path1)\n      "lib.path.removePrefix: First argument is of type ${typeOf path1}, but a path was expected."',
-              );
-            }
-            return /*let*/ createScope((nixScope) => {
-              Object.defineProperty(nixScope, "path1Deconstructed", {
-                enumerable: true,
-                get() {
-                  return nixScope.deconstructPath(nixScope.path1);
-                },
-              });
-              Object.defineProperty(nixScope, "path1Length", {
-                enumerable: true,
-                get() {
-                  return nixScope.length(
-                    nixScope.path1Deconstructed["components"],
+      obj.removePrefix = createFunc(/*arg:*/ "path1", null, {}, (nixScope) => (
+        ((_cond) => {
+          if (!_cond) {
+            throw new Error(
+              "assertion failed: " +
+                'assertMsg (isPath path1)\n      "lib.path.removePrefix: First argument is of type ${typeOf path1}, but a path was expected."',
+            );
+          }
+          return /*let*/ createScope((nixScope) => {
+            defGetter(
+              nixScope,
+              "path1Deconstructed",
+              (nixScope) => nixScope.deconstructPath(nixScope.path1),
+            );
+            defGetter(
+              nixScope,
+              "path1Length",
+              (nixScope) =>
+                nixScope.length(nixScope.path1Deconstructed["components"]),
+            );
+            return createFunc(/*arg:*/ "path2", null, {}, (nixScope) => (
+              ((_cond) => {
+                if (!_cond) {
+                  throw new Error(
+                    "assertion failed: " +
+                      'assertMsg (isPath path2)\n      "lib.path.removePrefix: Second argument is of type ${typeOf path2}, but a path was expected."',
                   );
-                },
-              });
-              return createFunc(/*arg:*/ "path2", null, {}, (nixScope) => (
-                ((_cond) => {
-                  if (!_cond) {
-                    throw new Error(
-                      "assertion failed: " +
-                        'assertMsg (isPath path2)\n      "lib.path.removePrefix: Second argument is of type ${typeOf path2}, but a path was expected."',
-                    );
-                  }
-                  return /*let*/ createScope((nixScope) => {
-                    Object.defineProperty(nixScope, "path2Deconstructed", {
-                      enumerable: true,
-                      get() {
-                        return nixScope.deconstructPath(nixScope.path2);
-                      },
-                    });
-                    Object.defineProperty(nixScope, "success", {
-                      enumerable: true,
-                      get() {
-                        return operators.equal(
-                          nixScope.take(nixScope.path1Length)(
-                            nixScope.path2Deconstructed["components"],
-                          ),
-                          nixScope.path1Deconstructed["components"],
-                        );
-                      },
-                    });
-                    Object.defineProperty(nixScope, "components", {
-                      enumerable: true,
-                      get() {
-                        return (operators.ifThenElse(
-                          nixScope.success,
-                          () => (nixScope.drop(nixScope.path1Length)(
-                            nixScope.path2Deconstructed["components"],
-                          )),
-                          () => (nixScope.throw(
-                            new InterpolatedString([
-                              'lib.path.removePrefix: The first path argument "',
-                              '" is not a component-wise prefix of the second path argument "',
-                              '".',
-                            ], [
-                              () => (nixScope.toString(nixScope.path1)),
-                              () => (nixScope.toString(nixScope.path2)),
-                            ]),
-                          )),
-                        ));
-                      },
-                    });
-                    return ((_cond) => {
-                      if (!_cond) {
-                        throw new Error(
-                          "assertion failed: " +
-                            'assertMsg (path1Deconstructed.root == path2Deconstructed.root) \'\'\n      lib.path.removePrefix: Filesystem roots must be the same for both paths, but paths with different roots were given:\n          first argument: "${toString path1}" with root "${toString path1Deconstructed.root}"\n          second argument: "${toString path2}" with root "${toString path2Deconstructed.root}"\'\'',
-                        );
-                      }
-                      return nixScope.joinRelPath(nixScope.components);
-                    })(
-                      nixScope.assertMsg(
-                        operators.equal(
-                          nixScope.path1Deconstructed["root"],
-                          nixScope.path2Deconstructed["root"],
+                }
+                return /*let*/ createScope((nixScope) => {
+                  defGetter(
+                    nixScope,
+                    "path2Deconstructed",
+                    (nixScope) => nixScope.deconstructPath(nixScope.path2),
+                  );
+                  defGetter(
+                    nixScope,
+                    "success",
+                    (nixScope) =>
+                      operators.equal(
+                        nixScope.take(nixScope.path1Length)(
+                          nixScope.path2Deconstructed["components"],
                         ),
-                      )(
+                        nixScope.path1Deconstructed["components"],
+                      ),
+                  );
+                  defGetter(
+                    nixScope,
+                    "components",
+                    (
+                      nixScope,
+                    ) => (operators.ifThenElse(
+                      nixScope.success,
+                      () => (nixScope.drop(nixScope.path1Length)(
+                        nixScope.path2Deconstructed["components"],
+                      )),
+                      () => (nixScope.throw(
                         new InterpolatedString([
-                          '\n      lib.path.removePrefix: Filesystem roots must be the same for both paths, but paths with different roots were given:\n          first argument: "',
-                          '" with root "',
-                          '"\n          second argument: "',
-                          '" with root "',
-                          '"',
+                          'lib.path.removePrefix: The first path argument "',
+                          '" is not a component-wise prefix of the second path argument "',
+                          '".',
                         ], [
                           () => (nixScope.toString(nixScope.path1)),
-                          () => (nixScope.toString(
-                            nixScope.path1Deconstructed["root"],
-                          )),
                           () => (nixScope.toString(nixScope.path2)),
-                          () => (nixScope.toString(
-                            nixScope.path2Deconstructed["root"],
-                          )),
                         ]),
+                      )),
+                    )),
+                  );
+                  return ((_cond) => {
+                    if (!_cond) {
+                      throw new Error(
+                        "assertion failed: " +
+                          'assertMsg (path1Deconstructed.root == path2Deconstructed.root) \'\'\n      lib.path.removePrefix: Filesystem roots must be the same for both paths, but paths with different roots were given:\n          first argument: "${toString path1}" with root "${toString path1Deconstructed.root}"\n          second argument: "${toString path2}" with root "${toString path2Deconstructed.root}"\'\'',
+                      );
+                    }
+                    return nixScope.joinRelPath(nixScope.components);
+                  })(
+                    nixScope.assertMsg(
+                      operators.equal(
+                        nixScope.path1Deconstructed["root"],
+                        nixScope.path2Deconstructed["root"],
                       ),
-                    );
-                  });
-                })(
-                  nixScope.assertMsg(nixScope.isPath(nixScope.path2))(
-                    new InterpolatedString([
-                      "lib.path.removePrefix: Second argument is of type ",
-                      ", but a path was expected.",
-                    ], [() => (nixScope.typeOf(nixScope.path2))]),
-                  ),
-                )
-              ));
-            });
-          })(
-            nixScope.assertMsg(nixScope.isPath(nixScope.path1))(
-              new InterpolatedString([
-                "lib.path.removePrefix: First argument is of type ",
-                ", but a path was expected.",
-              ], [() => (nixScope.typeOf(nixScope.path1))]),
-            ),
-          )
-        ),
-      );
-      obj["splitRoot"] = createFunc(/*arg:*/ "path", null, {}, (nixScope) => (
+                    )(
+                      new InterpolatedString([
+                        '\n      lib.path.removePrefix: Filesystem roots must be the same for both paths, but paths with different roots were given:\n          first argument: "',
+                        '" with root "',
+                        '"\n          second argument: "',
+                        '" with root "',
+                        '"',
+                      ], [
+                        () => (nixScope.toString(nixScope.path1)),
+                        () => (nixScope.toString(
+                          nixScope.path1Deconstructed["root"],
+                        )),
+                        () => (nixScope.toString(nixScope.path2)),
+                        () => (nixScope.toString(
+                          nixScope.path2Deconstructed["root"],
+                        )),
+                      ]),
+                    ),
+                  );
+                });
+              })(
+                nixScope.assertMsg(nixScope.isPath(nixScope.path2))(
+                  new InterpolatedString([
+                    "lib.path.removePrefix: Second argument is of type ",
+                    ", but a path was expected.",
+                  ], [() => (nixScope.typeOf(nixScope.path2))]),
+                ),
+              )
+            ));
+          });
+        })(
+          nixScope.assertMsg(nixScope.isPath(nixScope.path1))(
+            new InterpolatedString([
+              "lib.path.removePrefix: First argument is of type ",
+              ", but a path was expected.",
+            ], [() => (nixScope.typeOf(nixScope.path1))]),
+          ),
+        )
+      ));
+      obj.splitRoot = createFunc(/*arg:*/ "path", null, {}, (nixScope) => (
         ((_cond) => {
           if (!_cond) {
             throw new Error(
@@ -499,12 +481,11 @@ createFunc({}, null, {}, (nixScope) => (
             );
           }
           return /*let*/ createScope((nixScope) => {
-            Object.defineProperty(nixScope, "deconstructed", {
-              enumerable: true,
-              get() {
-                return nixScope.deconstructPath(nixScope.path);
-              },
-            });
+            defGetter(
+              nixScope,
+              "deconstructed",
+              (nixScope) => nixScope.deconstructPath(nixScope.path),
+            );
             return ({
               "root": nixScope.deconstructed["root"],
               "subpath": nixScope.joinRelPath(
@@ -521,18 +502,17 @@ createFunc({}, null, {}, (nixScope) => (
           ),
         )
       ));
-      obj["hasStorePathPrefix"] = createFunc(
+      obj.hasStorePathPrefix = createFunc(
         /*arg:*/ "path",
         null,
         {},
         (nixScope) => (
           /*let*/ createScope((nixScope) => {
-            Object.defineProperty(nixScope, "deconstructed", {
-              enumerable: true,
-              get() {
-                return nixScope.deconstructPath(nixScope.path);
-              },
-            });
+            defGetter(
+              nixScope,
+              "deconstructed",
+              (nixScope) => nixScope.deconstructPath(nixScope.path),
+            );
             return ((_cond) => {
               if (!_cond) {
                 throw new Error(

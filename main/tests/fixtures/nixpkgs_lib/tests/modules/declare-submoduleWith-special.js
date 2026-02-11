@@ -7,7 +7,7 @@ export default createFunc({}, null, {}, (nixScope) => (
         "type": nixScope.lib["types"]["submoduleWith"](
           createScope((nixScope) => {
             const obj = {};
-            obj["modules"] = [createFunc({}, null, {}, (nixScope) => (
+            obj.modules = [createFunc({}, null, {}, (nixScope) => (
               createScope((nixScope) => {
                 const obj = {};
                 if (obj["options"] === undefined) obj["options"] = {};

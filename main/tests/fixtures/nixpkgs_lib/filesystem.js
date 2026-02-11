@@ -50,49 +50,31 @@ export default /**
       )),
       "haskellPathsInDir": createFunc(/*arg:*/ "root", null, {}, (nixScope) => (
         /*let*/ createScope((nixScope) => {
-          Object.defineProperty(nixScope, "root-files", {
-            enumerable: true,
-            get() {
-              return nixScope.builtins["attrNames"](
-                nixScope.builtins["readDir"](nixScope.root),
-              );
-            },
-          });
-          Object.defineProperty(nixScope, "root-files-with-paths", {
-            enumerable: true,
-            get() {
-              return nixScope.map(
-                createFunc(/*arg:*/ "file", null, {}, (nixScope) => (
-                  {
-                    "name": nixScope.file,
-                    "value": operators.add(
-                      nixScope.root,
-                      new InterpolatedString(["/", ""], [
-                        () => (nixScope.file),
-                      ]),
-                    ),
-                  }
-                )),
-              )(nixScope["root-files"]);
-            },
-          });
-          Object.defineProperty(nixScope, "cabal-subdirs", {
-            enumerable: true,
-            get() {
-              return nixScope.builtins["filter"](
-                createFunc({}, null, {}, (nixScope) => (
-                  nixScope.builtins["pathExists"](
-                    operators.add(
-                      nixScope.value,
-                      new InterpolatedString(["/", ".cabal"], [
-                        () => (nixScope.name),
-                      ]),
-                    ),
-                  )
-                )),
-              )(nixScope["root-files-with-paths"]);
-            },
-          });
+          defGetter(nixScope, "root-files", (nixScope) =>
+            nixScope.builtins["attrNames"](
+              nixScope.builtins["readDir"](nixScope.root),
+            ));
+          defGetter(nixScope, "root-files-with-paths", (nixScope) =>
+            nixScope.map(createFunc(/*arg:*/ "file", null, {}, (nixScope) => (
+              {
+                "name": nixScope.file,
+                "value": operators.add(
+                  nixScope.root,
+                  new InterpolatedString(["/", ""], [() => (nixScope.file)]),
+                ),
+              }
+            )))(nixScope["root-files"]));
+          defGetter(nixScope, "cabal-subdirs", (nixScope) =>
+            nixScope.builtins["filter"](createFunc({}, null, {}, (nixScope) => (
+              nixScope.builtins["pathExists"](
+                operators.add(
+                  nixScope.value,
+                  new InterpolatedString(["/", ".cabal"], [
+                    () => (nixScope.name),
+                  ]),
+                ),
+              )
+            )))(nixScope["root-files-with-paths"]));
           return nixScope.builtins["listToAttrs"](nixScope["cabal-subdirs"]);
         })
       )),
@@ -103,90 +85,71 @@ export default /**
         (nixScope) => (
           createFunc(/*arg:*/ "file", null, {}, (nixScope) => (
             /*let*/ createScope((nixScope) => {
-              Object.defineProperty(nixScope, "go", {
-                enumerable: true,
-                get() {
-                  return createFunc(/*arg:*/ "path", null, {}, (nixScope) => (
-                    /*let*/ createScope((nixScope) => {
-                      Object.defineProperty(nixScope, "files", {
-                        enumerable: true,
-                        get() {
-                          return nixScope.builtins["attrNames"](
-                            nixScope.builtins["readDir"](nixScope.path),
-                          );
-                        },
-                      });
-                      Object.defineProperty(nixScope, "matches", {
-                        enumerable: true,
-                        get() {
-                          return nixScope.builtins["filter"](
-                            createFunc(
-                              /*arg:*/ "match",
-                              null,
-                              {},
-                              (nixScope) => (
-                                operators.notEqual(nixScope.match, null)
-                              ),
-                            ),
-                          )(
-                            nixScope.map(
-                              nixScope.builtins["match"](nixScope.pattern),
-                            )(nixScope.files),
-                          );
-                        },
-                      });
-                      return (operators.ifThenElse(
-                        operators.notEqual(
-                          nixScope.builtins["length"](nixScope.matches),
-                          0n,
+              defGetter(nixScope, "go", (nixScope) =>
+                createFunc(/*arg:*/ "path", null, {}, (nixScope) => (
+                  /*let*/ createScope((nixScope) => {
+                    defGetter(
+                      nixScope,
+                      "files",
+                      (nixScope) =>
+                        nixScope.builtins["attrNames"](
+                          nixScope.builtins["readDir"](nixScope.path),
                         ),
-                        () => ({
-                          "path": nixScope.path,
-                          "matches": nixScope.matches,
-                        }),
-                        () => (operators.ifThenElse(
-                          operators.equal(nixScope.path, new Path(["/."], [])),
-                          () => (null),
-                          () => (nixScope.go(nixScope.dirOf(nixScope.path))),
-                        )),
-                      ));
-                    })
-                  ));
-                },
-              });
-              Object.defineProperty(nixScope, "parent", {
-                enumerable: true,
-                get() {
-                  return nixScope.dirOf(nixScope.file);
-                },
-              });
-              Object.defineProperty(nixScope, "isDir", {
-                enumerable: true,
-                get() {
-                  return /*let*/ createScope((nixScope) => {
-                    Object.defineProperty(nixScope, "base", {
-                      enumerable: true,
-                      get() {
-                        return nixScope.baseNameOf(nixScope.file);
-                      },
-                    });
-                    Object.defineProperty(nixScope, "type", {
-                      enumerable: true,
-                      get() {
-                        return operators.selectOrDefault(
-                          nixScope.builtins["readDir"](nixScope.parent),
-                          [nixScope.base],
-                          null,
-                        );
-                      },
-                    });
-                    return operators.or(
-                      operators.equal(nixScope.file, new Path(["/."], [])),
-                      operators.equal(nixScope.type, "directory"),
                     );
-                  });
-                },
-              });
+                    defGetter(nixScope, "matches", (nixScope) =>
+                      nixScope.builtins["filter"](
+                        createFunc(/*arg:*/ "match", null, {}, (nixScope) => (
+                          operators.notEqual(nixScope.match, null)
+                        )),
+                      )(
+                        nixScope.map(
+                          nixScope.builtins["match"](nixScope.pattern),
+                        )(nixScope.files),
+                      ));
+                    return (operators.ifThenElse(
+                      operators.notEqual(
+                        nixScope.builtins["length"](nixScope.matches),
+                        0n,
+                      ),
+                      () => ({
+                        "path": nixScope.path,
+                        "matches": nixScope.matches,
+                      }),
+                      () => (operators.ifThenElse(
+                        operators.equal(nixScope.path, new Path(["/."], [])),
+                        () => (null),
+                        () => (nixScope.go(nixScope.dirOf(nixScope.path))),
+                      )),
+                    ));
+                  })
+                )));
+              defGetter(
+                nixScope,
+                "parent",
+                (nixScope) => nixScope.dirOf(nixScope.file),
+              );
+              defGetter(nixScope, "isDir", (nixScope) =>
+                /*let*/ createScope((nixScope) => {
+                  defGetter(
+                    nixScope,
+                    "base",
+                    (nixScope) => nixScope.baseNameOf(nixScope.file),
+                  );
+                  defGetter(
+                    nixScope,
+                    "type",
+                    (nixScope) =>
+                      operators.selectOrDefault(
+                        nixScope.builtins["readDir"](nixScope.parent),
+                        [nixScope.base],
+                        null,
+                      ),
+                  );
+                  return operators.or(
+                    operators.equal(nixScope.file, new Path(["/."], [])),
+                    operators.equal(nixScope.type, "directory"),
+                  );
+                }));
               return nixScope.go(
                 operators.ifThenElse(
                   nixScope.isDir,
@@ -229,80 +192,72 @@ export default /**
         nixScope.makeScope = nixScope.lib["makeScope"];
         nixScope.recurseIntoAttrs = nixScope.lib["recurseIntoAttrs"];
         nixScope.removeSuffix = nixScope.lib["removeSuffix"];
-        Object.defineProperty(nixScope, "processDir", {
-          enumerable: true,
-          get() {
-            return createFunc({}, "args", {}, (nixScope) => (
-              nixScope.concatMapAttrs(
-                createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
-                  createFunc(/*arg:*/ "type", null, {}, (nixScope) => (
-                    /*let*/ createScope((nixScope) => {
-                      Object.defineProperty(nixScope, "path", {
-                        enumerable: true,
-                        get() {
-                          return operators.add(
-                            nixScope.directory,
-                            new InterpolatedString(["/", ""], [
-                              () => (nixScope.name),
-                            ]),
-                          );
-                        },
-                      });
-                      return (operators.ifThenElse(
-                        operators.equal(nixScope.type, "directory"),
+        defGetter(nixScope, "processDir", (nixScope) =>
+          createFunc({}, "args", {}, (nixScope) => (
+            nixScope.concatMapAttrs(
+              createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
+                createFunc(/*arg:*/ "type", null, {}, (nixScope) => (
+                  /*let*/ createScope((nixScope) => {
+                    defGetter(nixScope, "path", (nixScope) =>
+                      operators.add(
+                        nixScope.directory,
+                        new InterpolatedString(["/", ""], [
+                          () => (nixScope.name),
+                        ]),
+                      ));
+                    return (operators.ifThenElse(
+                      operators.equal(nixScope.type, "directory"),
+                      () => (createScope((nixScope) => {
+                        const obj = {};
+                        obj[
+                          new InterpolatedString(["", ""], [
+                            () => (nixScope.name),
+                          ])
+                        ] = nixScope.packagesFromDirectoryRecursive(
+                          operators.merge(
+                            nixScope.args,
+                            { "directory": nixScope.path },
+                          ),
+                        );
+                        return obj;
+                      })),
+                      () => (operators.ifThenElse(
+                        operators.and(
+                          operators.equal(nixScope.type, "regular"),
+                          nixScope.hasSuffix(".nix")(nixScope.name),
+                        ),
                         () => (createScope((nixScope) => {
                           const obj = {};
                           obj[
                             new InterpolatedString(["", ""], [
-                              () => (nixScope.name),
+                              () => (nixScope.removeSuffix(".nix")(
+                                nixScope.name,
+                              )),
                             ])
-                          ] = nixScope.packagesFromDirectoryRecursive(
-                            operators.merge(
-                              nixScope.args,
-                              { "directory": nixScope.path },
-                            ),
-                          );
+                          ] = nixScope.callPackage(nixScope.path)({});
                           return obj;
                         })),
                         () => (operators.ifThenElse(
-                          operators.and(
-                            operators.equal(nixScope.type, "regular"),
-                            nixScope.hasSuffix(".nix")(nixScope.name),
-                          ),
-                          () => (createScope((nixScope) => {
-                            const obj = {};
-                            obj[
-                              new InterpolatedString(["", ""], [
-                                () => (nixScope.removeSuffix(".nix")(
-                                  nixScope.name,
-                                )),
-                              ])
-                            ] = nixScope.callPackage(nixScope.path)({});
-                            return obj;
-                          })),
-                          () => (operators.ifThenElse(
-                            operators.equal(nixScope.type, "regular"),
-                            () => ({}),
-                            () => (nixScope.throw(
-                              new InterpolatedString([
-                                "\n              lib.filesystem.packagesFromDirectoryRecursive: Unsupported file type ",
-                                " at path ",
-                                "\n            ",
-                              ], [
-                                () => (nixScope.type),
-                                () => (nixScope.toString(nixScope.path)),
-                              ]),
-                            )),
+                          operators.equal(nixScope.type, "regular"),
+                          () => ({}),
+                          () => (nixScope.throw(
+                            new InterpolatedString([
+                              "\n              lib.filesystem.packagesFromDirectoryRecursive: Unsupported file type ",
+                              " at path ",
+                              "\n            ",
+                            ], [
+                              () => (nixScope.type),
+                              () => (nixScope.toString(nixScope.path)),
+                            ]),
                           )),
                         )),
-                      ));
-                    })
-                  ))
-                )),
-              )(nixScope.builtins["readDir"](nixScope.directory))
-            ));
-          },
-        });
+                      )),
+                    ));
+                  })
+                ))
+              )),
+            )(nixScope.builtins["readDir"](nixScope.directory))
+          )));
         return createFunc(
           {
             "newScope": (
@@ -315,12 +270,11 @@ export default /**
           {},
           (nixScope) => (
             /*let*/ createScope((nixScope) => {
-              Object.defineProperty(nixScope, "defaultPath", {
-                enumerable: true,
-                get() {
-                  return operators.add(nixScope.directory, "/package.nix");
-                },
-              });
+              defGetter(
+                nixScope,
+                "defaultPath",
+                (nixScope) => operators.add(nixScope.directory, "/package.nix"),
+              );
               return (operators.ifThenElse(
                 nixScope.pathExists(nixScope.defaultPath),
                 () => (nixScope.callPackage(nixScope.defaultPath)({})),
@@ -334,8 +288,8 @@ export default /**
                             nixScope.args,
                             createScope((nixScope) => {
                               const obj = {};
-                              obj["callPackage"] = nixScope.self["callPackage"];
-                              obj["newScope"] = nixScope.self["newScope"];
+                              obj.callPackage = nixScope.self.callPackage;
+                              obj.newScope = nixScope.self.newScope;
                               return obj;
                             }),
                           ),

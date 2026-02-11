@@ -15,12 +15,12 @@ export default createFunc({}, null, {}, (nixScope) => (
     ],
     "options": createScope((nixScope) => {
       const obj = {};
-      obj["warnings"] = nixScope.lib["mkOption"](
+      obj.warnings = nixScope.lib["mkOption"](
         {
           "type": nixScope.lib["types"]["listOf"](nixScope.lib["types"]["str"]),
         },
       );
-      obj["result"] = nixScope.lib["mkOption"]({});
+      obj.result = nixScope.lib["mkOption"]({});
       if (obj["c"] === undefined) obj["c"] = {};
       if (obj["c"]["d"] === undefined) obj["c"]["d"] = {};
       obj["c"]["d"]["e"] = nixScope.lib["mkOption"]({});
@@ -28,7 +28,7 @@ export default createFunc({}, null, {}, (nixScope) => (
     }),
     "config": createScope((nixScope) => {
       const obj = {};
-      obj["result"] = nixScope.lib["concatStringsSep"]("%")(
+      obj.result = nixScope.lib["concatStringsSep"]("%")(
         nixScope.config["warnings"],
       );
       if (obj["a"] === undefined) obj["a"] = {};

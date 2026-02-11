@@ -14,30 +14,30 @@ createFunc(/*arg:*/ "self", null, {}, (nixScope) => (
         {
           "splitRoot": createFunc(/*arg:*/ "path", null, {}, (nixScope) => (
             /*let*/ createScope((nixScope) => {
-              Object.defineProperty(nixScope, "parts", {
-                enumerable: true,
-                get() {
-                  return nixScope.super["path"]["splitRoot"](nixScope.path);
-                },
-              });
-              Object.defineProperty(nixScope, "components", {
-                enumerable: true,
-                get() {
-                  return nixScope.self["path"]["subpath"]["components"](
+              defGetter(
+                nixScope,
+                "parts",
+                (nixScope) =>
+                  nixScope.super["path"]["splitRoot"](nixScope.path),
+              );
+              defGetter(
+                nixScope,
+                "components",
+                (nixScope) =>
+                  nixScope.self["path"]["subpath"]["components"](
                     nixScope.parts["subpath"],
-                  );
-                },
-              });
-              Object.defineProperty(nixScope, "count", {
-                enumerable: true,
-                get() {
-                  return nixScope.self["length"](nixScope.components);
-                },
-              });
-              Object.defineProperty(nixScope, "rootIndex", {
-                enumerable: true,
-                get() {
-                  return operators.subtract(
+                  ),
+              );
+              defGetter(
+                nixScope,
+                "count",
+                (nixScope) => nixScope.self["length"](nixScope.components),
+              );
+              defGetter(
+                nixScope,
+                "rootIndex",
+                (nixScope) =>
+                  operators.subtract(
                     nixScope.count,
                     nixScope.self["lists"]["findFirstIndex"](
                       createFunc(/*arg:*/ "component", null, {}, (nixScope) => (
@@ -46,31 +46,30 @@ createFunc(/*arg:*/ "self", null, {}, (nixScope) => (
                     )(nixScope.self["length"](nixScope.components))(
                       nixScope.self["reverseList"](nixScope.components),
                     ),
-                  );
-                },
-              });
-              Object.defineProperty(nixScope, "root", {
-                enumerable: true,
-                get() {
-                  return nixScope.self["path"]["append"](
-                    nixScope.parts["root"],
-                  )(nixScope.self["path"]["subpath"]["join"](
-                    nixScope.self["take"](nixScope.rootIndex)(
-                      nixScope.components,
+                  ),
+              );
+              defGetter(
+                nixScope,
+                "root",
+                (nixScope) =>
+                  nixScope.self["path"]["append"](nixScope.parts["root"])(
+                    nixScope.self["path"]["subpath"]["join"](
+                      nixScope.self["take"](nixScope.rootIndex)(
+                        nixScope.components,
+                      ),
                     ),
-                  ));
-                },
-              });
-              Object.defineProperty(nixScope, "subpath", {
-                enumerable: true,
-                get() {
-                  return nixScope.self["path"]["subpath"]["join"](
+                  ),
+              );
+              defGetter(
+                nixScope,
+                "subpath",
+                (nixScope) =>
+                  nixScope.self["path"]["subpath"]["join"](
                     nixScope.self["drop"](nixScope.rootIndex)(
                       nixScope.components,
                     ),
-                  );
-                },
-              });
+                  ),
+              );
               return ({ "root": nixScope.root, "subpath": nixScope.subpath });
             })
           )),

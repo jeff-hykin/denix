@@ -1,9 +1,10 @@
 export default createFunc({}, null, {}, (nixScope) => (
   /*let*/ createScope((nixScope) => {
-    Object.defineProperty(nixScope, "nixosModule", {
-      enumerable: true,
-      get() {
-        return createFunc({}, null, {}, (nixScope) => (
+    defGetter(
+      nixScope,
+      "nixosModule",
+      (nixScope) =>
+        createFunc({}, null, {}, (nixScope) => (
           createScope((nixScope) => {
             const obj = {};
             if (obj["options"] === undefined) obj["options"] = {};
@@ -12,13 +13,13 @@ export default createFunc({}, null, {}, (nixScope) => (
             );
             return obj;
           })
-        ));
-      },
-    });
-    Object.defineProperty(nixScope, "darwinModule", {
-      enumerable: true,
-      get() {
-        return createFunc({}, null, {}, (nixScope) => (
+        )),
+    );
+    defGetter(
+      nixScope,
+      "darwinModule",
+      (nixScope) =>
+        createFunc({}, null, {}, (nixScope) => (
           createScope((nixScope) => {
             const obj = {};
             if (obj["options"] === undefined) obj["options"] = {};
@@ -27,9 +28,8 @@ export default createFunc({}, null, {}, (nixScope) => (
             );
             return obj;
           })
-        ));
-      },
-    });
+        )),
+    );
     return ({
       "imports": [
         nixScope.lib["optionalAttrs"](

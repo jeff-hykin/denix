@@ -4,7 +4,7 @@ export default createFunc({}, null, {}, (nixScope) => (
     nixScope.types = nixScope.lib["types"];
     return createScope((nixScope) => {
       const obj = {};
-      obj["imports"] = [
+      obj.imports = [
         createScope((nixScope) => {
           const obj = {};
           if (obj["examples"] === undefined) obj["examples"] = {};

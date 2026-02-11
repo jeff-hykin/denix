@@ -8,7 +8,7 @@ export default createFunc({}, null, {}, (nixScope) => (
           {
             "options": createScope((nixScope) => {
               const obj = {};
-              obj["result"] = nixScope.mkOption(
+              obj.result = nixScope.mkOption(
                 {
                   "default": nixScope.lib["concatStringsSep"](" ")(
                     nixScope.config["meta"]["foo"],

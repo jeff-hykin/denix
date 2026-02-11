@@ -15,7 +15,7 @@ export default createFunc({}, null, {}, (nixScope) => (
         createFunc({}, null, {}, (nixScope) => (
           createScope((nixScope) => {
             const obj = {};
-            obj["_file"] = "generic.nix";
+            obj._file = "generic.nix";
             if (obj["options"] === undefined) obj["options"] = {};
             obj["options"]["nodes"] = nixScope.mkOption(
               {
@@ -63,7 +63,7 @@ export default createFunc({}, null, {}, (nixScope) => (
         },
         createScope((nixScope) => {
           const obj = {};
-          obj["_file"] = "nodes-foo.nix";
+          obj._file = "nodes-foo.nix";
           if (obj["nodes"] === undefined) obj["nodes"] = {};
           if (obj["nodes"]["foo"] === undefined) obj["nodes"]["foo"] = {};
           if (obj["nodes"]["foo"]["settingsDict"] === undefined) {
@@ -74,14 +74,14 @@ export default createFunc({}, null, {}, (nixScope) => (
         }),
         createScope((nixScope) => {
           const obj = {};
-          obj["_file"] = "the-file-that-contains-the-bad-config.nix";
+          obj._file = "the-file-that-contains-the-bad-config.nix";
           if (obj["default"] === undefined) obj["default"] = {};
           obj["default"]["bottom"] = "bogus";
           return obj;
         }),
         createScope((nixScope) => {
           const obj = {};
-          obj["_file"] = "nodes-foo-c-is-a.nix";
+          obj._file = "nodes-foo-c-is-a.nix";
           if (obj["nodes"] === undefined) obj["nodes"] = {};
           obj["nodes"]["foo"] = createFunc({}, null, {}, (nixScope) => (
             createScope((nixScope) => {

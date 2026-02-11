@@ -1,14 +1,14 @@
 export default createFunc({}, null, {}, (nixScope) => (
   createScope((nixScope) => {
     const obj = {};
-    obj["options"] = {
+    obj.options = {
       "result": nixScope.lib["mkOption"]({}),
       "weird": nixScope.lib["mkOption"](
         {
           "type": nixScope.lib["types"]["submoduleWith"](
             createScope((nixScope) => {
               const obj = {};
-              obj["modules"] = [];
+              obj.modules = [];
               if (obj["specialArgs"] === undefined) obj["specialArgs"] = {};
               obj["specialArgs"]["lib"] = {};
               return obj;

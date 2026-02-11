@@ -1,5 +1,5 @@
 import { createRuntime } from "../../../../../../../../../../../../../runtime.js"
-const {runtime, createFunc, createScope} = createRuntime()
+const {runtime, createFunc, createScope, defGetter} = createRuntime()
 const operators = runtime.operators
 const builtins = runtime.builtins
 
@@ -116,34 +116,34 @@ export default /**
         nixScope.updateManyAttrsByPath = nixScope.lib["updateManyAttrsByPath"];
         nixScope.versions = nixScope.lib["versions"];
         nixScope.xor = nixScope.lib["xor"];
-        Object.defineProperty(nixScope, "lib", {enumerable: true, get(){return nixScope.import((new Path(["../default.nix"], [])));}});
-        Object.defineProperty(nixScope, "testingThrow", {enumerable: true, get(){return createFunc(/*arg:*/ "expr", null, {}, (nixScope)=>(
+        defGetter(nixScope, "lib", (nixScope) => nixScope.import((new Path(["../default.nix"], []))));
+        defGetter(nixScope, "testingThrow", (nixScope) => createFunc(/*arg:*/ "expr", null, {}, (nixScope)=>(
                 ({"expr": (nixScope.builtins["tryEval"]((nixScope.builtins["seq"](nixScope.expr)("didn't throw")))), "expected": ({"success": false, "value": false})})
-            ));}});
-        Object.defineProperty(nixScope, "testingEval", {enumerable: true, get(){return createFunc(/*arg:*/ "expr", null, {}, (nixScope)=>(
+            )));
+        defGetter(nixScope, "testingEval", (nixScope) => createFunc(/*arg:*/ "expr", null, {}, (nixScope)=>(
                 ({"expr": (nixScope.builtins["tryEval"](nixScope.expr))["success"], "expected": true})
-            ));}});
-        Object.defineProperty(nixScope, "testSanitizeDerivationName", {enumerable: true, get(){return createFunc({}, null, {}, (nixScope)=>(
+            )));
+        defGetter(nixScope, "testSanitizeDerivationName", (nixScope) => createFunc({}, null, {}, (nixScope)=>(
                 /*let*/ createScope(nixScope=>{
-            Object.defineProperty(nixScope, "drv", {enumerable: true, get(){return nixScope.derivation(({"name": nixScope.strings["sanitizeDerivationName"](nixScope.name), "builder": "x", "system": "x"}));}});
+            defGetter(nixScope, "drv", (nixScope) => nixScope.derivation(({"name": nixScope.strings["sanitizeDerivationName"](nixScope.name), "builder": "x", "system": "x"})));
         return ({"expr": nixScope.builtins["seq"](nixScope.drv["drvPath"])(nixScope.drv["name"]), "expected": nixScope.expected});
     })
-            ));}});
+            )));
     return nixScope.runTests(({"testFunctionArgsMakeOverridable": ({"expr": nixScope.functionArgs((nixScope.makeOverridable((createFunc({"c": (nixScope)=>(null),}, null, {}, (nixScope)=>(
                 {}
             )))))), "expected": ({"a": false, "b": false, "c": true})}), "testFunctionArgsMakeOverridableOverride": ({"expr": nixScope.functionArgs((nixScope.makeOverridable((createFunc({"c": (nixScope)=>(null),}, null, {}, (nixScope)=>(
                 {}
             ))))(({"a": 1n, "b": 2n})))["override"]), "expected": ({"a": false, "b": false, "c": true})}), "testCallPackageWithOverridePreservesArguments": /*let*/ createScope(nixScope=>{
-        Object.defineProperty(nixScope, "f", {enumerable: true, get(){return createFunc({"a": (nixScope)=>(0n),}, null, {}, (nixScope)=>(
+        defGetter(nixScope, "f", (nixScope) => createFunc({"a": (nixScope)=>(0n),}, null, {}, (nixScope)=>(
                 {}
-            ));}});
-        Object.defineProperty(nixScope, "f'", {enumerable: true, get(){return nixScope.callPackageWith(({"a": 1n, "b": 2n}))(nixScope.f)({});}});
+            )));
+        defGetter(nixScope, "f'", (nixScope) => nixScope.callPackageWith(({"a": 1n, "b": 2n}))(nixScope.f)({}));
     return ({"expr": nixScope.functionArgs(nixScope["f'"]["override"]), "expected": nixScope.functionArgs(nixScope.f)});
 }), "testCallPackagesWithOverridePreservesArguments": /*let*/ createScope(nixScope=>{
-        Object.defineProperty(nixScope, "f", {enumerable: true, get(){return createFunc({"a": (nixScope)=>(0n),}, null, {}, (nixScope)=>(
+        defGetter(nixScope, "f", (nixScope) => createFunc({"a": (nixScope)=>(0n),}, null, {}, (nixScope)=>(
                 ({"nested": {}})
-            ));}});
-        Object.defineProperty(nixScope, "f'", {enumerable: true, get(){return nixScope.callPackagesWith(({"a": 1n, "b": 2n}))(nixScope.f)({});}});
+            )));
+        defGetter(nixScope, "f'", (nixScope) => nixScope.callPackagesWith(({"a": 1n, "b": 2n}))(nixScope.f)({}));
     return ({"expr": nixScope.functionArgs(nixScope["f'"]["nested"]["override"]), "expected": nixScope.functionArgs(nixScope.f)});
 }), "testId": ({"expr": nixScope.id(1n), "expected": 1n}), "testConst": ({"expr": nixScope.const(2n)(3n), "expected": 2n}), "testPipe": ({"expr": nixScope.pipe(2n)([(createFunc(/*arg:*/ "x", null, {}, (nixScope)=>(
                 operators.add(nixScope.x, 2n)
@@ -155,51 +155,51 @@ export default /**
       3
       4
     `}), "testAnd": ({"expr": nixScope.and(true)(false), "expected": false}), "testXor": ({"expr": [(nixScope.xor(true)(false)),(nixScope.xor(true)(true)),(nixScope.xor(false)(false)),(nixScope.xor(false)(true))], "expected": [true,false,false,true]}), "testComposeExtensions": ({"expr": /*let*/ createScope(nixScope=>{
-        Object.defineProperty(nixScope, "obj", {enumerable: true, get(){return nixScope.makeExtensible((createFunc(/*arg:*/ "self", null, {}, (nixScope)=>(
+        defGetter(nixScope, "obj", (nixScope) => nixScope.makeExtensible((createFunc(/*arg:*/ "self", null, {}, (nixScope)=>(
                 ({"foo": nixScope.self["bar"]})
-            ))));}});
-        Object.defineProperty(nixScope, "f", {enumerable: true, get(){return createFunc(/*arg:*/ "self", null, {}, (nixScope)=>(
+            )))));
+        defGetter(nixScope, "f", (nixScope) => createFunc(/*arg:*/ "self", null, {}, (nixScope)=>(
                 createFunc(/*arg:*/ "super", null, {}, (nixScope)=>(
                     ({"bar": false, "baz": true})
                 ))
-            ));}});
-        Object.defineProperty(nixScope, "g", {enumerable: true, get(){return createFunc(/*arg:*/ "self", null, {}, (nixScope)=>(
+            )));
+        defGetter(nixScope, "g", (nixScope) => createFunc(/*arg:*/ "self", null, {}, (nixScope)=>(
                 createFunc(/*arg:*/ "super", null, {}, (nixScope)=>(
                     ({"bar": operators.selectOrDefault(nixScope.super, ["baz"], false)})
                 ))
-            ));}});
-        Object.defineProperty(nixScope, "f_o_g", {enumerable: true, get(){return nixScope.composeExtensions(nixScope.f)(nixScope.g);}});
-        Object.defineProperty(nixScope, "composed", {enumerable: true, get(){return nixScope.obj["extend"](nixScope.f_o_g);}});
+            )));
+        defGetter(nixScope, "f_o_g", (nixScope) => nixScope.composeExtensions(nixScope.f)(nixScope.g));
+        defGetter(nixScope, "composed", (nixScope) => nixScope.obj["extend"](nixScope.f_o_g));
     return nixScope.composed["foo"];
 }), "expected": true}), "testComposeManyExtensions0": ({"expr": /*let*/ createScope(nixScope=>{
-        Object.defineProperty(nixScope, "obj", {enumerable: true, get(){return nixScope.makeExtensible((createFunc(/*arg:*/ "self", null, {}, (nixScope)=>(
+        defGetter(nixScope, "obj", (nixScope) => nixScope.makeExtensible((createFunc(/*arg:*/ "self", null, {}, (nixScope)=>(
                 ({"foo": true})
-            ))));}});
-        Object.defineProperty(nixScope, "emptyComposition", {enumerable: true, get(){return nixScope.composeManyExtensions([]);}});
-        Object.defineProperty(nixScope, "composed", {enumerable: true, get(){return nixScope.obj["extend"](nixScope.emptyComposition);}});
+            )))));
+        defGetter(nixScope, "emptyComposition", (nixScope) => nixScope.composeManyExtensions([]));
+        defGetter(nixScope, "composed", (nixScope) => nixScope.obj["extend"](nixScope.emptyComposition));
     return nixScope.composed["foo"];
 }), "expected": true}), "testComposeManyExtensions": /*let*/ createScope(nixScope=>{
-        Object.defineProperty(nixScope, "f", {enumerable: true, get(){return createFunc(/*arg:*/ "self", null, {}, (nixScope)=>(
+        defGetter(nixScope, "f", (nixScope) => createFunc(/*arg:*/ "self", null, {}, (nixScope)=>(
                 createFunc(/*arg:*/ "super", null, {}, (nixScope)=>(
                     ({"bar": false, "baz": true})
                 ))
-            ));}});
-        Object.defineProperty(nixScope, "g", {enumerable: true, get(){return createFunc(/*arg:*/ "self", null, {}, (nixScope)=>(
+            )));
+        defGetter(nixScope, "g", (nixScope) => createFunc(/*arg:*/ "self", null, {}, (nixScope)=>(
                 createFunc(/*arg:*/ "super", null, {}, (nixScope)=>(
                     ({"bar": operators.selectOrDefault(nixScope.super, ["baz"], false)})
                 ))
-            ));}});
-        Object.defineProperty(nixScope, "h", {enumerable: true, get(){return createFunc(/*arg:*/ "self", null, {}, (nixScope)=>(
+            )));
+        defGetter(nixScope, "h", (nixScope) => createFunc(/*arg:*/ "self", null, {}, (nixScope)=>(
                 createFunc(/*arg:*/ "super", null, {}, (nixScope)=>(
                     ({"qux": operators.selectOrDefault(nixScope.super, ["bar"], false)})
                 ))
-            ));}});
-        Object.defineProperty(nixScope, "obj", {enumerable: true, get(){return nixScope.makeExtensible((createFunc(/*arg:*/ "self", null, {}, (nixScope)=>(
+            )));
+        defGetter(nixScope, "obj", (nixScope) => nixScope.makeExtensible((createFunc(/*arg:*/ "self", null, {}, (nixScope)=>(
                 ({"foo": nixScope.self["qux"]})
-            ))));}});
+            )))));
     return ({"expr": /*let*/ createScope(nixScope=>{
-        Object.defineProperty(nixScope, "composition", {enumerable: true, get(){return nixScope.composeManyExtensions([nixScope.f,nixScope.g,nixScope.h]);}});
-        Object.defineProperty(nixScope, "composed", {enumerable: true, get(){return nixScope.obj["extend"](nixScope.composition);}});
+        defGetter(nixScope, "composition", (nixScope) => nixScope.composeManyExtensions([nixScope.f,nixScope.g,nixScope.h]));
+        defGetter(nixScope, "composed", (nixScope) => nixScope.obj["extend"](nixScope.composition));
     return nixScope.composed["foo"];
 }), "expected": (nixScope.obj["extend"]((nixScope.composeExtensions(nixScope.f)((nixScope.composeExtensions(nixScope.g)(nixScope.h))))))["foo"]});
 }), "testBitAnd": ({"expr": (nixScope.bitAnd(3n)(10n)), "expected": 2n}), "testBitOr": ({"expr": (nixScope.bitOr(3n)(10n)), "expected": 11n}), "testBitXor": ({"expr": (nixScope.bitXor(3n)(10n)), "expected": 9n}), "testToHexString": ({"expr": nixScope.toHexString(250n), "expected": "FA"}), "testFromHexStringFirstExample": ({"expr": nixScope.fromHexString("FF"), "expected": 255n}), "testFromHexStringSecondExample": ({"expr": nixScope.fromHexString((nixScope.builtins["hashString"]("sha256")("test"))), "expected": 9223372036854775807n}), "testFromHexStringWithPrefix": ({"expr": nixScope.fromHexString("0Xf"), "expected": 15n}), "testToBaseDigits": ({"expr": nixScope.toBaseDigits(2n)(6n), "expected": [1n,1n,0n]}), "testFunctionArgsFunctor": ({"expr": nixScope.functionArgs(({"__functor": createFunc(/*arg:*/ "self", null, {}, (nixScope)=>(
@@ -216,7 +216,7 @@ export default /**
                 ))
             ))))(({"a": "0.1.0", "b": "0.2.0"})), "expected": "a: foo-0.1.0"}), "testConcatLines": ({"expr": nixScope.concatLines(["a","b","c"]), "expected": "a"}), "testMakeIncludePathWithPkgs": ({"expr": (nixScope.makeIncludePath([createScope(nixScope=>{
     const obj = {};
-    obj["outPath"] = "/default";
+    obj.outPath = "/default";
     if (obj["dev"] === undefined) obj["dev"] = {};
     obj["dev"]["outPath"] = "/dev";
     if (obj["out"] === undefined) obj["out"] = {};
@@ -224,23 +224,23 @@ export default /**
     return obj;
 }),createScope(nixScope=>{
     const obj = {};
-    obj["outPath"] = "/default";
+    obj.outPath = "/default";
     if (obj["out"] === undefined) obj["out"] = {};
     obj["out"]["outPath"] = "/out";
     return obj;
 }),({"outPath": "/default"}),createScope(nixScope=>{
     const obj = {};
-    obj["outPath"] = "/default";
-    obj["outputSpecified"] = true;
+    obj.outPath = "/default";
+    obj.outputSpecified = true;
     if (obj["dev"] === undefined) obj["dev"] = {};
     obj["dev"]["outPath"] = "/dev";
     return obj;
 })])), "expected": "/dev/include:/out/include:/default/include:/default/include"}), "testMakeIncludePathWithEmptyList": ({"expr": (nixScope.makeIncludePath([])), "expected": ""}), "testMakeIncludePathWithOneString": ({"expr": (nixScope.makeIncludePath(["/usr"])), "expected": "/usr/include"}), "testMakeIncludePathWithManyString": ({"expr": (nixScope.makeIncludePath(["/usr","/usr/local"])), "expected": "/usr/include:/usr/local/include"}), "testReplaceStringString": ({"expr": nixScope.strings["replaceString"](".")("_")("v1.2.3"), "expected": "v1_2_3"}), "testReplicateString": ({"expr": nixScope.strings["replicate"](5n)("hello"), "expected": "hellohellohellohellohello"}), "testTrimString": ({"expr": /*let*/ createScope(nixScope=>{
-        Object.defineProperty(nixScope, "testValues", {enumerable: true, get(){return createFunc(/*arg:*/ "f", null, {}, (nixScope)=>(
+        defGetter(nixScope, "testValues", (nixScope) => createFunc(/*arg:*/ "f", null, {}, (nixScope)=>(
                 nixScope.mapAttrs((createFunc(/*arg:*/ "_", null, {}, (nixScope)=>(
                     nixScope.f
                 ))))(({"empty": "", "cr": "", "lf": "", "tab": "", "spaces": "   ", "leading": "  Hello, world", "trailing": "Hello, world   ", "mixed": " Hello, world ", "mixed-tabs": " ", "multiline": "  Hello,", "multiline-crlf": "  Hello,"}))
-            ));}});
+            )));
     return ({"leading": nixScope.testValues((nixScope.strings["trimWith"](({"start": true})))), "trailing": nixScope.testValues((nixScope.strings["trimWith"](({"end": true})))), "both": nixScope.testValues(nixScope.strings["trim"])});
 }), "expected": ({"leading": ({"empty": "", "cr": "", "lf": "", "tab": "", "spaces": "", "leading": "Hello, world", "trailing": "Hello, world   ", "mixed": "Hello, world ", "mixed-tabs": "Hello, world ", "multiline": "Hello,", "multiline-crlf": "Hello,"}), "trailing": ({"empty": "", "cr": "", "lf": "", "tab": "", "spaces": "", "leading": "  Hello, world", "trailing": "Hello, world", "mixed": " Hello, world", "mixed-tabs": " ", "multiline": "  Hello,", "multiline-crlf": "  Hello,"}), "both": ({"empty": "", "cr": "", "lf": "", "tab": "", "spaces": "", "leading": "Hello, world", "trailing": "Hello, world", "mixed": "Hello, world", "mixed-tabs": "Hello, world", "multiline": "Hello,", "multiline-crlf": "Hello,"})})}), "testSplitStringsSimple": ({"expr": nixScope.strings["splitString"](".")("a.b.c.d"), "expected": ["a","b","c","d"]}), "testSplitStringsEmpty": ({"expr": nixScope.strings["splitString"](".")("a..b"), "expected": ["a","","b"]}), "testSplitStringsOne": ({"expr": nixScope.strings["splitString"](":")("a.b"), "expected": ["a.b"]}), "testSplitStringsNone": ({"expr": nixScope.strings["splitString"](".")(""), "expected": [""]}), "testSplitStringsFirstEmpty": ({"expr": nixScope.strings["splitString"]("/")("/a/b/c"), "expected": ["","a","b","c"]}), "testSplitStringsLastEmpty": ({"expr": nixScope.strings["splitString"](":")("2001:db8:0:0042::8a2e:370:"), "expected": ["2001","db8","0","0042","","8a2e","370",""]}), "testSplitStringsRegex": ({"expr": nixScope.strings["splitString"]("[{}]()^$?*+|.")("A"), "expected": ["A","B"]}), "testSplitStringBySimpleDelimiter": ({"expr": nixScope.strings["splitStringBy"]((createFunc(/*arg:*/ "prev", null, {}, (nixScope)=>(
                 createFunc(/*arg:*/ "curr", null, {}, (nixScope)=>(
@@ -284,11 +284,11 @@ export default /**
     return ({"storePath": nixScope.isStorePath(nixScope.goodPath), "storePathDerivation": nixScope.isStorePath((nixScope.import((new Path(["../.."], [])))(({"system": "x86_64-linux"})))["hello"]), "storePathAppendix": nixScope.isStorePath((new InterpolatedString(["", "/bin/python"], [()=>(nixScope.goodPath)]))), "nonAbsolute": nixScope.isStorePath((nixScope.concatStrings((nixScope.tail((nixScope.stringToCharacters(nixScope.goodPath))))))), "asPath": nixScope.isStorePath((operators.add((new Path(["/."], [])), nixScope.goodPath))), "otherPath": nixScope.isStorePath("/something/else"), "caPath": nixScope.isStorePath(nixScope.goodCAPath), "caPathAppendix": nixScope.isStorePath((new InterpolatedString(["", "/bin/python"], [()=>(nixScope.goodCAPath)]))), "caAsPath": nixScope.isStorePath((operators.add((new Path(["/."], [])), nixScope.goodCAPath))), "otherVals": ({"attrset": nixScope.isStorePath({}), "list": nixScope.isStorePath([]), "int": nixScope.isStorePath(42n)})});
 }), "expected": ({"storePath": true, "storePathDerivation": true, "storePathAppendix": false, "nonAbsolute": false, "asPath": true, "caPath": true, "caPathAppendix": false, "caAsPath": true, "otherPath": false, "otherVals": ({"attrset": false, "list": false, "int": false})})}), "testEscapeXML": ({"expr": nixScope.escapeXML(`"test" 'test' < & >`), "expected": "&quot;test&quot; &apos;test&apos; &lt; &amp; &gt;"}), "testToShellVars": ({"expr": (new InterpolatedString(["\n      ", "\n    "], [()=>(nixScope.toShellVars(createScope(nixScope=>{
     const obj = {};
-    obj["STRing01"] = "just a 'string'";
-    obj["_array_"] = ["with","more strings"];
-    obj["drv"] = ({"outPath": "/drv", "foo": "ignored attribute"});
-    obj["path"] = (new Path(["/path"], []));
-    obj["stringable"] = ({"__toString": createFunc(/*arg:*/ "_", null, {}, (nixScope)=>(
+    obj.STRing01 = "just a 'string'";
+    obj._array_ = ["with","more strings"];
+    obj.drv = ({"outPath": "/drv", "foo": "ignored attribute"});
+    obj.path = (new Path(["/path"], []));
+    obj.stringable = ({"__toString": createFunc(/*arg:*/ "_", null, {}, (nixScope)=>(
                 "hello toString"
             )), "bar": "ignored attribute"});
     if (obj["assoc"] === undefined) obj["assoc"] = {};
@@ -327,13 +327,13 @@ export default /**
                     operators.equal(nixScope.i, 5n)
                 ))
             ))))([10n,11n,12n,13n,14n,15n]), "expected": [15n]}), "testFold": /*let*/ createScope(nixScope=>{
-        Object.defineProperty(nixScope, "f", {enumerable: true, get(){return createFunc(/*arg:*/ "op", null, {}, (nixScope)=>(
+        defGetter(nixScope, "f", (nixScope) => createFunc(/*arg:*/ "op", null, {}, (nixScope)=>(
                 createFunc(/*arg:*/ "fold", null, {}, (nixScope)=>(
                     nixScope.fold(nixScope.op)(0n)((nixScope.range(0n)(100n)))
                 ))
-            ));}});
-        Object.defineProperty(nixScope, "assoc", {enumerable: true, get(){return nixScope.f(nixScope.builtins["add"]);}});
-        Object.defineProperty(nixScope, "nonAssoc", {enumerable: true, get(){return nixScope.f(nixScope.builtins["sub"]);}});
+            )));
+        defGetter(nixScope, "assoc", (nixScope) => nixScope.f(nixScope.builtins["add"]));
+        defGetter(nixScope, "nonAssoc", (nixScope) => nixScope.f(nixScope.builtins["sub"]));
     return ({"expr": ({"assocRight": nixScope.assoc(nixScope.foldr), "assocRightIsLeft": operators.equal(nixScope.assoc(nixScope.foldr), nixScope.assoc(nixScope.foldl)), "nonAssocRight": nixScope.nonAssoc(nixScope.foldr), "nonAssocLeft": nixScope.nonAssoc(nixScope.foldl), "nonAssocRightIsNotLeft": operators.notEqual(nixScope.nonAssoc(nixScope.foldl), nixScope.nonAssoc(nixScope.foldr)), "foldIsRight": operators.equal(nixScope.nonAssoc(nixScope.fold), nixScope.nonAssoc(nixScope.foldr))}), "expected": ({"assocRight": 5050n, "assocRightIsLeft": true, "nonAssocRight": 50n, "nonAssocLeft": (-5050n), "nonAssocRightIsNotLeft": true, "foldIsRight": true})});
 }), "testFoldl'Empty": ({"expr": nixScope["foldl'"]((createFunc(/*arg:*/ "acc", null, {}, (nixScope)=>(
                 createFunc(/*arg:*/ "el", null, {}, (nixScope)=>(
@@ -369,9 +369,9 @@ export default /**
                     operators.listConcat([nixScope.n], nixScope.a)
                 ))
             ))))([])([({"a": 2n, "b": 7n}),({"a": 3n, "c": 8n})]), "expected": ({"a": [2n,3n], "b": [7n], "c": [8n]})}), "testListCommonPrefixExample1": ({"expr": nixScope.lists["commonPrefix"]([1n,2n,3n,4n,5n,6n])([1n,2n,4n,8n]), "expected": [1n,2n]}), "testListCommonPrefixExample2": ({"expr": nixScope.lists["commonPrefix"]([1n,2n,3n])([1n,2n,3n,4n,5n]), "expected": [1n,2n,3n]}), "testListCommonPrefixExample3": ({"expr": nixScope.lists["commonPrefix"]([1n,2n,3n])([4n,5n,6n]), "expected": []}), "testListCommonPrefixEmpty": ({"expr": nixScope.lists["commonPrefix"]([])([1n,2n,3n]), "expected": []}), "testListCommonPrefixSame": ({"expr": nixScope.lists["commonPrefix"]([1n,2n,3n])([1n,2n,3n]), "expected": [1n,2n,3n]}), "testListCommonPrefixLazy": ({"expr": nixScope.lists["commonPrefix"]([1n])([1n,(nixScope.abort("lib.lists.commonPrefix shouldn't evaluate this"))]), "expected": [1n]}), "testListCommonPrefixLong": /*let*/ createScope(nixScope=>{
-        Object.defineProperty(nixScope, "longList", {enumerable: true, get(){return nixScope.genList((createFunc(/*arg:*/ "n", null, {}, (nixScope)=>(
+        defGetter(nixScope, "longList", (nixScope) => nixScope.genList((createFunc(/*arg:*/ "n", null, {}, (nixScope)=>(
                 nixScope.n
-            ))))(100000n);}});
+            ))))(100000n));
     return ({"expr": nixScope.lists["commonPrefix"](nixScope.longList)(nixScope.longList), "expected": nixScope.longList});
 }), "testSort": ({"expr": nixScope.sort(nixScope.builtins["lessThan"])([40n,2n,30n,42n]), "expected": [2n,30n,40n,42n]}), "testSortOn": ({"expr": nixScope.sortOn(nixScope.stringLength)(["aa","b","cccc"]), "expected": ["b","aa","cccc"]}), "testSortOnEmpty": ({"expr": nixScope.sortOn((nixScope.throw("nope")))([]), "expected": []}), "testSortOnIncomparable": ({"expr": nixScope.map((createFunc(/*arg:*/ "x", null, {}, (nixScope)=>(
                 nixScope.x["f"](nixScope.x["ok"])
@@ -434,7 +434,7 @@ export default /**
                 ))
             ))))(createScope(nixScope=>{
     const obj = {};
-    obj["c"] = ({"hello": true, "world": false});
+    obj.c = ({"hello": true, "world": false});
     if (obj["a"] === undefined) obj["a"] = {};
     obj["a"]["hello"] = true;
     if (obj["b"] === undefined) obj["b"] = {};
@@ -444,7 +444,7 @@ export default /**
     return obj;
 })), "expected": createScope(nixScope=>{
     const obj = {};
-    obj["c"] = ({"hello": true, "world": false});
+    obj.c = ({"hello": true, "world": false});
     if (obj["b"] === undefined) obj["b"] = {};
     obj["b"]["hello"] = true;
     return obj;
@@ -467,14 +467,14 @@ export default /**
                     ))
                 ))
             ))))(1n)(({"z": 1n, "a": 2n}))}), "expected": ({"example": ({"sum": 11n, "names": ["bar","foo"]}), "emptySet": 123n, "valuesNotNeeded": 3n, "trivialAcc": 121n})}), "testMergeAttrsListExample1": ({"expr": nixScope.attrsets["mergeAttrsList"]([({"a": 0n, "b": 1n}),({"c": 2n, "d": 3n})]), "expected": ({"a": 0n, "b": 1n, "c": 2n, "d": 3n})}), "testMergeAttrsListExample2": ({"expr": nixScope.attrsets["mergeAttrsList"]([({"a": 0n}),({"a": 1n})]), "expected": ({"a": 1n})}), "testMergeAttrsListExampleMany": /*let*/ createScope(nixScope=>{
-        Object.defineProperty(nixScope, "list", {enumerable: true, get(){return nixScope.genList((createFunc(/*arg:*/ "n", null, {}, (nixScope)=>(
+        defGetter(nixScope, "list", (nixScope) => nixScope.genList((createFunc(/*arg:*/ "n", null, {}, (nixScope)=>(
                 nixScope.listToAttrs((nixScope.genList((createFunc(/*arg:*/ "m", null, {}, (nixScope)=>(
                     /*let*/ createScope(nixScope=>{
                 nixScope.str = (new InterpolatedString(["halfn", "m", ""], [()=>(nixScope.toString((operators.divide(nixScope.n, 2n)))), ()=>(nixScope.toString(nixScope.m))]));
             return nixScope.nameValuePair(nixScope.str)(nixScope.str);
         })
                 ))))(100n)))
-            ))))(100n);}});
+            ))))(100n));
     return ({"expr": nixScope.attrsets["mergeAttrsList"](nixScope.list), "expected": nixScope["foldl'"](nixScope.mergeAttrs)({})(nixScope.list)});
 }), "testRecursiveUpdateUntil": ({"expr": nixScope.recursiveUpdateUntil((createFunc(/*arg:*/ "path", null, {}, (nixScope)=>(
                 createFunc(/*arg:*/ "l", null, {}, (nixScope)=>(
@@ -484,7 +484,7 @@ export default /**
                 ))
             ))))(createScope(nixScope=>{
     const obj = {};
-    obj["bar"] = 3n;
+    obj.bar = 3n;
     if (obj["foo"] === undefined) obj["foo"] = {};
     obj["foo"]["bar"] = 1n;
     if (obj["foo"] === undefined) obj["foo"] = {};
@@ -492,7 +492,7 @@ export default /**
     return obj;
 }))(createScope(nixScope=>{
     const obj = {};
-    obj["baz"] = 4n;
+    obj.baz = 4n;
     if (obj["foo"] === undefined) obj["foo"] = {};
     obj["foo"]["bar"] = 1n;
     if (obj["foo"] === undefined) obj["foo"] = {};
@@ -500,8 +500,8 @@ export default /**
     return obj;
 })), "expected": createScope(nixScope=>{
     const obj = {};
-    obj["bar"] = 3n;
-    obj["baz"] = 4n;
+    obj.bar = 3n;
+    obj.baz = 4n;
     if (obj["foo"] === undefined) obj["foo"] = {};
     obj["foo"]["bar"] = 1n;
     if (obj["foo"] === undefined) obj["foo"] = {};
@@ -509,7 +509,7 @@ export default /**
     return obj;
 })}), "testMatchAttrsMatchingExact": ({"expr": nixScope.matchAttrs(({"cpu": ({"bits": 64n})}))(({"cpu": ({"bits": 64n})})), "expected": true}), "testMatchAttrsMismatch": ({"expr": nixScope.matchAttrs(({"cpu": ({"bits": 128n})}))(({"cpu": ({"bits": 64n})})), "expected": false}), "testMatchAttrsMatchingImplicit": ({"expr": nixScope.matchAttrs(({"cpu": {}}))(({"cpu": ({"bits": 64n})})), "expected": true}), "testMatchAttrsMissingAttrs": ({"expr": nixScope.matchAttrs(({"cpu": {}}))({}), "expected": false}), "testOverrideExistingEmpty": ({"expr": nixScope.overrideExisting({})(({"a": 1n})), "expected": {}}), "testOverrideExistingDisjoint": ({"expr": nixScope.overrideExisting(({"b": 2n}))(({"a": 1n})), "expected": ({"b": 2n})}), "testOverrideExistingOverride": ({"expr": nixScope.overrideExisting(({"a": 3n, "b": 2n}))(({"a": 1n})), "expected": ({"a": 1n, "b": 2n})}), "testListAttrsReverse": /*let*/ createScope(nixScope=>{
         nixScope.exampleSingletonList = [({"name": "foo", "value": 1n})];
-        Object.defineProperty(nixScope, "exampleAttrs", {enumerable: true, get(){return ({"foo": 1n, "bar": "asdf", "baz": [1n,3n,3n,7n], "fnord": null});}});
+        defGetter(nixScope, "exampleAttrs", (nixScope) => ({"foo": 1n, "bar": "asdf", "baz": [1n,3n,3n,7n], "fnord": null}));
     return ({"expr": ({"isReverseToListToAttrs": operators.equal(nixScope.builtins["listToAttrs"]((nixScope.attrsToList(nixScope.exampleAttrs))), nixScope.exampleAttrs), "isReverseToAttrsToList": operators.equal(nixScope.attrsToList((nixScope.builtins["listToAttrs"](nixScope.exampleSingletonList))), nixScope.exampleSingletonList), "testDuplicatePruningBehaviour": nixScope.attrsToList((nixScope.builtins["listToAttrs"]([({"name": "a", "value": 2n}),({"name": "a", "value": 1n})])))}), "expected": ({"isReverseToAttrsToList": true, "isReverseToListToAttrs": true, "testDuplicatePruningBehaviour": [({"name": "a", "value": 2n})]})});
 }), "testAttrsToListsCanDealWithFunctions": nixScope.testingEval((nixScope.attrsToList(({"someFunc": createFunc(/*arg:*/ "a", null, {}, (nixScope)=>(
                 operators.add(nixScope.a, 1n)
@@ -530,7 +530,7 @@ export default /**
             ))))))((createFunc(/*arg:*/ "final", null, {}, (nixScope)=>(
                 ({"a": 0n, "c": nixScope.final["a"]})
             )))))))], "expected": [({"a": 0n, "c": 0n}),({"a": 1n, "b": 2n, "c": 1n}),({"a": 1n, "b": 0n, "c": 1n}),({"a": 1n, "b": 0n, "c": 2n})]}), "testMkKeyValueDefault": ({"expr": nixScope.generators["mkKeyValueDefault"]({})(":")("f:oo")("bar"), "expected": `f\\:oo:bar`}), "testMkValueString": ({"expr": /*let*/ createScope(nixScope=>{
-        Object.defineProperty(nixScope, "vals", {enumerable: true, get(){return ({"int": 42n, "string": `fo"o`, "bool": true, "bool2": false, "null": null});}});
+        defGetter(nixScope, "vals", (nixScope) => ({"int": 42n, "string": `fo"o`, "bool": true, "bool2": false, "null": null}));
     return nixScope.mapAttrs((nixScope.const((nixScope.generators["mkValueStringDefault"]({})))))(nixScope.vals);
 }), "expected": ({"int": "42", "string": `fo"o`, "bool": "true", "bool2": "false", "null": "null"})}), "testToKeyValue": ({"expr": nixScope.generators["toKeyValue"]({})(({"key": "value", "other=key": "baz"})), "expected": `
       key=value
@@ -579,12 +579,12 @@ export default /**
       x=Me-se JarJar Binx
     `}), "testToGitINI": ({"expr": nixScope.generators["toGitINI"](createScope(nixScope=>{
     const obj = {};
-    obj["user"] = ({"email": "user@example.org", "name": "John Doe", "signingKey": "00112233445566778899AABBCCDDEEFF"});
-    obj["extra"] = createScope(nixScope=>{
+    obj.user = ({"email": "user@example.org", "name": "John Doe", "signingKey": "00112233445566778899AABBCCDDEEFF"});
+    obj.extra = createScope(nixScope=>{
     const obj = {};
-    obj["boolean"] = true;
-    obj["integer"] = 38n;
-    obj["name"] = "value";
+    obj.boolean = true;
+    obj.integer = 38n;
+    obj.name = "value";
     if (obj["subsection"] === undefined) obj["subsection"] = {};
     obj["subsection"]["value"] = "test";
     return obj;
@@ -606,7 +606,7 @@ export default /**
         nixScope.val = ({"list": [({"one": 1n}),({"two": 2n})], "all": 42n});
     return ({"expr": nixScope.generators["toYAML"]({})(nixScope.val), "expected": nixScope.builtins["toJSON"](nixScope.val)});
 }), "testToPretty": /*let*/ createScope(nixScope=>{
-        Object.defineProperty(nixScope, "deriv", {enumerable: true, get(){return nixScope.derivation(({"name": "test", "builder": "/bin/sh", "system": "aarch64-linux"}));}});
+        defGetter(nixScope, "deriv", (nixScope) => nixScope.derivation(({"name": "test", "builder": "/bin/sh", "system": "aarch64-linux"})));
     return ({"expr": nixScope.mapAttrs((nixScope.const((nixScope.generators["toPretty"](({"multiline": false}))))))(/*rec*/createScope(nixScope=>{
     nixScope.int = 42n;
     nixScope.float = 0.1337;
@@ -615,18 +615,18 @@ export default /**
     nixScope.newlinestring = "";
     nixScope.emptylist = [];
     nixScope.emptyattrs = {};
-        Object.defineProperty(nixScope, "bool", {enumerable: true, get(){return true;}});
-        Object.defineProperty(nixScope, "path", {enumerable: true, get(){return operators.add((new Path(["/."], [])), "/foo");}});
-        Object.defineProperty(nixScope, "null_", {enumerable: true, get(){return null;}});
-        Object.defineProperty(nixScope, "function", {enumerable: true, get(){return createFunc(/*arg:*/ "x", null, {}, (nixScope)=>(
+        defGetter(nixScope, "bool", (nixScope) => true);
+        defGetter(nixScope, "path", (nixScope) => operators.add((new Path(["/."], [])), "/foo"));
+        defGetter(nixScope, "null_", (nixScope) => null);
+        defGetter(nixScope, "function", (nixScope) => createFunc(/*arg:*/ "x", null, {}, (nixScope)=>(
                 nixScope.x
-            ));}});
-        Object.defineProperty(nixScope, "functionArgs", {enumerable: true, get(){return createFunc({"arg": (nixScope)=>(4n),}, null, {}, (nixScope)=>(
+            )));
+        defGetter(nixScope, "functionArgs", (nixScope) => createFunc({"arg": (nixScope)=>(4n),}, null, {}, (nixScope)=>(
                 nixScope.arg
-            ));}});
-        Object.defineProperty(nixScope, "list", {enumerable: true, get(){return [3n,4n,nixScope.function,[false]];}});
-        Object.defineProperty(nixScope, "attrs", {enumerable: true, get(){return ({"foo": null, "foo b/ar": "baz"});}});
-        Object.defineProperty(nixScope, "drv", {enumerable: true, get(){return nixScope.deriv;}});
+            )));
+        defGetter(nixScope, "list", (nixScope) => [3n,4n,nixScope.function,[false]]);
+        defGetter(nixScope, "attrs", (nixScope) => ({"foo": null, "foo b/ar": "baz"}));
+        defGetter(nixScope, "drv", (nixScope) => nixScope.deriv);
         return nixScope;
 })), "expected": /*rec*/createScope(nixScope=>{
     nixScope.int = "42";
@@ -642,8 +642,8 @@ export default /**
     nixScope.attrs = "{ foo = null; ";
     nixScope.emptyattrs = "{ }";
     nixScope.drv = (new InterpolatedString(["<derivation ", ">"], [()=>(nixScope.deriv["name"])]));
-        Object.defineProperty(nixScope, "emptystring", {enumerable: true, get(){return `""`;}});
-        Object.defineProperty(nixScope, "string", {enumerable: true, get(){return `"fn\`;}});
+        defGetter(nixScope, "emptystring", (nixScope) => `""`);
+        defGetter(nixScope, "string", (nixScope) => `"fn\`);
         return nixScope;
 })});
 }), "testToPrettyLimit": /*let*/ createScope(nixScope=>{
@@ -657,23 +657,23 @@ export default /**
         nixScope.a["c"] = nixScope.a;
     return ({"expr": (nixScope.builtins["tryEval"]((nixScope.generators["toPretty"]({})((nixScope.generators["withRecursion"](({"depthLimit": 2n}))(nixScope.a))))))["success"], "expected": false});
 }), "testWithRecursionDealsWithFunctors": /*let*/ createScope(nixScope=>{
-        Object.defineProperty(nixScope, "functor", {enumerable: true, get(){return ({"__functor": createFunc(/*arg:*/ "self", null, {}, (nixScope)=>(
+        defGetter(nixScope, "functor", (nixScope) => ({"__functor": createFunc(/*arg:*/ "self", null, {}, (nixScope)=>(
                 createFunc({}, null, {}, (nixScope)=>(
                     null
                 ))
-            ))});}});
-        Object.defineProperty(nixScope, "a", {enumerable: true, get(){return createScope(nixScope=>{
+            ))}));
+        defGetter(nixScope, "a", (nixScope) => createScope(nixScope=>{
     const obj = {};
-    obj["value"] = "1234";
-    obj["b"] = nixScope.functor;
+    obj.value = "1234";
+    obj.b = nixScope.functor;
     if (obj["c"] === undefined) obj["c"] = {};
     obj["c"]["d"] = nixScope.functor;
     return obj;
-});}});
+}));
     return ({"expr": nixScope.generators["toPretty"]({})((nixScope.generators["withRecursion"](({"depthLimit": 1n, "throwOnDepthLimit": false}))(nixScope.a))), "expected": "{"});
 }), "testToPrettyMultiline": ({"expr": nixScope.mapAttrs((nixScope.const((nixScope.generators["toPretty"]({})))))(({"list": [3n,4n,[false]], "attrs": createScope(nixScope=>{
     const obj = {};
-    obj["foo"] = null;
+    obj.foo = null;
     if (obj["bar"] === undefined) obj["bar"] = {};
     obj["bar"]["foo"] = "baz";
     return obj;
@@ -730,7 +730,7 @@ export default /**
       x.y = 42
     `}), "testToLuaIndentedBindings": ({"expr": nixScope.generators["toLua"](({"asBindings": true, "indent": "  "}))(({"x": ({"y": 42n})})), "expected": "  x = {"}), "testToLuaBindingsWithSpace": nixScope.testingThrow((nixScope.generators["toLua"](({"asBindings": true}))(({"with space": 42n})))), "testToLuaBindingsWithLeadingDigit": nixScope.testingThrow((nixScope.generators["toLua"](({"asBindings": true}))(({"11eleven": 42n})))), "testToLuaBasicExample": ({"expr": nixScope.generators["toLua"]({})(createScope(nixScope=>{
     const obj = {};
-    obj["cmd"] = ["typescript-language-server","--stdio"];
+    obj.cmd = ["typescript-language-server","--stdio"];
     if (obj["settings"] === undefined) obj["settings"] = {};
     if (obj["settings"]["workspace"] === undefined) obj["settings"]["workspace"] = {};
     obj["settings"]["workspace"]["library"] = nixScope.generators["mkLuaInline"](`vim.api.nvim_get_runtime_file("", true)`);
@@ -747,34 +747,34 @@ export default /**
           }
         }
       }`}), "testToGNUCommandLine": ({"expr": nixScope.cli["toGNUCommandLine"]({})(({"data": nixScope.builtins["toJSON"](({"id": 0n})), "X": "PUT", "retry": 3n, "retry-delay": null, "url": ["https://example.com/foo","https://example.com/bar"], "silent": false, "verbose": true})), "expected": ["-X","PUT","--data","{","--retry","3","--url","https://example.com/foo","--url","https://example.com/bar","--verbose"]}), "testToGNUCommandLineSeparator": ({"expr": nixScope.cli["toGNUCommandLine"](({"optionValueSeparator": "="}))(({"data": nixScope.builtins["toJSON"](({"id": 0n})), "X": "PUT", "retry": 3n, "retry-delay": null, "url": ["https://example.com/foo","https://example.com/bar"], "silent": false, "verbose": true})), "expected": ["-X=PUT","--data={","--retry=3","--url=https://example.com/foo","--url=https://example.com/bar","--verbose"]}), "testToGNUCommandLineShell": ({"expr": nixScope.cli["toGNUCommandLineShell"]({})(({"data": nixScope.builtins["toJSON"](({"id": 0n})), "X": "PUT", "retry": 3n, "retry-delay": null, "url": ["https://example.com/foo","https://example.com/bar"], "silent": false, "verbose": true})), "expected": "-X PUT --data '{"}), "testSanitizeDerivationNameLeadingDots": nixScope.testSanitizeDerivationName(({"name": "..foo", "expected": "foo"})), "testSanitizeDerivationNameUnicode": nixScope.testSanitizeDerivationName(({"name": "fö", "expected": "f-"})), "testSanitizeDerivationNameAscii": nixScope.testSanitizeDerivationName(({"name": " !", "expected": "-+--.-0123456789-=-?-ABCDEFGHIJKLMNOPQRSTUVWXYZ-_-abcdefghijklmnopqrstuvwxyz-"})), "testSanitizeDerivationNameTooLong": nixScope.testSanitizeDerivationName(({"name": "This string is loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong", "expected": "loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooong"})), "testSanitizeDerivationNameTooLongWithInvalid": nixScope.testSanitizeDerivationName(({"name": "Hello there aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa &&&&&&&&", "expected": "there-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa-"})), "testSanitizeDerivationNameEmpty": nixScope.testSanitizeDerivationName(({"name": "", "expected": "unknown"})), "test: submodule definitions aren't unchecked when evaluating submodule documentation": ({"expr": /*let*/ createScope(nixScope=>{
-        Object.defineProperty(nixScope, "module", {enumerable: true, get(){return createFunc({}, null, {}, (nixScope)=>(
+        defGetter(nixScope, "module", (nixScope) => createFunc({}, null, {}, (nixScope)=>(
                 createScope(nixScope=>{
         const obj = {};
         if (obj["options"] === undefined) obj["options"] = {};
         obj["options"]["foo"] = nixScope.lib["mkOption"](({"type": nixScope.lib["types"]["submodule"](nixScope.submodule)}));
         return obj;
     })
-            ));}});
-        Object.defineProperty(nixScope, "submodule", {enumerable: true, get(){return createScope(nixScope=>{
+            )));
+        defGetter(nixScope, "submodule", (nixScope) => createScope(nixScope=>{
     const obj = {};
     if (obj["options"] === undefined) obj["options"] = {};
     obj["options"]["bar"] = nixScope.lib["mkOption"](({"type": nixScope.lib["types"]["int"]}));
     if (obj["config"] === undefined) obj["config"] = {};
     obj["config"]["submoduleWrong"] = nixScope.throw("yikes");
     return obj;
-});}});
-        Object.defineProperty(nixScope, "options", {enumerable: true, get(){return (nixScope.evalModules(({"modules": [nixScope.module]})))["options"];}});
-        Object.defineProperty(nixScope, "renderableOpts", {enumerable: true, get(){return nixScope.filter((createFunc(/*arg:*/ "o", null, {}, (nixScope)=>(
+}));
+        defGetter(nixScope, "options", (nixScope) => (nixScope.evalModules(({"modules": [nixScope.module]})))["options"]);
+        defGetter(nixScope, "renderableOpts", (nixScope) => nixScope.filter((createFunc(/*arg:*/ "o", null, {}, (nixScope)=>(
                 operators.negate(nixScope.o["internal"])
-            ))))((nixScope.optionAttrSetToDocList(nixScope.options)));}});
+            ))))((nixScope.optionAttrSetToDocList(nixScope.options))));
     return nixScope.builtins["deepSeq"](nixScope.renderableOpts)((nixScope.map((createFunc(/*arg:*/ "o", null, {}, (nixScope)=>(
                 nixScope.o["loc"]
             ))))(nixScope.renderableOpts)));
 }), "expected": [["_module","args"],["foo"],["foo","bar"]]}), "testFreeformOptions": ({"expr": /*let*/ createScope(nixScope=>{
-        Object.defineProperty(nixScope, "submodule", {enumerable: true, get(){return createFunc({}, null, {}, (nixScope)=>(
+        defGetter(nixScope, "submodule", (nixScope) => createFunc({}, null, {}, (nixScope)=>(
                 createScope(nixScope=>{
         const obj = {};
-        obj["freeformType"] = nixScope.lib["types"]["attrsOf"]((nixScope.lib["types"]["submodule"](createScope(nixScope=>{
+        obj.freeformType = nixScope.lib["types"]["attrsOf"]((nixScope.lib["types"]["submodule"](createScope(nixScope=>{
         const obj = {};
         if (obj["options"] === undefined) obj["options"] = {};
         obj["options"]["bar"] = nixScope.lib["mkOption"]({});
@@ -784,30 +784,30 @@ export default /**
         obj["options"]["bar"] = nixScope.lib["mkOption"]({});
         return obj;
     })
-            ));}});
-        Object.defineProperty(nixScope, "module", {enumerable: true, get(){return createFunc({}, null, {}, (nixScope)=>(
+            )));
+        defGetter(nixScope, "module", (nixScope) => createFunc({}, null, {}, (nixScope)=>(
                 createScope(nixScope=>{
         const obj = {};
         if (obj["options"] === undefined) obj["options"] = {};
         obj["options"]["foo"] = nixScope.lib["mkOption"](({"type": nixScope.lib["types"]["submodule"](nixScope.submodule)}));
         return obj;
     })
-            ));}});
-        Object.defineProperty(nixScope, "options", {enumerable: true, get(){return (nixScope.evalModules(({"modules": [nixScope.module]})))["options"];}});
-        Object.defineProperty(nixScope, "locs", {enumerable: true, get(){return nixScope.filter((createFunc(/*arg:*/ "o", null, {}, (nixScope)=>(
+            )));
+        defGetter(nixScope, "options", (nixScope) => (nixScope.evalModules(({"modules": [nixScope.module]})))["options"]);
+        defGetter(nixScope, "locs", (nixScope) => nixScope.filter((createFunc(/*arg:*/ "o", null, {}, (nixScope)=>(
                 operators.negate(nixScope.o["internal"])
-            ))))((nixScope.optionAttrSetToDocList(nixScope.options)));}});
+            ))))((nixScope.optionAttrSetToDocList(nixScope.options))));
     return nixScope.map((createFunc(/*arg:*/ "o", null, {}, (nixScope)=>(
                 nixScope.o["loc"]
             ))))(nixScope.locs);
 }), "expected": [["_module","args"],["foo"],["foo","<name>","bar"],["foo","bar"]]}), "testAttrsWithName": ({"expr": /*let*/ createScope(nixScope=>{
-        Object.defineProperty(nixScope, "eval", {enumerable: true, get(){return nixScope.evalModules(({"modules": [({"options": ({"foo": nixScope.lib["mkOption"](({"type": nixScope.lib["types"]["attrsWith"](({"placeholder": "MyCustomPlaceholder", "elemType": nixScope.lib["types"]["submodule"](createScope(nixScope=>{
+        defGetter(nixScope, "eval", (nixScope) => nixScope.evalModules(({"modules": [({"options": ({"foo": nixScope.lib["mkOption"](({"type": nixScope.lib["types"]["attrsWith"](({"placeholder": "MyCustomPlaceholder", "elemType": nixScope.lib["types"]["submodule"](createScope(nixScope=>{
     const obj = {};
     if (obj["options"] === undefined) obj["options"] = {};
     obj["options"]["bar"] = nixScope.lib["mkOption"](({"type": nixScope.lib["types"]["int"], "default": 42n}));
     return obj;
-}))}))}))})})]}));}});
-        Object.defineProperty(nixScope, "opt", {enumerable: true, get(){return nixScope.eval["options"]["foo"];}});
+}))}))}))})})]})));
+        defGetter(nixScope, "opt", (nixScope) => nixScope.eval["options"]["foo"]);
     return (nixScope.opt["type"]["getSubOptions"](nixScope.opt["loc"]))["bar"]["loc"];
 }), "expected": ["foo","<MyCustomPlaceholder>","bar"]}), "testShowOptionWithPlaceholder": ({"expr": nixScope.lib["showOption"](["<name>","<myName>","*","{foo}"]), "expected": "<name>.<myName>.*."}), "testCartesianProductOfEmptySet": ({"expr": nixScope.cartesianProduct({}), "expected": [{}]}), "testCartesianProductOfOneSet": ({"expr": nixScope.cartesianProduct(({"a": [1n,2n,3n]})), "expected": [({"a": 1n}),({"a": 2n}),({"a": 3n})]}), "testCartesianProductOfTwoSets": ({"expr": nixScope.cartesianProduct(({"a": [1n], "b": [10n,20n]})), "expected": [({"a": 1n, "b": 10n}),({"a": 1n, "b": 20n})]}), "testCartesianProductOfTwoSetsWithOneEmpty": ({"expr": nixScope.cartesianProduct(({"a": [], "b": [10n,20n]})), "expected": []}), "testCartesianProductOfThreeSets": ({"expr": nixScope.cartesianProduct(({"a": [1n,2n,3n], "b": [10n,20n,30n], "c": [100n,200n,300n]})), "expected": [({"a": 1n, "b": 10n, "c": 100n}),({"a": 1n, "b": 10n, "c": 200n}),({"a": 1n, "b": 10n, "c": 300n}),({"a": 1n, "b": 20n, "c": 100n}),({"a": 1n, "b": 20n, "c": 200n}),({"a": 1n, "b": 20n, "c": 300n}),({"a": 1n, "b": 30n, "c": 100n}),({"a": 1n, "b": 30n, "c": 200n}),({"a": 1n, "b": 30n, "c": 300n}),({"a": 2n, "b": 10n, "c": 100n}),({"a": 2n, "b": 10n, "c": 200n}),({"a": 2n, "b": 10n, "c": 300n}),({"a": 2n, "b": 20n, "c": 100n}),({"a": 2n, "b": 20n, "c": 200n}),({"a": 2n, "b": 20n, "c": 300n}),({"a": 2n, "b": 30n, "c": 100n}),({"a": 2n, "b": 30n, "c": 200n}),({"a": 2n, "b": 30n, "c": 300n}),({"a": 3n, "b": 10n, "c": 100n}),({"a": 3n, "b": 10n, "c": 200n}),({"a": 3n, "b": 10n, "c": 300n}),({"a": 3n, "b": 20n, "c": 100n}),({"a": 3n, "b": 20n, "c": 200n}),({"a": 3n, "b": 20n, "c": 300n}),({"a": 3n, "b": 30n, "c": 100n}),({"a": 3n, "b": 30n, "c": 200n}),({"a": 3n, "b": 30n, "c": 300n})]}), "testMapCartesianProductOfOneSet": ({"expr": nixScope.mapCartesianProduct((createFunc({}, null, {}, (nixScope)=>(
                 operators.multiply(nixScope.a, 2n)
@@ -895,13 +895,13 @@ export default /**
     return obj;
 })}), "testCommonPrefixLengthEmpty": ({"expr": nixScope.strings["commonPrefixLength"]("")("hello"), "expected": 0n}), "testCommonPrefixLengthSame": ({"expr": nixScope.strings["commonPrefixLength"]("hello")("hello"), "expected": 5n}), "testCommonPrefixLengthDiffering": ({"expr": nixScope.strings["commonPrefixLength"]("hello")("hey"), "expected": 2n}), "testCommonSuffixLengthEmpty": ({"expr": nixScope.strings["commonSuffixLength"]("")("hello"), "expected": 0n}), "testCommonSuffixLengthSame": ({"expr": nixScope.strings["commonSuffixLength"]("hello")("hello"), "expected": 5n}), "testCommonSuffixLengthDiffering": ({"expr": nixScope.strings["commonSuffixLength"]("test")("rest"), "expected": 3n}), "testLevenshteinEmpty": ({"expr": nixScope.strings["levenshtein"]("")(""), "expected": 0n}), "testLevenshteinOnlyAdd": ({"expr": nixScope.strings["levenshtein"]("")("hello there"), "expected": 11n}), "testLevenshteinOnlyRemove": ({"expr": nixScope.strings["levenshtein"]("hello there")(""), "expected": 11n}), "testLevenshteinOnlyTransform": ({"expr": nixScope.strings["levenshtein"]("abcdef")("ghijkl"), "expected": 6n}), "testLevenshteinMixed": ({"expr": nixScope.strings["levenshtein"]("kitchen")("sitting"), "expected": 5n}), "testLevenshteinAtMostZeroFalse": ({"expr": nixScope.strings["levenshteinAtMost"](0n)("foo")("boo"), "expected": false}), "testLevenshteinAtMostZeroTrue": ({"expr": nixScope.strings["levenshteinAtMost"](0n)("foo")("foo"), "expected": true}), "testLevenshteinAtMostOneFalse": ({"expr": nixScope.strings["levenshteinAtMost"](1n)("car")("ct"), "expected": false}), "testLevenshteinAtMostOneTrue": ({"expr": nixScope.strings["levenshteinAtMost"](1n)("car")("cr"), "expected": true}), "testLevenshteinAtMostTwoIsEmpty": ({"expr": nixScope.strings["levenshteinAtMost"](2n)("")(""), "expected": true}), "testLevenshteinAtMostTwoIsZero": ({"expr": nixScope.strings["levenshteinAtMost"](2n)("abcdef")("abcdef"), "expected": true}), "testLevenshteinAtMostTwoIsOne": ({"expr": nixScope.strings["levenshteinAtMost"](2n)("abcdef")("abddef"), "expected": true}), "testLevenshteinAtMostTwoDiff0False": ({"expr": nixScope.strings["levenshteinAtMost"](2n)("abcdef")("aczyef"), "expected": false}), "testLevenshteinAtMostTwoDiff0Outer": ({"expr": nixScope.strings["levenshteinAtMost"](2n)("abcdef")("zbcdez"), "expected": true}), "testLevenshteinAtMostTwoDiff0DelLeft": ({"expr": nixScope.strings["levenshteinAtMost"](2n)("abcdef")("bcdefz"), "expected": true}), "testLevenshteinAtMostTwoDiff0DelRight": ({"expr": nixScope.strings["levenshteinAtMost"](2n)("abcdef")("zabcde"), "expected": true}), "testLevenshteinAtMostTwoDiff1False": ({"expr": nixScope.strings["levenshteinAtMost"](2n)("abcdef")("bddez"), "expected": false}), "testLevenshteinAtMostTwoDiff1DelLeft": ({"expr": nixScope.strings["levenshteinAtMost"](2n)("abcdef")("bcdez"), "expected": true}), "testLevenshteinAtMostTwoDiff1DelRight": ({"expr": nixScope.strings["levenshteinAtMost"](2n)("abcdef")("zbcde"), "expected": true}), "testLevenshteinAtMostTwoDiff2False": ({"expr": nixScope.strings["levenshteinAtMost"](2n)("hello")("hxo"), "expected": false}), "testLevenshteinAtMostTwoDiff2True": ({"expr": nixScope.strings["levenshteinAtMost"](2n)("hello")("heo"), "expected": true}), "testLevenshteinAtMostTwoDiff3": ({"expr": nixScope.strings["levenshteinAtMost"](2n)("hello")("ho"), "expected": false}), "testLevenshteinAtMostThreeFalse": ({"expr": nixScope.strings["levenshteinAtMost"](3n)("hello")("Holla!"), "expected": false}), "testLevenshteinAtMostThreeTrue": ({"expr": nixScope.strings["levenshteinAtMost"](3n)("hello")("Holla"), "expected": true}), "testLazyDerivationIsLazyInDerivationForAttrNames": ({"expr": nixScope.attrNames((nixScope.lazyDerivation(({"derivation": nixScope.throw("not lazy enough")})))), "expected": ["drvPath","meta","name","out","outPath","outputName","outputs","system","type"]}), "testLazyDerivationIsLazyInDerivationForPassthruAttr": ({"expr": (nixScope.lazyDerivation(createScope(nixScope=>{
     const obj = {};
-    obj["derivation"] = nixScope.throw("not lazy enough");
+    obj.derivation = nixScope.throw("not lazy enough");
     if (obj["passthru"] === undefined) obj["passthru"] = {};
     obj["passthru"]["tests"] = "whatever is in tests";
     return obj;
 })))["tests"], "expected": "whatever is in tests"}), "testLazyDerivationIsLazyInDerivationForPassthruAttr2": ({"expr": (nixScope.lazyDerivation(createScope(nixScope=>{
     const obj = {};
-    obj["derivation"] = nixScope.throw("not lazy enough");
+    obj.derivation = nixScope.throw("not lazy enough");
     if (obj["passthru"] === undefined) obj["passthru"] = {};
     obj["passthru"]["foo"] = "whatever is in foo";
     return obj;
@@ -909,30 +909,30 @@ export default /**
         nixScope.derivation = ({"type": "derivation", "outputs": ["out"], "out": "test out", "outPath": "test outPath", "outputName": "out", "drvPath": "test drvPath", "name": "test name", "system": "test system", "meta": "test meta"});
     return ({"expr": nixScope.lazyDerivation(({"derivation": nixScope.derivation})), "expected": nixScope.derivation});
 }), "testOptionalDrvAttr": /*let*/ createScope(nixScope=>{
-        Object.defineProperty(nixScope, "mkDerivation", {enumerable: true, get(){return createFunc(/*arg:*/ "args", null, {}, (nixScope)=>(
+        defGetter(nixScope, "mkDerivation", (nixScope) => createFunc(/*arg:*/ "args", null, {}, (nixScope)=>(
                 nixScope.derivation((operators.merge(nixScope.args, ({"builder": "builder", "system": "system", "__ignoreNulls": true}))))
-            ));}});
+            )));
     return ({"expr": (nixScope.mkDerivation(({"name": "foo", "x": nixScope.optionalDrvAttr(true)(1n), "y": nixScope.optionalDrvAttr(false)(1n)})))["drvPath"], "expected": (nixScope.mkDerivation(({"name": "foo", "x": 1n})))["drvPath"]});
 }), "testLazyDerivationMultiOutputReturnsDerivationAttrs": /*let*/ createScope(nixScope=>{
         nixScope.derivation = createScope(nixScope=>{
     const obj = {};
-    obj["type"] = "derivation";
-    obj["outputs"] = ["out","dev"];
-    obj["dev"] = "test dev";
-    obj["out"] = "test out";
-    obj["outPath"] = "test outPath";
-    obj["outputName"] = "out";
-    obj["drvPath"] = "test drvPath";
-    obj["name"] = "test name";
-    obj["system"] = "test system";
+    obj.type = "derivation";
+    obj.outputs = ["out","dev"];
+    obj.dev = "test dev";
+    obj.out = "test out";
+    obj.outPath = "test outPath";
+    obj.outputName = "out";
+    obj.drvPath = "test drvPath";
+    obj.name = "test name";
+    obj.system = "test system";
     if (obj["meta"] === undefined) obj["meta"] = {};
     obj["meta"]["position"] = "/hi:23";
     return obj;
 });
     return ({"expr": nixScope.lazyDerivation(createScope(nixScope=>{
     const obj = {};
-    obj["derivation"] = nixScope.derivation;
-    obj["outputs"] = ["out","dev"];
+    obj.derivation = nixScope.derivation;
+    obj.outputs = ["out","dev"];
     if (obj["passthru"] === undefined) obj["passthru"] = {};
     if (obj["passthru"]["meta"] === undefined) obj["passthru"]["meta"] = {};
     obj["passthru"]["meta"]["position"] = "/hi:23";
@@ -1072,9 +1072,9 @@ export default /**
                 null
             ))})]))), "expected": ({"a": false, "b": false, "c": true})}), "testGetExe'Output": ({"expr": nixScope["getExe'"](({"type": "derivation", "out": "somelonghash", "bin": "somelonghash"}))("executable"), "expected": "somelonghash/bin/executable"}), "testGetExeOutput": ({"expr": nixScope.getExe(createScope(nixScope=>{
     const obj = {};
-    obj["type"] = "derivation";
-    obj["out"] = "somelonghash";
-    obj["bin"] = "somelonghash";
+    obj.type = "derivation";
+    obj.out = "somelonghash";
+    obj.bin = "somelonghash";
     if (obj["meta"] === undefined) obj["meta"] = {};
     obj["meta"]["mainProgram"] = "mainProgram";
     return obj;
@@ -1091,31 +1091,31 @@ export default /**
                     nixScope.import(nixScope.path)(nixScope.overrides)
                 ))
             )), "directory": (new Path(["./packages-from-directory/plain/c"], []))})), "expected": "c"}), "testMergeTypesSimple": /*let*/ createScope(nixScope=>{
-        Object.defineProperty(nixScope, "mergedType", {enumerable: true, get(){return nixScope.types["mergeTypes"](nixScope.types["str"])(nixScope.types["str"]);}});
+        defGetter(nixScope, "mergedType", (nixScope) => nixScope.types["mergeTypes"](nixScope.types["str"])(nixScope.types["str"]));
     return ({"expr": nixScope.mergedType["name"], "expected": "str"});
 }), "testMergeTypesFail": /*let*/ createScope(nixScope=>{
-        Object.defineProperty(nixScope, "mergedType", {enumerable: true, get(){return nixScope.types["mergeTypes"](nixScope.types["str"])(nixScope.types["int"]);}});
+        defGetter(nixScope, "mergedType", (nixScope) => nixScope.types["mergeTypes"](nixScope.types["str"])(nixScope.types["int"]));
     return ({"expr": nixScope.types["isType"]("merge-error")(nixScope.mergedType), "expected": true});
 }), "testMergeTypesEnum": /*let*/ createScope(nixScope=>{
-        Object.defineProperty(nixScope, "enumAB", {enumerable: true, get(){return nixScope.lib["types"]["enum"](["A","B"]);}});
-        Object.defineProperty(nixScope, "enumXY", {enumerable: true, get(){return nixScope.lib["types"]["enum"](["X","Y"]);}});
-        Object.defineProperty(nixScope, "merged", {enumerable: true, get(){return nixScope.lib["types"]["mergeTypes"](nixScope.enumAB)(nixScope.enumXY);}});
+        defGetter(nixScope, "enumAB", (nixScope) => nixScope.lib["types"]["enum"](["A","B"]));
+        defGetter(nixScope, "enumXY", (nixScope) => nixScope.lib["types"]["enum"](["X","Y"]));
+        defGetter(nixScope, "merged", (nixScope) => nixScope.lib["types"]["mergeTypes"](nixScope.enumAB)(nixScope.enumXY));
     return ({"expr": ({"checkA": nixScope.merged["check"]("A"), "checkB": nixScope.merged["check"]("B"), "checkX": nixScope.merged["check"]("X"), "checkY": nixScope.merged["check"]("Y"), "checkC": nixScope.merged["check"]("C")}), "expected": ({"checkA": true, "checkB": true, "checkX": true, "checkY": true, "checkC": false})});
 }), "testPackagesFromDirectoryNestedScopes": /*let*/ createScope(nixScope=>{
         nixScope.makeScope = nixScope.lib["makeScope"];
         nixScope.recurseIntoAttrs = nixScope.lib["recurseIntoAttrs"];
-        Object.defineProperty(nixScope, "emptyScope", {enumerable: true, get(){return nixScope.makeScope(nixScope.lib["callPackageWith"])((createFunc(/*arg:*/ "_", null, {}, (nixScope)=>(
+        defGetter(nixScope, "emptyScope", (nixScope) => nixScope.makeScope(nixScope.lib["callPackageWith"])((createFunc(/*arg:*/ "_", null, {}, (nixScope)=>(
                 {}
-            ))));}});
+            )))));
     return ({"expr": nixScope.lib["filterAttrsRecursive"]((createFunc(/*arg:*/ "name", null, {}, (nixScope)=>(
                 createFunc(/*arg:*/ "value", null, {}, (nixScope)=>(
                     operators.negate(nixScope.lib["elem"](nixScope.name)(["callPackage","newScope","overrideScope","packages"]))
                 ))
             ))))((nixScope.packagesFromDirectoryRecursive(createScope(nixScope=>{
     const obj = {};
-        obj["callPackage"] = nixScope.emptyScope["callPackage"];
-        obj["newScope"] = nixScope.emptyScope["newScope"];
-        obj["directory"] = (new Path(["./packages-from-directory/scope"], []));
+        obj.callPackage = nixScope.emptyScope.callPackage
+        obj.newScope = nixScope.emptyScope.newScope
+        obj.directory = (new Path(["./packages-from-directory/scope"], []));
     return obj;
 })))), "expected": nixScope.lib["recurseIntoAttrs"](({"a": "a", "b": "b", "c": "c", "my-namespace": nixScope.lib["recurseIntoAttrs"](({"d": "d", "e": "e", "f": "f", "my-sub-namespace": nixScope.lib["recurseIntoAttrs"](({"g": "g", "h": "h"}))}))}))});
 }), "testFilesystemResolveDefaultNixFile1": ({"expr": nixScope.lib["filesystem"]["resolveDefaultNix"]((new Path(["./foo.nix"], []))), "expected": (new Path(["./foo.nix"], []))}), "testFilesystemResolveDefaultNixFile2": ({"expr": nixScope.lib["filesystem"]["resolveDefaultNix"]((new Path(["./default.nix"], []))), "expected": (new Path(["./default.nix"], []))}), "testFilesystemResolveDefaultNixDir1": ({"expr": nixScope.lib["filesystem"]["resolveDefaultNix"]((new Path(["./."], []))), "expected": (new Path(["./default.nix"], []))}), "testFilesystemResolveDefaultNixFile1_toString": ({"expr": nixScope.lib["filesystem"]["resolveDefaultNix"]((nixScope.toString((new Path(["./foo.nix"], []))))), "expected": nixScope.toString((new Path(["./foo.nix"], [])))}), "testFilesystemResolveDefaultNixFile2_toString": ({"expr": nixScope.lib["filesystem"]["resolveDefaultNix"]((nixScope.toString((new Path(["./default.nix"], []))))), "expected": nixScope.toString((new Path(["./default.nix"], [])))}), "testFilesystemResolveDefaultNixDir1_toString": ({"expr": nixScope.lib["filesystem"]["resolveDefaultNix"]((nixScope.toString((new Path(["./."], []))))), "expected": nixScope.toString((new Path(["./default.nix"], [])))}), "testFilesystemResolveDefaultNixDir1_toString2": ({"expr": nixScope.lib["filesystem"]["resolveDefaultNix"]((nixScope.toString((new Path(["./."], []))))), "expected": operators.add(nixScope.toString((new Path(["./."], []))), "/default.nix")}), "testFilesystemResolveDefaultNixNonExistent": ({"expr": nixScope.lib["filesystem"]["resolveDefaultNix"]("/non-existent/this/does/not/exist/for/real/please-dont-mess-with-your-local-fs"), "expected": "/non-existent/this/does/not/exist/for/real/please-dont-mess-with-your-local-fs"}), "testFilesystemResolveDefaultNixNonExistentDir": ({"expr": nixScope.lib["filesystem"]["resolveDefaultNix"]("/non-existent/this/does/not/exist/for/real/please-dont-mess-with-your-local-fs/"), "expected": "/non-existent/this/does/not/exist/for/real/please-dont-mess-with-your-local-fs/default.nix"})}));
