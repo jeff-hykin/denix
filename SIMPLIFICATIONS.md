@@ -25,10 +25,10 @@
 
 ### Test Status After Session 2
 All tests passing after changes:
-- `import_loader_test.js` - 7/7 passing ✅
-- `translator_test.js` - 41/41 passing ✅
-- `builtins_lists_comprehensive_test.js` - 72/72 passing ✅
-- Full test suite - 538+ tests passing ✅
+- `import_loader_test.js` - 7/7 passing
+- `translator_test.js` - 41/41 passing
+- `builtins_lists_comprehensive_test.js` - 72/72 passing
+- Full test suite - 538+ tests passing
 
 ## Changes Made - Session 1 (2026-02-11)
 

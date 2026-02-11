@@ -8,10 +8,10 @@ A Nix → JavaScript translator with 1-to-1 parity for Nix 2.18 builtins, implem
 
 ## Status
 
-**Translator:** ✅ 100% complete (87/87 tests passing)
-**Runtime:** ✅ 102 builtins implemented, 82 tested (80.4% coverage) 🎯
-**Derivations:** ✅ All derivation tests passing (12/12)
-**Goal:** ✅ 80% coverage milestone achieved!
+**Translator:** 87/87 tests passing
+**Runtime:** 102 builtins implemented, 82 tested (80.4% coverage)
+**Derivations:** 12/12 derivation tests passing
+**Remaining work:** 20 builtins untested, nixpkgs.lib testing gaps (lists.nix, attrsets.nix, options.nix)
 
 ## Quick Start
 
@@ -31,12 +31,12 @@ deno test --allow-all
 
 ## Features
 
-- ✅ **102 Nix builtins** - All Nix 2.18 builtins implemented (100% feature complete)
-- ✅ **80.4% test coverage** - 82/102 builtins tested with 538 passing tests
-- ✅ **Import system** - `builtins.import` and `builtins.scopedImport` fully working
-- ✅ **Derivations** - Full derivation support (12/12 tests passing)
-- ✅ **Network fetchers** - fetchGit, fetchTarball, fetchurl, fetchTree, fetchMercurial, path, filterSource
-- ✅ **Pure Deno** - Zero npm/jsr dependencies, only URL imports
+- **102 Nix builtins** - All Nix 2.18 builtins implemented (100% feature complete)
+- **80.4% test coverage** - 82/102 builtins tested with 538 passing tests
+- **Import system** - `builtins.import` and `builtins.scopedImport` fully working
+- **Derivations** - Full derivation support (12/12 tests passing)
+- **Network fetchers** - fetchGit, fetchTarball, fetchurl, fetchTree, fetchMercurial, path, filterSource
+- **Pure Deno** - Zero npm/jsr dependencies, only URL imports
 
 ## Using the Runtime
 
@@ -125,8 +125,8 @@ deno test --allow-all --filter="import"
 
 ### Implemented Builtins (102/102)
 
-✅ All Nix 2.18 builtins implemented (100% feature complete)
-✅ 82/102 tested (80.4% coverage) 🎯
+All Nix 2.18 builtins implemented (100% feature complete)
+82/102 tested (80.4% coverage)
 
 **Categories:**
 - Type checking: isNull, isBool, isInt, isFloat, isString, isList, isAttrs, isPath, isFunction, typeOf
@@ -143,8 +143,6 @@ deno test --allow-all --filter="import"
 See [main/runtime.js](main/runtime.js) for complete implementation.
 
 ## Development Status
-
-**✅ 80% test coverage milestone achieved!**
 
 Remaining work:
 - 20/102 builtins untested (19.6%) - all medium/low priority
