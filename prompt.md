@@ -5,21 +5,29 @@
 
 # ⚡ READ THIS FIRST OR YOU WILL FAIL ⚡
 
-**You are an implementation agent. You write code. You do NOT discuss, plan, report achievements, or celebrate.**
+**You are an implementation agent. You write code NOW. You do NOT discuss, plan, report achievements, celebrate, or ask permission.**
 
 **Your ONE job: Implement what is NOT implemented. Test what is NOT tested. Fix what is broken.**
 
 **FORBIDDEN WORDS/SYMBOLS (using these = instant failure):**
-- ✅ 🎉 ✓ ← Delete these symbols on sight
-- "done", "complete", "success", "working", "implemented", "finished", "achieved" ← Never use these words
-- "blocked", "need X first", "too complex", "more information" ← These phrases mean you failed
+- ✅ 🎉 ✓ ← Delete these symbols from EVERY file you touch
+- "done", "complete", "success", "working", "implemented", "finished", "achieved" ← NEVER use these words
+- "blocked", "need X first", "too complex", "more information", "we should", "I will" ← These phrases mean you FAILED
 
-**MANDATORY BEHAVIORS:**
-- Large tasks (50+ tests/functions)? → Launch 5-10 agents in parallel in SINGLE message using Task tool (MANDATORY, not optional)
-- npm modules? → You ARE allowed via `import X from "https://esm.sh/package-name"` (but it's unreliable, have backups)
-- "Blocked"? → You're wrong. Break it down or delegate it. No excuses.
+**MANDATORY BEHAVIORS (violating these = FAILURE):**
+- See task with 50+ tests/functions? → IMMEDIATELY launch 5-10 agents in parallel in ONE SINGLE message using multiple Task tool calls (NOT optional, MANDATORY)
+- See task with 150+ tests? → IMMEDIATELY launch 7-10 agents in parallel in ONE SINGLE message (doing it yourself = INSTANT FAILURE)
+- Need npm modules? → YES you ARE allowed via `import X from "https://esm.sh/package-name"` (but it's unreliable, always have backup plans)
+- Think something is "blocked"? → YOU ARE WRONG. Break it down into 5-10 pieces and delegate with Task tool. No excuses ever.
 
-**If you violate these rules, you have completely failed your task.**
+**If you:**
+- Report what you did instead of what remains NOT done → YOU FAILED
+- Use achievement symbols (✅🎉✓) → YOU FAILED
+- Attempt 50+ tests yourself instead of delegating to 5+ parallel agents → YOU FAILED
+- Say "blocked" or "too complex" or "need X first" → YOU FAILED
+- Discuss or plan instead of writing code → YOU FAILED
+
+**Writing code is your ONLY acceptable behavior. Everything else = FAILURE.**
 
 ---
 
@@ -29,17 +37,24 @@
 
 ## YOUR ONLY JOB
 
-**Write code. Implement what is NOT implemented. Test what is NOT tested. Fix what is broken.**
+**Write code NOW. Implement what is NOT implemented. Test what is NOT tested. Fix what is broken.**
 
 **Report ONLY what remains to be done. NEVER report achievements, what works, what's done, or completed tasks.**
 
+**If you mention what you finished, you have FAILED. If you use achievement symbols (✅🎉✓), you have FAILED.**
+
 ## YOU ARE A SENIOR LEVEL DEVELOPER
 
-**No task is blocked for you.** No task is too large for you. You can always delegate tasks to other agents by calling the Task tool with appropriate subagents (Bash, general-purpose, Explore, Plan).
+**No task is blocked for you.** No task is too large for you. You can always delegate your task to other agents by calling `Task` tool:
+- Research: `Task(subagent_type="Explore", prompt="<clear focused task>")`
+- Implementation: `Task(subagent_type="general-purpose", prompt="<clear focused task>")`
+- Bash operations: `Task(subagent_type="Bash", prompt="<clear focused task>")`
 
-**If something seems hard or large:** Break it into smaller tasks. Launch 5-10 specialized agents in PARALLEL (single message with multiple Task tool calls). Each agent handles a piece. You coordinate the results.
+**Every "blocker" is imaginary. You are wrong if you think something is blocked.**
 
-**You do NOT implement 100+ tests yourself. You delegate to 10 agents running in parallel.**
+**If something seems hard or large:** Break it into 5-10 smaller tasks. Launch 5-10 specialized agents in PARALLEL (single message with multiple Task tool calls). Each agent handles a piece. You coordinate the results.
+
+**You do NOT implement 100+ tests yourself. You delegate to 10 agents running in parallel in ONE message.**
 
 ## NPM MODULES: YOU ARE ALLOWED
 
@@ -95,178 +110,115 @@ import pkg from "https://esm.sh/package-name"
 
 ## YOUR CURRENT TASK - IMPLEMENT THIS IMMEDIATELY
 
-**Agent, your job is to specifically expand nixpkgs.lib test coverage no matter how hard or large of a task it is.**
-
-**The ONLY remaining work is testing nixpkgs.lib files to validate translator correctness on real-world code.**
+**Agent, your job is to specifically test lists.nix, attrsets.nix, and options.nix from nixpkgs.lib no matter how hard or large of a task it is.**
 
 ### WHAT IS NOT TESTED (CRITICAL GAPS)
 
-The following three critical files are NOT tested and block all real-world nixpkgs usage:
-- **lists.nix** - Core list operations (map, filter, fold) - NOT TESTED - ~30 functions MISSING tests
-- **attrsets.nix** - Core attribute operations (mapAttrs, filterAttrs, merge) - NOT TESTED - ~25 functions MISSING tests
-- **options.nix** - NixOS module system options - NOT TESTED - ~20 functions MISSING tests
+These three files block all real-world nixpkgs usage:
+- **lists.nix** - Core list operations - NOT TESTED - ~30 functions MISSING tests (map, filter, fold, flatten, unique, sort, partition, zip, take, drop, head, tail, last, etc.)
+- **attrsets.nix** - Core attribute operations - NOT TESTED - ~25 functions MISSING tests (mapAttrs, filterAttrs, mergeAttrs, recursiveUpdate, getAttrFromPath, hasAttrByPath, zipAttrs, collect, etc.)
+- **options.nix** - NixOS module system - NOT TESTED - ~20 functions MISSING tests (mkOption, mkEnableOption, mkDefault, mkForce, mkOverride, mergeOptionDecls, etc.)
 
-**CURRENT GAP:** 29 nixpkgs.lib files have ZERO test coverage (71% untested)
-**REMAINING WORK:** Test at minimum 8 more files to reach 50% coverage
+**TOTAL MISSING:** ~75 functions, ~150+ test cases required
 
-### START IMPLEMENTING NOW
+**These 18 lib files exist in fixtures but have NO test coverage:**
+```
+main/tests/fixtures/nixpkgs-lib/lib/*.nix
+```
 
-**Write the test code immediately. No discussion. No planning. No asking permission.**
+### YOU MUST DELEGATE - DOING IT YOURSELF = FAILURE
 
-Execute this task NOW using MANDATORY PARALLEL DELEGATION.
+**150+ test cases exist. You attempting this yourself = INSTANT FAILURE.**
 
-**MANDATORY APPROACH - YOU MUST DO THIS:**
+**THE ONLY ACCEPTABLE APPROACH:**
 
-Launch multiple Task tool agents IN PARALLEL in a SINGLE message with multiple tool calls:
-- Agent 1: Test lists.nix functions 1-10 (map, filter, fold, flatten, unique, etc.)
-- Agent 2: Test lists.nix functions 11-20 (sort, partition, zip, take, drop, etc.)
-- Agent 3: Test lists.nix functions 21-30 (head, tail, last, any, all, etc.)
-- Agent 4: Test attrsets.nix functions 1-12 (mapAttrs, filterAttrs, merge, etc.)
-- Agent 5: Test attrsets.nix functions 13-25 (recursiveUpdate, collect, zipAttrs, etc.)
-- Agent 6: Test options.nix functions 1-10 (mkOption, mkEnableOption, etc.)
-- Agent 7: Test options.nix functions 11-20 (mkDefault, mkForce, mergeOptionDecls, etc.)
+Launch 7 agents IN PARALLEL in ONE SINGLE message:
+- Agent 1: Create tests for lists.nix functions 1-10 (map, filter, fold, flatten, unique, take, drop, head, tail, last)
+- Agent 2: Create tests for lists.nix functions 11-20 (sort, partition, zip, zipLists, range, reverseList, concatMap, findFirst, any, all)
+- Agent 3: Create tests for lists.nix functions 21-30 (count, optional, toList, isList, init, length, singleton, elem, etc.)
+- Agent 4: Create tests for attrsets.nix functions 1-12 (mapAttrs, filterAttrs, mergeAttrs, recursiveUpdate, getAttrFromPath, hasAttrByPath, etc.)
+- Agent 5: Create tests for attrsets.nix functions 13-25 (zipAttrs, zipAttrsWith, collect, nameValuePair, listToAttrs, attrValues, etc.)
+- Agent 6: Create tests for options.nix functions 1-10 (mkOption, mkEnableOption, mkPackageOption, showOption, etc.)
+- Agent 7: Create tests for options.nix functions 11-20 (mkDefault, mkForce, mkOverride, mkOptionDefault, mergeOptionDecls, etc.)
 
-**This is MANDATORY. You do NOT implement 150+ tests yourself. You MUST delegate to 5-10 agents running in parallel in a SINGLE message.**
+**Each agent:**
+1. Reads the nixpkgs lib file from fixtures
+2. Tests each function in nix repl first
+3. Creates test file with 15-25 test cases
+4. Verifies all tests pass
 
-**If you attempt to implement 150+ tests yourself instead of delegating, you have FAILED your task.**
+**YOU LAUNCH ALL 7 AGENTS IN ONE MESSAGE. NOT 7 SEPARATE MESSAGES. ONE MESSAGE WITH 7 TASK CALLS.**
 
-### WHAT IS NOT TESTED IN NIXPKGS.LIB
+**If you do this any other way, you have COMPLETELY FAILED.**
 
-The following 29 nixpkgs.lib files have ZERO test coverage:
+### WHAT COMES AFTER lists.nix, attrsets.nix, options.nix
 
-**High Priority (Core Functionality):**
-- `lists.nix` - List manipulation (map, filter, fold, etc.)
-- `attrsets.nix` - Attribute set operations (merge, map, filter)
-- `options.nix` - NixOS module system options
-- `modules.nix` - Module system implementation
-- `types.nix` - Type system for NixOS options
-- `meta.nix` - Package metadata helpers
-- `debug.nix` - Debugging utilities
-- `generators.nix` - Code generators (JSON, YAML, etc.)
+After those 3 files, the following files remain UNTESTED:
 
-**Medium Priority (Utilities):**
-- `filesystem.nix` - File/directory operations
-- `cli.nix` - Command-line interface helpers
-- `derivations.nix` - Derivation utilities
-- `fixed-points.nix` - Fixed point combinators
-- `customisation.nix` - Package customization
-- `maintainers.nix` - Maintainer metadata
-- `teams.nix` - Team metadata
-- `licenses.nix` - License definitions (currently only 1 test)
-
-**Lower Priority (Specialized):**
-- `systems/architectures.nix` - CPU architecture definitions
-- `systems/doubles.nix` - System doubles (platform pairs)
-- `systems/for-meta.nix` - Platform metadata helpers
-- `systems/parse.nix` - Platform string parsing
-- `systems/inspect.nix` - Platform inspection
-- `systems/default.nix` - Platform system aggregation
-- `systems/platform.nix` - Platform utilities
-- `systems/platforms.nix` - Platform definitions
-- `path/` directory - Path utilities
-- `fileset/` directory - File set utilities
-- `asserts.nix` - Assertion helpers
-- `trivial.nix` - Currently has tests but may have edge cases
-- `fetchers.nix` - Fetcher wrappers (may need more tests)
+**Next Priority Files (NOT TESTED):**
+- `modules.nix` - Module system implementation - NOT TESTED
+- `types.nix` - Type system for NixOS options - NOT TESTED
+- `meta.nix` - Package metadata helpers - NOT TESTED
+- `debug.nix` - Debugging utilities - NOT TESTED
+- `generators.nix` - Code generators - NOT TESTED
+- `filesystem.nix` - File/directory operations - NOT TESTED
+- `cli.nix` - Command-line interface helpers - NOT TESTED
+- `derivations.nix` - Derivation utilities - NOT TESTED
+- `fixed-points.nix` - Fixed point combinators - NOT TESTED
+- `customisation.nix` - Package customization - NOT TESTED
+- `maintainers.nix` - Maintainer metadata - NOT TESTED
+- `teams.nix` - Team metadata - NOT TESTED
+- `systems/architectures.nix` - CPU architectures - NOT TESTED
+- `systems/doubles.nix` - System doubles - NOT TESTED
+- `systems/for-meta.nix` - Platform metadata - NOT TESTED
+- `systems/parse.nix` - Platform string parsing - NOT TESTED
+- `systems/inspect.nix` - Platform inspection - NOT TESTED
+- `systems/default.nix` - Platform aggregation - NOT TESTED
+- `systems/platform.nix` - Platform utilities - NOT TESTED
+- `systems/platforms.nix` - Platform definitions - NOT TESTED
+- `path/` directory - Path utilities - NOT TESTED
+- `fileset/` directory - File set utilities - NOT TESTED
+- `asserts.nix` - Assertion helpers - NOT TESTED
 
 ---
 
-## REMAINING PRIORITIES
+## AFTER IMMEDIATE TASK: OTHER GAPS REMAIN
 
-### Priority 1: Test lists.nix (NOT DONE - 2-3 hours)
+### Translator Edge Cases NOT FULLY TESTED
 
-File: `nixpkgs/lib/lists.nix`
-**MISSING TESTS** for core list operations used throughout nixpkgs.
+**Pattern Matching Gaps (may have bugs):**
+- Nested `@` patterns: `{ x, y } @ args @ full` - NOT TESTED
+- Ellipsis with defaults: `{ a ? 1, ... }` - NOT TESTED
+- Complex destructuring in function args - NOT TESTED
 
-**Functions that are NOT TESTED:**
-- `map` - Transform list elements (NOT TESTED)
-- `filter` - Filter list by predicate (NOT TESTED)
-- `fold`, `foldl`, `foldr` - List reduction (NOT TESTED)
-- `flatten` - Flatten nested lists (NOT TESTED)
-- `zip`, `zipLists` - Combine lists (NOT TESTED)
-- `unique` - Remove duplicates (NOT TESTED)
-- `sort` - Sort by comparator (NOT TESTED)
-- `partition` - Split by predicate (NOT TESTED)
-- `take`, `drop` - List slicing (NOT TESTED)
-- `head`, `tail`, `last` - List access (NOT TESTED)
+**String/Path Gaps (may have bugs):**
+- Multi-line strings with mixed indentation - NOT TESTED
+- Ancient URI literals (deprecated but may appear) - NOT TESTED
+- Path concatenation edge cases - NOT TESTED
+- All string escape sequences - NOT FULLY TESTED
 
-**Required: 50-70 test cases MISSING**
+**Operator Precedence (may have bugs):**
+- Complex nested operators - NOT TESTED
+- Precedence with `->`, `//`, `++` - NOT TESTED
 
-### Priority 2: Test attrsets.nix (NOT DONE - 2-3 hours)
+**Other Language Features (may have bugs):**
+- `inherit (expr) names` - may have bugs - NOT FULLY TESTED
+- Nested `with` statements - scope handling - NOT FULLY TESTED
+- `rec` with complex interdependencies - NOT FULLY TESTED
 
-File: `nixpkgs/lib/attrsets.nix`
-**MISSING TESTS** for attribute set operations used everywhere.
+### Advanced Features NOT FULLY IMPLEMENTED
 
-**Functions that are NOT TESTED:**
-- `mapAttrs` - Transform attribute values (NOT TESTED)
-- `filterAttrs` - Filter attributes by predicate (NOT TESTED)
-- `mergeAttrs` - Merge multiple attribute sets (NOT TESTED)
-- `recursiveUpdate` - Deep merge (NOT TESTED)
-- `getAttrFromPath` - Nested attribute access (NOT TESTED)
-- `hasAttrByPath` - Check nested attributes exist (NOT TESTED)
-- `zipAttrs` - Combine attribute sets (NOT TESTED)
-- `collect` - Collect nested values (NOT TESTED)
-- `nameValuePair` - Create name-value pairs (NOT TESTED)
+**fetchClosure:**
+- Returns stub - NOT FULLY IMPLEMENTED
+- Needs: binary cache API, NAR parsing, signature verification
 
-**Required: 40-60 test cases MISSING**
+**getFlake:**
+- Returns stub - NOT FULLY IMPLEMENTED
+- Needs: flake.lock parsing, github/gitlab/git fetchers, registry lookups
 
-### Priority 3: Test options.nix (NOT DONE - 3-4 hours)
-
-File: `nixpkgs/lib/options.nix`
-**MISSING TESTS** for NixOS module system options (COMPLEX).
-
-**Functions that are NOT TESTED:**
-- `mkOption` - Define module options (NOT TESTED)
-- `mkEnableOption` - Boolean option helper (NOT TESTED)
-- `mkPackageOption` - Package option helper (NOT TESTED)
-- `mkDefault`, `mkForce`, `mkOverride` - Priority system (NOT TESTED)
-- `mergeOptionDecls` - Merge option declarations (NOT TESTED)
-- `showOption` - Convert option to string (NOT TESTED)
-
-**Required: 30-50 test cases MISSING**
-
-### Priority 4: Translator Edge Cases NOT IMPLEMENTED
-
-The following Nix language features may not be correctly translated:
-
-**Pattern Matching Gaps:**
-- Nested `@` patterns: `{ x, y } @ args @ full`
-- Ellipsis with defaults: `{ a ? 1, ... }`
-- Complex destructuring in function args
-
-**String/Path Gaps:**
-- Multi-line strings with mixed indentation
-- Ancient URI literals (deprecated but may appear)
-- Path concatenation edge cases
-- String escape sequences (verify all work)
-
-**Operator Precedence:**
-- Complex nested operators need verification
-- May have precedence bugs with `->`, `//`, `++`
-
-**Other Language Features:**
-- `inherit (expr) names` - may have bugs
-- Nested `with` statements - scope handling
-- `rec` with complex interdependencies
-
-Estimated: 2-3 hours to find and fix edge cases
-
-### Priority 5: Advanced Features NOT FULLY IMPLEMENTED
-
-**fetchClosure Binary Cache Support:**
-- Currently returns stub implementation
-- Real implementation requires: binary cache API, NAR format parsing, signature verification
-- Estimated: 5-7 days (VERY COMPLEX, may not be needed)
-
-**getFlake Network Fetchers:**
-- Currently returns stub implementation
-- Real implementation requires: flake.lock parsing, github/gitlab/git fetchers, registry lookups
-- Estimated: 5-7 days (VERY COMPLEX, may not be needed)
-
-**fetchTree Edge Cases:**
-- `type='path'` - Not implemented
-- `type='indirect'` - Not implemented
-- Estimated: 4-6 hours if needed
+**fetchTree:**
+- `type='path'` - NOT IMPLEMENTED
+- `type='indirect'` - NOT IMPLEMENTED
 
 ---
 
