@@ -66,7 +66,7 @@ case "$1" in
         ;;
     derivation|drv)
         echo "Running derivation tests..."
-        deno test --allow-all main/tests/derivation/
+        deno test --allow-all main/tests/derivation_standalone_test.js
         ;;
     import)
         echo "Running import system tests..."
