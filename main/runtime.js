@@ -32,6 +32,7 @@ import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPa
     const globalImportState = {
         importFn: null,
         scopedImportFn: null,
+        runtime: null, // Store runtime for use by getFlake
     }
 
 //
@@ -2044,8 +2045,247 @@ import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPa
                 }
                 return 0
             },
-            "getFlake": (flakeRef)=>{
-                throw new NotImplemented(`builtins.getFlake requires flake system with network fetching, lock files, and evaluation`)
+            "getFlake": async (flakeRef) => {
+                // getFlake fetches a flake and returns its output attributes and metadata
+                // Usage: builtins.getFlake "github:owner/repo" or builtins.getFlake "/path/to/flake"
+
+                const refString = requireString(flakeRef).toString();
+
+                // Parse the flake reference
+                const parsedRef = builtins.parseFlakeRef(refString);
+
+                // Fetch the flake source based on reference type
+                let sourcePath;
+                let sourceInfo = {};
+
+                switch (parsedRef.type) {
+                    case "path":
+                        // Local path flake
+                        sourcePath = parsedRef.path;
+                        // Resolve relative paths
+                        if (!sourcePath.startsWith("/")) {
+                            sourcePath = await Deno.realPath(sourcePath);
+                        }
+                        sourceInfo = {
+                            type: "path",
+                            path: sourcePath,
+                            narHash: await hashDirectory(sourcePath),
+                        };
+                        break;
+
+                    case "github":
+                        // Fetch from GitHub using fetchTree
+                        const githubResult = await builtins.fetchTree({
+                            type: "github",
+                            owner: parsedRef.owner,
+                            repo: parsedRef.repo,
+                            rev: parsedRef.rev,
+                            ref: parsedRef.ref,
+                        });
+                        sourcePath = githubResult.outPath;
+                        sourceInfo = {
+                            type: "github",
+                            owner: parsedRef.owner,
+                            repo: parsedRef.repo,
+                            rev: githubResult.rev,
+                            shortRev: githubResult.shortRev,
+                            narHash: githubResult.narHash,
+                            lastModified: githubResult.lastModified,
+                        };
+                        break;
+
+                    case "gitlab":
+                        // Fetch from GitLab using fetchTree
+                        const gitlabResult = await builtins.fetchTree({
+                            type: "gitlab",
+                            owner: parsedRef.owner,
+                            repo: parsedRef.repo,
+                            rev: parsedRef.rev,
+                            ref: parsedRef.ref,
+                        });
+                        sourcePath = gitlabResult.outPath;
+                        sourceInfo = {
+                            type: "gitlab",
+                            owner: parsedRef.owner,
+                            repo: parsedRef.repo,
+                            rev: gitlabResult.rev,
+                            shortRev: gitlabResult.shortRev,
+                            narHash: gitlabResult.narHash,
+                            lastModified: gitlabResult.lastModified,
+                        };
+                        break;
+
+                    case "git":
+                        // Fetch from Git repository
+                        const gitResult = await builtins.fetchGit({
+                            url: parsedRef.url,
+                            rev: parsedRef.rev,
+                            ref: parsedRef.ref,
+                        });
+                        sourcePath = gitResult.toString();
+                        sourceInfo = {
+                            type: "git",
+                            url: parsedRef.url,
+                            rev: gitResult.rev,
+                            shortRev: gitResult.shortRev,
+                            narHash: gitResult.narHash,
+                            revCount: gitResult.revCount,
+                            lastModified: gitResult.lastModified,
+                        };
+                        break;
+
+                    case "mercurial":
+                    case "hg":
+                        // Fetch from Mercurial repository
+                        const hgResult = await builtins.fetchMercurial({
+                            url: parsedRef.url,
+                            rev: parsedRef.rev,
+                            ref: parsedRef.ref,
+                        });
+                        sourcePath = hgResult.toString();
+                        sourceInfo = {
+                            type: "mercurial",
+                            url: parsedRef.url,
+                            rev: hgResult.rev,
+                            shortRev: hgResult.shortRev,
+                            narHash: hgResult.narHash,
+                            revCount: hgResult.revCount,
+                            lastModified: hgResult.lastModified,
+                        };
+                        break;
+
+                    case "tarball":
+                        // Fetch tarball
+                        const tarballResult = await builtins.fetchTarball({
+                            url: parsedRef.url,
+                        });
+                        sourcePath = tarballResult.toString();
+                        sourceInfo = {
+                            type: "tarball",
+                            url: parsedRef.url,
+                            narHash: tarballResult.narHash,
+                        };
+                        break;
+
+                    case "indirect":
+                        // Indirect references (registry lookup) - not supported yet
+                        throw new NotImplemented(
+                            `builtins.getFlake: indirect flake references ("${parsedRef.id}") require flake registry support.\n` +
+                            `Use explicit references like "github:owner/repo" or "path:/path/to/flake" instead.`
+                        );
+
+                    default:
+                        throw new Error(`builtins.getFlake: unsupported flake reference type: ${parsedRef.type}`);
+                }
+
+                // Read flake.nix from the source
+                const flakePath = `${sourcePath}/flake.nix`;
+                let flakeNixExists = false;
+                try {
+                    await Deno.stat(flakePath);
+                    flakeNixExists = true;
+                } catch {
+                    throw new Error(
+                        `builtins.getFlake: no flake.nix found at ${sourcePath}\n` +
+                        `Expected file: ${flakePath}`
+                    );
+                }
+
+                // Load and evaluate the flake.nix file
+                // flake.nix should export an attribute set with:
+                // - description (optional string)
+                // - inputs (attribute set of flake references)
+                // - outputs (function taking inputs as arguments)
+
+                if (!globalImportState.runtime) {
+                    throw new Error(`builtins.getFlake called before runtime initialization`);
+                }
+
+                const flakeExpr = await loadAndEvaluateSync(flakePath, globalImportState.runtime);
+
+                // Validate flake structure
+                if (!builtins.isAttrs(flakeExpr)) {
+                    throw new Error(`builtins.getFlake: flake.nix must evaluate to an attribute set`);
+                }
+
+                // Extract flake components
+                const description = flakeExpr.description ? requireString(flakeExpr.description).toString() : "";
+                const inputsSpec = flakeExpr.inputs || {};
+                const outputsFn = flakeExpr.outputs;
+
+                if (!builtins.isFunction(outputsFn)) {
+                    throw new Error(`builtins.getFlake: flake.nix must have an 'outputs' attribute that is a function`);
+                }
+
+                // Read flake.lock if it exists (for locked input versions)
+                const lockPath = `${sourcePath}/flake.lock`;
+                let lockData = null;
+                try {
+                    const lockContent = await Deno.readTextFile(lockPath);
+                    lockData = JSON.parse(lockContent);
+                } catch {
+                    // No lock file or invalid JSON - that's okay, we'll use unlocked inputs
+                }
+
+                // Recursively fetch and evaluate inputs
+                // For now, we'll create a simplified inputs object with just 'self'
+                // Full implementation would recursively call getFlake on each input
+                const inputs = {
+                    self: null, // Will be set after we create the flake object
+                };
+
+                // Build the initial flake result
+                const flakeResult = {
+                    _type: "flake",
+                    description: description,
+                    sourceInfo: sourceInfo,
+                    inputs: inputs,
+                    outputs: null, // Will be set after calling outputs function
+                };
+
+                // Set self reference
+                inputs.self = flakeResult;
+
+                // Evaluate each input (simplified - in real Nix this would recursively fetch)
+                for (const [inputName, inputSpec] of Object.entries(inputsSpec)) {
+                    if (builtins.isAttrs(inputSpec) && inputSpec.url) {
+                        // Input specification with URL
+                        const inputUrl = requireString(inputSpec.url).toString();
+                        try {
+                            // For now, just mark that the input exists but don't recursively fetch
+                            // Full implementation would do: inputs[inputName] = await builtins.getFlake(inputUrl)
+                            // This would require handling circular dependencies and lock files properly
+                            inputs[inputName] = {
+                                _type: "flake-input-stub",
+                                url: inputUrl,
+                                // Note: Real implementation would fetch and evaluate recursively
+                            };
+                        } catch (error) {
+                            throw new Error(
+                                `builtins.getFlake: failed to fetch input '${inputName}' from ${inputUrl}: ${error.message}`
+                            );
+                        }
+                    } else if (typeof inputSpec === "string" || inputSpec instanceof InterpolatedString) {
+                        // Direct string URL
+                        const inputUrl = requireString(inputSpec).toString();
+                        inputs[inputName] = {
+                            _type: "flake-input-stub",
+                            url: inputUrl,
+                        };
+                    }
+                }
+
+                // Call the outputs function with inputs
+                // The outputs function takes all inputs as arguments
+                try {
+                    flakeResult.outputs = outputsFn(inputs);
+                } catch (error) {
+                    throw new Error(
+                        `builtins.getFlake: error evaluating flake outputs: ${error.message}`
+                    );
+                }
+
+                return flakeResult;
             },
             "parseFlakeRef": (flakeRef)=>{
                 // Parse flake reference string into structured form
@@ -2505,6 +2745,10 @@ import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPa
             abort: builtins.abort,
             throw: builtins.throw,
         }
+
+        // Store runtime globally for use by getFlake
+        globalImportState.runtime = runtime
+
         return {
             scopeStack: [rootScope],
             rootScope: rootScope,

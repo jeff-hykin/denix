@@ -13,7 +13,7 @@ import { createRuntime } from "../runtime.js"
 import { assertEquals, assertExists } from "https://deno.land/std@0.224.0/assert/mod.ts"
 import { resolve, dirname, join } from "https://deno.land/std@0.224.0/path/mod.ts"
 
-const nixpkgsLibPath = resolve(Deno.cwd(), "nixpkgs.lib/lib")
+const nixpkgsLibPath = resolve(Deno.cwd(), "main/tests/fixtures/nixpkgs-lib/lib")
 
 /**
  * Helper: Load and evaluate a nixpkgs.lib file
