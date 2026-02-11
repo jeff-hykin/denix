@@ -41,40 +41,42 @@ import { resolveIndirectReference } from "./registry.js"
 //
 // Helper functions
 //
-    export function createFunc(defaulters, allArgsName, metadata, func) {
-        // all were doing is scope/default arg boilerplate
-        return function (arg) {
-            const nixScope = {
-                // inherit parent scope
-                ...runtime.scopeStack.slice(-1)[0],
-            }
-            
-            // arguments without defaults get assigned first (to be accessible in calculations of default values)
-            if (builtins.isAttrs(arg)) {
-                Object.assign(nixScope, arg)
-            }
-            
-            // TODO: not sure if this is supposed to be accessible in default values
-            if (typeof allArgsName === 'string') {
-                nixScope[allArgsName] = allArgs
-            }
-
-            // compute the default values one after another to match nix behavior
-            for (const [key, value] of Object.entries(defaulters)) {
-                // FIXME: its actually probably worse than delayed evaluation: they probably compute defaults similar to `rec` where dependencies are found and made into a DAG. Should check this later
-                if (typeof value === 'function') {
-                    nixScope[key] = value(nixScope)
-                } else {
-                    nixScope[key] = value
+    function createCreateFunc(runtime) {
+        return function createFunc(defaulters, allArgsName, metadata, func) {
+            // all were doing is scope/default arg boilerplate
+            return function (arg) {
+                const nixScope = {
+                    // inherit parent scope
+                    ...runtime.scopeStack.slice(-1)[0],
                 }
-            }
-            
-            runtime.scopeStack.push(nixScope)
-            // args are now setup
-            try {
-                return func(nixScope)
-            } finally {
-                runtime.scopeStack.pop()
+                
+                // arguments without defaults get assigned first (to be accessible in calculations of default values)
+                if (builtins.isAttrs(arg)) {
+                    Object.assign(nixScope, arg)
+                }
+                
+                // TODO: not sure if this is supposed to be accessible in default values
+                if (typeof allArgsName === 'string') {
+                    nixScope[allArgsName] = allArgs
+                }
+
+                // compute the default values one after another to match nix behavior
+                for (const [key, value] of Object.entries(defaulters)) {
+                    // FIXME: its actually probably worse than delayed evaluation: they probably compute defaults similar to `rec` where dependencies are found and made into a DAG. Should check this later
+                    if (typeof value === 'function') {
+                        nixScope[key] = value(nixScope)
+                    } else {
+                        nixScope[key] = value
+                    }
+                }
+                
+                runtime.scopeStack.push(nixScope)
+                // args are now setup
+                try {
+                    return func(nixScope)
+                } finally {
+                    runtime.scopeStack.pop()
+                }
             }
         }
     }
@@ -2852,10 +2854,15 @@ import { resolveIndirectReference } from "./registry.js"
         // Store runtime globally for use by getFlake
         globalImportState.runtime = runtime
 
-        return {
+        const runtimeWithScope = {
             scopeStack: [rootScope],
             rootScope: rootScope,
             runtime, // Expose runtime for use by import system
             importCache,
+        }
+        const createFunc = createCreateFunc(runtimeWithScope)
+        return {
+            createFunc,
+            runtime: runtimeWithScope,
         }
     }

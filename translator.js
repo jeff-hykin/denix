@@ -143,7 +143,7 @@ import { nixRepr } from "./main/runtime.js"
 // The Main function! nix comes in js comes out
 //
 // 
-export const convertToJs = (code, options = {}) => {
+export const convertToJs = async (code, options = {}) => {
     const tree = parse(code)
     const rootNode = tree.rootNode
     let output = ""
@@ -160,8 +160,70 @@ export const convertToJs = (code, options = {}) => {
     let result = ""
 
     if (needsRuntime) {
-        result += `import { createRuntime, createFunc } from "${runtimePath}"\n`
-        result += `const runtime = createRuntime()\n`
+        result += `import { createRuntime } from "${runtimePath}"\n`
+        result += `const {runtime, createFunc} = createRuntime()\n`
+
+        // Extract commonly used runtime components if they're referenced
+        if (output.includes("operators.")) {
+            result += `const operators = runtime.operators\n`
+        }
+        if (output.includes("builtins.") && !output.includes("nixScope[\"builtins\"]")) {
+            result += `const builtins = runtime.builtins\n`
+        }
+    }
+
+    // Always export the result as a module
+    result += `\nexport default ${output.trim()}`
+
+    // Format the result with Deno's built-in formatter
+    try {
+        const formatted = new Deno.Command("deno", {
+            args: ["fmt", "-"],
+            stdin: "piped",
+            stdout: "piped",
+            stderr: "piped",
+        }).spawn()
+
+        const writer = formatted.stdin.getWriter()
+        await writer.write(new TextEncoder().encode(result))
+        await writer.close()
+
+        const { stdout, stderr, code } = await formatted.output()
+
+        if (code === 0) {
+            result = new TextDecoder().decode(stdout)
+        } else {
+            const errorMsg = new TextDecoder().decode(stderr)
+            console.warn("Warning: Failed to format generated JavaScript:", errorMsg)
+        }
+    } catch (formatError) {
+        // If formatting fails, return unformatted (with a warning)
+        console.warn("Warning: Failed to format generated JavaScript:", formatError.message)
+    }
+
+    return result
+}
+
+// Synchronous version without formatting (for compatibility)
+export const convertToJsSync = (code, options = {}) => {
+    const tree = parse(code)
+    const rootNode = tree.rootNode
+    let output = ""
+    for (const node of rootNode.children) {
+        output += nixNodeToJs(node)
+    }
+
+    // Determine if we need runtime imports
+    const needsRuntime = output.includes("runtime")
+
+    // Handle runtime import path (default to relative path from root)
+    const runtimePath = options.runtimePath || "./main/runtime.js"
+
+    let result = ""
+
+    if (needsRuntime) {
+        result += `import { createRuntime } from "${runtimePath}"\n`
+        result += `const {runtime, createFunc} = createRuntime()\n`
 
         // Extract commonly used runtime components if they're referenced
         if (output.includes("operators.")) {
