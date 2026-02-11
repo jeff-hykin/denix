@@ -25,14 +25,6 @@ import { extractTarball } from "./tar.js"
 import { hashDirectory } from "./nar_hash.js"
 import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPath, atomicMove, exists } from "./store_manager.js"
 
-// hard parts right now:
-    // builtins.fetchGit
-    // builtins.sort
-    // operators.equality
-    // builtins.fromTOML
-    // builtins.fetchMercurial
-    // create the value-to-env-var function for derivations
-
 //
 // Import state (shared across runtime instances)
 //
@@ -1068,8 +1060,163 @@ import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPa
                     throw error;
                 }
             },
-            "fetchMercurial": (args)=>{
-                throw new NotImplemented(`builtins.fetchMercurial requires hg binary integration and store implementation`)
+            "fetchMercurial": async (args) => {
+                // Parse arguments: can be string URL or {url, name?, rev?, ref?}
+                let url, name, rev, ref;
+                if (typeof args === "string" || args instanceof InterpolatedString) {
+                    url = requireString(args);
+                    name = extractNameFromUrl(url) || "source";
+                    rev = null;
+                    ref = "default"; // Mercurial's default branch
+                } else {
+                    url = requireString(args["url"]);
+                    name = args["name"] ? requireString(args["name"]) : (extractNameFromUrl(url) || "source");
+                    rev = args["rev"] ? requireString(args["rev"]) : null;
+                    ref = args["ref"] ? requireString(args["ref"]) : "default";
+                }
+
+                // Ensure store directory exists
+                await ensureStoreDirectory();
+
+                // Check cache
+                const cacheKey = `fetchhg:${url}:${ref}:${rev || "tip"}`;
+                // Skip cache for now to ensure metadata is always available
+                // const cached = await getCachedPath(cacheKey);
+                // if (cached && await exists(cached)) {
+                //     const result = new Path(cached);
+                //     return result;
+                // }
+
+                // Validate hg binary exists
+                try {
+                    const hgVersion = new Deno.Command("hg", {
+                        args: ["--version"],
+                        stdout: "piped",
+                        stderr: "piped",
+                    });
+                    const { code } = await hgVersion.output();
+                    if (code !== 0) {
+                        throw new Error("hg command failed");
+                    }
+                } catch (error) {
+                    throw new Error(
+                        `builtins.fetchMercurial requires hg binary to be installed\n` +
+                        `Error: ${error.message}`
+                    );
+                }
+
+                // Create temp directory for cloning
+                const tempDir = await Deno.makeTempDir();
+
+                try {
+                    // Build hg clone command
+                    const cloneArgs = ["clone"];
+
+                    // If we have a specific ref (branch), clone that branch
+                    if (ref && ref !== "default") {
+                        cloneArgs.push("--branch", ref);
+                    }
+
+                    cloneArgs.push(url, tempDir);
+
+                    // Execute hg clone
+                    const cloneCmd = new Deno.Command("hg", {
+                        args: cloneArgs,
+                        stdout: "piped",
+                        stderr: "piped",
+                    });
+
+                    const cloneResult = await cloneCmd.output();
+                    if (cloneResult.code !== 0) {
+                        const errorText = new TextDecoder().decode(cloneResult.stderr);
+                        throw new Error(`hg clone failed: ${errorText}`);
+                    }
+
+                    // If specific revision requested, update to that revision
+                    if (rev) {
+                        const updateCmd = new Deno.Command("hg", {
+                            args: ["-R", tempDir, "update", "-r", rev],
+                            stdout: "piped",
+                            stderr: "piped",
+                        });
+                        const updateResult = await updateCmd.output();
+                        if (updateResult.code !== 0) {
+                            const errorText = new TextDecoder().decode(updateResult.stderr);
+                            throw new Error(`hg update -r ${rev} failed: ${errorText}`);
+                        }
+                    }
+
+                    // Helper function to run hg command and get output
+                    async function hgOutput(args) {
+                        const cmd = new Deno.Command("hg", {
+                            args: ["-R", tempDir, ...args],
+                            stdout: "piped",
+                            stderr: "piped",
+                        });
+                        const { code, stdout } = await cmd.output();
+                        if (code !== 0) {
+                            throw new Error(`hg ${args.join(" ")} failed`);
+                        }
+                        return new TextDecoder().decode(stdout).trim();
+                    }
+
+                    // Extract metadata using hg log with template
+                    // Mercurial template fields: {node} = full hash, {date} = timestamp, {rev} = revision number
+                    const logOutput = await hgOutput([
+                        "log",
+                        "-r", ".",
+                        "--template", "{node}\\n{date|hgdate}\\n{rev}\\n"
+                    ]);
+
+                    const [fullRev, dateInfo, revNumStr] = logOutput.split("\n");
+
+                    // Parse date (format: "timestamp timezone")
+                    const timestamp = dateInfo.split(" ")[0];
+                    const lastModified = BigInt(Math.floor(parseFloat(timestamp)));
+
+                    // Parse revision number (Mercurial's sequential revision number)
+                    const revCount = BigInt(revNumStr) + 1n; // +1 because revs are 0-indexed
+
+                    // Short rev is first 12 characters (Mercurial convention)
+                    const shortRev = fullRev.substring(0, 12);
+
+                    // Remove .hg directory for determinism
+                    try {
+                        await Deno.remove(`${tempDir}/.hg`, { recursive: true });
+                    } catch {
+                        // Ignore errors if .hg doesn't exist or can't be removed
+                    }
+
+                    // Compute NAR hash of directory
+                    const narHash = await hashDirectory(tempDir);
+
+                    // Compute store path
+                    const storePath = computeFetchStorePath(narHash, name);
+
+                    // Move to store
+                    await atomicMove(tempDir, storePath);
+
+                    // Cache the result
+                    await setCachedPath(cacheKey, storePath);
+
+                    // Return Path object with metadata as properties
+                    const result = new Path(storePath);
+                    result.rev = fullRev;
+                    result.shortRev = shortRev;
+                    result.revCount = revCount;
+                    result.lastModified = lastModified;
+                    result.narHash = narHash;
+                    result.branch = ref;
+                    return result;
+                } catch (error) {
+                    // Clean up temp directory on error
+                    try {
+                        await Deno.remove(tempDir, { recursive: true });
+                    } catch {
+                        // Ignore cleanup errors
+                    }
+                    throw error;
+                }
             },
             "fetchTree": async (args) => {
                 // fetchTree is a unified interface for fetching from different source types
@@ -1299,8 +1446,25 @@ import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPa
 
                     case "mercurial":
                     case "hg":
-                        // Delegate to fetchMercurial (which is not implemented yet)
-                        throw new NotImplemented("builtins.fetchTree: type 'mercurial' requires builtins.fetchMercurial to be implemented");
+                        // Delegate to fetchMercurial
+                        const hgArgs = {
+                            url: attrs.url,
+                        };
+                        if (attrs.name) hgArgs.name = attrs.name;
+                        if (attrs.rev) hgArgs.rev = attrs.rev;
+                        if (attrs.ref) hgArgs.ref = attrs.ref;
+
+                        const hgResult = await builtins.fetchMercurial(hgArgs);
+
+                        // Return unified fetchTree format (same as git)
+                        return {
+                            outPath: hgResult.toString(),
+                            rev: hgResult.rev,
+                            shortRev: hgResult.shortRev,
+                            revCount: hgResult.revCount,
+                            lastModified: hgResult.lastModified,
+                            narHash: hgResult.narHash,
+                        };
 
                     case "path":
                         // Delegate to builtins.path
