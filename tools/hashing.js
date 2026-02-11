@@ -166,25 +166,3 @@ import md5 from "./md5.js"
         add(data)
         return digest().hex()
     }
-
-    // HMAC-SHA256 implementation
-    // Internal use only - not exported (unused, kept for future potential use)
-    function hmacSha256Bytes(key, message) {
-        if (typeof key === "string") {
-            key = typeof TextEncoder === "undefined" ? Buffer.from(key) : new TextEncoder().encode(key)
-        }
-        if (key.length > 64) key = sha256(key)
-        let inner = new Uint8Array(64).fill(0x36)
-        let outer = new Uint8Array(64).fill(0x5c)
-        for (let i = 0; i < key.length; i++) {
-            inner[i] ^= key[i]
-            outer[i] ^= key[i]
-        }
-        let pass1 = sha256(),
-            pass2 = sha256()
-        pass1.add(inner)
-        pass1.add(message)
-        pass2.add(outer)
-        pass2.add(pass1.digest())
-        return pass2.digest()
-    }

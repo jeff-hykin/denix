@@ -5,8 +5,63 @@ import { FileSystem } from "https://deno.land/x/quickr@0.6.51/main/file_system.j
 // Helper: Convert BigInt or number to float
 const toFloat = (value) => typeof value == "bigint" ? `${value}` - 0 : value
 import { sha256Hex, md5Hex, sha1Hex, sha512Hex } from "../tools/hashing.js"
-import { jsonParseWithBigInt } from "../tools/json_parse.js"
-import { lazyMap } from "../tools/lazy_array.js"
+
+// Custom JSON parser that converts plain integers to BigInts (matches Nix behavior)
+function jsonParseWithBigInt(text) {
+    // First handle the special case of a bare integer
+    const trimmed = text.trim()
+    if (/^-?\d+$/.test(trimmed) && !trimmed.includes('.')) {
+        return BigInt(trimmed)
+    }
+
+    // Use a regex to find all plain integers in the JSON and mark them
+    // Match integers after : or [ or , or at start
+    const intPattern = /([:,\[]|^)\s*(-?\d+)(?=\s*[,\}\]\s]|$)/g
+    const replacements = []
+    let index = 0
+
+    const markedText = text.replace(intPattern, (match, prefix, num) => {
+        replacements.push(num)
+        return `${prefix} "__BIGINT_${index++}__"`
+    })
+
+    return JSON.parse(markedText, (key, value) => {
+        if (typeof value === "string" && value.startsWith("__BIGINT_")) {
+            const idx = parseInt(value.match(/__BIGINT_(\d+)__/)[1])
+            return BigInt(replacements[idx])
+        }
+        return value
+    })
+}
+
+// Lazy array mapper (behaves like a real array, but only computes the mapping as indices are accessed)
+function lazyMap(list, mapping) {
+    const newList = [...new Array(list.length)]
+    const filledIndices = new Array(list.length)
+    return new Proxy(newList, {
+        ownKeys(innerObj, ...args) { return Reflect.ownKeys(innerObj, ...args) },
+        get(innerObj, key, ...args) {
+            if (filledIndices[key]) {
+                return newList[key]
+            } else if (typeof key == "string" && isFinite(key)) {
+                filledIndices[key] = true
+                newList[key] = mapping(list[key])
+                return newList[key]
+            }
+            return Reflect.get(newList, key, ...args)
+        },
+        set(innerObj, key, ...args) {
+            return Reflect.set(innerObj, key, ...args)
+        },
+        has: Reflect.has,
+        deleteProperty: Reflect.deleteProperty,
+        isExtensible: Reflect.isExtensible,
+        preventExtensions: Reflect.preventExtensions,
+        setPrototypeOf: Reflect.setPrototypeOf,
+        defineProperty: Reflect.defineProperty,
+        getPrototypeOf: Reflect.getPrototypeOf,
+    })
+}
 // Removed prex dependency due to WASM initialization issues
 // Replaced with custom POSIX regex converter below
 import { parse as tomlParse } from "https://deno.land/std@0.224.0/toml/mod.ts"

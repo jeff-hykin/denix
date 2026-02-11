@@ -12,34 +12,6 @@ import { getImportType, validateImportPath } from "../tools/import_resolver.js"
 import { convertToJs } from "../translator.js"
 
 /**
- * Load and evaluate a file
- *
- * @param {string} filepath - Absolute path to file
- * @param {object} runtime - Runtime object with builtins and operators
- * @returns {any} - Result of evaluating the file
- */
-export async function loadAndEvaluate(filepath, runtime) {
-    // Validate the path exists
-    validateImportPath(filepath)
-
-    // Read file contents
-    const content = await Deno.readTextFile(filepath)
-
-    // Determine file type
-    const fileType = getImportType(filepath)
-
-    if (fileType === 'json') {
-        return loadJsonFile(content, runtime)
-    }
-
-    if (fileType === 'nix') {
-        return loadNixFile(content, runtime)
-    }
-
-    throw new Error(`Unsupported file type for import: ${filepath}`)
-}
-
-/**
  * Load and parse a JSON file
  *
  * @param {string} content - File contents
