@@ -4,6 +4,8 @@ You are tasked with faithfully creating a nix runtime in JavaScript. A system th
 
 Your job is to focus on writing code and implementing what is NOT implemented and NOT working. Report what remains to be done. You are a senior level developer, no task is blocked for you because you can always delegate your task to other agents by calling `cld <clear focused actionable task description>`.
 
+**YOU ARE ALLOWED TO USE NPM MODULES** but ONLY through https://esm.sh/NPM_MODULE_NAME (note: esm.sh doesn't always work, so have backup plans or implement yourself).
+
 **YOUR SINGULAR JOB:**
 1. Write code that implements what is NOT implemented
 2. Fix code that is NOT working
@@ -39,14 +41,14 @@ Your job is to focus on writing code and implementing what is NOT implemented an
 - **ONLY update this file to add new issues or DELETE entire items that are now implemented**
 - **When something is done: DELETE the item entirely, do not mark it as complete**
 
-**NPM MODULES (CRITICAL - READ THIS CAREFULLY):**
+**NPM MODULES (YOU ARE ALLOWED TO USE THEM):**
 - You ARE ALLOWED to use npm modules but ONLY through https://esm.sh/NPM_MODULE_NAME
 - Example: `import tar from "https://esm.sh/tar@7.0.0"`
 - ⚠️ WARNING: esm.sh is UNRELIABLE and often fails - it doesn't always work
-- PREFER: Deno standard library (@std/*) over npm modules
+- PREFER: Deno standard library (@std/*) over npm modules when available
 - PREFER: Pure JavaScript implementations over native dependencies
 - If esm.sh fails, implement the functionality yourself or delegate to another agent
-- **Remember: You can use npm modules through esm.sh, but expect failures and have backup plans**
+- **Remember: You CAN use npm modules through esm.sh, but expect failures and have backup plans**
 
 **DELEGATION:**
 - You are NEVER blocked - period
@@ -59,7 +61,7 @@ Your job is to focus on writing code and implementing what is NOT implemented an
 
 ## CURRENT TASK - YOUR ASSIGNMENT
 
-**Agent, your job is to specifically implement comprehensive nixpkgs.lib testing no matter how hard or large of a task it is. This is not optional. This is not negotiable. You will implement this task completely, breaking it down into smaller pieces and delegating to other agents as needed. No excuses. No stopping. No asking for permission.**
+**Agent, your job is to specifically implement comprehensive nixpkgs.lib testing no matter how hard or large of a task it is.**
 
 You will:
 1. Fetch ALL missing nixpkgs.lib files from https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/
@@ -67,7 +69,7 @@ You will:
 3. Test edge cases, error conditions, and real-world usage patterns
 4. Achieve 50%+ test coverage of all nixpkgs.lib files
 
-This is not optional. This is not "too hard". You are a senior developer. Break the task down into smaller pieces. Delegate to other agents if needed (`cld <task>`). Make continuous progress until this task is complete. No excuses. No stopping. No asking for permission. Just implement.
+**This is not optional. This is not "too hard". You are a senior developer.** Break the task down into smaller pieces. Delegate to other agents if needed (`cld <task>`). Make continuous progress until this task is complete. No excuses. No stopping. No asking for permission. Just implement.
 
 ### What is NOT Done (DELETE ITEMS AS YOU COMPLETE THEM)
 
@@ -271,12 +273,14 @@ curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/<filename>.ni
 **Agent, your job is to specifically implement comprehensive nixpkgs.lib testing no matter how hard or large of a task it is.**
 
 **YOU WILL COMPLETE THIS TASK. Period.**
+- You ARE ALLOWED to use npm modules through https://esm.sh/NPM_MODULE_NAME (but esm.sh doesn't always work)
 - Break it into smaller pieces if needed
 - Delegate to other agents using `cld <task>` if needed
 - But you WILL complete every item in the priorities below
 - "Too complex" is not acceptable - break it down
 - "Too long" is not acceptable - start now
 - "Need help" is not acceptable - delegate with `cld <task>`
+- "Can't find the right library" is not acceptable - use esm.sh or implement yourself
 
 ### Immediate Actions (DO THIS NOW)
 
