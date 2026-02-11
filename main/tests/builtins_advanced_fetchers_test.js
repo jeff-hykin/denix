@@ -1,6 +1,5 @@
 import { assertEquals, assertExists, assert, assertRejects } from "jsr:@std/assert";
-import { createRuntime } from "../runtime.js";
-import { NotImplemented } from "../errors.js";
+import { createRuntime, NotImplemented } from "../runtime.js";
 
 // Initialize runtime once before tests
 const runtimeContext = createRuntime();

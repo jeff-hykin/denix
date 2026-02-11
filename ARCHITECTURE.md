@@ -1,25 +1,26 @@
 # Denix Architecture
 
+Simple Nix → JavaScript translator with runtime builtins. No npm, pure Deno.
+
 ## Directory Structure
 
 ```
 denix/
-├── translator.js         # Nix → JS translator (58KB)
+├── translator.js         # Nix → JS translator (58KB, 1264 lines)
 ├── main/
-│   ├── runtime.js        # 102 builtins + operators (125KB) ⚠️
+│   ├── runtime.js        # 102 builtins + operators + errors (125KB, 2828 lines) ⚠️
 │   ├── import_cache.js   # Import caching & circular detection
 │   ├── import_loader.js  # Nix file loading
 │   ├── fetcher.js        # HTTP downloads
 │   ├── tar.js           # Tarball extraction
 │   ├── nar_hash.js      # NAR directory hashing
 │   ├── store_manager.js # Store path management
-│   ├── registry.js      # Flake registry resolution
-│   └── errors.js        # Error types
+│   └── registry.js      # Flake registry resolution
 ├── tools/
-│   ├── hashing.js       # SHA256/MD5/SHA1/SHA512 (wrapper)
-│   ├── sha1.js          # SHA-1 implementation (20KB)
-│   ├── sha_helpers.js   # SHA-512/256 implementation (35KB)
-│   ├── md5.js           # MD5 implementation (14KB)
+│   ├── hashing.js       # SHA256/MD5/SHA1/SHA512 wrapper
+│   ├── sha1.js          # SHA-1 implementation (456 lines)
+│   ├── sha_helpers.js   # SHA-512/256 implementation (859 lines)
+│   ├── md5.js           # MD5 implementation (276 lines)
 │   ├── store_path.js    # Store path computation
 │   ├── import_resolver.js # Path resolution
 │   ├── json_parse.js    # JSON with BigInt support
@@ -30,59 +31,53 @@ denix/
 
 ## Core Components
 
-### 1. Translator (translator.js)
-- Converts Nix AST to JavaScript code
-- Uses tree-sitter-nix for parsing
-- Main function: `convertToJs(nixCode) → jsCode`
-- Size: 58KB (1,264 lines)
+### Translator (translator.js)
+Converts Nix AST → JavaScript code. Uses tree-sitter-nix for parsing.
 
-### 2. Runtime (main/runtime.js) ⚠️
-- Implements all 102 Nix builtins
-- Exports: `builtins`, `operators`, `createRuntime()`
-- Size: **125KB (2,824 lines)** - LARGEST FILE
-- Contains: InterpolatedString, Path classes
-- All builtins are curried: `builtins.substring(5)(3)(str)`
+### Runtime (main/runtime.js) ⚠️ NEEDS SPLITTING
+**Problem**: Single monolithic 2,826-line file with all 102 builtins mixed together.
+- Exports: `builtins` (102 functions), `operators`, `createRuntime()`
+- Contains: InterpolatedString, Path classes, NixError, NotImplemented
+- All builtins manually curried: `builtins.substring(5)(3)(str)`
 
-**Organizational Issue**: Single monolithic file with no logical grouping of builtins.
+### Import System
+- `import_cache.js` - Caching + circular detection
+- `import_loader.js` - File loading + evaluation
+- `import_resolver.js` - Path resolution (in tools/)
 
-### 3. Import System
-- **import_cache.js**: Caching + circular detection
-- **import_loader.js**: File loading + evaluation
-- **import_resolver.js**: Path resolution (tools/)
-- Works with both .nix and .json files
+### Fetch System
+- `fetcher.js` - HTTP downloads with retry logic
+- `tar.js` - Tarball extraction (@std/tar)
+- `nar_hash.js` - NAR directory hashing
+- `store_manager.js` - Store path management + caching
+- Store: `~/.cache/denix/store/`
 
-### 4. Fetch System
-- **fetcher.js**: HTTP downloads with retry logic
-- **tar.js**: Tarball extraction (uses @std/tar)
-- **nar_hash.js**: NAR directory hashing
-- **store_manager.js**: Store path management + caching
-- Store location: `~/.cache/denix/store/`
+### Hashing (tools/) ⚠️ COULD USE DENO CRYPTO
+**Problem**: 1,591 lines of bundled third-party hash code (70KB).
+- `sha1.js` - 456 lines
+- `sha_helpers.js` - 859 lines
+- `md5.js` - 276 lines
+- `hashing.js` - Wrapper (189 lines)
 
-### 5. Hashing (tools/)
-- **hashing.js**: Unified interface (sha256Hex, md5Hex, etc.)
-- **sha1.js**: SHA-1 implementation (20KB)
-- **sha_helpers.js**: SHA-512/256 implementation (35KB)
-- **md5.js**: MD5 implementation (14KB)
-
-**Note**: These are bundled third-party hash implementations. Could use Deno's crypto stdlib instead.
+**Alternative**: Deno's `crypto.subtle` API (built-in, faster, smaller).
 
 ## Design Patterns
 
 ### Scope Management
-- Nix variables → `nixScope["varName"]`
+- Nix variables → `nixScope["varName"]` (avoids JS keyword conflicts)
 - Function closures use `Object.create(parentScope)` to preserve lazy getters
-- **CRITICAL**: Never use spread operator for scope copying (loses getters)
+- **CRITICAL**: Never use spread operator `{...scope}` - loses getters
 
 ### Type System
-- Nix integers → JavaScript BigInt
+- Nix ints → JavaScript BigInt (for correct integer division)
 - Nix floats → JavaScript number
-- Nix strings → String or InterpolatedString class
+- Nix strings → String or InterpolatedString
 - Nix paths → Path class (extends InterpolatedString)
 
 ### Lazy Evaluation
-- Recursive attribute sets use getters for lazy evaluation
-- `lazy_array.js` provides proxy-based lazy mapping
-- InterpolatedString evaluates on first `toString()` call
+- Recursive attribute sets use getters
+- `lazy_array.js` - Proxy-based lazy mapping
+- InterpolatedString evaluates on first `toString()`
 
 ## Class Hierarchy
 
@@ -100,77 +95,77 @@ Path extends InterpolatedString {
 }
 ```
 
-**Note**: Path subclass only sets `isPath = true`. Uses inheritance to share toString() logic.
+## Performance Bottlenecks
 
-## Key Simplifications Made
-
-1. **Removed empty Interpolater base class** - Path now extends InterpolatedString directly
-2. **Reordered typeOf checks** - Path checked before InterpolatedString to avoid false positives
-
-## Performance Considerations
-
-### Bottlenecks
 1. **runtime.js size**: 125KB - slow to parse/load
 2. **All builtins curried**: Extra function call overhead
-3. **Proxy-based lazy arrays**: Overhead for all array operations
-4. **Three separate hash implementations**: ~70KB of hash code
-
-### Optimization Opportunities
-1. Split runtime.js into logical modules (type checking, lists, strings, etc.)
-2. Make currying optional - let translator handle it
-3. Consider Deno's crypto stdlib instead of bundled hash implementations
-4. Use generators instead of proxies for lazy evaluation
-
-## Test Structure
-
-- 40 test files, 538+ tests total
-- Naming: `builtins_*_test.js` for builtin tests
-- Categories: type checking, lists, strings, math, fetchers, etc.
-- All tests use Deno.test() format (except nixpkgs_trivial_test.js)
+3. **Proxy-based lazy arrays**: Overhead on all array ops
+4. **Bundled hash implementations**: ~70KB
 
 ## Dependencies
 
-All dependencies via URL imports:
-- `tree-sitter-nix` (via esm.sh) - Nix parser
+All via URL imports (no npm):
+- `tree-sitter-nix` (esm.sh) - Parser
 - `@deno/std` - Standard library
-- `https://deno.land/x/good` - zip utility
-- `https://deno.land/x/quickr` - FileSystem utility
+- `deno.land/x/good` - zip utility
+- `deno.land/x/quickr` - FileSystem utility
 
-**No npm/package.json** - pure Deno project.
+## Simplification Opportunities
 
-## Future Architecture Improvements
-
-### Priority 1: Split runtime.js
-Current: Single 125KB file with all 102 builtins
-Proposed:
-```javascript
-// runtime.js (main file)
-export * from "./builtins/type_checking.js"
-export * from "./builtins/lists.js"
-export * from "./builtins/strings.js"
-// ... etc
-
-// builtins/type_checking.js
-export const createTypeCheckingBuiltins = () => ({
-  isInt, isBool, isString, typeOf, ...
-})
+### 1. Split runtime.js (HIGH PRIORITY)
+**Current**: Single 2,826-line file
+**Proposed**:
+```
+main/builtins/
+  ├── type_checking.js  (isInt, isBool, typeOf...)
+  ├── lists.js          (map, filter, fold...)
+  ├── strings.js        (split, concat, substring...)
+  ├── attrsets.js       (mapAttrs, filterAttrs...)
+  ├── math.js           (add, sub, bitAnd...)
+  ├── fetch.js          (fetchGit, fetchTarball...)
+  └── derivations.js    (derivation, toPath...)
 ```
 
-Benefits:
-- Faster loading (only load what's needed)
-- Easier navigation
-- Better organization
-- Logical grouping
+**Benefits**: Faster loading, better navigation, logical grouping
+**Effort**: Medium (4-6 hours)
 
-### Priority 2: Consolidate Hashing
-Current: 3 separate hash implementations (70KB total)
-Proposed: Use Deno's built-in crypto.subtle
+### 2. Use Deno Crypto (MEDIUM PRIORITY)
+**Current**: 1,591 lines of custom hash code
+**Proposed**: Use `crypto.subtle` API
 
-### Priority 3: Reconsider Currying
-Current: All builtins curried
-Proposed: Accept multiple arguments, let translator curry if needed
+```javascript
+// Current:
+import { sha256Hex } from "./tools/hashing.js"
 
-Benefits:
-- More natural JavaScript
-- Easier debugging
-- Less function call overhead
+// Proposed:
+const sha256Hex = async (data) => {
+  const msgUint8 = new TextEncoder().encode(data)
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgUint8)
+  return Array.from(new Uint8Array(hashBuffer))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('')
+}
+```
+
+**Benefits**: Remove ~70KB, faster (native), battle-tested
+**Effort**: Medium (2-3 hours)
+**Note**: Some Nix-specific hashing may require custom code
+
+### 3. Reconsider Currying (LOW PRIORITY)
+**Current**: All builtins manually curried
+**Proposed**: Normal multi-arg functions, let translator curry
+
+**Benefits**: More natural JS, easier debugging, less overhead
+**Effort**: High (6-8 hours) - requires translator changes
+
+### 4. Merge store_path.js + store_manager.js (LOW PRIORITY)
+Related functions split across two files - could merge.
+**Effort**: Low (1 hour)
+
+## What NOT to Change
+
+1. **Import system architecture** - Well-designed
+2. **Fetch system** - Clean, modular
+3. **Scope management pattern** - Object.create() is correct
+4. **BigInt for integers** - Required for Nix semantics
+5. **URL imports** - Maintains Deno philosophy

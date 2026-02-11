@@ -5,8 +5,7 @@
  */
 
 import { assertEquals, assertThrows } from "https://deno.land/std@0.208.0/assert/mod.ts"
-import { builtins } from "../runtime.js"
-import { NixError } from "../errors.js"
+import { builtins, NixError } from "../runtime.js"
 
 // ============================================================================
 // List Operations

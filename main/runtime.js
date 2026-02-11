@@ -12,8 +12,9 @@ import { lazyMap } from "../tools/lazy_array.js"
 import { parse as tomlParse } from "https://deno.land/std@0.224.0/toml/mod.ts"
 import { serializeDerivation, computeDrvPath, computeOutputPath, encodeBase32 } from "../tools/store_path.js"
 
-// core stuff
-import { NixError, NotImplemented } from "./errors.js"
+// core stuff (errors inlined from errors.js)
+export class NixError extends Error {}
+export class NotImplemented extends Error {}
 
 // import system
 import { ImportCache } from "./import_cache.js"

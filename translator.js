@@ -1,7 +1,6 @@
 // Core parsing and analysis tools
 import { parse, xmlStylePreview } from "./tools/parsing.js"
-import { NixError, NotImplemented } from "./main/errors.js"
-import { nixRepr } from "./main/runtime.js"
+import { nixRepr, NixError, NotImplemented } from "./main/runtime.js"
 
 
 // Design explanation (converting nix to JavaScript)
