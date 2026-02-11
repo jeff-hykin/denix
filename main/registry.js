@@ -188,7 +188,9 @@ export async function resolveIndirectReference(flakeId) {
             return target.url
 
         default:
-            console.warn(`Unknown registry target type: ${target.type}`)
+            if (Deno.env.get("NIX_DEBUG")) {
+                console.warn(`Unknown registry target type: ${target.type}`)
+            }
             return null
     }
 }
