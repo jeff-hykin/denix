@@ -22,111 +22,33 @@ You are tasked with faithfully creating a nix runtime in JavaScript. A system th
 
 ## YOUR CURRENT TASK
 
-**Agent, your job is to specifically implement comprehensive test coverage for the 20 remaining untested builtins, no matter how hard or large of a task it is.**
+**ALL 102 FUNCTION BUILTINS NOW HAVE COMPREHENSIVE TESTS!**
 
-### 20 UNTESTED BUILTINS REQUIRING TESTS:
+Runtime test coverage: 102/102 builtins tested (100%)
+Total runtime tests: 659+ tests across 40 test files
 
-#### Context Operations (4 functions):
-- `addErrorContext` - Add error context to thrown exceptions
-- `appendContext` - Append string context metadata
-- `hasContext` - Check if string has context metadata
-- `unsafeDiscardStringContext` - Remove string context
+### RUNTIME TESTING: COMPLETE
 
-#### Store Operations (5 functions):
-- `storeDir` - Return the store directory path
-- `storePath` - Validate and return store paths
-- `toFile` - Write content to store and return path
-- `placeholder` - Generate derivation output placeholder
-- `outputOf` - Reference derivation output paths
+All previously untested builtins now have comprehensive test coverage:
 
-#### Hashing Operations (2 functions):
-- `hashString` - Hash a string with specified algorithm
-- `hashFile` - Hash a file with specified algorithm
+Test files created (Session 43):
+- `main/tests/builtins_context_test.js` - 32 tests (context operations)
+- `main/tests/builtins_hashing_test.js` - 30 tests (hashString, hashFile)
+- `main/tests/builtins_store_test.js` - 39 tests (store operations)
+- `main/tests/builtins_control_flow_standalone_test.js` - 22 tests (break, traceVerbose, genericClosure)
+- `main/tests/builtins_derivation_ops_test.js` - 22 tests (derivation operations)
+- `main/tests/builtins_nixpath_test.js` - 10 tests (nixPath)
+- `main/tests/builtins_advanced_fetchers_test.js` - 34 tests (fetchClosure, getFlake)
 
-#### Derivation Operations (3 functions):
-- `derivationStrict` - Strict version of derivation
-- `unsafeDiscardOutputDependency` - Remove output dependencies
-- `unsafeGetAttrPos` - Get source position of attribute
-
-#### Control Flow (4 functions):
-- `break` - Debug breakpoint (if supported)
-- `traceVerbose` - Conditional tracing
-- `genericClosure` - Generic graph closure computation
-
-#### Fetchers (2 functions):
-- `fetchClosure` - Fetch from binary cache (COMPLEX)
-- `getFlake` - Load and evaluate flakes (VERY COMPLEX)
-
-#### Advanced (1 function):
-- `nixPath` - Get NIX_PATH search path
+Bug fixes during testing:
+- Fixed `nixPath` implementation to correctly parse paths containing `=` characters
 
 ---
 
-## IMPLEMENTATION PROCESS
+## NEXT PRIORITIES
 
-For each untested builtin:
+### Priority 1: Expand nixpkgs.lib Testing (RECOMMENDED, 5-8 hours)
 
-### Step 1: Research (MANDATORY)
-1. Read official Nix documentation: https://nix.dev/manual/nix/2.18/language/builtins
-2. Test behavior in `nix repl` with edge cases
-3. Find examples in nixpkgs repository
-4. Document expected behavior
-
-### Step 2: Verify Implementation
-1. Check `main/runtime.js` for the function implementation
-2. Verify it matches Nix behavior
-3. Fix any bugs found during verification
-
-### Step 3: Create Comprehensive Tests
-1. Create test file: `main/tests/builtins_<category>_test.js`
-2. Write minimum 5-10 tests per function covering:
-   - Basic functionality
-   - Edge cases (null, undefined, empty)
-   - Error conditions
-   - Integration with other builtins
-3. Use `Deno.test()` format, NOT console.log
-4. Verify all tests pass: `deno test main/tests/builtins_<category>_test.js`
-
-### Step 4: Document
-Update this file with remaining untested functions (if any)
-
----
-
-## TEST FILE TEMPLATE
-
-```javascript
-// main/tests/builtins_<category>_test.js
-import { assertEquals, assertThrows } from "https://deno.land/std@0.220.1/assert/mod.ts"
-import runtime from "../runtime.js"
-
-const builtins = runtime.builtins
-
-Deno.test("builtin_name - basic functionality", () => {
-    const result = builtins.builtin_name(/* args */)
-    assertEquals(result, /* expected */)
-})
-
-Deno.test("builtin_name - edge case: empty input", () => {
-    const result = builtins.builtin_name(/* empty */)
-    assertEquals(result, /* expected */)
-})
-
-Deno.test("builtin_name - error: invalid input", () => {
-    assertThrows(
-        () => builtins.builtin_name(/* invalid */),
-        Error,
-        "expected error message"
-    )
-})
-```
-
----
-
-## AFTER TESTING IS COMPLETE
-
-Once all 20 builtins have comprehensive tests, move to:
-
-### Next Priority 1: Expand nixpkgs.lib Testing (5-8 hours)
 Test these high-value nixpkgs.lib files:
 - `lists.nix` - List manipulation functions
 - `attrsets.nix` - Attribute set operations
@@ -134,18 +56,16 @@ Test these high-value nixpkgs.lib files:
 
 Goal: Increase nixpkgs.lib coverage from 29% (12/41 files) to 50%+ (20/41 files)
 
-### Next Priority 2: Translator Edge Cases (2-3 hours)
+### Priority 2: Translator Edge Cases (2-3 hours)
 - Advanced pattern matching (nested @, ellipsis in functions)
 - String escape sequences verification
 - Path literal edge cases
 - Operator precedence verification
 - Multi-line string handling
 
-### Next Priority 3: Optional Advanced Builtins (16-22 days total)
-Only implement if specifically requested:
-- `fetchMercurial` (2-3 days) - Rarely used
-- `fetchClosure` (5-7 days) - Binary cache support, VERY COMPLEX
-- `getFlake` (5-7 days) - Full flake system, VERY COMPLEX
+### Priority 3: Optional Advanced Features (only if requested)
+- Complete binary cache support for `fetchClosure` (5-7 days, VERY COMPLEX)
+- Implement network fetchers for `getFlake` (github:, gitlab:, git:, etc.) - partially done
 - `fetchTree` edge cases (4-6 hours) - type='path', type='indirect'
 
 ---

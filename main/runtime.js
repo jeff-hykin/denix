@@ -39,6 +39,30 @@ import { resolveIndirectReference } from "./registry.js"
     }
 
 //
+// Helper functions
+//
+
+    // Safely convert any value to a string for error messages
+    function safeToString(value) {
+        try {
+            if (value === null) return "null"
+            if (value === undefined) return "undefined"
+            if (typeof value === "string") return JSON.stringify(value)
+            if (typeof value === "function") return "[Function]"
+            if (typeof value === "symbol") return value.toString()
+            if (typeof value === "bigint") return value.toString()
+            return JSON.stringify(value)
+        } catch {
+            return String(value)
+        }
+    }
+
+    // Escape special regex characters in a string for use in RegExp
+    function escapeRegexMatch(str) {
+        return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    }
+
+//
 // classes
 //
 
@@ -331,7 +355,13 @@ import { resolveIndirectReference } from "./registry.js"
                             // CRITICAL: Check derivation BEFORE plain object check
                             // Derivations have toString() functions that would cause errors
                             return JSON.stringify(value.outPath)
-                        } else if (Object.getPrototypeOf({}) == Object.getPrototypeOf(value)) {
+                        } else if (
+                            Object.getPrototypeOf({}) == Object.getPrototypeOf(value) ||
+                            // Handle objects created with Object.create(parent) - used by rec attrsets
+                            (Object.getOwnPropertyNames(value).length > 0 && value.constructor === Object)
+                        ) {
+                            // Handle plain objects and objects created with Object.create(parent)
+                            // (rec attrsets use Object.create for scope inheritance)
                             // Nix sorts object keys alphabetically (lexicographic order)
                             const keys = Object.getOwnPropertyNames(value).sort()
                             const entries = []
@@ -1867,9 +1897,12 @@ import { resolveIndirectReference } from "./registry.js"
                 if (!nixPath) return []
 
                 return nixPath.split(":").map(entry => {
-                    const [prefix, path] = entry.includes("=")
-                        ? entry.split("=", 2)
-                        : ["", entry]
+                    if (!entry.includes("=")) {
+                        return { prefix: "", path: entry }
+                    }
+                    const idx = entry.indexOf("=")
+                    const prefix = entry.slice(0, idx)
+                    const path = entry.slice(idx + 1)
                     return { prefix, path }
                 })
             },

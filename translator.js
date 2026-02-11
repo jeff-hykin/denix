@@ -753,7 +753,7 @@ const nixNodeToJs = (node)=>{
 
             // Add lazy bindings
             for (const {name, value, isConstant} of simpleBindings.filter(b => !b.isConstant)) {
-                code += `        Object.defineProperty(nixScope, ${JSON.stringify(name)}, {get(){return ${nixNodeToJs(value)};}});\n`
+                code += `        Object.defineProperty(nixScope, ${JSON.stringify(name)}, {enumerable: true, get(){return ${nixNodeToJs(value)};}});\n`
             }
 
             code += `        return nixScope;\n`
@@ -1112,7 +1112,7 @@ const nixNodeToJs = (node)=>{
 
         // Add lazy bindings (those that reference other variables)
         for (const {name, value, isConstant} of simpleBindings.filter(b => !b.isConstant)) {
-            code += `        Object.defineProperty(nixScope, ${JSON.stringify(name)}, {get(){return ${nixNodeToJs(value)};}});\n`
+            code += `        Object.defineProperty(nixScope, ${JSON.stringify(name)}, {enumerable: true, get(){return ${nixNodeToJs(value)};}});\n`
         }
 
         code += `        return ${nixNodeToJs(body)};\n`

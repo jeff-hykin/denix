@@ -9,7 +9,7 @@
  */
 
 import { getImportType, validateImportPath } from "../tools/import_resolver.js"
-import { convertToJs } from "../main.js"
+import { convertToJs } from "../translator.js"
 
 /**
  * Load and evaluate a file
