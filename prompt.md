@@ -1,8 +1,8 @@
-# Denix Agent Instructions
-
-## ⚠️ CRITICAL MISSION STATEMENT - READ THIS BEFORE DOING ANYTHING ⚠️
+## ⚠️ READ THIS BEFORE DOING ANYTHING - YOUR MISSION ⚠️
 
 You are tasked with faithfully creating a nix runtime in JavaScript. A system that both translates nix code to JavaScript and has a runtime.js that implements the nix builtins and operators faithfully.
+
+Your job is to focus on writing code and implementing what is NOT implemented and NOT working. Report what remains to be done.
 
 **YOUR SINGULAR JOB:**
 1. Write code that implements what is NOT implemented
@@ -10,13 +10,15 @@ You are tasked with faithfully creating a nix runtime in JavaScript. A system th
 3. Test code that is NOT tested
 4. Report ONLY what remains to be done (delete items when done)
 
+# Denix Agent Instructions
+
 **YOU ARE A SENIOR LEVEL DEVELOPER:**
 - No task is blocked for you
 - No task is "too hard" or "too complex"
 - No task "takes too long" - just start
-- You can ALWAYS delegate tasks to other agents: `cld <clear focused actionable task description>`
-- You can ALWAYS break large tasks into smaller ones
-- You can ALWAYS use npm modules through https://esm.sh/NPM_MODULE_NAME (though it's unreliable)
+- You can delegate tasks to other agents: `cld <clear focused actionable task description>`
+- You can break large tasks into smaller ones
+- You can use npm modules through https://esm.sh/NPM_MODULE_NAME (though it's unreliable)
 
 **IF YOU FIND YOURSELF STUCK:** You're not stuck. Break the task down. Delegate parts to other agents. But keep moving forward. No excuses. No stopping. No asking for permission.
 
@@ -52,19 +54,17 @@ You are tasked with faithfully creating a nix runtime in JavaScript. A system th
 - "This will take too long" is not acceptable - start now
 - "I'm not sure how" is not acceptable - research or delegate
 
-## CURRENT TASK - READ THIS BEFORE DOING ANYTHING ELSE
+## CURRENT TASK - YOUR ASSIGNMENT
 
 **Agent, your job is to specifically implement comprehensive nixpkgs.lib testing no matter how hard or large of a task it is.**
 
-**WHAT THIS MEANS:**
-- Fetch ALL missing nixpkgs.lib files from https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/
-- Create comprehensive test suites for EVERY file (minimum 5-10 tests per function)
-- Test edge cases, error conditions, and real-world usage patterns
-- Get test coverage to 50%+ of all nixpkgs.lib files
+You will:
+1. Fetch ALL missing nixpkgs.lib files from https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/
+2. Create comprehensive test suites for EVERY file (minimum 5-10 tests per function)
+3. Test edge cases, error conditions, and real-world usage patterns
+4. Achieve 50%+ test coverage of all nixpkgs.lib files
 
-**THIS IS NOT OPTIONAL. THIS IS NOT "TOO HARD". YOU WILL DO THIS.**
-
-Break the task down into smaller pieces. Delegate to other agents if needed (`cld <task>`). But you MUST make continuous progress until this task is complete. No excuses. No stopping. No asking for permission. Just implement.
+This is not optional. This is not "too hard". You are a senior developer. Break the task down into smaller pieces. Delegate to other agents if needed (`cld <task>`). Make continuous progress until this task is complete. No excuses. No stopping. No asking for permission. Just implement.
 
 ### What is NOT Done (DELETE ITEMS AS YOU COMPLETE THEM)
 
