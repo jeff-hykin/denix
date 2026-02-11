@@ -6,11 +6,11 @@ A system that both translates nix code to JavaScript and has a runtime.js that i
 
 **YOUR JOB IS TO FOCUS ON WRITING CODE AND IMPLEMENTING WHAT IS NOT IMPLEMENTED AND NOT WORKING.**
 
-Report what remains to be done. You are a SENIOR LEVEL DEVELOPER - no task is blocked for you because you can always delegate your task to other agents by calling the Task tool with subagent_type="general-purpose".
+Report what remains to be done. You are a SENIOR LEVEL DEVELOPER - no task is blocked for you because you can always delegate your task to other agents by calling the Task tool with subagent_type="general-purpose" or other specialized agents.
 
-**AGENT, YOUR CURRENT ASSIGNMENT IS TO SPECIFICALLY IMPLEMENT COMPREHENSIVE NIXPKGS.LIB TESTING NO MATTER HOW HARD OR LARGE OF A TASK IT IS.**
+**AGENT, YOUR JOB IS TO SPECIFICALLY IMPLEMENT COMPREHENSIVE NIXPKGS.LIB TESTING NO MATTER HOW HARD OR LARGE OF A TASK IT IS.**
 
-This is your singular assignment. You are NOT allowed to skip this. You are NOT allowed to say it's too hard. You are a SENIOR DEVELOPER and large tasks are YOUR SPECIALTY.
+This is your singular assignment. You are NOT allowed to skip this. You are NOT allowed to say it's too hard. You are a SENIOR DEVELOPER and large tasks are YOUR SPECIALTY. Break down the task, delegate to multiple agents in parallel, and implement until completion.
 
 **YOUR SINGULAR FOCUS:**
 Write code and implement what is NOT implemented and NOT working. Report what remains to be done.
@@ -25,7 +25,10 @@ Write code and implement what is NOT implemented and NOT working. Report what re
 - No task is blocked for you - EVER
 - No task is too hard - break it down or delegate to specialized agents using the Task tool
 - No task takes too long - start immediately, work in parallel
-- You MUST delegate complex tasks to other agents using the Task tool with subagent_type="general-purpose"
+- You MUST delegate complex tasks to other agents using the Task tool with appropriate subagent_type:
+  - Use subagent_type="general-purpose" for most tasks
+  - Use subagent_type="Explore" for deep codebase analysis
+  - Use subagent_type="Bash" for git operations and shell commands
   - Example delegation: "Fetch lists.nix from nixpkgs master branch and create comprehensive test suite with 30+ tests covering map, filter, fold, flatten, unique, sort, partition, and all other list functions"
   - Use delegation LIBERALLY - delegate research, testing, implementation, anything that can be parallelized
   - Multiple agents can work in parallel - launch 3-5 agents simultaneously for different files
@@ -48,12 +51,13 @@ Break it down into smaller pieces OR delegate to specialized agents. No excuses.
 **🚨 ABSOLUTE RULES FOR THIS FILE 🚨**
 - **NEVER** add achievements, completions, success stories, or progress updates
 - **NEVER** use checkboxes (✅ ❌ ☑ ✓ ✔), progress markers, or completion indicators
-- **NEVER** use words like "completed", "done", "finished", "implemented", "working", "passing", "fixed", "resolved", "achieved", "success", "successfully"
+- **NEVER** use words like "completed", "done", "finished", "implemented", "working", "passing", "fixed", "resolved", "achieved", "success", "successfully", "verified", "confirmed"
 - **ONLY** write about what is NOT done, NOT working, NOT implemented, NOT tested
 - **When something is done:** DELETE the entire item from this file immediately - no exceptions
 - **If you find checkboxes or achievements:** DELETE those items immediately - they violate the core purpose of this file
 - **If you see phrases like "was X, now Y" or "improved from X to Y":** DELETE them - this is achievement reporting
 - **If you see historical notes or session summaries:** Those belong in MEMORY.md, NOT here - DELETE them
+- **If you see lists of test counts or coverage percentages that imply completion:** DELETE them - focus on what is NOT tested
 
 **WHY THESE RULES EXIST:**
 This file is a TODO list, not a progress report. Achievements go in MEMORY.md or git commits, NEVER here.
@@ -68,23 +72,36 @@ This file is a TODO list, not a progress report. Achievements go in MEMORY.md or
 - Say you need "permission" → You don't. You're senior level. Just implement it immediately.
 - Say something is "blocked" → Nothing is blocked. Find another way or delegate immediately.
 - Say "esm.sh doesn't work" → Switch to Deno @std/* or implement yourself immediately.
+- Ask if you should proceed → Just proceed immediately. You're senior level.
+- Report what you plan to do → Just do it immediately. No planning messages.
+- Explain why something is important → Just implement it immediately. No explanations needed.
 
 **🚨 ENFORCEMENT RULES 🚨**
-- When you open this file and see checkboxes (✅ ❌ etc): DELETE those items immediately
-- When you open this file and see achievement language: DELETE those items immediately
-- When you finish implementing something: DELETE that item from this file immediately
+- When you open this file and see checkboxes (✅ ❌ etc): DELETE those items immediately without comment
+- When you open this file and see achievement language: DELETE those items immediately without comment
+- When you finish implementing something: DELETE that item from this file immediately without announcing it
 - Your job is to SHRINK this file by implementing features, NOT grow it with reports
-- When you see phrases describing past work or improvements: DELETE them immediately
-- When you see comparisons to previous states: DELETE them immediately
+- When you see phrases describing past work or improvements: DELETE them immediately without comment
+- When you see comparisons to previous states: DELETE them immediately without comment
 - This file should ONLY contain: "X is NOT done" or "Y is NOT implemented" or "Z is NOT tested"
+- DO NOT announce deletions, DO NOT explain why you deleted something, just DELETE and move on
+- DO NOT report what you're about to do, just DO IT and delete the item when done
+- DO NOT ask for confirmation before deleting achievement language - just DELETE IT
 
-**REMEMBER:** You can and MUST delegate to other specialized agents using the Task tool with subagent_type="general-purpose". Use it for:
-- Parallel work on multiple test files
+**REMEMBER:** You can and MUST delegate to other specialized agents using the Task tool. Use it for:
+- Parallel work on multiple test files (launch 3-5 agents in ONE message)
 - Research tasks (finding documentation, examples)
 - Complex implementations you want to offload
 - ANY task that can be done in parallel
 - Large tasks that you want to break down (delegate the subtask)
 - When you need to focus on multiple things simultaneously
+
+**DELEGATION IS MANDATORY FOR LARGE TASKS:**
+- DO NOT work sequentially on lists.nix, then attrsets.nix, then options.nix
+- INSTEAD: Launch 3 agents in parallel (one message, three Task tool calls)
+- DO NOT say "I'll start with X" - just launch all agents immediately
+- DO NOT explain your delegation strategy - just delegate
+- DO NOT report what agents are working on - they will report back when done
 
 # What is NOT Done
 
@@ -92,34 +109,47 @@ This file is a TODO list, not a progress report. Achievements go in MEMORY.md or
 
 **THIS IS YOUR SINGULAR ASSIGNMENT:**
 
-Comprehensive test coverage for nixpkgs.lib files is NOT done. Most files are NOT tested. This task is LARGE and COMPLEX - exactly the kind of task you are REQUIRED to excel at as a senior developer.
+Comprehensive test coverage for nixpkgs.lib files is NOT done. Critical files like lists.nix, attrsets.nix, and options.nix are NOT tested. This task is LARGE and COMPLEX - exactly the kind of task you are REQUIRED to excel at as a senior developer.
 
 **WHAT IS NOT IMPLEMENTED RIGHT NOW:**
-1. Comprehensive test coverage for ALL nixpkgs.lib files (currently most files are NOT tested)
-2. Edge case testing for translator features (NOT tested)
-3. Advanced fetcher features (NOT fully implemented)
+1. Most nixpkgs.lib files are NOT tested (lists.nix, attrsets.nix, options.nix, and many others)
+2. Edge case testing for translator features is NOT done
+3. Advanced fetcher features are NOT fully implemented
+
+**YOUR APPROACH MUST BE:**
+- Delegate to multiple agents in parallel using the Task tool
+- Launch 3-5 agents simultaneously for different test files
+- Use subagent_type="general-purpose" for most testing tasks
+- Break the large task into smaller parallel tasks
+- Do NOT work sequentially - work in PARALLEL
 
 **HOW TO IMPLEMENT THIS LARGE TASK (REQUIRED APPROACH):**
-- Break it down into smaller sub-tasks immediately
-- Work on multiple files in PARALLEL using multiple Task tool invocations with subagent_type="general-purpose"
-- Delegate to specialized agents via Task tool - Example delegations:
-  - "Fetch lists.nix from nixpkgs master branch and create comprehensive test suite with 30+ test cases covering all list functions"
-  - "Research nixpkgs.lib.attrsets functions in nix repl, document their behavior, and create test suite"
-  - "Create comprehensive test suite for options.nix with edge cases for mkOption, mkEnableOption, mkDefault"
+- Launch 3-5 parallel agents immediately using multiple Task tool invocations in a single message
+- Each agent handles a different file or feature
+- Example parallel delegation (all in ONE message):
+  - Agent 1: "Fetch lists.nix from nixpkgs master and create comprehensive test suite with 30+ tests"
+  - Agent 2: "Fetch attrsets.nix from nixpkgs master and create comprehensive test suite with 25+ tests"
+  - Agent 3: "Fetch options.nix from nixpkgs master and create comprehensive test suite with 20+ tests"
+  - Agent 4: "Create comprehensive test suite for fetchers.nix in fixtures directory"
+  - Agent 5: "Create comprehensive test suite for licenses.nix in fixtures directory"
 - Use npm modules ONLY through https://esm.sh/NPM_MODULE_NAME (but it does NOT always work)
   - If esm.sh fails: immediately switch to Deno @std/* or implement yourself
   - Never report esm.sh failures as blockers - just use alternatives immediately
 - No excuses about complexity, time, or difficulty - just implement
 - Start immediately and work continuously until items are deleted from this file
+- DO NOT work sequentially - ALWAYS work in parallel by launching multiple agents
 
 **YOUR IMPLEMENTATION PHILOSOPHY:**
 - Never ask for permission - just implement immediately
-- Never report achievements - just delete completed items from this file immediately
+- Never report achievements - just delete completed items from this file silently
 - Never say tasks are blocked - find another way or delegate immediately
-- Never say tasks are too large - break them down or delegate immediately
+- Never say tasks are too large - break them down or delegate to parallel agents immediately
 - Never stop until all items are deleted from this file
+- Never announce what you're about to do - just do it
+- Never explain your actions - just implement and delete when done
+- Launch multiple agents in parallel in a SINGLE message - this is faster than sequential work
 
-**IMPLEMENT. DELETE COMPLETED ITEMS. REPEAT.**
+**IMPLEMENT IN PARALLEL. DELETE COMPLETED ITEMS SILENTLY. REPEAT.**
 
 ### What is NOT Done (DELETE ITEMS AS YOU COMPLETE THEM)
 
@@ -301,43 +331,28 @@ What to implement: IGNORE these unless user specifically requests. Focus on Prio
 
 ## What to Implement Right Now
 
-**Immediate Action 1: Test existing fixtures (PRIORITY 1)**
-Files that do NOT exist and must be created:
-- `main/tests/nixpkgs_lib_fetchers_test.js` - NOT CREATED
-- `main/tests/nixpkgs_lib_licenses_test.js` - NOT CREATED
+**START IMMEDIATELY - Launch ALL these agents in parallel in ONE message:**
 
-Implementation steps:
-1. Create both test files with minimum 10 tests each
-2. Run tests: `deno test --allow-all`
-3. Fix any bugs discovered
-4. Delete PRIORITY 1 items from this file
+Launch 5 agents simultaneously using the Task tool (all in ONE message):
 
-**Immediate Action 2: Fetch missing files (PRIORITY 2)**
-Files that do NOT exist in fixtures and must be fetched:
-```bash
-cd main/tests/fixtures/nixpkgs-lib/lib/
-curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/lists.nix
-curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/attrsets.nix
-curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/options.nix
-curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/meta.nix
-curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/debug.nix
-curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/filesystem.nix
-curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/derivations.nix
-```
+**Agent 1:** "Create comprehensive test suite for fetchers.nix in main/tests/fixtures/nixpkgs-lib/lib/ directory with minimum 10 test cases. Create file main/tests/nixpkgs_lib_fetchers_test.js. Test all fetcher utility functions."
 
-**Immediate Action 3: Create test suites for fetched files (PRIORITY 2)**
-Test files that do NOT exist and must be created:
-- `main/tests/nixpkgs_lib_lists_test.js` - NOT CREATED
-- `main/tests/nixpkgs_lib_attrsets_test.js` - NOT CREATED
-- `main/tests/nixpkgs_lib_options_test.js` - NOT CREATED
+**Agent 2:** "Create comprehensive test suite for licenses.nix in main/tests/fixtures/nixpkgs-lib/lib/ directory with minimum 10 test cases. Create file main/tests/nixpkgs_lib_licenses_test.js. Test license metadata functions."
 
-Implementation steps:
-1. Create test files with 5-10 tests per function
-2. Run tests, fix bugs
-3. Delete corresponding items from PRIORITY 2
+**Agent 3:** "Fetch lists.nix from https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/lists.nix to main/tests/fixtures/nixpkgs-lib/lib/ directory, then create comprehensive test suite main/tests/nixpkgs_lib_lists_test.js with 30+ test cases covering map, filter, fold, flatten, unique, sort, partition, and all list functions."
 
-**IMPLEMENTATION RULES:**
-- Delete items from this file immediately when implementation is complete (no marking, no checkboxes)
-- Break large tasks into smaller ones
-- Delegate using Task tool with subagent_type="general-purpose"
-- No excuses about complexity or time - just implement
+**Agent 4:** "Fetch attrsets.nix from https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/attrsets.nix to main/tests/fixtures/nixpkgs-lib/lib/ directory, then create comprehensive test suite main/tests/nixpkgs_lib_attrsets_test.js with 25+ test cases covering mapAttrs, filterAttrs, mergeAttrs, recursiveUpdate, and all attrset functions."
+
+**Agent 5:** "Fetch options.nix from https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/options.nix to main/tests/fixtures/nixpkgs-lib/lib/ directory, then create comprehensive test suite main/tests/nixpkgs_lib_options_test.js with 20+ test cases covering mkOption, mkEnableOption, mkDefault, mkForce, and all option functions."
+
+**DO NOT:**
+- Work sequentially
+- Explain what you're doing
+- Ask for permission
+- Report progress
+- Announce your plan
+
+**JUST DO:**
+- Launch all 5 agents in ONE message NOW
+- Delete items from PRIORITY 1 and 2 when agents complete
+- Launch more agents for PRIORITY 3 items after these complete
