@@ -61,7 +61,7 @@ operators.divide(10n, 3n)       // 3n (integer division)
 ## Using the Translator
 
 ```javascript
-import translate from "./main.js"
+import translate from "./translator.js"
 
 const nixCode = `
   let
@@ -78,7 +78,7 @@ const result = eval(jsCode)  // 3n
 
 ```
 denix/
-├── main.js                 # Nix → JS translator (1,264 lines)
+├── translator.js                 # Nix → JS translator (1,264 lines)
 ├── main/
 │   ├── runtime.js          # 102 Nix builtins + operators (2,750+ lines)
 │   ├── import_cache.js     # Import caching & circular detection

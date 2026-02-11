@@ -8,7 +8,7 @@
  * Tests progress from simple (no imports) to complex (multi-file with imports).
  */
 
-import { convertToJs } from "../../main.js"
+import { convertToJs } from "../../translator.js"
 import { createRuntime } from "../runtime.js"
 import { assertEquals, assertExists } from "https://deno.land/std@0.224.0/assert/mod.ts"
 import { resolve, dirname, join } from "https://deno.land/std@0.224.0/path/mod.ts"

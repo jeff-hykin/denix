@@ -1,5 +1,5 @@
-// import { Parser, parserFromWasm, xmlStylePreview } from "https://deno.land/x/deno_tree_sitter@0.2.8.6/main.js"
-import { createParser } from "https://deno.land/x/deno_tree_sitter@1.0.1.0/main/main.js"
+// import { Parser, parserFromWasm, xmlStylePreview } from "https://deno.land/x/deno_tree_sitter@0.2.8.6/translator.js"
+import { createParser } from "https://deno.land/x/deno_tree_sitter@1.0.1.0/main/translator.js"
 import nixTreeSitter from "https://esm.sh/gh/jeff-hykin/common_tree_sitter_languages@c37fc96/main/nix.js"
 import { FileSystem } from "https://deno.land/x/quickr@0.6.51/main/file_system.js"
 

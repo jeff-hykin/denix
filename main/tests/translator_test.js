@@ -4,7 +4,7 @@
  * Tests that translated code produces correct results
  */
 
-import { convertToJs } from "../../main.js"
+import { convertToJs } from "../../translator.js"
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts"
 
 // Helper to evaluate the translated JavaScript code

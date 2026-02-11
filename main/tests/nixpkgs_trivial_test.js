@@ -10,7 +10,7 @@
  * This validates the translator against real nixpkgs code.
  */
 
-import { convertToJs } from "../../main.js"
+import { convertToJs } from "../../translator.js"
 import { toFloat } from "../../tools/generic.js"
 
 // Minimal builtins for tests (avoiding prex WASM issue)

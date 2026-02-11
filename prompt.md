@@ -154,7 +154,7 @@ Only implement if specifically requested:
 
 - 102 function builtins implemented in `main/runtime.js`
 - 82/102 builtins have tests (80.4% coverage)
-- 87 translator tests passing in `main.js`
+- 87 translator tests passing in `translator.js`
 - Import system fully functional (`builtins.import`, `builtins.scopedImport`)
 - Derivation system with basic tests
 - All network fetchers (git, tarball, url, tree, path, filterSource, mercurial)
@@ -178,7 +178,7 @@ nix repl
 > builtins.functionName args
 
 # Translate Nix to JS
-deno run --allow-all main.js examples/test.nix
+deno run --allow-all translator.js examples/test.nix
 
 # Check test coverage
 grep -r "Deno.test.*builtin_name" main/tests/

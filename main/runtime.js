@@ -1489,8 +1489,26 @@ import { resolveIndirectReference } from "./registry.js"
                         return await builtins.path(pathArgs);
 
                     case "indirect":
-                        // Flake registry indirection - requires flake registry support
-                        throw new NotImplemented("builtins.fetchTree: type 'indirect' requires flake registry support");
+                        // Flake registry indirection - resolve via registry
+                        const indirectId = requireString(attrs.id || attrs.ref).toString();
+
+                        // Resolve the indirect reference via registry
+                        const resolvedRef = await resolveIndirectReference(indirectId);
+
+                        if (!resolvedRef) {
+                            throw new Error(
+                                `builtins.fetchTree: indirect flake reference "${indirectId}" not found in registry.\n` +
+                                `Available registries:\n` +
+                                `  - User: ~/.config/nix/registry.json\n` +
+                                `  - System: /etc/nix/registry.json\n` +
+                                `  - Global: https://channels.nixos.org/flake-registry.json\n` +
+                                `\n` +
+                                `You can also use explicit references like "github:owner/repo" instead.`
+                            );
+                        }
+
+                        // Recursively call fetchTree with the resolved reference
+                        return await builtins.fetchTree(resolvedRef);
 
                     default:
                         throw new Error(`builtins.fetchTree: unsupported type '${type}'`);
@@ -2171,11 +2189,23 @@ import { resolveIndirectReference } from "./registry.js"
                         break;
 
                     case "indirect":
-                        // Indirect references (registry lookup) - not supported yet
-                        throw new NotImplemented(
-                            `builtins.getFlake: indirect flake references ("${parsedRef.id}") require flake registry support.\n` +
-                            `Use explicit references like "github:owner/repo" or "path:/path/to/flake" instead.`
-                        );
+                        // Indirect references (registry lookup)
+                        const resolvedFlakeRef = await resolveIndirectReference(parsedRef.id);
+
+                        if (!resolvedFlakeRef) {
+                            throw new Error(
+                                `builtins.getFlake: indirect flake reference "${parsedRef.id}" not found in registry.\n` +
+                                `Available registries:\n` +
+                                `  - User: ~/.config/nix/registry.json\n` +
+                                `  - System: /etc/nix/registry.json\n` +
+                                `  - Global: https://channels.nixos.org/flake-registry.json\n` +
+                                `\n` +
+                                `You can also use explicit references like "github:owner/repo" or "path:/path/to/flake" instead.`
+                            );
+                        }
+
+                        // Recursively call getFlake with the resolved reference
+                        return await builtins.getFlake(resolvedFlakeRef);
 
                     default:
                         throw new Error(`builtins.getFlake: unsupported flake reference type: ${parsedRef.type}`);
