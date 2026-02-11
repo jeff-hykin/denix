@@ -41,9 +41,9 @@ Agent, your job is to specifically implement **comprehensive nixpkgs.lib testing
 
 **Only 12/40+ nixpkgs.lib files available as fixtures:**
 
-Currently available in `main/tests/fixtures/nixpkgs-lib/lib/`:
-- 10 tested: ascii-table.nix, strings.nix, minfeatures.nix, source-types.nix, versions.nix, kernel.nix, flakes.nix, flake-version-info.nix, systems/flake-systems.nix, systems/supported.nix
-- 2 NOT tested yet: fetchers.nix, licenses.nix
+Files in `main/tests/fixtures/nixpkgs-lib/lib/` that are NOT tested yet:
+- fetchers.nix - NOT TESTED
+- licenses.nix - NOT TESTED
 
 **Missing critical files (MUST be fetched):**
 - `lists.nix` (~30 functions) - map, filter, fold, flatten, unique, sort, partition, zip, take, drop, head, tail, last
