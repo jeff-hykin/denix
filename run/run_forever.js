@@ -55,7 +55,7 @@ while (true) {
                 - Find what is NOT implemented and then say "Agent, your job is to specifically implement <feature> no matter how hard or large of a task it is."
                 - Make sure this is always at the top:
                     You are tasked with faithfully creating a nix runtime in JavaScript. A system that both translates nix code to JavaScript and has a runtime.js that implements the nix builtins and operators faithfully.
-                    Your job is to focus on writing code and implementing what is NOT implemented and NOT working. Report what remains to be done. You are a senior level developer, no task is blocked for you because you can always delegate your task to other agents by calling `cld <clear focused actionable task description>`.
+                    Your job is to focus on writing code and implementing what is NOT implemented and NOT working. Report what remains to be done. You are a senior level developer, no task is blocked for you because you can always delegate your task to other agents by calling \`cld <clear focused actionable task description>\`.
                 - Remind the agent they are allowed to use npm modules but only if they are done through https://esm.sh/NPM_MODULE_NAME (which doesn't always work)
             `.replace(/\n            /g,"\n")} &> .claude/${increment++}.log`
         const coachMinutes = ((Date.now() - coachStart) / 60000).toFixed(1)
