@@ -281,6 +281,509 @@ Deno.test("nixpkgs.lib file loading", async (t) => {
         console.log("✅ strings.nix concatStrings function works")
     })
 
+    await t.step("strings.nix edge cases: concatStrings", () => {
+        const stringsModule = loadStringsModule()
+
+        // Empty list
+        assertEquals(stringsModule.concatStrings([]), "")
+
+        // Empty strings
+        assertEquals(stringsModule.concatStrings(["", "", ""]), "")
+
+        // Single character
+        assertEquals(stringsModule.concatStrings(["a", "b", "c"]), "abc")
+
+        // Unicode/emoji
+        assertEquals(stringsModule.concatStrings(["Hello ", "🌍", "!"]), "Hello 🌍!")
+
+        // Very long string (1000+ chars)
+        const longStr = "x".repeat(1000)
+        assertEquals(stringsModule.concatStrings([longStr, "y"]), longStr + "y")
+
+        console.log("✅ concatStrings edge cases passed")
+    })
+
+    await t.step("strings.nix edge cases: concatStringsSep", () => {
+        const stringsModule = loadStringsModule()
+
+        // concatStringsSep is curried
+        // Empty list
+        assertEquals(stringsModule.concatStringsSep(",")([ ]), "")
+
+        // Single element (no separator)
+        assertEquals(stringsModule.concatStringsSep(",")(["foo"]), "foo")
+
+        // Empty separator
+        assertEquals(stringsModule.concatStringsSep("")(["a", "b", "c"]), "abc")
+
+        // Unicode separator
+        assertEquals(stringsModule.concatStringsSep(" → ")(["a", "b", "c"]), "a → b → c")
+
+        // Empty strings in list
+        assertEquals(stringsModule.concatStringsSep(",")(["", "a", "", "b", ""]), ",a,,b,")
+
+        // Multi-character separator
+        assertEquals(stringsModule.concatStringsSep(" AND ")(["foo", "bar"]), "foo AND bar")
+
+        console.log("✅ concatStringsSep edge cases passed")
+    })
+
+    await t.step("strings.nix edge cases: splitString", () => {
+        const stringsModule = loadStringsModule()
+
+        // splitString is curried
+        // Basic split
+        assertEquals(stringsModule.splitString(".")("foo.bar.baz"), ["foo", "bar", "baz"])
+
+        // Split on first character
+        assertEquals(stringsModule.splitString("/")("/usr/bin"), ["", "usr", "bin"])
+
+        // Split on last character
+        assertEquals(stringsModule.splitString("/")("foo/bar/"), ["foo", "bar", ""])
+
+        // Multiple consecutive delimiters
+        assertEquals(stringsModule.splitString(".")("foo...bar"), ["foo", "", "", "bar"])
+
+        // Empty string
+        assertEquals(stringsModule.splitString(".")(""), [""])
+
+        // Delimiter not found
+        assertEquals(stringsModule.splitString(".")("foobar"), ["foobar"])
+
+        // Single character delimiter
+        assertEquals(stringsModule.splitString(" ")("a b c"), ["a", "b", "c"])
+
+        console.log("✅ splitString edge cases passed")
+    })
+
+    await t.step("strings.nix edge cases: removePrefix/removeSuffix", () => {
+        const stringsModule = loadStringsModule()
+
+        // removePrefix/removeSuffix are curried
+        // removePrefix - basic
+        assertEquals(stringsModule.removePrefix("foo.")("foo.bar.baz"), "bar.baz")
+
+        // removePrefix - no match
+        assertEquals(stringsModule.removePrefix("xxx")("foo.bar"), "foo.bar")
+
+        // removePrefix - empty prefix
+        assertEquals(stringsModule.removePrefix("")("foobar"), "foobar")
+
+        // removePrefix - prefix equals string
+        assertEquals(stringsModule.removePrefix("foo")("foo"), "")
+
+        // removePrefix - prefix longer than string
+        assertEquals(stringsModule.removePrefix("foobar")("foo"), "foo")
+
+        // removeSuffix - basic
+        assertEquals(stringsModule.removeSuffix("front")("homefront"), "home")
+
+        // removeSuffix - no match
+        assertEquals(stringsModule.removeSuffix("xxx")("homefront"), "homefront")
+
+        // removeSuffix - empty suffix
+        assertEquals(stringsModule.removeSuffix("")("foobar"), "foobar")
+
+        // removeSuffix - suffix equals string
+        assertEquals(stringsModule.removeSuffix("foo")("foo"), "")
+
+        // removeSuffix - suffix longer than string
+        assertEquals(stringsModule.removeSuffix("foobar")("bar"), "bar")
+
+        console.log("✅ removePrefix/removeSuffix edge cases passed")
+    })
+
+    await t.step("strings.nix edge cases: replaceStrings", () => {
+        const stringsModule = loadStringsModule()
+
+        // replaceStrings is curried
+        // Basic replacement
+        assertEquals(stringsModule.replaceStrings(["a"])(["b"])("aaa"), "bbb")
+
+        // Multiple replacements
+        assertEquals(stringsModule.replaceStrings(["a", "e"])(["b", "f"])("abcade"), "bbcbdf")
+
+        // Empty string replacement
+        assertEquals(stringsModule.replaceStrings([""])(["x"])("foo"), "foo")
+
+        // Replace with empty string
+        assertEquals(stringsModule.replaceStrings(["a"])([""])("banana"), "bnn")
+
+        // No matches
+        assertEquals(stringsModule.replaceStrings(["x"])(["y"])("foobar"), "foobar")
+
+        // Unicode replacement
+        assertEquals(stringsModule.replaceStrings(["🌍"])(["🌎"])("Hello 🌍!"), "Hello 🌎!")
+
+        console.log("✅ replaceStrings edge cases passed")
+    })
+
+    await t.step("strings.nix edge cases: toLower/toUpper", () => {
+        const stringsModule = loadStringsModule()
+
+        // Basic case conversion
+        assertEquals(stringsModule.toLower("HELLO"), "hello")
+        assertEquals(stringsModule.toUpper("hello"), "HELLO")
+
+        // Empty string
+        assertEquals(stringsModule.toLower(""), "")
+        assertEquals(stringsModule.toUpper(""), "")
+
+        // Mixed case
+        assertEquals(stringsModule.toLower("HeLLo WoRLd"), "hello world")
+        assertEquals(stringsModule.toUpper("HeLLo WoRLd"), "HELLO WORLD")
+
+        // Numbers and symbols (should be unchanged)
+        assertEquals(stringsModule.toLower("ABC123!@#"), "abc123!@#")
+        assertEquals(stringsModule.toUpper("abc123!@#"), "ABC123!@#")
+
+        // Unicode (should be unchanged - only ASCII supported)
+        assertEquals(stringsModule.toLower("CAFÉ"), "cafÉ")
+        assertEquals(stringsModule.toUpper("café"), "CAFé")
+
+        console.log("✅ toLower/toUpper edge cases passed")
+    })
+
+    await t.step("strings.nix edge cases: hasPrefix/hasSuffix", () => {
+        const stringsModule = loadStringsModule()
+
+        // hasPrefix/hasSuffix are curried
+        // Basic prefix
+        assertEquals(stringsModule.hasPrefix("foo")("foobar"), true)
+        assertEquals(stringsModule.hasPrefix("bar")("foobar"), false)
+
+        // Empty prefix (always true)
+        assertEquals(stringsModule.hasPrefix("")("foobar"), true)
+
+        // Prefix equals string
+        assertEquals(stringsModule.hasPrefix("foo")("foo"), true)
+
+        // Prefix longer than string
+        assertEquals(stringsModule.hasPrefix("foobar")("foo"), false)
+
+        // Basic suffix
+        assertEquals(stringsModule.hasSuffix("bar")("foobar"), true)
+        assertEquals(stringsModule.hasSuffix("foo")("foobar"), false)
+
+        // Empty suffix (always true)
+        assertEquals(stringsModule.hasSuffix("")("foobar"), true)
+
+        // Suffix equals string
+        assertEquals(stringsModule.hasSuffix("foo")("foo"), true)
+
+        // Suffix longer than string
+        assertEquals(stringsModule.hasSuffix("foobar")("bar"), false)
+
+        // Unicode
+        assertEquals(stringsModule.hasPrefix("🌍")("🌍🌎🌏"), true)
+        assertEquals(stringsModule.hasSuffix("🌏")("🌍🌎🌏"), true)
+
+        console.log("✅ hasPrefix/hasSuffix edge cases passed")
+    })
+
+    await t.step("strings.nix edge cases: stringLength", () => {
+        const stringsModule = loadStringsModule()
+
+        // stringLength is inherited from builtins
+        // Empty string
+        assertEquals(stringsModule.stringLength(""), 0n)
+
+        // Single character
+        assertEquals(stringsModule.stringLength("a"), 1n)
+
+        // Basic string
+        assertEquals(stringsModule.stringLength("hello"), 5n)
+
+        // Unicode (counts bytes, not characters)
+        // "🌍" is 4 bytes in UTF-8
+        assertEquals(stringsModule.stringLength("🌍"), 4n)
+
+        // Escape sequences (count as single chars after evaluation)
+        assertEquals(stringsModule.stringLength("\n\t"), 2n)
+
+        console.log("✅ stringLength edge cases passed")
+    })
+
+    await t.step("strings.nix edge cases: substring", () => {
+        const stringsModule = loadStringsModule()
+
+        // substring is inherited from builtins and curried
+        // Basic substring
+        assertEquals(stringsModule.substring(0n)(3n)("foobar"), "foo")
+
+        // Start at middle
+        assertEquals(stringsModule.substring(3n)(3n)("foobar"), "bar")
+
+        // Length exceeds string (should return rest)
+        assertEquals(stringsModule.substring(3n)(100n)("foobar"), "bar")
+
+        // Start at end
+        assertEquals(stringsModule.substring(6n)(1n)("foobar"), "")
+
+        // Start beyond end
+        assertEquals(stringsModule.substring(10n)(5n)("foobar"), "")
+
+        // Zero length
+        assertEquals(stringsModule.substring(0n)(0n)("foobar"), "")
+
+        // Negative length (Nix uses -1 for "rest of string")
+        assertEquals(stringsModule.substring(2n)(-1n)("foobar"), "obar")
+
+        console.log("✅ substring edge cases passed")
+    })
+
+    await t.step("strings.nix edge cases: escape", () => {
+        const stringsModule = loadStringsModule()
+
+        // escape is curried
+        // Basic escape
+        assertEquals(stringsModule.escape(["(", ")"])("(foo)"), "\\(foo\\)")
+
+        // Empty list (no escaping)
+        assertEquals(stringsModule.escape([])("foo()"), "foo()")
+
+        // Multiple occurrences
+        assertEquals(stringsModule.escape(["."])("1.2.3"), "1\\.2\\.3")
+
+        // Characters not in string
+        assertEquals(stringsModule.escape(["x", "y"])("foobar"), "foobar")
+
+        // Empty string
+        assertEquals(stringsModule.escape(["a"])(""), "")
+
+        // Special regex characters
+        assertEquals(stringsModule.escape(["[", "]"])("foo[bar]"), "foo\\[bar\\]")
+
+        console.log("✅ escape edge cases passed")
+    })
+
+    await t.step("strings.nix edge cases: escapeNixString", () => {
+        const stringsModule = loadStringsModule()
+
+        // Basic escaping
+        assertEquals(stringsModule.escapeNixString("hello"), '"hello"')
+
+        // Dollar sign escaping
+        assertEquals(stringsModule.escapeNixString("hello${world}"), '"hello\\${world}"')
+
+        // Escape sequences
+        assertEquals(stringsModule.escapeNixString("hello\nworld"), '"hello\\nworld"')
+
+        // Empty string
+        assertEquals(stringsModule.escapeNixString(""), '""')
+
+        // Quotes (should be escaped by toJSON)
+        assertEquals(stringsModule.escapeNixString('hello"world'), '"hello\\"world"')
+
+        console.log("✅ escapeNixString edge cases passed")
+    })
+
+    await t.step("strings.nix edge cases: escapeRegex", () => {
+        const stringsModule = loadStringsModule()
+
+        // Basic regex escaping
+        assertEquals(stringsModule.escapeRegex("[^a-z]*"), "\\[\\^a-z\\]\\*")
+
+        // Empty string
+        assertEquals(stringsModule.escapeRegex(""), "")
+
+        // All special characters
+        assertEquals(stringsModule.escapeRegex("\\[{()^$?*+|."), "\\\\\\[\\{\\(\\)\\^\\$\\?\\*\\+\\|\\.")
+
+        // No special characters
+        assertEquals(stringsModule.escapeRegex("hello"), "hello")
+
+        console.log("✅ escapeRegex edge cases passed")
+    })
+
+    await t.step("strings.nix edge cases: match", () => {
+        const stringsModule = loadStringsModule()
+
+        // match is a builtin, inherited directly
+        // Basic match with capture group
+        const result1 = stringsModule.match("foo.*")("foobar")
+        assertEquals(result1, [])  // No capture groups
+
+        // Match with capture groups
+        const result2 = stringsModule.match("(.*)@(.*)")("foo@bar")
+        assertEquals(result2, ["foo", "bar"])
+
+        // No match
+        const result3 = stringsModule.match("xyz")("abc")
+        assertEquals(result3, null)
+
+        // Empty regex (matches empty string)
+        const result4 = stringsModule.match("")("foo")
+        assertEquals(result4, [])
+
+        // Empty string
+        const result5 = stringsModule.match("")("")
+        assertEquals(result5, [])
+
+        console.log("✅ match edge cases passed")
+    })
+
+    await t.step("strings.nix edge cases: optionalString", () => {
+        const stringsModule = loadStringsModule()
+
+        // optionalString is curried
+        // Condition true
+        assertEquals(stringsModule.optionalString(true)("hello"), "hello")
+
+        // Condition false
+        assertEquals(stringsModule.optionalString(false)("hello"), "")
+
+        // Empty string with true
+        assertEquals(stringsModule.optionalString(true)(""), "")
+
+        // Empty string with false
+        assertEquals(stringsModule.optionalString(false)(""), "")
+
+        console.log("✅ optionalString edge cases passed")
+    })
+
+    await t.step("strings.nix edge cases: fixedWidthString", () => {
+        const stringsModule = loadStringsModule()
+
+        // fixedWidthString is curried
+        // Basic padding
+        assertEquals(stringsModule.fixedWidthString(5n)("0")("15"), "00015")
+
+        // Already correct width
+        assertEquals(stringsModule.fixedWidthString(3n)("0")("123"), "123")
+
+        // Empty string
+        assertEquals(stringsModule.fixedWidthString(5n)("0")(""), "00000")
+
+        // Multi-character filler
+        assertEquals(stringsModule.fixedWidthString(6n)("ab")("x"), "ababax")
+
+        // Width equals string length
+        assertEquals(stringsModule.fixedWidthString(3n)("0")("foo"), "foo")
+
+        console.log("✅ fixedWidthString edge cases passed")
+    })
+
+    await t.step("strings.nix edge cases: sanitizeDerivationName", () => {
+        const stringsModule = loadStringsModule()
+
+        // Already valid name
+        assertEquals(stringsModule.sanitizeDerivationName("hello-world"), "hello-world")
+
+        // Invalid characters replaced
+        assertEquals(stringsModule.sanitizeDerivationName("hello world"), "hello-world")
+        assertEquals(stringsModule.sanitizeDerivationName("hello/world"), "hello-world")
+
+        // Leading dots removed
+        assertEquals(stringsModule.sanitizeDerivationName("..hello"), "hello")
+
+        // Empty string becomes "unknown"
+        assertEquals(stringsModule.sanitizeDerivationName(""), "unknown")
+
+        // Multiple consecutive invalid chars
+        assertEquals(stringsModule.sanitizeDerivationName("foo###bar"), "foo-bar")
+
+        // Valid characters preserved
+        assertEquals(stringsModule.sanitizeDerivationName("foo_bar+1.0"), "foo_bar+1.0")
+
+        console.log("✅ sanitizeDerivationName edge cases passed")
+    })
+
+    await t.step("strings.nix edge cases: concatMapStrings", () => {
+        const stringsModule = loadStringsModule()
+
+        // Basic map and concat
+        assertEquals(stringsModule.concatMapStrings((x) => "a" + x)(["foo", "bar"]), "afooabar")
+
+        // Empty list
+        assertEquals(stringsModule.concatMapStrings((x) => x + "!"), [])
+
+        // Identity function
+        assertEquals(stringsModule.concatMapStrings((x) => x)(["a", "b", "c"]), "abc")
+
+        console.log("✅ concatMapStrings edge cases passed")
+    })
+
+    // Helper function to load strings module (defined once, used by all edge case tests)
+    function loadStringsModule() {
+        const filePath = join(nixpkgsLibPath, "strings.nix")
+        const nixCode = Deno.readTextFileSync(filePath)
+        let jsCode = convertToJs(nixCode, { relativePath: filePath })
+
+        const runtime = createRuntime()
+        runtime.runtime.currentFile = filePath
+
+        // Remove all import statements and runtime creation
+        jsCode = jsCode.split('\n').filter(line =>
+            !line.trim().startsWith('import ') &&
+            !line.trim().startsWith('const runtime = createRuntime()')
+        ).join('\n')
+
+        jsCode = jsCode.replace(/\/\*\*[\s\S]*?\*\//g, '')
+        jsCode = jsCode.trim()
+
+        const nixScope = {
+            builtins: runtime.runtime.builtins,
+            ...runtime.runtime.builtins
+        }
+
+        const evalFunc = new Function(
+            'runtime',
+            'operators',
+            'builtins',
+            'nixScope',
+            'InterpolatedString',
+            'Path',
+            `return (${jsCode})`
+        )
+
+        const moduleFactory = evalFunc(
+            { scopeStack: [nixScope] },
+            runtime.runtime.operators,
+            runtime.runtime.builtins,
+            nixScope,
+            runtime.runtime.InterpolatedString,
+            runtime.runtime.Path
+        )
+
+        const minimalLib = {
+            trivial: {
+                warnIf: (cond, msg, val) => val,
+            },
+            imap1: (f, list) => list.map((x, i) => f(BigInt(i + 1), x)),
+            concatMap: (f, list) => list.flatMap(f),
+            attrValues: runtime.runtime.builtins.attrValues,
+            mapAttrs: runtime.runtime.builtins.mapAttrs,
+            lists: {
+                replicate: (n, s) => Array(Number(n)).fill(s)
+            },
+            toHexString: (n) => {
+                const num = typeof n === 'bigint' ? Number(n) : n
+                return num.toString(16).toUpperCase()
+            },
+            all: (pred, list) => list.every(pred),
+            elem: (x, list) => list.includes(x),
+            flatten: (list) => list.flat(Infinity),
+            min: Math.min,
+            max: Math.max,
+            last: (list) => list[list.length - 1],
+            pipe: (val, fns) => fns.reduce((acc, fn) => fn(acc), val),
+            isList: Array.isArray,
+            throwIfNot: (cond, msg) => (val) => { if (!cond) throw new Error(msg); return val; },
+            assertMsg: (cond, msg) => cond || (console.warn(msg), false),
+            warnIf: (cond, msg) => (val) => { if (cond) console.warn(msg); return val; },
+            isString: (x) => typeof x === 'string',
+            isBool: (x) => typeof x === 'boolean',
+            boolToString: (x) => x ? "true" : "false",
+            toUpper: (s) => s.toUpperCase(),
+            genList: (f, n) => Array.from({ length: Number(n) }, (_, i) => f(BigInt(i))),
+            mapAttrsToList: (f, attrs) => Object.entries(attrs).map(([k, v]) => f(k, v)),
+            stringLength: runtime.runtime.builtins.stringLength,
+        }
+
+        return moduleFactory({ lib: minimalLib })
+    }
+
     await t.step("load minfeatures.nix (no dependencies)", () => {
         // minfeatures.nix is a simple self-contained file that checks Nix version features
         const filePath = join(nixpkgsLibPath, "minfeatures.nix")
@@ -362,10 +865,11 @@ Deno.test("nixpkgs.lib file loading", async (t) => {
         const runtime = createRuntime()
 
         // Remove import statements
-        if (jsCode.includes('import { createRuntime }')) {
-            jsCode = jsCode.replace(/import \{ createRuntime \}.*\n/, '')
-            jsCode = jsCode.replace(/const runtime = createRuntime\(\)\n/, '')
-        }
+        // Remove all import statements and runtime creation
+        jsCode = jsCode.split('\n').filter(line =>
+            !line.trim().startsWith('import ') &&
+            !line.trim().startsWith('const runtime = createRuntime()')
+        ).join('\n')
 
         jsCode = jsCode.replace(/\/\*\*[\s\S]*?\*\//g, '')
         jsCode = jsCode.trim()
@@ -434,10 +938,11 @@ Deno.test("nixpkgs.lib file loading", async (t) => {
 
         const runtime = createRuntime()
 
-        if (jsCode.includes('import { createRuntime }')) {
-            jsCode = jsCode.replace(/import \{ createRuntime \}.*\n/, '')
-            jsCode = jsCode.replace(/const runtime = createRuntime\(\)\n/, '')
-        }
+        // Remove all import statements and runtime creation
+        jsCode = jsCode.split('\n').filter(line =>
+            !line.trim().startsWith('import ') &&
+            !line.trim().startsWith('const runtime = createRuntime()')
+        ).join('\n')
 
         jsCode = jsCode.replace(/\/\*\*[\s\S]*?\*\//g, '')
         jsCode = jsCode.trim()
@@ -502,10 +1007,11 @@ Deno.test("nixpkgs.lib file loading", async (t) => {
 
         const runtime = createRuntime()
 
-        if (jsCode.includes('import { createRuntime }')) {
-            jsCode = jsCode.replace(/import \{ createRuntime \}.*\n/, '')
-            jsCode = jsCode.replace(/const runtime = createRuntime\(\)\n/, '')
-        }
+        // Remove all import statements and runtime creation
+        jsCode = jsCode.split('\n').filter(line =>
+            !line.trim().startsWith('import ') &&
+            !line.trim().startsWith('const runtime = createRuntime()')
+        ).join('\n')
 
         jsCode = jsCode.replace(/\/\*\*[\s\S]*?\*\//g, '')
         jsCode = jsCode.trim()

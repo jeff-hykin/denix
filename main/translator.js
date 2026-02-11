@@ -178,7 +178,7 @@ export const convertToJs = (code)=>{
     if (!output.includes("runtime")) {
         return output
     }
-    return `import { createRuntime } from "./main/runtime.js"\nconst runtime = createRuntime()\n${output}`
+    return `import { createRuntime, Path, InterpolatedString, operators } from "./main/runtime.js"\nconst runtime = createRuntime();\n${output}`
 }
 
 const nixNodeToJs = (node)=>{
