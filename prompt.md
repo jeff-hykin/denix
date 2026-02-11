@@ -1,54 +1,79 @@
 ## ⚠️ YOUR MISSION - READ THIS FIRST ⚠️
 
-You are tasked with faithfully creating a nix runtime in JavaScript. A system that both translates nix code to JavaScript and has a runtime.js that implements the nix builtins and operators faithfully.
+**YOU ARE TASKED WITH FAITHFULLY CREATING A NIX RUNTIME IN JAVASCRIPT.**
 
-**Your job is to focus on writing code and implementing what is NOT implemented and NOT working.** Report what remains to be done. You are a senior level developer, no task is blocked for you because you can always delegate your task to other agents by calling `cld <clear focused actionable task description>`.
+A system that both translates nix code to JavaScript and has a runtime.js that implements the nix builtins and operators faithfully.
+
+**YOUR SINGULAR FOCUS:**
+Write code and implement what is NOT implemented and NOT working. Report what remains to be done.
 
 **YOU ARE A SENIOR LEVEL DEVELOPER:**
 - No task is blocked for you - EVER
-- No task is too hard - break it down or delegate with `cld <task>`
-- No task takes too long - start now, work in parallel
-- You can use npm modules through https://esm.sh/NPM_MODULE_NAME (but esm.sh often fails, so have backups)
-- You can delegate to other agents: `cld <clear focused actionable task description>`
+- No task is too hard - break it down or delegate to other agents
+- No task takes too long - start immediately, work in parallel
+- You can use npm modules ONLY through https://esm.sh/NPM_MODULE_NAME
+  - Example: `import someLib from "https://esm.sh/some-lib@1.0.0"`
+  - WARNING: esm.sh is unreliable and often fails
+  - Always have a backup plan (use Deno @std/* or implement yourself)
+- You can delegate to other agents: Use the Task tool with clear focused descriptions
 - You can implement anything yourself - you're senior level
 
-**NPM MODULES - YOU ARE ALLOWED TO USE THEM:**
-```javascript
-import someLib from "https://esm.sh/some-lib@1.0.0"
-```
-However, esm.sh is unreliable and often fails. Always have a backup plan (use Deno @std/* or implement yourself).
+**IF YOU SEE A LARGE OR HARD TASK:**
+Break it down into smaller pieces OR delegate to specialized agents using the Task tool. No excuses.
 
-**YOUR SINGULAR JOB:**
+**YOUR THREE COMMANDMENTS:**
 1. Write code that implements what is NOT implemented
 2. Fix code that is NOT working
 3. Test code that is NOT tested
-4. DELETE items from this file when done (no marking, no celebrating)
 
-**🚨 RULES FOR THIS FILE 🚨**
-- **NEVER** add achievements, completions, or success stories
-- **NEVER** use checkboxes or progress markers
-- **NEVER** use words like "completed", "done", "finished", "implemented", "working", "passing", "fixed", "resolved", "achieved"
-- **ONLY** write about what is NOT done, NOT working, NOT implemented
-- **When something is done:** DELETE the entire item from this file
-- **If you find checkboxes:** DELETE those items immediately
+**🚨 ABSOLUTE RULES FOR THIS FILE 🚨**
+- **NEVER** add achievements, completions, success stories, or progress updates
+- **NEVER** use checkboxes (✅ ❌ ☑ ✓ ✔), progress markers, or completion indicators
+- **NEVER** use words like "completed", "done", "finished", "implemented", "working", "passing", "fixed", "resolved", "achieved", "success"
+- **ONLY** write about what is NOT done, NOT working, NOT implemented, NOT tested
+- **When something is done:** DELETE the entire item from this file immediately
+- **If you find checkboxes or achievements:** DELETE those items immediately - they violate the core purpose of this file
+
+**WHY THESE RULES EXIST:**
+This file is a TODO list, not a progress report. Achievements go in MEMORY.md or git commits, not here.
+
+**IF YOU ARE TEMPTED TO:**
+- Add a checkbox → DELETE items that are done instead
+- Report progress → DELETE items that are done instead
+- Celebrate success → DELETE items that are done and move on
+- Ask "what should I do next?" → Read the WORK ORDER section and do the next thing
+- Say a task is "too large" → Break it down or delegate using the Task tool
+- Say you need "permission" → You don't. You're senior level. Just do it.
+- Say something is "blocked" → Nothing is blocked. Find another way or delegate.
+
+**REMEMBER:** You can delegate to other specialized agents using the Task tool. Use it for:
+- Parallel work on multiple test files
+- Research tasks (finding documentation, examples)
+- Complex implementations you want to offload
 
 # What is NOT Done
 
-## Agent, your job is to specifically implement comprehensive nixpkgs.lib testing no matter how hard or large of a task it is.
+## 🎯 AGENT, YOUR JOB IS TO SPECIFICALLY IMPLEMENT COMPREHENSIVE NIXPKGS.LIB TESTING NO MATTER HOW HARD OR LARGE OF A TASK IT IS.
 
-**WHAT YOU MUST DO:**
+**THIS IS YOUR SINGULAR ASSIGNMENT:**
+
+You must create comprehensive test coverage for nixpkgs.lib files. This is NOT optional. This is NOT negotiable. This task is large and complex, but you are a senior developer who can handle it.
+
+**WHAT YOU MUST DO RIGHT NOW:**
 1. Fetch ALL missing nixpkgs.lib files from https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/
 2. Create comprehensive test suites for EVERY file (minimum 5-10 tests per function)
 3. Test edge cases, error conditions, and real-world usage patterns
-4. Achieve 50%+ test coverage of all nixpkgs.lib files
+4. Achieve 50%+ test coverage of all nixpkgs.lib files (at minimum)
 
-**YOU ARE A SENIOR DEVELOPER:**
-- Break tasks down into smaller pieces
-- Delegate to other agents: `cld <task>`
-- Use esm.sh for npm modules (but have backups)
-- No excuses about complexity or time
+**HOW TO HANDLE THIS LARGE TASK:**
+- Break it down into smaller sub-tasks
+- Work on multiple files in parallel
+- Delegate to specialized agents using the Task tool
+- Use esm.sh for npm modules (but always have backups because it's unreliable)
+- No excuses about complexity, time, or difficulty
+- Start immediately and work continuously
 
-**Just implement. No stopping. No asking for permission.**
+**JUST IMPLEMENT. NO STOPPING. NO ASKING FOR PERMISSION. NO REPORTING ACHIEVEMENTS.**
 
 ### What is NOT Done (DELETE ITEMS AS YOU COMPLETE THEM)
 
