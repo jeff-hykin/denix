@@ -1,10 +1,24 @@
 # Denix Agent Instructions
 
-## CRITICAL MISSION STATEMENT (READ THIS FIRST)
+## ⚠️ CRITICAL MISSION STATEMENT - READ THIS BEFORE DOING ANYTHING ⚠️
 
 You are tasked with faithfully creating a nix runtime in JavaScript. A system that both translates nix code to JavaScript and has a runtime.js that implements the nix builtins and operators faithfully.
 
-**Your job is to focus on writing code and implementing what is NOT implemented and NOT working.** Report what remains to be done. You are a senior level developer, no task is blocked for you because you can always delegate your task to other agents by calling `cld <clear focused actionable task description>`.
+**YOUR SINGULAR JOB:**
+1. Write code that implements what is NOT implemented
+2. Fix code that is NOT working
+3. Test code that is NOT tested
+4. Report ONLY what remains to be done (delete items when done)
+
+**YOU ARE A SENIOR LEVEL DEVELOPER:**
+- No task is blocked for you
+- No task is "too hard" or "too complex"
+- No task "takes too long" - just start
+- You can ALWAYS delegate tasks to other agents: `cld <clear focused actionable task description>`
+- You can ALWAYS break large tasks into smaller ones
+- You can ALWAYS use npm modules through https://esm.sh/NPM_MODULE_NAME (though it's unreliable)
+
+**IF YOU FIND YOURSELF STUCK:** You're not stuck. Break the task down. Delegate parts to other agents. But keep moving forward. No excuses. No stopping. No asking for permission.
 
 **DO NOT UPDATE THIS FILE WITH ACHIEVEMENTS.** Only update this file to:
 - Add newly discovered bugs/issues/missing features
@@ -21,10 +35,13 @@ You are tasked with faithfully creating a nix runtime in JavaScript. A system th
 - **NEVER say "completed", "done", "finished" in this file**
 - **ONLY update this file to add new issues or remove implemented features**
 
-**NPM MODULES:**
-- You are allowed to use npm modules ONLY through https://esm.sh/NPM_MODULE_NAME
-- Warning: esm.sh doesn't always work, have fallback plans
-- Prefer Deno standard library when possible
+**NPM MODULES (IMPORTANT - READ THIS):**
+- You are allowed to use npm modules but ONLY through https://esm.sh/NPM_MODULE_NAME
+- Example: `import tar from "https://esm.sh/tar@7.0.0"`
+- ⚠️ WARNING: esm.sh is UNRELIABLE and often fails - ALWAYS have fallback plans
+- PREFER: Deno standard library (@std/*) over npm modules
+- PREFER: Pure JavaScript implementations over native dependencies
+- If esm.sh fails, implement the functionality yourself or delegate to another agent
 
 **DELEGATION:**
 - You are NEVER blocked - period
@@ -35,32 +52,38 @@ You are tasked with faithfully creating a nix runtime in JavaScript. A system th
 - "This will take too long" is not acceptable - start now
 - "I'm not sure how" is not acceptable - research or delegate
 
-## CURRENT TASK
+## CURRENT TASK - READ THIS BEFORE DOING ANYTHING ELSE
 
 **Agent, your job is to specifically implement comprehensive nixpkgs.lib testing no matter how hard or large of a task it is.**
 
-You must fetch missing nixpkgs.lib files and create comprehensive test suites. This is NOT optional. This is NOT "too hard". You WILL do this.
+**WHAT THIS MEANS:**
+- Fetch ALL missing nixpkgs.lib files from https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/
+- Create comprehensive test suites for EVERY file (minimum 5-10 tests per function)
+- Test edge cases, error conditions, and real-world usage patterns
+- Get test coverage to 50%+ of all nixpkgs.lib files
 
-Break the task down. Delegate to other agents if needed. But you MUST make progress on this task.
+**THIS IS NOT OPTIONAL. THIS IS NOT "TOO HARD". YOU WILL DO THIS.**
 
-### What is NOT Done
+Break the task down into smaller pieces. Delegate to other agents if needed (`cld <task>`). But you MUST make continuous progress until this task is complete. No excuses. No stopping. No asking for permission. Just implement.
 
-**Only 12/40+ nixpkgs.lib files available as fixtures:**
+### What is NOT Done (DELETE ITEMS AS YOU COMPLETE THEM)
 
-Files in `main/tests/fixtures/nixpkgs-lib/lib/` that are NOT tested yet:
-- fetchers.nix - NOT TESTED
-- licenses.nix - NOT TESTED
+**Files in fixtures but NOT TESTED:**
+- fetchers.nix - NOT TESTED (in fixtures, no excuse not to test)
+- licenses.nix - NOT TESTED (in fixtures, no excuse not to test)
 
-**Missing critical files (MUST be fetched):**
-- `lists.nix` (~30 functions) - map, filter, fold, flatten, unique, sort, partition, zip, take, drop, head, tail, last
-- `attrsets.nix` (~25 functions) - mapAttrs, filterAttrs, mergeAttrs, recursiveUpdate, getAttrFromPath, hasAttrByPath, zipAttrs, collect
-- `options.nix` (~20 functions) - mkOption, mkEnableOption, mkDefault, mkForce, mkOverride, mergeOptionDecls
-- `modules.nix` - Module system
-- `types.nix` - Type system
-- `meta.nix` - Package metadata
-- `debug.nix` - Debugging utilities
-- `filesystem.nix` - File/path utilities
-- `derivations.nix` - Derivation helpers
+**CRITICAL FILES MISSING (fetch these NOW):**
+- `lists.nix` (~30 functions) - NOT FETCHED, NOT TESTED
+- `attrsets.nix` (~25 functions) - NOT FETCHED, NOT TESTED
+- `options.nix` (~20 functions) - NOT FETCHED, NOT TESTED
+- `modules.nix` - NOT FETCHED, NOT TESTED
+- `types.nix` - NOT FETCHED, NOT TESTED
+- `meta.nix` - NOT FETCHED, NOT TESTED
+- `debug.nix` - NOT FETCHED, NOT TESTED
+- `filesystem.nix` - NOT FETCHED, NOT TESTED
+- `derivations.nix` - NOT FETCHED, NOT TESTED
+
+**Why these matter:** These are the MOST USED nixpkgs.lib functions. Without testing them, the translator cannot be trusted with real Nix code.
 
 ### How to Fetch Missing Files
 
@@ -178,32 +201,37 @@ cd main/tests/fixtures/nixpkgs-lib/lib/
 curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/<filename>.nix
 ```
 
-## PRIORITY ORDER
+## WORK ORDER (DO NOT SKIP STEPS)
 
-**Priority 1: Test existing fixtures (1-2 hours)**
-- fetchers.nix
-- licenses.nix
+**PRIORITY 1: Test existing fixtures (DO THIS FIRST, 1-2 hours)**
+- fetchers.nix - NOT TESTED
+- licenses.nix - NOT TESTED
+(Delete these lines when tests are created and passing)
 
-**Priority 2: Fetch and test critical files (8-16 hours)**
-- lists.nix (~30 functions, 3-5 hours)
-- attrsets.nix (~25 functions, 3-4 hours)
-- options.nix (~20 functions, 2-3 hours)
+**PRIORITY 2: Fetch and test critical files (DO NEXT, 8-16 hours)**
+- lists.nix - NOT FETCHED, NOT TESTED (~30 functions, 3-5 hours)
+- attrsets.nix - NOT FETCHED, NOT TESTED (~25 functions, 3-4 hours)
+- options.nix - NOT FETCHED, NOT TESTED (~20 functions, 2-3 hours)
+(Delete these lines when files are fetched, tests are created, and tests pass)
 
-**Priority 3: Fetch and test utility files (6-12 hours)**
-- meta.nix
-- debug.nix
-- filesystem.nix
-- derivations.nix
+**PRIORITY 3: Fetch and test utility files (DO AFTER PRIORITY 2, 6-12 hours)**
+- meta.nix - NOT FETCHED, NOT TESTED
+- debug.nix - NOT FETCHED, NOT TESTED
+- filesystem.nix - NOT FETCHED, NOT TESTED
+- derivations.nix - NOT FETCHED, NOT TESTED
+(Delete these lines when files are fetched, tests are created, and tests pass)
 
-**Priority 4: Test translator edge cases (2-3 hours)**
-- Pattern matching edge cases
-- String/path handling
-- Operator precedence
+**PRIORITY 4: Test translator edge cases (ONLY AFTER PRIORITIES 1-3, 2-3 hours)**
+- Pattern matching edge cases - NOT TESTED
+- String/path handling - NOT TESTED
+- Operator precedence - NOT TESTED
+(Delete these lines when tests are created and passing)
 
-**Priority 5: Implement advanced features (OPTIONAL, 16-22 hours)**
-- fetchClosure (5-7 hours, VERY COMPLEX)
-- getFlake (5-7 hours, VERY COMPLEX)
-- fetchTree edge cases (4-6 hours)
+**PRIORITY 5: Implement advanced features (OPTIONAL - only if user requests)**
+- fetchClosure - PARTIAL IMPLEMENTATION (5-7 hours)
+- getFlake - PARTIAL IMPLEMENTATION (5-7 hours)
+- fetchTree edge cases - NOT IMPLEMENTED (4-6 hours)
+(These are low priority, only implement if explicitly requested)
 
 ## FINAL REMINDER - WHAT YOU MUST DO
 
@@ -241,23 +269,32 @@ curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/<filename>.ni
 
 ### Immediate Actions (DO THIS NOW)
 
-**Step 1: Test existing fixtures (START HERE, 1-2 hours)**
-- Create tests for fetchers.nix
-- Create tests for licenses.nix
-- These files already exist in fixtures - no excuses
+**Step 1: Test existing fixtures (START HERE RIGHT NOW, 1-2 hours)**
+1. Create `main/tests/nixpkgs_lib_fetchers_test.js`
+2. Create `main/tests/nixpkgs_lib_licenses_test.js`
+3. Run tests: `deno test --allow-all`
+4. Delete the "fetchers.nix - NOT TESTED" and "licenses.nix - NOT TESTED" lines from PRIORITY 1 in this file
 
-**Step 2: Fetch critical missing files (2-3 hours)**
+**Step 2: Fetch critical missing files (IMMEDIATELY AFTER STEP 1, 10 minutes)**
 ```bash
 cd main/tests/fixtures/nixpkgs-lib/lib/
 curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/lists.nix
 curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/attrsets.nix
 curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/options.nix
+curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/meta.nix
+curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/debug.nix
+curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/filesystem.nix
+curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/derivations.nix
+curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/modules.nix
+curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/types.nix
 ```
 
-**Step 3: Create comprehensive test suites (8-16 hours)**
-- Test lists.nix (~30 functions, 3-5 hours)
-- Test attrsets.nix (~25 functions, 3-4 hours)
-- Test options.nix (~20 functions, 2-3 hours)
+**Step 3: Create comprehensive test suites (IMMEDIATELY AFTER STEP 2, 8-16 hours)**
+1. Test lists.nix (~30 functions, 3-5 hours) - Create `main/tests/nixpkgs_lib_lists_test.js`
+2. Test attrsets.nix (~25 functions, 3-4 hours) - Create `main/tests/nixpkgs_lib_attrsets_test.js`
+3. Test options.nix (~20 functions, 2-3 hours) - Create `main/tests/nixpkgs_lib_options_test.js`
+4. Delete corresponding lines from PRIORITY 2 when done
+5. Continue with meta.nix, debug.nix, filesystem.nix, derivations.nix (PRIORITY 3)
 
 ### Rules for Execution
 
