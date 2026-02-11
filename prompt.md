@@ -239,11 +239,11 @@ curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/<filename>.ni
 ## FINAL REMINDER - WHAT YOU MUST DO
 
 **Focus on DOING, not reporting:**
-- ❌ Don't add achievements to this file
-- ❌ Don't add progress markers (✅)
-- ❌ Don't add status updates ("completed", "done", "passing")
-- ✅ Keep this file focused on what is NOT done
-- ✅ Only update to add new issues or remove completed items
+- Don't add achievements to this file
+- Don't add progress markers or checkboxes
+- Don't add status updates ("completed", "done", "passing")
+- Keep this file focused on what is NOT done
+- Only update to add new issues or remove completed items
 
 **Your job:**
 - Implement what's NOT implemented
@@ -309,13 +309,13 @@ curl -O https://raw.githubusercontent.com/NixOS/nixpkgs/master/lib/types.nix
 
 ### Rules for Execution
 
-- ❌ Do NOT stop to report progress
-- ❌ Do NOT ask for permission to continue
-- ❌ Do NOT say "this is too complex" - break it down or delegate
-- ❌ Do NOT update this file with achievements
-- ✅ DO break large tasks into smaller ones
-- ✅ DO delegate to other agents if needed: `cld <task>`
-- ✅ DO keep working until all Priority 1 and 2 tasks are complete
-- ✅ DO delete items from this file when they're truly done
+- Do NOT stop to report progress
+- Do NOT ask for permission to continue
+- Do NOT say "this is too complex" - break it down or delegate
+- Do NOT update this file with achievements
+- DO break large tasks into smaller ones
+- DO delegate to other agents if needed: `cld <task>`
+- DO keep working until all Priority 1 and 2 tasks are complete
+- DO delete items from this file when they're truly done
 
 **You are a senior developer. No task is blocked for you. Start now.**
