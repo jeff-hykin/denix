@@ -11,7 +11,7 @@ A Nix → JavaScript translator with 1-to-1 parity for Nix 2.18 builtins, implem
 **Translator:** 87/87 tests passing
 **Runtime:** 102 builtins implemented, 82 tested (80.4% coverage)
 **Derivations:** 12/12 derivation tests passing
-**Remaining work:** 20 builtins untested, nixpkgs.lib testing gaps (lists.nix, attrsets.nix, options.nix)
+**Remaining work:** See [TODO.md](TODO.md) for nixpkgs.lib testing priorities
 
 ## Quick Start
 
@@ -90,7 +90,7 @@ denix/
 │   └── tests/              # Test suite (34 files, 538 tests)
 ├── tools/                  # Utilities (hashing, store paths, parsing, 10 modules)
 ├── test.sh                 # Smart test runner with filters
-└── prompt.md               # Current priorities & remaining work
+└── TODO.md                 # Remaining work priorities
 ```
 
 ## Testing
@@ -145,11 +145,12 @@ See [main/runtime.js](main/runtime.js) for complete implementation.
 ## Development Status
 
 Remaining work:
-- 20/102 builtins untested (19.6%) - all medium/low priority
-- Optional: Test medium-priority builtins (context ops, store ops, hashing)
-- Recommended: Expand nixpkgs.lib testing (lists.nix, attrsets.nix, options.nix)
+- Expand nixpkgs.lib testing (lists.nix, attrsets.nix, options.nix - ~75 functions)
+- Test remaining 18 nixpkgs.lib files (modules, types, meta, debug, generators, etc.)
+- Translator edge cases (pattern matching, string/path handling, operator precedence)
+- Optional: Advanced features (fetchClosure, getFlake, fetchTree edge cases)
 
-See [prompt.md](prompt.md) for remaining work.
+See [TODO.md](TODO.md) for detailed priorities.
 
 ## Architecture & Design Decisions
 
@@ -183,17 +184,14 @@ See [prompt.md](prompt.md) for remaining work.
 
 ## Contributing
 
-### Adding Tests for Remaining Builtins
+### Expanding nixpkgs.lib Testing
 
-20 builtins remain untested (all medium/low priority):
-- Context operations (4): addErrorContext, appendContext, hasContext, unsafeDiscardStringContext
-- Store operations (5): storeDir, storePath, toFile, placeholder, outputOf
-- Hashing (2): hashString, hashFile
-- Derivation (3): derivationStrict, unsafeDiscardOutputDependency, unsafeGetAttrPos
-- Control flow (4): break, traceVerbose, genericClosure
-- Advanced (2): fetchClosure, nixPath
+Priority files needing tests:
+- **lists.nix** (~30 functions) - map, filter, fold, flatten, unique, sort, etc.
+- **attrsets.nix** (~25 functions) - mapAttrs, filterAttrs, mergeAttrs, etc.
+- **options.nix** (~20 functions) - mkOption, mkEnableOption, mkDefault, etc.
 
-See [prompt.md](prompt.md) for detailed implementation guide.
+Plus 18 more lib files. See [TODO.md](TODO.md) for details.
 
 ## License
 
