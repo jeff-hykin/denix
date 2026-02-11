@@ -1,4 +1,4 @@
-import { createRuntime } from "../../../../runtime.js"
+import { createRuntime, createFunc } from "../../../../../../../../../../../../../runtime.js"
 const runtime = createRuntime()
 const operators = runtime.operators
 
@@ -121,89 +121,58 @@ export default /**
         Object.defineProperty(nixScope, "lib", {enumerable: true, get(){return nixScope["import"]((new Path(["../default.nix"], [])));}});
         Object.defineProperty(nixScope, "testingThrow", {enumerable: true, get(){return (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["expr"] = arg; runtime.scopeStack.push(nixScope); try { return ({"expr": (nixScope["builtins"]["tryEval"]((nixScope["builtins"]["seq"](nixScope["expr"])("didn't throw")))), "expected": ({"success": false, "value": false})}); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1]);}});
         Object.defineProperty(nixScope, "testingEval", {enumerable: true, get(){return (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["expr"] = arg; runtime.scopeStack.push(nixScope); try { return ({"expr": (nixScope["builtins"]["tryEval"](nixScope["expr"]))["success"], "expected": true}); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1]);}});
-        Object.defineProperty(nixScope, "testSanitizeDerivationName", {enumerable: true, get(){return (function(arg){
-                    const nixScope = {
-                        // inherit parent scope
-                        ...runtime.scopeStack.slice(-1)[0],
-                        // inherit default arguments
-                        
-                        // inherit arguments
-                        ...arg,
-                        // all-args arg (if @ syntax is used)
-                        
-                    }
-                    runtime.scopeStack.push(nixScope)
-                    try {
-                        return (function(){
+        Object.defineProperty(nixScope, "testSanitizeDerivationName", {enumerable: true, get(){return 
+
+// args: {
+//    name,
+//    expected,
+//}
+createFunc({}, null, {}, (nixScope)=>(
+                (function(){
+        const nixScope = {...runtime.scopeStack.slice(-1)[0]};
+        runtime.scopeStack.push(nixScope);
+        try {
+            Object.defineProperty(nixScope, "drv", {enumerable: true, get(){return nixScope["derivation"](({"name": nixScope["strings"]["sanitizeDerivationName"](nixScope["name"]), "builder": "x", "system": "x"}));}});
+            return ({"expr": nixScope["builtins"]["seq"](nixScope["drv"]["drvPath"])(nixScope["drv"]["name"]), "expected": nixScope["expected"]});
+        } finally {
+            runtime.scopeStack.pop();
+        }
+    })()
+            ));}});
+        return nixScope["runTests"](({"testFunctionArgsMakeOverridable": ({"expr": nixScope["functionArgs"]((nixScope["makeOverridable"]((
+
+// args: {
+//    a,
+//    b,
+//    c,
+//    ,
+//}
+createFunc({"c": (nixScope)=>(null),}, null, {}, (nixScope)=>(
+                {}
+            )))))), "expected": ({"a": false, "b": false, "c": true})}), "testFunctionArgsMakeOverridableOverride": ({"expr": nixScope["functionArgs"]((nixScope["makeOverridable"]((
+
+// args: {
+//    a,
+//    b,
+//    c,
+//    ,
+//}
+createFunc({"c": (nixScope)=>(null),}, null, {}, (nixScope)=>(
+                {}
+            ))))(({"a": 1n, "b": 2n})))["override"]), "expected": ({"a": false, "b": false, "c": true})}), "testCallPackageWithOverridePreservesArguments": (function(){
     const nixScope = {...runtime.scopeStack.slice(-1)[0]};
     runtime.scopeStack.push(nixScope);
     try {
-        Object.defineProperty(nixScope, "drv", {enumerable: true, get(){return nixScope["derivation"](({"name": nixScope["strings"]["sanitizeDerivationName"](nixScope["name"]), "builder": "x", "system": "x"}));}});
-        return ({"expr": nixScope["builtins"]["seq"](nixScope["drv"]["drvPath"])(nixScope["drv"]["name"]), "expected": nixScope["expected"]});
-    } finally {
-        runtime.scopeStack.pop();
-    }
-})()
-                    } finally {
-                        runtime.scopeStack.pop()
-                    }
-                });}});
-        return nixScope["runTests"](({"testFunctionArgsMakeOverridable": ({"expr": nixScope["functionArgs"]((nixScope["makeOverridable"](((function(arg){
-                    const nixScope = {
-                        // inherit parent scope
-                        ...runtime.scopeStack.slice(-1)[0],
-                        // inherit default arguments
-                        "c": (()=>{ const nixScope = runtime.scopeStack.slice(-1)[0]; return null; })(),
-                        // inherit arguments
-                        ...arg,
-                        // all-args arg (if @ syntax is used)
-                        
-                    }
-                    runtime.scopeStack.push(nixScope)
-                    try {
-                        return {}
-                    } finally {
-                        runtime.scopeStack.pop()
-                    }
-                }))))), "expected": ({"a": false, "b": false, "c": true})}), "testFunctionArgsMakeOverridableOverride": ({"expr": nixScope["functionArgs"]((nixScope["makeOverridable"](((function(arg){
-                    const nixScope = {
-                        // inherit parent scope
-                        ...runtime.scopeStack.slice(-1)[0],
-                        // inherit default arguments
-                        "c": (()=>{ const nixScope = runtime.scopeStack.slice(-1)[0]; return null; })(),
-                        // inherit arguments
-                        ...arg,
-                        // all-args arg (if @ syntax is used)
-                        
-                    }
-                    runtime.scopeStack.push(nixScope)
-                    try {
-                        return {}
-                    } finally {
-                        runtime.scopeStack.pop()
-                    }
-                })))(({"a": 1n, "b": 2n})))["override"]), "expected": ({"a": false, "b": false, "c": true})}), "testCallPackageWithOverridePreservesArguments": (function(){
-    const nixScope = {...runtime.scopeStack.slice(-1)[0]};
-    runtime.scopeStack.push(nixScope);
-    try {
-        Object.defineProperty(nixScope, "f", {enumerable: true, get(){return (function(arg){
-                    const nixScope = {
-                        // inherit parent scope
-                        ...runtime.scopeStack.slice(-1)[0],
-                        // inherit default arguments
-                        "a": (()=>{ const nixScope = runtime.scopeStack.slice(-1)[0]; return 0n; })(),
-                        // inherit arguments
-                        ...arg,
-                        // all-args arg (if @ syntax is used)
-                        
-                    }
-                    runtime.scopeStack.push(nixScope)
-                    try {
-                        return {}
-                    } finally {
-                        runtime.scopeStack.pop()
-                    }
-                });}});
+        Object.defineProperty(nixScope, "f", {enumerable: true, get(){return 
+
+// args: {
+//    a,
+//    b,
+//    ,
+//}
+createFunc({"a": (nixScope)=>(0n),}, null, {}, (nixScope)=>(
+                {}
+            ));}});
         Object.defineProperty(nixScope, "f'", {enumerable: true, get(){return nixScope["callPackageWith"](({"a": 1n, "b": 2n}))(nixScope["f"])({});}});
         return ({"expr": nixScope["functionArgs"](nixScope["f'"]["override"]), "expected": nixScope["functionArgs"](nixScope["f"])});
     } finally {
@@ -213,24 +182,16 @@ export default /**
     const nixScope = {...runtime.scopeStack.slice(-1)[0]};
     runtime.scopeStack.push(nixScope);
     try {
-        Object.defineProperty(nixScope, "f", {enumerable: true, get(){return (function(arg){
-                    const nixScope = {
-                        // inherit parent scope
-                        ...runtime.scopeStack.slice(-1)[0],
-                        // inherit default arguments
-                        "a": (()=>{ const nixScope = runtime.scopeStack.slice(-1)[0]; return 0n; })(),
-                        // inherit arguments
-                        ...arg,
-                        // all-args arg (if @ syntax is used)
-                        
-                    }
-                    runtime.scopeStack.push(nixScope)
-                    try {
-                        return ({"nested": {}})
-                    } finally {
-                        runtime.scopeStack.pop()
-                    }
-                });}});
+        Object.defineProperty(nixScope, "f", {enumerable: true, get(){return 
+
+// args: {
+//    a,
+//    b,
+//    ,
+//}
+createFunc({"a": (nixScope)=>(0n),}, null, {}, (nixScope)=>(
+                ({"nested": {}})
+            ));}});
         Object.defineProperty(nixScope, "f'", {enumerable: true, get(){return nixScope["callPackagesWith"](({"a": 1n, "b": 2n}))(nixScope["f"])({});}});
         return ({"expr": nixScope["functionArgs"](nixScope["f'"]["nested"]["override"]), "expected": nixScope["functionArgs"](nixScope["f"])});
     } finally {
@@ -285,24 +246,15 @@ export default /**
     } finally {
         runtime.scopeStack.pop();
     }
-})(), "testBitAnd": ({"expr": (nixScope["bitAnd"](3n)(10n)), "expected": 2n}), "testBitOr": ({"expr": (nixScope["bitOr"](3n)(10n)), "expected": 11n}), "testBitXor": ({"expr": (nixScope["bitXor"](3n)(10n)), "expected": 9n}), "testToHexString": ({"expr": nixScope["toHexString"](250n), "expected": "FA"}), "testFromHexStringFirstExample": ({"expr": nixScope["fromHexString"]("FF"), "expected": 255n}), "testFromHexStringSecondExample": ({"expr": nixScope["fromHexString"]((nixScope["builtins"]["hashString"]("sha256")("test"))), "expected": 9223372036854775807n}), "testFromHexStringWithPrefix": ({"expr": nixScope["fromHexString"]("0Xf"), "expected": 15n}), "testToBaseDigits": ({"expr": nixScope["toBaseDigits"](2n)(6n), "expected": [1n,1n,0n]}), "testFunctionArgsFunctor": ({"expr": nixScope["functionArgs"](({"__functor": (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["self"] = arg; runtime.scopeStack.push(nixScope); try { return (function(arg){
-                    const nixScope = {
-                        // inherit parent scope
-                        ...runtime.scopeStack.slice(-1)[0],
-                        // inherit default arguments
-                        
-                        // inherit arguments
-                        ...arg,
-                        // all-args arg (if @ syntax is used)
-                        
-                    }
-                    runtime.scopeStack.push(nixScope)
-                    try {
-                        return null
-                    } finally {
-                        runtime.scopeStack.pop()
-                    }
-                }); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])})), "expected": ({"a": false, "b": false})}), "testFunctionArgsSetFunctionArgs": ({"expr": nixScope["functionArgs"]((nixScope["setFunctionArgs"](((function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["args"] = arg; runtime.scopeStack.push(nixScope); try { return nixScope["args"]["x"]; } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])))(({"x": false})))), "expected": ({"x": false})}), "testConcatMapStrings": ({"expr": nixScope["concatMapStrings"](((function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["x"] = arg; runtime.scopeStack.push(nixScope); try { return operators.add(nixScope["x"], ";"); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])))(["a","b","c"]), "expected": "a;b;c;"}), "testConcatStringsSep": ({"expr": nixScope["concatStringsSep"](",")(["a","b","c"]), "expected": "a,b,c"}), "testConcatMapAttrsStringSepExamples": ({"expr": nixScope["concatMapAttrsStringSep"]("")(((function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["name"] = arg; runtime.scopeStack.push(nixScope); try { return (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["value"] = arg; runtime.scopeStack.push(nixScope); try { return (new InterpolatedString(["", ": foo-", ""], [()=>(nixScope["name"]), ()=>(nixScope["value"])])); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1]); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])))(({"a": "0.1.0", "b": "0.2.0"})), "expected": "a: foo-0.1.0"}), "testConcatLines": ({"expr": nixScope["concatLines"](["a","b","c"]), "expected": "a"}), "testMakeIncludePathWithPkgs": ({"expr": (nixScope["makeIncludePath"]([(function(){
+})(), "testBitAnd": ({"expr": (nixScope["bitAnd"](3n)(10n)), "expected": 2n}), "testBitOr": ({"expr": (nixScope["bitOr"](3n)(10n)), "expected": 11n}), "testBitXor": ({"expr": (nixScope["bitXor"](3n)(10n)), "expected": 9n}), "testToHexString": ({"expr": nixScope["toHexString"](250n), "expected": "FA"}), "testFromHexStringFirstExample": ({"expr": nixScope["fromHexString"]("FF"), "expected": 255n}), "testFromHexStringSecondExample": ({"expr": nixScope["fromHexString"]((nixScope["builtins"]["hashString"]("sha256")("test"))), "expected": 9223372036854775807n}), "testFromHexStringWithPrefix": ({"expr": nixScope["fromHexString"]("0Xf"), "expected": 15n}), "testToBaseDigits": ({"expr": nixScope["toBaseDigits"](2n)(6n), "expected": [1n,1n,0n]}), "testFunctionArgsFunctor": ({"expr": nixScope["functionArgs"](({"__functor": (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["self"] = arg; runtime.scopeStack.push(nixScope); try { return 
+
+// args: {
+//    a,
+//    b,
+//}
+createFunc({}, null, {}, (nixScope)=>(
+                null
+            )); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])})), "expected": ({"a": false, "b": false})}), "testFunctionArgsSetFunctionArgs": ({"expr": nixScope["functionArgs"]((nixScope["setFunctionArgs"](((function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["args"] = arg; runtime.scopeStack.push(nixScope); try { return nixScope["args"]["x"]; } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])))(({"x": false})))), "expected": ({"x": false})}), "testConcatMapStrings": ({"expr": nixScope["concatMapStrings"](((function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["x"] = arg; runtime.scopeStack.push(nixScope); try { return operators.add(nixScope["x"], ";"); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])))(["a","b","c"]), "expected": "a;b;c;"}), "testConcatStringsSep": ({"expr": nixScope["concatStringsSep"](",")(["a","b","c"]), "expected": "a,b,c"}), "testConcatMapAttrsStringSepExamples": ({"expr": nixScope["concatMapAttrsStringSep"]("")(((function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["name"] = arg; runtime.scopeStack.push(nixScope); try { return (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["value"] = arg; runtime.scopeStack.push(nixScope); try { return (new InterpolatedString(["", ": foo-", ""], [()=>(nixScope["name"]), ()=>(nixScope["value"])])); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1]); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])))(({"a": "0.1.0", "b": "0.2.0"})), "expected": "a: foo-0.1.0"}), "testConcatLines": ({"expr": nixScope["concatLines"](["a","b","c"]), "expected": "a"}), "testMakeIncludePathWithPkgs": ({"expr": (nixScope["makeIncludePath"]([(function(){
     const obj = {};
     obj["outPath"] = "/default";
     if (obj["dev"] === undefined) obj["dev"] = {};
@@ -615,24 +567,16 @@ export default /**
         Object.defineProperty(nixScope, "path", {enumerable: true, get(){return operators.add((new Path(["/."], [])), "/foo");}});
         Object.defineProperty(nixScope, "null_", {enumerable: true, get(){return null;}});
         Object.defineProperty(nixScope, "function", {enumerable: true, get(){return (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["x"] = arg; runtime.scopeStack.push(nixScope); try { return nixScope["x"]; } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1]);}});
-        Object.defineProperty(nixScope, "functionArgs", {enumerable: true, get(){return (function(arg){
-                    const nixScope = {
-                        // inherit parent scope
-                        ...runtime.scopeStack.slice(-1)[0],
-                        // inherit default arguments
-                        "arg": (()=>{ const nixScope = runtime.scopeStack.slice(-1)[0]; return 4n; })(),
-                        // inherit arguments
-                        ...arg,
-                        // all-args arg (if @ syntax is used)
-                        
-                    }
-                    runtime.scopeStack.push(nixScope)
-                    try {
-                        return nixScope["arg"]
-                    } finally {
-                        runtime.scopeStack.pop()
-                    }
-                });}});
+        Object.defineProperty(nixScope, "functionArgs", {enumerable: true, get(){return 
+
+// args: {
+//    arg,
+//    foo,
+//    ,
+//}
+createFunc({"arg": (nixScope)=>(4n),}, null, {}, (nixScope)=>(
+                nixScope["arg"]
+            ));}});
         Object.defineProperty(nixScope, "list", {enumerable: true, get(){return [3n,4n,nixScope["function"],[false]];}});
         Object.defineProperty(nixScope, "attrs", {enumerable: true, get(){return ({"foo": null, "foo b/ar": "baz"});}});
         Object.defineProperty(nixScope, "drv", {enumerable: true, get(){return nixScope["deriv"];}});
@@ -693,24 +637,15 @@ export default /**
     const nixScope = {...runtime.scopeStack.slice(-1)[0]};
     runtime.scopeStack.push(nixScope);
     try {
-        Object.defineProperty(nixScope, "functor", {enumerable: true, get(){return ({"__functor": (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["self"] = arg; runtime.scopeStack.push(nixScope); try { return (function(arg){
-                    const nixScope = {
-                        // inherit parent scope
-                        ...runtime.scopeStack.slice(-1)[0],
-                        // inherit default arguments
-                        
-                        // inherit arguments
-                        ...arg,
-                        // all-args arg (if @ syntax is used)
-                        
-                    }
-                    runtime.scopeStack.push(nixScope)
-                    try {
-                        return null
-                    } finally {
-                        runtime.scopeStack.pop()
-                    }
-                }); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])});}});
+        Object.defineProperty(nixScope, "functor", {enumerable: true, get(){return ({"__functor": (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["self"] = arg; runtime.scopeStack.push(nixScope); try { return 
+
+// args: {
+//    a,
+//    b,
+//}
+createFunc({}, null, {}, (nixScope)=>(
+                null
+            )); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])});}});
         Object.defineProperty(nixScope, "a", {enumerable: true, get(){return (function(){
     const obj = {};
     obj["value"] = "1234";
@@ -800,29 +735,19 @@ export default /**
     const nixScope = {...runtime.scopeStack.slice(-1)[0]};
     runtime.scopeStack.push(nixScope);
     try {
-        Object.defineProperty(nixScope, "module", {enumerable: true, get(){return (function(arg){
-                    const nixScope = {
-                        // inherit parent scope
-                        ...runtime.scopeStack.slice(-1)[0],
-                        // inherit default arguments
-                        
-                        // inherit arguments
-                        ...arg,
-                        // all-args arg (if @ syntax is used)
-                        
-                    }
-                    runtime.scopeStack.push(nixScope)
-                    try {
-                        return (function(){
-    const obj = {};
-    if (obj["options"] === undefined) obj["options"] = {};
-    obj["options"]["foo"] = nixScope["lib"]["mkOption"](({"type": nixScope["lib"]["types"]["submodule"](nixScope["submodule"])}));
-    return obj;
-})()
-                    } finally {
-                        runtime.scopeStack.pop()
-                    }
-                });}});
+        Object.defineProperty(nixScope, "module", {enumerable: true, get(){return 
+
+// args: {
+//    lib,
+//}
+createFunc({}, null, {}, (nixScope)=>(
+                (function(){
+        const obj = {};
+        if (obj["options"] === undefined) obj["options"] = {};
+        obj["options"]["foo"] = nixScope["lib"]["mkOption"](({"type": nixScope["lib"]["types"]["submodule"](nixScope["submodule"])}));
+        return obj;
+    })()
+            ));}});
         Object.defineProperty(nixScope, "submodule", {enumerable: true, get(){return (function(){
     const obj = {};
     if (obj["options"] === undefined) obj["options"] = {};
@@ -841,58 +766,38 @@ export default /**
     const nixScope = {...runtime.scopeStack.slice(-1)[0]};
     runtime.scopeStack.push(nixScope);
     try {
-        Object.defineProperty(nixScope, "submodule", {enumerable: true, get(){return (function(arg){
-                    const nixScope = {
-                        // inherit parent scope
-                        ...runtime.scopeStack.slice(-1)[0],
-                        // inherit default arguments
-                        
-                        // inherit arguments
-                        ...arg,
-                        // all-args arg (if @ syntax is used)
-                        
-                    }
-                    runtime.scopeStack.push(nixScope)
-                    try {
-                        return (function(){
-    const obj = {};
-    obj["freeformType"] = nixScope["lib"]["types"]["attrsOf"]((nixScope["lib"]["types"]["submodule"]((function(){
-    const obj = {};
-    if (obj["options"] === undefined) obj["options"] = {};
-    obj["options"]["bar"] = nixScope["lib"]["mkOption"]({});
-    return obj;
-})())));
-    if (obj["options"] === undefined) obj["options"] = {};
-    obj["options"]["bar"] = nixScope["lib"]["mkOption"]({});
-    return obj;
-})()
-                    } finally {
-                        runtime.scopeStack.pop()
-                    }
-                });}});
-        Object.defineProperty(nixScope, "module", {enumerable: true, get(){return (function(arg){
-                    const nixScope = {
-                        // inherit parent scope
-                        ...runtime.scopeStack.slice(-1)[0],
-                        // inherit default arguments
-                        
-                        // inherit arguments
-                        ...arg,
-                        // all-args arg (if @ syntax is used)
-                        
-                    }
-                    runtime.scopeStack.push(nixScope)
-                    try {
-                        return (function(){
-    const obj = {};
-    if (obj["options"] === undefined) obj["options"] = {};
-    obj["options"]["foo"] = nixScope["lib"]["mkOption"](({"type": nixScope["lib"]["types"]["submodule"](nixScope["submodule"])}));
-    return obj;
-})()
-                    } finally {
-                        runtime.scopeStack.pop()
-                    }
-                });}});
+        Object.defineProperty(nixScope, "submodule", {enumerable: true, get(){return 
+
+// args: {
+//    lib,
+//}
+createFunc({}, null, {}, (nixScope)=>(
+                (function(){
+        const obj = {};
+        obj["freeformType"] = nixScope["lib"]["types"]["attrsOf"]((nixScope["lib"]["types"]["submodule"]((function(){
+        const obj = {};
+        if (obj["options"] === undefined) obj["options"] = {};
+        obj["options"]["bar"] = nixScope["lib"]["mkOption"]({});
+        return obj;
+    })())));
+        if (obj["options"] === undefined) obj["options"] = {};
+        obj["options"]["bar"] = nixScope["lib"]["mkOption"]({});
+        return obj;
+    })()
+            ));}});
+        Object.defineProperty(nixScope, "module", {enumerable: true, get(){return 
+
+// args: {
+//    lib,
+//}
+createFunc({}, null, {}, (nixScope)=>(
+                (function(){
+        const obj = {};
+        if (obj["options"] === undefined) obj["options"] = {};
+        obj["options"]["foo"] = nixScope["lib"]["mkOption"](({"type": nixScope["lib"]["types"]["submodule"](nixScope["submodule"])}));
+        return obj;
+    })()
+            ));}});
         Object.defineProperty(nixScope, "options", {enumerable: true, get(){return (nixScope["evalModules"](({"modules": [nixScope["module"]]})))["options"];}});
         Object.defineProperty(nixScope, "locs", {enumerable: true, get(){return nixScope["filter"](((function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["o"] = arg; runtime.scopeStack.push(nixScope); try { return operators.negate(nixScope["o"]["internal"]); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])))((nixScope["optionAttrSetToDocList"](nixScope["options"])));}});
         return nixScope["map"](((function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["o"] = arg; runtime.scopeStack.push(nixScope); try { return nixScope["o"]["loc"]; } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])))(nixScope["locs"]);
@@ -914,58 +819,32 @@ export default /**
     } finally {
         runtime.scopeStack.pop();
     }
-})(), "expected": ["foo","<MyCustomPlaceholder>","bar"]}), "testShowOptionWithPlaceholder": ({"expr": nixScope["lib"]["showOption"](["<name>","<myName>","*","{foo}"]), "expected": "<name>.<myName>.*."}), "testCartesianProductOfEmptySet": ({"expr": nixScope["cartesianProduct"]({}), "expected": [{}]}), "testCartesianProductOfOneSet": ({"expr": nixScope["cartesianProduct"](({"a": [1n,2n,3n]})), "expected": [({"a": 1n}),({"a": 2n}),({"a": 3n})]}), "testCartesianProductOfTwoSets": ({"expr": nixScope["cartesianProduct"](({"a": [1n], "b": [10n,20n]})), "expected": [({"a": 1n, "b": 10n}),({"a": 1n, "b": 20n})]}), "testCartesianProductOfTwoSetsWithOneEmpty": ({"expr": nixScope["cartesianProduct"](({"a": [], "b": [10n,20n]})), "expected": []}), "testCartesianProductOfThreeSets": ({"expr": nixScope["cartesianProduct"](({"a": [1n,2n,3n], "b": [10n,20n,30n], "c": [100n,200n,300n]})), "expected": [({"a": 1n, "b": 10n, "c": 100n}),({"a": 1n, "b": 10n, "c": 200n}),({"a": 1n, "b": 10n, "c": 300n}),({"a": 1n, "b": 20n, "c": 100n}),({"a": 1n, "b": 20n, "c": 200n}),({"a": 1n, "b": 20n, "c": 300n}),({"a": 1n, "b": 30n, "c": 100n}),({"a": 1n, "b": 30n, "c": 200n}),({"a": 1n, "b": 30n, "c": 300n}),({"a": 2n, "b": 10n, "c": 100n}),({"a": 2n, "b": 10n, "c": 200n}),({"a": 2n, "b": 10n, "c": 300n}),({"a": 2n, "b": 20n, "c": 100n}),({"a": 2n, "b": 20n, "c": 200n}),({"a": 2n, "b": 20n, "c": 300n}),({"a": 2n, "b": 30n, "c": 100n}),({"a": 2n, "b": 30n, "c": 200n}),({"a": 2n, "b": 30n, "c": 300n}),({"a": 3n, "b": 10n, "c": 100n}),({"a": 3n, "b": 10n, "c": 200n}),({"a": 3n, "b": 10n, "c": 300n}),({"a": 3n, "b": 20n, "c": 100n}),({"a": 3n, "b": 20n, "c": 200n}),({"a": 3n, "b": 20n, "c": 300n}),({"a": 3n, "b": 30n, "c": 100n}),({"a": 3n, "b": 30n, "c": 200n}),({"a": 3n, "b": 30n, "c": 300n})]}), "testMapCartesianProductOfOneSet": ({"expr": nixScope["mapCartesianProduct"](((function(arg){
-                    const nixScope = {
-                        // inherit parent scope
-                        ...runtime.scopeStack.slice(-1)[0],
-                        // inherit default arguments
-                        
-                        // inherit arguments
-                        ...arg,
-                        // all-args arg (if @ syntax is used)
-                        
-                    }
-                    runtime.scopeStack.push(nixScope)
-                    try {
-                        return operators.multiply(nixScope["a"], 2n)
-                    } finally {
-                        runtime.scopeStack.pop()
-                    }
-                })))(({"a": [1n,2n,3n]})), "expected": [2n,4n,6n]}), "testMapCartesianProductOfTwoSets": ({"expr": nixScope["mapCartesianProduct"](((function(arg){
-                    const nixScope = {
-                        // inherit parent scope
-                        ...runtime.scopeStack.slice(-1)[0],
-                        // inherit default arguments
-                        
-                        // inherit arguments
-                        ...arg,
-                        // all-args arg (if @ syntax is used)
-                        
-                    }
-                    runtime.scopeStack.push(nixScope)
-                    try {
-                        return operators.add(nixScope["a"], nixScope["b"])
-                    } finally {
-                        runtime.scopeStack.pop()
-                    }
-                })))(({"a": [1n], "b": [10n,20n]})), "expected": [11n,21n]}), "testMapCartesianProcutOfTwoSetsWithOneEmpty": ({"expr": nixScope["mapCartesianProduct"](((function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["x"] = arg; runtime.scopeStack.push(nixScope); try { return operators.add(nixScope["x"]["a"], nixScope["x"]["b"]); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])))(({"a": [], "b": [10n,20n]})), "expected": []}), "testMapCartesianProductOfThreeSets": ({"expr": nixScope["mapCartesianProduct"](((function(arg){
-                    const nixScope = {
-                        // inherit parent scope
-                        ...runtime.scopeStack.slice(-1)[0],
-                        // inherit default arguments
-                        
-                        // inherit arguments
-                        ...arg,
-                        // all-args arg (if @ syntax is used)
-                        
-                    }
-                    runtime.scopeStack.push(nixScope)
-                    try {
-                        return operators.add(operators.add(nixScope["a"], nixScope["b"]), nixScope["c"])
-                    } finally {
-                        runtime.scopeStack.pop()
-                    }
-                })))(({"a": [1n,2n,3n], "b": [10n,20n,30n], "c": [100n,200n,300n]})), "expected": [111n,211n,311n,121n,221n,321n,131n,231n,331n,112n,212n,312n,122n,222n,322n,132n,232n,332n,113n,213n,313n,123n,223n,323n,133n,233n,333n]}), "testShowAttrPathExample": ({"expr": nixScope["showAttrPath"](["foo","10","bar"]), "expected": "foo."}), "testShowAttrPathEmpty": ({"expr": nixScope["showAttrPath"]([]), "expected": "<root attribute path>"}), "testShowAttrPathVarious": ({"expr": nixScope["showAttrPath"]([".","foo","2","a2-b","_bc'de"]), "expected": `".".foo."2".a2-b._bc'de`}), "testGroupBy": ({"expr": nixScope["groupBy"](((function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["n"] = arg; runtime.scopeStack.push(nixScope); try { return nixScope["toString"]((nixScope["mod"](nixScope["n"])(5n))); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])))((nixScope["range"](0n)(16n))), "expected": ({"0": [0n,5n,10n,15n], "1": [1n,6n,11n,16n], "2": [2n,7n,12n], "3": [3n,8n,13n], "4": [4n,9n,14n]})}), "testGroupBy'": ({"expr": nixScope["groupBy'"](nixScope["builtins"]["add"])(0n)(((function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["x"] = arg; runtime.scopeStack.push(nixScope); try { return nixScope["boolToString"]((operators.greaterThan(nixScope["x"], 2n))); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])))([5n,1n,2n,3n,4n]), "expected": ({"false": 3n, "true": 12n})}), "testUpdateManyAttrsByPathExample": ({"expr": nixScope["updateManyAttrsByPath"]([({"path": ["a","b"], "update": (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["old"] = arg; runtime.scopeStack.push(nixScope); try { return ({"d": nixScope["old"]["c"]}); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])}),({"path": ["a","b","c"], "update": (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["old"] = arg; runtime.scopeStack.push(nixScope); try { return operators.add(nixScope["old"], 1n); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])}),({"path": ["x","y"], "update": (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["old"] = arg; runtime.scopeStack.push(nixScope); try { return "xy"; } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])})])((function(){
+})(), "expected": ["foo","<MyCustomPlaceholder>","bar"]}), "testShowOptionWithPlaceholder": ({"expr": nixScope["lib"]["showOption"](["<name>","<myName>","*","{foo}"]), "expected": "<name>.<myName>.*."}), "testCartesianProductOfEmptySet": ({"expr": nixScope["cartesianProduct"]({}), "expected": [{}]}), "testCartesianProductOfOneSet": ({"expr": nixScope["cartesianProduct"](({"a": [1n,2n,3n]})), "expected": [({"a": 1n}),({"a": 2n}),({"a": 3n})]}), "testCartesianProductOfTwoSets": ({"expr": nixScope["cartesianProduct"](({"a": [1n], "b": [10n,20n]})), "expected": [({"a": 1n, "b": 10n}),({"a": 1n, "b": 20n})]}), "testCartesianProductOfTwoSetsWithOneEmpty": ({"expr": nixScope["cartesianProduct"](({"a": [], "b": [10n,20n]})), "expected": []}), "testCartesianProductOfThreeSets": ({"expr": nixScope["cartesianProduct"](({"a": [1n,2n,3n], "b": [10n,20n,30n], "c": [100n,200n,300n]})), "expected": [({"a": 1n, "b": 10n, "c": 100n}),({"a": 1n, "b": 10n, "c": 200n}),({"a": 1n, "b": 10n, "c": 300n}),({"a": 1n, "b": 20n, "c": 100n}),({"a": 1n, "b": 20n, "c": 200n}),({"a": 1n, "b": 20n, "c": 300n}),({"a": 1n, "b": 30n, "c": 100n}),({"a": 1n, "b": 30n, "c": 200n}),({"a": 1n, "b": 30n, "c": 300n}),({"a": 2n, "b": 10n, "c": 100n}),({"a": 2n, "b": 10n, "c": 200n}),({"a": 2n, "b": 10n, "c": 300n}),({"a": 2n, "b": 20n, "c": 100n}),({"a": 2n, "b": 20n, "c": 200n}),({"a": 2n, "b": 20n, "c": 300n}),({"a": 2n, "b": 30n, "c": 100n}),({"a": 2n, "b": 30n, "c": 200n}),({"a": 2n, "b": 30n, "c": 300n}),({"a": 3n, "b": 10n, "c": 100n}),({"a": 3n, "b": 10n, "c": 200n}),({"a": 3n, "b": 10n, "c": 300n}),({"a": 3n, "b": 20n, "c": 100n}),({"a": 3n, "b": 20n, "c": 200n}),({"a": 3n, "b": 20n, "c": 300n}),({"a": 3n, "b": 30n, "c": 100n}),({"a": 3n, "b": 30n, "c": 200n}),({"a": 3n, "b": 30n, "c": 300n})]}), "testMapCartesianProductOfOneSet": ({"expr": nixScope["mapCartesianProduct"]((
+
+// args: {
+//    a,
+//}
+createFunc({}, null, {}, (nixScope)=>(
+                operators.multiply(nixScope["a"], 2n)
+            ))))(({"a": [1n,2n,3n]})), "expected": [2n,4n,6n]}), "testMapCartesianProductOfTwoSets": ({"expr": nixScope["mapCartesianProduct"]((
+
+// args: {
+//    a,
+//    b,
+//}
+createFunc({}, null, {}, (nixScope)=>(
+                operators.add(nixScope["a"], nixScope["b"])
+            ))))(({"a": [1n], "b": [10n,20n]})), "expected": [11n,21n]}), "testMapCartesianProcutOfTwoSetsWithOneEmpty": ({"expr": nixScope["mapCartesianProduct"](((function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["x"] = arg; runtime.scopeStack.push(nixScope); try { return operators.add(nixScope["x"]["a"], nixScope["x"]["b"]); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])))(({"a": [], "b": [10n,20n]})), "expected": []}), "testMapCartesianProductOfThreeSets": ({"expr": nixScope["mapCartesianProduct"]((
+
+// args: {
+//    a,
+//    b,
+//    c,
+//    ,
+//}
+createFunc({}, null, {}, (nixScope)=>(
+                operators.add(operators.add(nixScope["a"], nixScope["b"]), nixScope["c"])
+            ))))(({"a": [1n,2n,3n], "b": [10n,20n,30n], "c": [100n,200n,300n]})), "expected": [111n,211n,311n,121n,221n,321n,131n,231n,331n,112n,212n,312n,122n,222n,322n,132n,232n,332n,113n,213n,313n,123n,223n,323n,133n,233n,333n]}), "testShowAttrPathExample": ({"expr": nixScope["showAttrPath"](["foo","10","bar"]), "expected": "foo."}), "testShowAttrPathEmpty": ({"expr": nixScope["showAttrPath"]([]), "expected": "<root attribute path>"}), "testShowAttrPathVarious": ({"expr": nixScope["showAttrPath"]([".","foo","2","a2-b","_bc'de"]), "expected": `".".foo."2".a2-b._bc'de`}), "testGroupBy": ({"expr": nixScope["groupBy"](((function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["n"] = arg; runtime.scopeStack.push(nixScope); try { return nixScope["toString"]((nixScope["mod"](nixScope["n"])(5n))); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])))((nixScope["range"](0n)(16n))), "expected": ({"0": [0n,5n,10n,15n], "1": [1n,6n,11n,16n], "2": [2n,7n,12n], "3": [3n,8n,13n], "4": [4n,9n,14n]})}), "testGroupBy'": ({"expr": nixScope["groupBy'"](nixScope["builtins"]["add"])(0n)(((function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["x"] = arg; runtime.scopeStack.push(nixScope); try { return nixScope["boolToString"]((operators.greaterThan(nixScope["x"], 2n))); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])))([5n,1n,2n,3n,4n]), "expected": ({"false": 3n, "true": 12n})}), "testUpdateManyAttrsByPathExample": ({"expr": nixScope["updateManyAttrsByPath"]([({"path": ["a","b"], "update": (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["old"] = arg; runtime.scopeStack.push(nixScope); try { return ({"d": nixScope["old"]["c"]}); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])}),({"path": ["a","b","c"], "update": (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["old"] = arg; runtime.scopeStack.push(nixScope); try { return operators.add(nixScope["old"], 1n); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])}),({"path": ["x","y"], "update": (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["old"] = arg; runtime.scopeStack.push(nixScope); try { return "xy"; } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])})])((function(){
     const obj = {};
     if (obj["a"] === undefined) obj["a"] = {};
     if (obj["a"]["b"] === undefined) obj["a"]["b"] = {};
@@ -1202,41 +1081,23 @@ export default /**
     } finally {
         runtime.scopeStack.pop();
     }
-})(nixScope["types"]))["description"], "expected": "signed integer or list of (boolean or string)"}), "testTypeFunctionToPropagateFunctionArgs": ({"expr": nixScope["lib"]["functionArgs"](((nixScope["types"]["functionTo"](nixScope["types"]["null"]))["merge"]([])([({"value": (function(arg){
-                    const nixScope = {
-                        // inherit parent scope
-                        ...runtime.scopeStack.slice(-1)[0],
-                        // inherit default arguments
-                        "b": (()=>{ const nixScope = runtime.scopeStack.slice(-1)[0]; return false; })(),
-                        // inherit arguments
-                        ...arg,
-                        // all-args arg (if @ syntax is used)
-                        
-                    }
-                    runtime.scopeStack.push(nixScope)
-                    try {
-                        return null
-                    } finally {
-                        runtime.scopeStack.pop()
-                    }
-                })}),({"value": (function(arg){
-                    const nixScope = {
-                        // inherit parent scope
-                        ...runtime.scopeStack.slice(-1)[0],
-                        // inherit default arguments
-                        "c": (()=>{ const nixScope = runtime.scopeStack.slice(-1)[0]; return false; })(),
-                        // inherit arguments
-                        ...arg,
-                        // all-args arg (if @ syntax is used)
-                        
-                    }
-                    runtime.scopeStack.push(nixScope)
-                    try {
-                        return null
-                    } finally {
-                        runtime.scopeStack.pop()
-                    }
-                })})]))), "expected": ({"a": false, "b": false, "c": true})}), "testGetExe'Output": ({"expr": nixScope["getExe'"](({"type": "derivation", "out": "somelonghash", "bin": "somelonghash"}))("executable"), "expected": "somelonghash/bin/executable"}), "testGetExeOutput": ({"expr": nixScope["getExe"]((function(){
+})(nixScope["types"]))["description"], "expected": "signed integer or list of (boolean or string)"}), "testTypeFunctionToPropagateFunctionArgs": ({"expr": nixScope["lib"]["functionArgs"](((nixScope["types"]["functionTo"](nixScope["types"]["null"]))["merge"]([])([({"value": 
+
+// args: {
+//    a,
+//    b,
+//}
+createFunc({"b": (nixScope)=>(false),}, null, {}, (nixScope)=>(
+                null
+            ))}),({"value": 
+
+// args: {
+//    b,
+//    c,
+//}
+createFunc({"c": (nixScope)=>(false),}, null, {}, (nixScope)=>(
+                null
+            ))})]))), "expected": ({"a": false, "b": false, "c": true})}), "testGetExe'Output": ({"expr": nixScope["getExe'"](({"type": "derivation", "out": "somelonghash", "bin": "somelonghash"}))("executable"), "expected": "somelonghash/bin/executable"}), "testGetExeOutput": ({"expr": nixScope["getExe"]((function(){
     const obj = {};
     obj["type"] = "derivation";
     obj["out"] = "somelonghash";

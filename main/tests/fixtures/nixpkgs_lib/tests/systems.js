@@ -1,4 +1,4 @@
-import { createRuntime } from "../../../../runtime.js"
+import { createRuntime, createFunc } from "../../../../../../../../../../../../../runtime.js"
 const runtime = createRuntime()
 const operators = runtime.operators
 

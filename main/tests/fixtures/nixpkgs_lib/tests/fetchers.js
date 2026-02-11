@@ -1,4 +1,4 @@
-import { createRuntime } from "../../../../runtime.js"
+import { createRuntime, createFunc } from "../../../../../../../../../../../../../runtime.js"
 const runtime = createRuntime()
 
 export default (function(){
@@ -40,24 +40,15 @@ export default (function(){
     obj[(new InterpolatedString(["test", "ThrowsOnMissing"], [()=>(nixScope["n"])]))] = nixScope["testingThrow"]((nixScope["f"]({})(({"gibi": false}))));
     return obj;
 })(); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1]); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1]);}});
-        return nixScope["runTests"]((nixScope["unionOfDisjoints"]([(nixScope["genTests"]("NormalizeHash")(nixScope["normalizeHash"])),(nixScope["genTests"]("WithNormalized")((nixScope["flip"](nixScope["withNormalizedHash"])(((function(arg){
-                    const nixScope = {
-                        // inherit parent scope
-                        ...runtime.scopeStack.slice(-1)[0],
-                        // inherit default arguments
-                        
-                        // inherit arguments
-                        ...arg,
-                        // all-args arg (if @ syntax is used)
-                        "args": arg,
-                    }
-                    runtime.scopeStack.push(nixScope)
-                    try {
-                        return nixScope["args"]
-                    } finally {
-                        runtime.scopeStack.pop()
-                    }
-                })))))),({"testNormalizeNotRequiredEquivalent": ({"expr": nixScope["normalizeHash"](({"required": false}))(({"hash": "", "prof": "shadoko"})), "expected": nixScope["normalizeHash"]({})(({"hash": "", "prof": "shadoko"}))}), "testNormalizeNotRequiredPassthru": (function(){
+        return nixScope["runTests"]((nixScope["unionOfDisjoints"]([(nixScope["genTests"]("NormalizeHash")(nixScope["normalizeHash"])),(nixScope["genTests"]("WithNormalized")((nixScope["flip"](nixScope["withNormalizedHash"])((
+
+// args: {
+//    outputHash,
+//    outputHashAlgo,
+//}@args
+createFunc({}, "args", {}, (nixScope)=>(
+                nixScope["args"]
+            ))))))),({"testNormalizeNotRequiredEquivalent": ({"expr": nixScope["normalizeHash"](({"required": false}))(({"hash": "", "prof": "shadoko"})), "expected": nixScope["normalizeHash"]({})(({"hash": "", "prof": "shadoko"}))}), "testNormalizeNotRequiredPassthru": (function(){
     const obj = {};
     obj["expr"] = nixScope["normalizeHash"](({"required": false}))(({"ga bu": "zo meu"}));
     if (obj["expected"] === undefined) obj["expected"] = {};
@@ -65,102 +56,58 @@ export default (function(){
     return obj;
 })(), "testOptionalArg": (function(){
     const obj = {};
-    obj["expr"] = nixScope["withNormalizedHash"]({})(((function(arg){
-                    const nixScope = {
-                        // inherit parent scope
-                        ...runtime.scopeStack.slice(-1)[0],
-                        // inherit default arguments
-                        "outputHash": (()=>{ const nixScope = runtime.scopeStack.slice(-1)[0]; return ""; })(),"outputHashAlgo": (()=>{ const nixScope = runtime.scopeStack.slice(-1)[0]; return null; })(),
-                        // inherit arguments
-                        ...arg,
-                        // all-args arg (if @ syntax is used)
-                        "args": arg,
-                    }
-                    runtime.scopeStack.push(nixScope)
-                    try {
-                        return nixScope["args"]
-                    } finally {
-                        runtime.scopeStack.pop()
-                    }
-                })))(({"author": "Jacques Rouxel"}));
+    obj["expr"] = nixScope["withNormalizedHash"]({})((
+
+// args: {
+//    outputHash,
+//    outputHashAlgo,
+//}@args
+createFunc({"outputHash": (nixScope)=>(""),"outputHashAlgo": (nixScope)=>(null),}, "args", {}, (nixScope)=>(
+                nixScope["args"]
+            ))))(({"author": "Jacques Rouxel"}));
     if (obj["expected"] === undefined) obj["expected"] = {};
     obj["expected"]["author"] = "Jacques Rouxel";
     return obj;
 })(), "testOptionalArgMetadata": (function(){
     const obj = {};
-    obj["expr"] = nixScope["functionArgs"]((nixScope["withNormalizedHash"]({})(((function(arg){
-                    const nixScope = {
-                        // inherit parent scope
-                        ...runtime.scopeStack.slice(-1)[0],
-                        // inherit default arguments
-                        "outputHash": (()=>{ const nixScope = runtime.scopeStack.slice(-1)[0]; return ""; })(),"outputHashAlgo": (()=>{ const nixScope = runtime.scopeStack.slice(-1)[0]; return null; })(),
-                        // inherit arguments
-                        ...arg,
-                        // all-args arg (if @ syntax is used)
-                        
-                    }
-                    runtime.scopeStack.push(nixScope)
-                    try {
-                        return {}
-                    } finally {
-                        runtime.scopeStack.pop()
-                    }
-                })))));
+    obj["expr"] = nixScope["functionArgs"]((nixScope["withNormalizedHash"]({})((
+
+// args: {
+//    outputHash,
+//    outputHashAlgo,
+//    ,
+//}
+createFunc({"outputHash": (nixScope)=>(""),"outputHashAlgo": (nixScope)=>(null),}, null, {}, (nixScope)=>(
+                {}
+            ))))));
     if (obj["expected"] === undefined) obj["expected"] = {};
     obj["expected"]["hash"] = true;
     return obj;
-})(), "testPreservesArgsMetadata": ({"expr": nixScope["functionArgs"]((nixScope["withNormalizedHash"]({})(((function(arg){
-                    const nixScope = {
-                        // inherit parent scope
-                        ...runtime.scopeStack.slice(-1)[0],
-                        // inherit default arguments
-                        "pumping": (()=>{ const nixScope = runtime.scopeStack.slice(-1)[0]; return true; })(),
-                        // inherit arguments
-                        ...arg,
-                        // all-args arg (if @ syntax is used)
-                        
-                    }
-                    runtime.scopeStack.push(nixScope)
-                    try {
-                        return {}
-                    } finally {
-                        runtime.scopeStack.pop()
-                    }
-                }))))), "expected": ({"hash": false, "pumping": true})}), "testRejectsMissingHashArg": nixScope["testingThrow"]((nixScope["withNormalizedHash"]({})(((function(arg){
-                    const nixScope = {
-                        // inherit parent scope
-                        ...runtime.scopeStack.slice(-1)[0],
-                        // inherit default arguments
-                        
-                        // inherit arguments
-                        ...arg,
-                        // all-args arg (if @ syntax is used)
-                        
-                    }
-                    runtime.scopeStack.push(nixScope)
-                    try {
-                        return {}
-                    } finally {
-                        runtime.scopeStack.pop()
-                    }
-                }))))), "testRejectsMissingAlgoArg": nixScope["testingThrow"]((nixScope["withNormalizedHash"]({})(((function(arg){
-                    const nixScope = {
-                        // inherit parent scope
-                        ...runtime.scopeStack.slice(-1)[0],
-                        // inherit default arguments
-                        
-                        // inherit arguments
-                        ...arg,
-                        // all-args arg (if @ syntax is used)
-                        
-                    }
-                    runtime.scopeStack.push(nixScope)
-                    try {
-                        return {}
-                    } finally {
-                        runtime.scopeStack.pop()
-                    }
-                })))))})])));
+})(), "testPreservesArgsMetadata": ({"expr": nixScope["functionArgs"]((nixScope["withNormalizedHash"]({})((
+
+// args: {
+//    outputHash,
+//    outputHashAlgo,
+//    pumping,
+//    ,
+//}
+createFunc({"pumping": (nixScope)=>(true),}, null, {}, (nixScope)=>(
+                {}
+            )))))), "expected": ({"hash": false, "pumping": true})}), "testRejectsMissingHashArg": nixScope["testingThrow"]((nixScope["withNormalizedHash"]({})((
+
+// args: {
+//    outputHashAlgo,
+//}
+createFunc({}, null, {}, (nixScope)=>(
+                {}
+            )))))), "testRejectsMissingAlgoArg": nixScope["testingThrow"]((nixScope["withNormalizedHash"]({})((
+
+// args: {
+//    outputHash,
+//}
+createFunc({}, null, {}, (nixScope)=>(
+                {}
+            ))))))})])));
     } finally {
         runtime.scopeStack.pop();
     }
