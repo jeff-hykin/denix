@@ -1,1 +1,0 @@
-export const toFloat = (value)=>typeof value == "bigint"?`${value}`-0:value

@@ -11,7 +11,9 @@
  */
 
 import { convertToJs } from "../../translator.js"
-import { toFloat } from "../../tools/generic.js"
+
+// Helper: Convert BigInt or number to float
+const toFloat = (value) => typeof value == "bigint" ? `${value}` - 0 : value
 
 // Minimal builtins for tests (avoiding prex WASM issue)
 // These match the signatures in main/runtime.js (curried)

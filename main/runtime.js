@@ -2,7 +2,8 @@ import { zip } from "https://deno.land/x/good@1.5.1.0/array.js"
 import { FileSystem } from "https://deno.land/x/quickr@0.6.51/main/file_system.js"
 
 //  tools
-import { toFloat } from "../tools/generic.js"
+// Helper: Convert BigInt or number to float
+const toFloat = (value) => typeof value == "bigint" ? `${value}` - 0 : value
 import { sha256Hex, md5Hex, sha1Hex, sha512Hex } from "../tools/hashing.js"
 import { jsonParseWithBigInt } from "../tools/json_parse.js"
 import { lazyMap } from "../tools/lazy_array.js"
