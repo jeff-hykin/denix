@@ -2,7 +2,7 @@
 import { parse, xmlStylePreview } from "./tools/parsing.js"
 import { NixError, NotImplemented } from "./main/errors.js"
 import { nixRepr } from "./main/runtime.js"
-
+import { isValidKeyLiteral } from 'https://esm.sh/gh/jeff-hykin/good-js@1.18.2.0/source/flattened/is_valid_key_literal.js'
 
 // Design explanation (converting nix to JavaScript)
     // Half the work is done in the runtime.js file
@@ -151,7 +151,7 @@ export const convertToJs = async (code, options = {}) => {
         output += nixNodeToJs(node)
     }
 
-    // Determine if we need runtime imports
+    // short hack to determine if we need runtime imports
     const needsRuntime = output.includes("runtime")
 
     // Handle runtime import path (default to relative path from root)
@@ -161,7 +161,7 @@ export const convertToJs = async (code, options = {}) => {
 
     if (needsRuntime) {
         result += `import { createRuntime } from "${runtimePath}"\n`
-        result += `const {runtime, createFunc} = createRuntime()\n`
+        result += `const {runtime, createFunc, createScope} = createRuntime()\n`
 
         // Extract commonly used runtime components if they're referenced
         if (output.includes("operators.")) {
@@ -229,7 +229,7 @@ export const convertToJsSync = (code, options = {}) => {
         if (output.includes("operators.")) {
             result += `const operators = runtime.operators\n`
         }
-        if (output.includes("builtins.") && !output.includes("nixScope[\"builtins\"]")) {
+        if (output.includes("builtins.")) {
             result += `const builtins = runtime.builtins\n`
         }
     }
@@ -259,12 +259,8 @@ const nixNodeToJs = (node)=>{
             // TODO: This should check if they're shadowed in the current scope
             return node.text
         } else {
-            // builtins and other identifiers
-            // They can all be overriden with local variable names...
-
-            // NOTE: not all identifiers (ex: attrSet keys are identifiers) will be changed to nixScope["name"]
-            // but the ones that wont be converted will be skipped
-            return `nixScope[${JSON.stringify(node.text)}]`
+            // fun fact, in nix builtins and other identifiers can all be overridden with local variable names
+            return varAccess(node.text)
         }
     } else if (node.type == "integer_expression") {
         // Note: Nix does not support hex (0xFF) or octal (0o77) literals
@@ -720,8 +716,7 @@ const nixNodeToJs = (node)=>{
             // - Bindings need access to parent scope AND sibling bindings
             // - But the returned object should only contain the rec attrset's own bindings
             // Solution: Use Object.create() so parent scope is in prototype, not own properties
-            let code = `(function(){\n`
-            code += `    const nixScope = Object.create(runtime.scopeStack.slice(-1)[0]);\n`
+            let code = `/*rec*/createScope(nixScope=>{\n`
 
             // Process bindings similar to let
             const bindingsByBase = {}
@@ -798,23 +793,23 @@ const nixNodeToJs = (node)=>{
 
             // Create base objects for nested bindings
             for (const [baseName, _] of Object.entries(bindingsByBase)) {
-                code += `    nixScope[${JSON.stringify(baseName)}] = {};\n`
+                code += `    ${varAccess(baseName)} = {};\n`
             }
 
             // Add simple constant bindings
             for (const {name, value, isConstant} of simpleBindings.filter(b => b.isConstant)) {
                 if (value.type === "select") {
                     // Special case for inherit_from
-                    code += `    nixScope[${JSON.stringify(name)}] = ${nixNodeToJs(value.source)}[${JSON.stringify(value.attr)}];\n`
+                    code += `    ${varAccess(name)} = ${nixNodeToJs(value.source)}[${JSON.stringify(value.attr)}];\n`
                 } else {
-                    code += `    nixScope[${JSON.stringify(name)}] = ${nixNodeToJs(value)};\n`
+                    code += `    ${varAccess(name)} = ${nixNodeToJs(value)};\n`
                 }
             }
 
             // Add nested bindings
             for (const [baseName, nestedBindings] of Object.entries(bindingsByBase)) {
                 for (const {path, value} of nestedBindings) {
-                    let accessor = `nixScope[${JSON.stringify(baseName)}]`
+                    let accessor = varAccess(baseName)
                     for (let i = 0; i < path.length - 1; i++) {
                         const key = extractKeyString(path[i])
                         if (key === null) {
@@ -831,19 +826,12 @@ const nixNodeToJs = (node)=>{
             }
 
             // For rec, we need to push the scope so lazy bindings can reference other attributes
-            code += `    runtime.scopeStack.push(nixScope);\n`
-            code += `    try {\n`
-
             // Add lazy bindings
             for (const {name, value, isConstant} of simpleBindings.filter(b => !b.isConstant)) {
                 code += `        Object.defineProperty(nixScope, ${JSON.stringify(name)}, {enumerable: true, get(){return ${nixNodeToJs(value)};}});\n`
             }
-
             code += `        return nixScope;\n`
-            code += `    } finally {\n`
-            code += `        runtime.scopeStack.pop();\n`
-            code += `    }\n`
-            code += `})()`
+            code += `})`
 
             return code
         } else {
@@ -919,12 +907,7 @@ const nixNodeToJs = (node)=>{
 
             // Otherwise, build object imperatively
             // If we have inherit_from, we need scope context
-            let code = `(function(){\n`
-            if (hasInheritFrom) {
-                code += `    const nixScope = {...runtime.scopeStack.slice(-1)[0]};\n`
-                code += `    runtime.scopeStack.push(nixScope);\n`
-                code += `    try {\n`
-            }
+            let code = `createScope(nixScope=>{\n`
             code += `    const obj = {};\n`
 
             // Add simple bindings
@@ -971,12 +954,7 @@ const nixNodeToJs = (node)=>{
             }
 
             code += `    return obj;\n`
-            if (hasInheritFrom) {
-                code += `    } finally {\n`
-                code += `        runtime.scopeStack.pop();\n`
-                code += `    }\n`
-            }
-            code += `})()`
+            code += `})`
 
             return code
         }
@@ -996,7 +974,9 @@ const nixNodeToJs = (node)=>{
             // Solution: When a function is created, capture the current scope. When it's called,
             // use the captured scope as the parent (via prototype chain), not runtime.scopeStack.
             // Using Object.create() ensures getters from parent scopes are accessible.
-            return `(function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope[${JSON.stringify(argName)}] = arg; runtime.scopeStack.push(nixScope); try { return ${nixNodeToJs(body)}; } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])`
+            return `createFunc(/*arg:*/ ${JSON.stringify(argName)}, null, {}, (nixScope)=>(
+                ${nixNodeToJs(body).replace(/\n/g,"\n    ")}
+            ))`
         // more complicated function:
         } else {
             // <function_expression>
@@ -1056,11 +1036,11 @@ const nixNodeToJs = (node)=>{
             }
             
             const allArgsString = allArgsName ? `@${allArgsName}` : ""
-            const translationHint = `// args: {\n${argNames.map(each=>"//    "+each.replace(/\n|\r/g,"")+",").join("\n")}\n//}${allArgsString}`
+            const translationHint = (`/* args: {\n${argNames.map(each=>"    "+each.replace(/\n|\r/g,"")+",").join("\n")}\n}${allArgsString} `).replace(/\*\//g,"* /") + "*/" 
 
             // The body is the last child (after the ":")
             const body = children.slice(-1)[0]
-            return `${translationHint}\ncreateFunc({${defaulters}}, ${JSON.stringify(allArgsName)}, {}, (nixScope)=>(
+            return `createFunc({${defaulters}}, ${JSON.stringify(allArgsName)}, {}, (nixScope)=>(
                 ${nixNodeToJs(body).replace(/\n/g,"\n    ")}
             ))`
         }
@@ -1152,30 +1132,27 @@ const nixNodeToJs = (node)=>{
         }
 
         // Generate JavaScript code
-        let code = `(function(){\n`
-        code += `    const nixScope = {...runtime.scopeStack.slice(-1)[0]};\n`
-        code += `    runtime.scopeStack.push(nixScope);\n`
-        code += `    try {\n`
+        let code = `/*let*/ createScope(nixScope=>{\n`
 
         // Create base objects for nested bindings
         for (const [baseName, _] of Object.entries(bindingsByBase)) {
-            code += `        nixScope[${JSON.stringify(baseName)}] = {};\n`
+            code += `        ${varAccess(baseName)} = {};\n`
         }
 
         // Add simple constant bindings
         for (const {name, value, isConstant} of simpleBindings.filter(b => b.isConstant)) {
             if (value.type === "select") {
                 // Special case for inherit_from: value is { type: "select", source: expr, attr: name }
-                code += `        nixScope[${JSON.stringify(name)}] = ${nixNodeToJs(value.source)}[${JSON.stringify(value.attr)}];\n`
+                code += `        ${varAccess(name)} = ${nixNodeToJs(value.source)}[${JSON.stringify(value.attr)}];\n`
             } else {
-                code += `        nixScope[${JSON.stringify(name)}] = ${nixNodeToJs(value)};\n`
+                code += `        ${varAccess(name)} = ${nixNodeToJs(value)};\n`
             }
         }
 
         // Add nested bindings
         for (const [baseName, nestedBindings] of Object.entries(bindingsByBase)) {
             for (const {path, value} of nestedBindings) {
-                let accessor = `nixScope[${JSON.stringify(baseName)}]`
+                let accessor = varAccess(baseName)
                 for (let i = 0; i < path.length - 1; i++) {
                     accessor += `[${JSON.stringify(path[i].text)}]`
                 }
@@ -1189,11 +1166,8 @@ const nixNodeToJs = (node)=>{
             code += `        Object.defineProperty(nixScope, ${JSON.stringify(name)}, {enumerable: true, get(){return ${nixNodeToJs(value)};}});\n`
         }
 
-        code += `        return ${nixNodeToJs(body)};\n`
-        code += `    } finally {\n`
-        code += `        runtime.scopeStack.pop();\n`
-        code += `    }\n`
-        code += `})()`
+        code += `    return ${nixNodeToJs(body).trimStart()};\n`
+        code += `})`
 
         return code
     } else if (node.type == "with_expression") {
@@ -1229,7 +1203,7 @@ const nixNodeToJs = (node)=>{
         code += `    const nixScope = {...runtime.scopeStack.slice(-1)[0], ..._withAttrs};\n`
         code += `    runtime.scopeStack.push(nixScope);\n`
         code += `    try {\n`
-        code += `        return ${nixNodeToJs(bodyExpr)};\n`
+        code += `        return ${nixNodeToJs(bodyExpr).trimStart()};\n`
         code += `    } finally {\n`
         code += `        runtime.scopeStack.pop();\n`
         code += `    }\n`
@@ -1265,7 +1239,7 @@ const nixNodeToJs = (node)=>{
         code += `    if (!_cond) {\n`
         code += `        throw new Error("assertion failed: " + ${JSON.stringify(node.text.split(';')[0].replace('assert', '').trim())});\n`
         code += `    }\n`
-        code += `    return ${nixNodeToJs(valueExpr)};\n`
+        code += `    return ${nixNodeToJs(valueExpr).trimStart()};\n`
         code += `})(${nixNodeToJs(conditionExpr)})`
 
         return code
@@ -1336,4 +1310,12 @@ const isConstantExpression = (node) => {
 
     // Identifiers and any expression involving them are non-constant
     return false
+}
+
+function varAccess(varName) {
+    if (isValidKeyLiteral(varName)) {
+        return `nixScope.${varName}`
+    } else {
+        return `nixScope[${JSON.stringify(varName)}]`
+    }
 }

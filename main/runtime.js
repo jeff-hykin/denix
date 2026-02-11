@@ -44,6 +44,26 @@ import { resolveIndirectReference } from "./registry.js"
     function createCreateFunc(runtime) {
         return function createFunc(defaulters, allArgsName, metadata, func) {
             // all were doing is scope/default arg boilerplate
+            const isSimpleFunction = typeof defaulters == "string"
+            if (isSimpleFunction) {
+                const argName = defaulters
+                return function (arg) {
+                    const nixScope = {
+                        // inherit parent scope
+                        ...runtime.scopeStack.slice(-1)[0],
+                        [argName]: arg,
+                    }
+                    
+                    runtime.scopeStack.push(nixScope)
+                    // args are now setup
+                    try {
+                        return func(nixScope)
+                    } finally {
+                        runtime.scopeStack.pop()
+                    }
+                }
+            }
+            // function with "named" arguments
             return function (arg) {
                 const nixScope = {
                     // inherit parent scope
@@ -77,6 +97,24 @@ import { resolveIndirectReference } from "./registry.js"
                 } finally {
                     runtime.scopeStack.pop()
                 }
+            }
+        }
+    }
+    
+    function createCreateScope(runtime) {
+        return function createScope(func) {
+            // all were doing is reducing boilerplate
+            const nixScope = {
+                // inherit parent scope
+                ...runtime.scopeStack.slice(-1)[0],
+            }
+            
+            runtime.scopeStack.push(nixScope)
+            // args are now setup
+            try {
+                return func(nixScope)
+            } finally {
+                runtime.scopeStack.pop()
             }
         }
     }
@@ -2860,9 +2898,9 @@ import { resolveIndirectReference } from "./registry.js"
             runtime, // Expose runtime for use by import system
             importCache,
         }
-        const createFunc = createCreateFunc(runtimeWithScope)
         return {
-            createFunc,
+            createFunc: createCreateFunc(runtimeWithScope),
+            createScope: createCreateScope(runtimeWithScope),
             runtime: runtimeWithScope,
         }
     }
