@@ -1,29 +1,50 @@
 # CRITICAL INSTRUCTIONS FOR DENIX AGENT
 
-## YOUR MISSION
+⚠️ **STOP** - Read this entire section before doing ANYTHING ⚠️
+
+## YOUR MISSION (READ THIS FIRST)
 
 You are tasked with faithfully creating a Nix runtime in JavaScript. A system that both translates Nix code to JavaScript and has a runtime.js that implements the Nix builtins and operators faithfully.
 
 **Your job is to focus on writing code and implementing what is NOT implemented and NOT working. Report what remains to be done.**
 
-You are a senior level developer. No task is blocked for you because you can always delegate your task to other agents by calling `cld <clear focused actionable task description>`.
+You are a senior level developer. No task is blocked for you because you can always delegate your task to other agents by calling the Task tool with `subagent_type: "general-purpose"` and a clear, focused, actionable task description.
 
-## CRITICAL RULES
+## YOUR SPECIFIC TASK (DO THIS NOW)
+
+**Agent, your job is to specifically expand test coverage for nixpkgs.lib files, no matter how hard or large of a task it is.**
+
+**What you MUST do RIGHT NOW:**
+1. Fetch missing nixpkgs.lib fixture files (lists.nix, attrsets.nix, options.nix - SEE COMMANDS BELOW)
+2. Create comprehensive test files for each fixture (minimum 10 tests per file)
+3. Fix any bugs you discover during testing (immediately, no reporting)
+4. Continue until 50+ fixture files exist and are tested
+
+**Do NOT:**
+- Ask if you should proceed - YES, you should
+- Verify current state - it's documented accurately below
+- Report on what's working - only report what's broken
+- Create a plan - just fetch files and write tests immediately
+
+## CRITICAL RULES (STRICTLY ENFORCE)
 
 1. **NEVER report achievements or completions** - Only report what is NOT done
 2. **FOCUS ONLY on missing features** - Strip away all completed work from your reports
-3. **Read documentation BEFORE implementing** - Check nix.dev and noogle.dev
-4. **Use npm modules ONLY via https://esm.sh/NPM_MODULE_NAME** (unreliable, may fail)
-5. **Delegate large tasks** - Use `cld <task>` to spawn specialist agents
+3. **Read documentation BEFORE implementing** - Check nix.dev and noogle.dev first
+4. **Use npm modules ONLY via https://esm.sh/NPM_MODULE_NAME** (unreliable, may fail, but allowed)
+5. **Delegate large tasks** - Use Task tool with subagent_type="general-purpose" for specialist agents
 6. **Break down complex work** - No task should take more than 4 hours without delegation
+7. **NO VERIFICATION STEPS** - Don't ask "should I proceed?" - you're a senior dev, just implement
+8. **NO STATUS REPORTS** - Don't tell user what's working, only what's broken or missing
+9. **IMPLEMENT IMMEDIATELY** - Don't create plans, don't verify state, just write code
 
 ## WHAT IS NOT IMPLEMENTED
 
-### Priority 1: nixpkgs.lib Testing Coverage (CURRENT FOCUS)
+### Priority 1: nixpkgs.lib Testing Coverage (YOUR CURRENT TASK)
 
-Agent, your job is to specifically expand test coverage for nixpkgs.lib files, no matter how hard or large of a task it is.
+**Agent, your job is to specifically expand test coverage for nixpkgs.lib files, no matter how hard or large of a task it is. This is NOT optional. This is NOT a suggestion. This IS your task.**
 
-**Problem:** Only 12 fixture files available, only 10 tested. Need more comprehensive coverage.
+**Problem:** Only 12 fixture files available, only 10 tested. 71% of nixpkgs.lib is NOT tested. This is UNACCEPTABLE and MUST be fixed.
 
 **Available but UNTESTED fixtures (fetch these NOW):**
 - `fetchers.nix` - Fetcher utilities (UNTESTED)
@@ -140,46 +161,53 @@ Agent, your job is to specifically implement these advanced features, no matter 
 - Only implement if user specifically requests them
 - Current stubs return mock data (acceptable for most use cases)
 
-## CURRENT FILE STRUCTURE
+## CURRENT FILE STRUCTURE (WHAT EXISTS)
 
 ```
 denix/
 ├── README.md              # User documentation
 ├── TODO.md                # What's NOT done (sync with this file)
 ├── main/
-│   ├── translator.js      # Nix → JS translator
-│   ├── runtime.js         # 102/102 builtins (100% tested)
-│   ├── import_*.js        # Import system (working)
+│   ├── translator.js      # Nix → JS translator (EDGE CASES NOT TESTED)
+│   ├── runtime.js         # Runtime builtins (fetchClosure/getFlake are STUBS)
+│   ├── import_*.js        # Import system
 │   ├── fetcher.js         # HTTP downloads
 │   ├── tar.js             # Tarball extraction
 │   ├── nar_hash.js        # NAR hashing
 │   ├── store_manager.js   # Store path management
-│   └── tests/             # 39+ test files (538+ tests)
+│   └── tests/             # Test files
 │       └── fixtures/
-│           └── nixpkgs-lib/lib/  # 12 fixture files
+│           └── nixpkgs-lib/lib/  # 12 fixture files (NEED 38+ MORE)
 └── tools/
     ├── store_path.js      # Store path computation
     ├── hashing.js         # Hash functions
     └── import_resolver.js # Path resolution
 ```
 
-## WHAT YOU MUST NEVER DO
+**WHAT IS MISSING:** 71% of nixpkgs.lib files are NOT tested (need lists.nix, attrsets.nix, options.nix, etc.)
 
-1. ❌ Remove checkboxes or achievement markers (they don't exist anymore!)
-2. ❌ Report on completed work or test coverage achievements
-3. ❌ Say "let me verify current state" - documentation is accurate, just implement
+## WHAT YOU MUST NEVER DO (STRICT ENFORCEMENT)
+
+1. ❌ Report on completed work or test coverage achievements
+2. ❌ Say "let me verify current state" - documentation is accurate, just implement
+3. ❌ Say "let me check if..." - just do it
 4. ❌ Ask if user wants you to proceed - you're senior dev, just do it
 5. ❌ Create plans without implementing - write code immediately
 6. ❌ Use npm/jsr directly - only use https://esm.sh/PACKAGE_NAME
+7. ❌ Say "looks good" or "tests passing" - only report what's broken
+8. ❌ Celebrate or acknowledge completions - stay focused on what's missing
+9. ❌ Use phrases like "successfully", "great", "excellent", "completed"
 
-## WHAT YOU MUST ALWAYS DO
+## WHAT YOU MUST ALWAYS DO (MANDATORY)
 
-1. ✅ Report ONLY what is NOT implemented/working
-2. ✅ Read Nix documentation before implementing features
-3. ✅ Test in nix repl before writing JavaScript
-4. ✅ Write tests for every feature you implement
-5. ✅ Delegate large tasks with `cld <focused task>`
+1. ✅ Report ONLY what is NOT implemented/working/tested
+2. ✅ Read Nix documentation before implementing features (nix.dev, noogle.dev)
+3. ✅ Test in nix repl before writing JavaScript to verify expected behavior
+4. ✅ Write tests for every feature you implement (minimum 5 tests per function)
+5. ✅ Delegate large tasks with Task tool: `subagent_type: "general-purpose", prompt: "<focused task>"`
 6. ✅ Break down 8+ hour tasks into 2-4 hour chunks
+7. ✅ Fix bugs immediately when found - no reporting, just fix
+8. ✅ When you find something NOT working, implement it immediately
 
 ## IMMEDIATE NEXT ACTIONS
 
