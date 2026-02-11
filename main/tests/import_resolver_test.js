@@ -3,7 +3,7 @@
  */
 
 import { assertEquals, assertThrows } from "https://deno.land/std@0.224.0/assert/mod.ts"
-import { resolveImportPath, canonicalizePath, getImportType, validateImportPath } from "../../tools/import_resolver.js"
+import { resolveImportPath, getImportType, validateImportPath } from "../../tools/import_resolver.js"
 import { resolve as pathResolve } from "https://deno.land/std@0.224.0/path/mod.ts"
 
 // Create test directory structure
@@ -71,23 +71,15 @@ Deno.test({
                 assertEquals(result, `${testDir}/helper.nix`)
             })
 
-            await t.step("canonicalizePath - existing file", () => {
-                const result = canonicalizePath(`${testDir}/main.nix`)
-                assertEquals(result, `${testDir}/main.nix`)
-            })
-
-            await t.step("canonicalizePath - directory with default.nix", () => {
-                const result = canonicalizePath(`${testDir}/with-default`)
+            await t.step("resolveImportPath - directory with default.nix", () => {
+                const from = `${testDir}/main.nix`
+                const result = resolveImportPath(from, "./with-default")
                 assertEquals(result, `${testDir}/with-default/default.nix`)
             })
 
-            await t.step("canonicalizePath - file without extension", () => {
-                const result = canonicalizePath(`${testDir}/noextension`)
-                assertEquals(result, `${testDir}/noextension`)
-            })
-
-            await t.step("canonicalizePath - infer .nix extension", () => {
-                const result = canonicalizePath(`${testDir}/helper`)
+            await t.step("resolveImportPath - infer .nix extension", () => {
+                const from = `${testDir}/main.nix`
+                const result = resolveImportPath(from, "./helper")
                 assertEquals(result, `${testDir}/helper.nix`)
             })
 

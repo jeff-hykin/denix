@@ -55,7 +55,7 @@ export function resolveImportPath(fromFile, importPath) {
  * @param {string} path - Path to canonicalize
  * @returns {string} - Canonical absolute path
  */
-export function canonicalizePath(path) {
+function canonicalizePath(path) {
     const info = getFileInfo(path)
 
     // If path exists as-is and is a file, return it

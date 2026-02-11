@@ -191,25 +191,3 @@ export async function resolveIndirectReference(flakeId) {
     }
 }
 
-/**
- * Clear the registry cache (useful for testing)
- */
-export function clearRegistryCache() {
-    registryCache = null
-    registryCacheTime = null
-}
-
-/**
- * Get registry statistics
- * @returns {object} - Registry info
- */
-export async function getRegistryInfo() {
-    const registry = await loadRegistry()
-
-    return {
-        version: registry.version,
-        entryCount: registry.flakes.length,
-        cacheAge: registryCacheTime ? Date.now() - registryCacheTime : null,
-        sampleEntries: registry.flakes.slice(0, 5).map(e => e.from.id),
-    }
-}

@@ -10,7 +10,7 @@ import { UntarStream } from "jsr:@std/tar@0.1.10/untar-stream";
  * @param {string} filePath - Path to archive file
  * @returns {string} - Format: "tar", "gzip", "bzip2", or "xz"
  */
-export function detectFormat(filePath) {
+function detectFormat(filePath) {
     if (filePath.endsWith('.tar.gz') || filePath.endsWith('.tgz')) {
         return 'gzip';
     } else if (filePath.endsWith('.tar.bz2') || filePath.endsWith('.tbz2')) {
@@ -143,7 +143,7 @@ async function extractWithTarCommand(tarballPath, destDir) {
  * @param {string} extractDir - Directory containing extracted files
  * @returns {Promise<string>} - Final directory path
  */
-export async function stripTopLevelDirectory(extractDir) {
+async function stripTopLevelDirectory(extractDir) {
     const entries = [];
     for await (const entry of Deno.readDir(extractDir)) {
         entries.push(entry);

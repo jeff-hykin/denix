@@ -132,51 +132,6 @@ export async function setCachedPath(cacheKey, storePath) {
     await saveCache(cache);
 }
 
-/**
- * Acquire an exclusive lock and run a function
- * Prevents concurrent access to the same resource
- * @param {string} lockName - Name of the lock (will be used as filename)
- * @param {Function} fn - Async function to run while holding the lock
- * @returns {Promise<any>} - Result of fn
- */
-export async function withLock(lockName, fn) {
-    await ensureStoreDirectory(); // Ensures LOCK_DIR exists
-
-    const lockPath = `${LOCK_DIR}/${lockName}.lock`;
-
-    // Create lock file
-    const lockFile = await Deno.open(lockPath, {
-        create: true,
-        write: true,
-        read: true,
-    });
-
-    try {
-        // Acquire exclusive lock (blocks until available)
-        await lockFile.lock(true); // true = exclusive lock
-
-        // Run the function while holding the lock
-        return await fn();
-    } finally {
-        // Release lock and close file
-        try {
-            await lockFile.unlock();
-        } catch {
-            // Already unlocked
-        }
-        try {
-            lockFile.close();
-        } catch {
-            // Already closed
-        }
-        // Clean up lock file
-        try {
-            await Deno.remove(lockPath);
-        } catch {
-            // File might be in use by another process
-        }
-    }
-}
 
 /**
  * Check if a path exists in the store

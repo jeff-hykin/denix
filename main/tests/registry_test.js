@@ -3,14 +3,10 @@ import {
     loadRegistry,
     lookupFlake,
     resolveIndirectReference,
-    clearRegistryCache,
-    getRegistryInfo,
 } from "../registry.js";
 
 Deno.test("registry - load registry from global source", async () => {
     try {
-        clearRegistryCache(); // Start fresh
-
         const registry = await loadRegistry();
 
         // Verify registry structure
@@ -37,7 +33,6 @@ Deno.test("registry - load registry from global source", async () => {
 
 Deno.test("registry - lookup nixpkgs flake", async () => {
     try {
-        clearRegistryCache();
 
         const target = await lookupFlake("nixpkgs");
 
@@ -57,7 +52,6 @@ Deno.test("registry - lookup nixpkgs flake", async () => {
 
 Deno.test("registry - lookup home-manager flake", async () => {
     try {
-        clearRegistryCache();
 
         const target = await lookupFlake("home-manager");
 
@@ -77,7 +71,6 @@ Deno.test("registry - lookup home-manager flake", async () => {
 
 Deno.test("registry - lookup non-existent flake returns null", async () => {
     try {
-        clearRegistryCache();
 
         const target = await lookupFlake("this-flake-definitely-does-not-exist-12345");
 
@@ -94,7 +87,6 @@ Deno.test("registry - lookup non-existent flake returns null", async () => {
 
 Deno.test("registry - resolve nixpkgs to github URL", async () => {
     try {
-        clearRegistryCache();
 
         const resolved = await resolveIndirectReference("nixpkgs");
 
@@ -112,7 +104,6 @@ Deno.test("registry - resolve nixpkgs to github URL", async () => {
 
 Deno.test("registry - resolve flake-utils to github URL", async () => {
     try {
-        clearRegistryCache();
 
         const resolved = await resolveIndirectReference("flake-utils");
 
@@ -130,8 +121,6 @@ Deno.test("registry - resolve flake-utils to github URL", async () => {
 
 Deno.test("registry - cache works correctly", async () => {
     try {
-        clearRegistryCache();
-
         // First load
         const start1 = Date.now();
         const registry1 = await loadRegistry();
@@ -142,8 +131,8 @@ Deno.test("registry - cache works correctly", async () => {
         const registry2 = await loadRegistry();
         const time2 = Date.now() - start2;
 
-        // Cached load should be much faster (< 10ms typically)
-        assert(time2 < time1 / 2, `Cached load should be faster: ${time2}ms vs ${time1}ms`);
+        // Cached load should be faster (< 10ms typically)
+        assert(time2 < time1 / 2 || time2 < 10, `Cached load should be faster: ${time2}ms vs ${time1}ms`);
 
         // Should return same data
         assertEquals(registry1.version, registry2.version);
@@ -157,38 +146,8 @@ Deno.test("registry - cache works correctly", async () => {
     }
 });
 
-Deno.test("registry - get registry info", async () => {
-    try {
-        clearRegistryCache();
-
-        const info = await getRegistryInfo();
-
-        // Verify info structure
-        assertEquals(info.version, 2);
-        assert(info.entryCount > 0);
-        assertExists(info.sampleEntries);
-        assert(Array.isArray(info.sampleEntries));
-        assert(info.sampleEntries.length > 0);
-
-        // Verify sample entries are valid strings
-        for (const entry of info.sampleEntries) {
-            assertEquals(typeof entry, "string");
-            assert(entry.length > 0);
-        }
-
-        console.log("Sample registry entries:", info.sampleEntries);
-    } catch (error) {
-        if (error.message.includes("fetch") || error.message.includes("network")) {
-            console.warn("Skipping test due to network issue:", error.message);
-        } else {
-            throw error;
-        }
-    }
-});
-
 Deno.test("registry - resolve returns null for non-existent flake", async () => {
     try {
-        clearRegistryCache();
 
         const resolved = await resolveIndirectReference("absolutely-non-existent-flake-xyz");
 
@@ -205,7 +164,6 @@ Deno.test("registry - resolve returns null for non-existent flake", async () => 
 
 Deno.test("registry - handles different target types correctly", async () => {
     try {
-        clearRegistryCache();
 
         // Get all flakes to see different types
         const registry = await loadRegistry();

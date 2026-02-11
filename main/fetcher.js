@@ -9,7 +9,7 @@
  * @param {string} destPath - Destination file path
  * @returns {Promise<string>} - Returns destPath on success
  */
-export async function downloadFile(url, destPath) {
+async function downloadFile(url, destPath) {
     const response = await fetch(url);
 
     if (!response.ok) {
