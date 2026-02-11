@@ -1,0 +1,160 @@
+import { createRuntime } from "../../../../runtime.js"
+const runtime = createRuntime()
+const operators = runtime.operators
+
+export default (function(arg){
+                    const nixScope = {
+                        // inherit parent scope
+                        ...runtime.scopeStack.slice(-1)[0],
+                        // inherit default arguments
+                        
+                        // inherit arguments
+                        ...arg,
+                        // all-args arg (if @ syntax is used)
+                        
+                    }
+                    runtime.scopeStack.push(nixScope)
+                    try {
+                        return (function(){
+    const nixScope = {...runtime.scopeStack.slice(-1)[0]};
+    runtime.scopeStack.push(nixScope);
+    try {
+        nixScope["any"] = nixScope["lib"]["any"];
+        nixScope["filterAttrs"] = nixScope["lib"]["filterAttrs"];
+        nixScope["foldl"] = nixScope["lib"]["foldl"];
+        nixScope["hasInfix"] = nixScope["lib"]["hasInfix"];
+        nixScope["isAttrs"] = nixScope["lib"]["isAttrs"];
+        nixScope["isFunction"] = nixScope["lib"]["isFunction"];
+        nixScope["isList"] = nixScope["lib"]["isList"];
+        nixScope["mapAttrs"] = nixScope["lib"]["mapAttrs"];
+        nixScope["optional"] = nixScope["lib"]["optional"];
+        nixScope["optionalAttrs"] = nixScope["lib"]["optionalAttrs"];
+        nixScope["optionalString"] = nixScope["lib"]["optionalString"];
+        nixScope["removeSuffix"] = nixScope["lib"]["removeSuffix"];
+        nixScope["replaceString"] = nixScope["lib"]["replaceString"];
+        nixScope["toUpper"] = nixScope["lib"]["toUpper"];
+        nixScope["toJSON"] = nixScope["lib"]["strings"]["toJSON"];
+        Object.defineProperty(nixScope, "doubles", {enumerable: true, get(){return nixScope["import"]((new Path(["./doubles.nix"], [])))(({"lib": nixScope["lib"]}));}});
+        Object.defineProperty(nixScope, "parse", {enumerable: true, get(){return nixScope["import"]((new Path(["./parse.nix"], [])))(({"lib": nixScope["lib"]}));}});
+        Object.defineProperty(nixScope, "inspect", {enumerable: true, get(){return nixScope["import"]((new Path(["./inspect.nix"], [])))(({"lib": nixScope["lib"]}));}});
+        Object.defineProperty(nixScope, "platforms", {enumerable: true, get(){return nixScope["import"]((new Path(["./platforms.nix"], [])))(({"lib": nixScope["lib"]}));}});
+        Object.defineProperty(nixScope, "examples", {enumerable: true, get(){return nixScope["import"]((new Path(["./examples.nix"], [])))(({"lib": nixScope["lib"]}));}});
+        Object.defineProperty(nixScope, "architectures", {enumerable: true, get(){return nixScope["import"]((new Path(["./architectures.nix"], [])))(({"lib": nixScope["lib"]}));}});
+        Object.defineProperty(nixScope, "equals", {enumerable: true, get(){return (function(){
+    const nixScope = {...runtime.scopeStack.slice(-1)[0]};
+    runtime.scopeStack.push(nixScope);
+    try {
+        Object.defineProperty(nixScope, "removeFunctions", {enumerable: true, get(){return (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["a"] = arg; runtime.scopeStack.push(nixScope); try { return nixScope["filterAttrs"](((function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["_"] = arg; runtime.scopeStack.push(nixScope); try { return (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["v"] = arg; runtime.scopeStack.push(nixScope); try { return operators.negate(nixScope["isFunction"](nixScope["v"])); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1]); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])))(nixScope["a"]); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1]);}});
+        return (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["a"] = arg; runtime.scopeStack.push(nixScope); try { return (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["b"] = arg; runtime.scopeStack.push(nixScope); try { return operators.equal(nixScope["removeFunctions"](nixScope["a"]), nixScope["removeFunctions"](nixScope["b"])); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1]); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1]);
+    } finally {
+        runtime.scopeStack.pop();
+    }
+})();}});
+        Object.defineProperty(nixScope, "flakeExposed", {enumerable: true, get(){return nixScope["import"]((new Path(["./flake-systems.nix"], [])))({});}});
+        Object.defineProperty(nixScope, "systemToAttrs", {enumerable: true, get(){return (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["systemOrArgs"] = arg; runtime.scopeStack.push(nixScope); try { return (operators.ifThenElse(nixScope["isAttrs"](nixScope["systemOrArgs"]), ()=>(nixScope["systemOrArgs"]), ()=>(({"system": nixScope["systemOrArgs"]})))); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1]);}});
+        Object.defineProperty(nixScope, "elaborate", {enumerable: true, get(){return (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["systemOrArgs"] = arg; runtime.scopeStack.push(nixScope); try { return (function(){
+    const nixScope = {...runtime.scopeStack.slice(-1)[0]};
+    runtime.scopeStack.push(nixScope);
+    try {
+        Object.defineProperty(nixScope, "allArgs", {enumerable: true, get(){return nixScope["systemToAttrs"](nixScope["systemOrArgs"]);}});
+        Object.defineProperty(nixScope, "args", {enumerable: true, get(){return nixScope["builtins"]["removeAttrs"](nixScope["allArgs"])(["parsed","system"]);}});
+        Object.defineProperty(nixScope, "rust", {enumerable: true, get(){return operators.selectOrDefault(nixScope["args"], ["rust"], operators.selectOrDefault(nixScope["args"], ["rustc"], {}));}});
+        Object.defineProperty(nixScope, "final", {enumerable: true, get(){return operators.merge(({"parsed": nixScope["parse"]["mkSystemFromString"]((operators.selectOrDefault(nixScope["args"], ["config"], nixScope["allArgs"]["system"]))), "system": nixScope["parse"]["doubleFromSystem"](nixScope["final"]["parsed"]), "config": nixScope["parse"]["tripleFromSystem"](nixScope["final"]["parsed"]), "canExecute": (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["platform"] = arg; runtime.scopeStack.push(nixScope); try { return operators.and(operators.and(operators.and(operators.equal(nixScope["final"]["isAndroid"], nixScope["platform"]["isAndroid"]), nixScope["parse"]["isCompatible"](nixScope["final"]["parsed"]["cpu"])(nixScope["platform"]["parsed"]["cpu"])), operators.equal(nixScope["final"]["parsed"]["kernel"], nixScope["platform"]["parsed"]["kernel"])), (operators.implication(operators.equal(nixScope["final"]["parsed"]["cpu"], nixScope["platform"]["parsed"]["cpu"]), operators.or((operators.implication((operators.and(operators.hasAttrPath(nixScope["final"], "gcc", "arch"), operators.hasAttrPath(nixScope["platform"], "gcc", "arch"))), nixScope["architectures"]["canExecute"](nixScope["final"]["gcc"]["arch"])(nixScope["platform"]["gcc"]["arch"]))), (operators.implication(operators.hasAttrPath(nixScope["platform"], "gcc", "arch"), operators.negate((operators.hasAttrPath(nixScope["final"], "gcc", "arch"))))))))); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1]), "isCompatible": (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["_"] = arg; runtime.scopeStack.push(nixScope); try { return nixScope["throw"]("2022-05-23: isCompatible has been removed in favor of canExecute, refer to the 22.11 changelog for details"); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1]), "useLLVM": operators.or(nixScope["final"]["isFreeBSD"], nixScope["final"]["isOpenBSD"]), "libc": (operators.ifThenElse(nixScope["final"]["isDarwin"], ()=>("libSystem"), ()=>((operators.ifThenElse(nixScope["final"]["isMsvc"], ()=>("ucrt"), ()=>((operators.ifThenElse(nixScope["final"]["isMinGW"], ()=>("msvcrt"), ()=>((operators.ifThenElse(nixScope["final"]["isWasi"], ()=>("wasilibc"), ()=>((operators.ifThenElse(operators.and(nixScope["final"]["isWasm"], operators.negate(nixScope["final"]["isWasi"])), ()=>(null), ()=>((operators.ifThenElse(nixScope["final"]["isRedox"], ()=>("relibc"), ()=>((operators.ifThenElse(nixScope["final"]["isMusl"], ()=>("musl"), ()=>((operators.ifThenElse(nixScope["final"]["isUClibc"], ()=>("uclibc"), ()=>((operators.ifThenElse(nixScope["final"]["isAndroid"], ()=>("bionic"), ()=>((operators.ifThenElse(nixScope["final"]["isLinux"], ()=>("glibc"), ()=>((operators.ifThenElse(nixScope["final"]["isFreeBSD"], ()=>("fblibc"), ()=>((operators.ifThenElse(nixScope["final"]["isOpenBSD"], ()=>("oblibc"), ()=>((operators.ifThenElse(nixScope["final"]["isNetBSD"], ()=>("nblibc"), ()=>((operators.ifThenElse(nixScope["final"]["isAvr"], ()=>("avrlibc"), ()=>((operators.ifThenElse(nixScope["final"]["isGhcjs"], ()=>(null), ()=>((operators.ifThenElse(nixScope["final"]["isNone"], ()=>("newlib"), ()=>("native/impure")))))))))))))))))))))))))))))))))))))))))))))))), "linker": (operators.ifThenElse(operators.selectOrDefault(nixScope["final"], ["useLLVM"], false), ()=>("lld"), ()=>((operators.ifThenElse(nixScope["final"]["isDarwin"], ()=>("cctools"), ()=>("bfd")))))), "libDir": (operators.ifThenElse(nixScope["final"]["isLinux"], ()=>((operators.ifThenElse(operators.or(operators.or(nixScope["final"]["isx86_64"], nixScope["final"]["isMips64"]), nixScope["final"]["isPower64"]), ()=>("lib64"), ()=>("lib")))), ()=>(null))), "extensions": operators.merge(nixScope["optionalAttrs"](nixScope["final"]["hasSharedLibraries"])(({"sharedLibrary": (operators.ifThenElse(nixScope["final"]["isDarwin"], ()=>(".dylib"), ()=>((operators.ifThenElse(nixScope["final"]["isWindows"], ()=>(".dll"), ()=>(".so"))))))})), ({"staticLibrary": (operators.ifThenElse(nixScope["final"]["isWindows"], ()=>(".lib"), ()=>(".a"))), "library": (operators.ifThenElse(nixScope["final"]["isStatic"], ()=>(nixScope["final"]["extensions"]["staticLibrary"]), ()=>(nixScope["final"]["extensions"]["sharedLibrary"]))), "executable": (operators.ifThenElse(nixScope["final"]["isWindows"], ()=>(".exe"), ()=>("")))})), "useAndroidPrebuilt": false, "useiOSPrebuilt": false, "uname": ({"system": operators.selectOrDefault(({"linux": "Linux", "windows": "Windows", "darwin": "Darwin", "netbsd": "NetBSD", "freebsd": "FreeBSD", "openbsd": "OpenBSD", "wasi": "Wasi", "redox": "Redox", "genode": "Genode"}), [nixScope["final"]["parsed"]["kernel"]["name"]], null), "processor": (operators.ifThenElse(nixScope["final"]["isPower64"], ()=>((new InterpolatedString(["ppc64", ""], [()=>(nixScope["optionalString"](nixScope["final"]["isLittleEndian"])("le"))]))), ()=>((operators.ifThenElse(nixScope["final"]["isPower"], ()=>((new InterpolatedString(["ppc", ""], [()=>(nixScope["optionalString"](nixScope["final"]["isLittleEndian"])("le"))]))), ()=>((operators.ifThenElse(nixScope["final"]["isMips64"], ()=>("mips64"), ()=>((operators.ifThenElse(nixScope["final"]["isDarwin"], ()=>(nixScope["final"]["darwinArch"]), ()=>(nixScope["final"]["parsed"]["cpu"]["name"])))))))))))), "release": null}), "hasSharedLibraries": ((_withAttrs)=>{
+    const nixScope = {...runtime.scopeStack.slice(-1)[0], ..._withAttrs};
+    runtime.scopeStack.push(nixScope);
+    try {
+        return operators.and((operators.or(operators.or(operators.or(operators.or(operators.or(operators.or(operators.or(operators.or(operators.or(operators.or(operators.or(nixScope["isAndroid"], nixScope["isGnu"]), nixScope["isMusl"]), nixScope["isDarwin"]), nixScope["isSunOS"]), nixScope["isOpenBSD"]), nixScope["isFreeBSD"]), nixScope["isNetBSD"]), nixScope["isCygwin"]), nixScope["isMinGW"]), nixScope["isWindows"]), nixScope["isWasm"])), operators.negate(nixScope["isStatic"]));
+    } finally {
+        runtime.scopeStack.pop();
+    }
+})(nixScope["final"]), "isStatic": operators.or(nixScope["final"]["isWasi"], nixScope["final"]["isRedox"]), "rustc": operators.selectOrDefault(nixScope["args"], ["rustc"], {}), "linuxArch": (operators.ifThenElse(nixScope["final"]["isAarch32"], ()=>("arm"), ()=>((operators.ifThenElse(nixScope["final"]["isAarch64"], ()=>("arm64"), ()=>((operators.ifThenElse(nixScope["final"]["isx86_32"], ()=>("i386"), ()=>((operators.ifThenElse(nixScope["final"]["isx86_64"], ()=>("x86_64"), ()=>((operators.ifThenElse(nixScope["final"]["isMicroBlaze"], ()=>("microblaze"), ()=>((operators.ifThenElse(nixScope["final"]["isMips32"], ()=>("mips"), ()=>((operators.ifThenElse(nixScope["final"]["isMips64"], ()=>("mips"), ()=>((operators.ifThenElse(nixScope["final"]["isPower"], ()=>("powerpc"), ()=>((operators.ifThenElse(nixScope["final"]["isRiscV"], ()=>("riscv"), ()=>((operators.ifThenElse(nixScope["final"]["isS390"], ()=>("s390"), ()=>((operators.ifThenElse(nixScope["final"]["isLoongArch64"], ()=>("loongarch"), ()=>(nixScope["final"]["parsed"]["cpu"]["name"]))))))))))))))))))))))))))))))))), "ubootArch": (operators.ifThenElse(nixScope["final"]["isx86_32"], ()=>("x86"), ()=>((operators.ifThenElse(nixScope["final"]["isMips64"], ()=>("mips64"), ()=>(nixScope["final"]["linuxArch"])))))), "qemuArch": (operators.ifThenElse(nixScope["final"]["isAarch32"], ()=>("arm"), ()=>((operators.ifThenElse(nixScope["final"]["isAarch64"], ()=>("aarch64"), ()=>((operators.ifThenElse(operators.and(nixScope["final"]["isS390"], operators.negate(nixScope["final"]["isS390x"])), ()=>(null), ()=>((operators.ifThenElse(nixScope["final"]["isx86_64"], ()=>("x86_64"), ()=>((operators.ifThenElse(nixScope["final"]["isx86"], ()=>("i386"), ()=>((operators.ifThenElse(nixScope["final"]["isMips64n32"], ()=>((new InterpolatedString(["mipsn32", ""], [()=>(nixScope["optionalString"](nixScope["final"]["isLittleEndian"])("el"))]))), ()=>((operators.ifThenElse(nixScope["final"]["isMips64"], ()=>((new InterpolatedString(["mips64", ""], [()=>(nixScope["optionalString"](nixScope["final"]["isLittleEndian"])("el"))]))), ()=>(nixScope["final"]["uname"]["processor"]))))))))))))))))))))), "efiArch": (operators.ifThenElse(nixScope["final"]["isx86_32"], ()=>("ia32"), ()=>((operators.ifThenElse(nixScope["final"]["isx86_64"], ()=>("x64"), ()=>((operators.ifThenElse(nixScope["final"]["isAarch32"], ()=>("arm"), ()=>((operators.ifThenElse(nixScope["final"]["isAarch64"], ()=>("aa64"), ()=>(nixScope["final"]["parsed"]["cpu"]["name"])))))))))))), "darwinArch": nixScope["parse"]["darwinArch"](nixScope["final"]["parsed"]["cpu"]), "darwinPlatform": (operators.ifThenElse(nixScope["final"]["isMacOS"], ()=>("macos"), ()=>((operators.ifThenElse(nixScope["final"]["isiOS"], ()=>("ios"), ()=>(null)))))), "darwinSdkVersion": operators.selectOrDefault(nixScope["final"], ["sdkVer"], "11.3"), "darwinMinVersion": nixScope["final"]["darwinSdkVersion"], "darwinMinVersionVariable": (operators.ifThenElse(nixScope["final"]["isMacOS"], ()=>("MACOSX_DEPLOYMENT_TARGET"), ()=>((operators.ifThenElse(nixScope["final"]["isiOS"], ()=>("IPHONEOS_DEPLOYMENT_TARGET"), ()=>(null)))))), "androidSdkVersion": operators.selectOrDefault(nixScope["args"], ["androidSdkVersion"], null), "androidNdkVersion": operators.selectOrDefault(nixScope["args"], ["androidNdkVersion"], null)}), operators.merge(((function(){
+    const nixScope = {...runtime.scopeStack.slice(-1)[0]};
+    runtime.scopeStack.push(nixScope);
+    try {
+        Object.defineProperty(nixScope, "selectEmulator", {enumerable: true, get(){return (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["pkgs"] = arg; runtime.scopeStack.push(nixScope); try { return (function(){
+    const nixScope = {...runtime.scopeStack.slice(-1)[0]};
+    runtime.scopeStack.push(nixScope);
+    try {
+        Object.defineProperty(nixScope, "wine", {enumerable: true, get(){return (nixScope["pkgs"]["winePackagesFor"]((new InterpolatedString(["wine", ""], [()=>(nixScope["toString"](nixScope["final"]["parsed"]["cpu"]["bits"]))]))))["minimal"];}});
+        return (operators.ifThenElse(nixScope["pkgs"]["stdenv"]["hostPlatform"]["canExecute"](nixScope["final"]), ()=>(nixScope["lib"]["getExe"]((nixScope["pkgs"]["writeShellScriptBin"]("exec")(`exec "$@"`)))), ()=>((operators.ifThenElse(nixScope["final"]["isWindows"], ()=>((new InterpolatedString(["", "/bin/wine", ""], [()=>(nixScope["wine"]), ()=>(nixScope["optionalString"]((operators.equal(nixScope["final"]["parsed"]["cpu"]["bits"], 64n)))("64"))]))), ()=>((operators.ifThenElse(operators.and(operators.and(nixScope["final"]["isLinux"], nixScope["pkgs"]["stdenv"]["hostPlatform"]["isLinux"]), operators.notEqual(nixScope["final"]["qemuArch"], null)), ()=>((new InterpolatedString(["", "/bin/qemu-", ""], [()=>(nixScope["pkgs"]["qemu-user"]), ()=>(nixScope["final"]["qemuArch"])]))), ()=>((operators.ifThenElse(nixScope["final"]["isWasi"], ()=>((new InterpolatedString(["", "/bin/wasmtime"], [()=>(nixScope["pkgs"]["wasmtime"])]))), ()=>((operators.ifThenElse(nixScope["final"]["isMmix"], ()=>((new InterpolatedString(["", "/bin/mmix"], [()=>(nixScope["pkgs"]["mmixware"])]))), ()=>(null)))))))))))))));
+    } finally {
+        runtime.scopeStack.pop();
+    }
+})(); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1]);}});
+        return ({"emulatorAvailable": (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["pkgs"] = arg; runtime.scopeStack.push(nixScope); try { return operators.notEqual((nixScope["selectEmulator"](nixScope["pkgs"])), null); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1]), "staticEmulatorAvailable": (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["pkgs"] = arg; runtime.scopeStack.push(nixScope); try { return operators.and(nixScope["final"]["emulatorAvailable"](nixScope["pkgs"]), (operators.or(operators.or(nixScope["final"]["isLinux"], nixScope["final"]["isWasi"]), nixScope["final"]["isMmix"]))); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1]), "emulator": (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["pkgs"] = arg; runtime.scopeStack.push(nixScope); try { return (operators.ifThenElse((nixScope["final"]["emulatorAvailable"](nixScope["pkgs"])), ()=>(nixScope["selectEmulator"](nixScope["pkgs"])), ()=>(nixScope["throw"]((new InterpolatedString(["Don't know how to run ", " executables."], [()=>(nixScope["final"]["config"])])))))); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])});
+    } finally {
+        runtime.scopeStack.pop();
+    }
+})()), operators.merge(nixScope["mapAttrs"](((function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["n"] = arg; runtime.scopeStack.push(nixScope); try { return (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["v"] = arg; runtime.scopeStack.push(nixScope); try { return nixScope["v"](nixScope["final"]["parsed"]); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1]); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])))(nixScope["inspect"]["predicates"]), operators.merge(nixScope["mapAttrs"](((function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["n"] = arg; runtime.scopeStack.push(nixScope); try { return (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["v"] = arg; runtime.scopeStack.push(nixScope); try { return nixScope["v"](operators.selectOrDefault(nixScope["final"], ["gcc", "arch"], "default")); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1]); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])))(nixScope["architectures"]["predicates"]), operators.merge(nixScope["args"], operators.merge(({"rust": operators.merge(nixScope["rust"], ({"platform": operators.merge(operators.selectOrDefault(nixScope["rust"], ["platform"], {}), ({"arch": (operators.ifThenElse(operators.hasAttr(nixScope["rust"], "platform"), ()=>(nixScope["rust"]["platform"]["arch"]), ()=>((operators.ifThenElse(nixScope["final"]["isAarch32"], ()=>("arm"), ()=>((operators.ifThenElse(nixScope["final"]["isMips64"], ()=>("mips64"), ()=>((operators.ifThenElse(nixScope["final"]["isPower64"], ()=>("powerpc64"), ()=>(nixScope["final"]["parsed"]["cpu"]["name"])))))))))))), "os": (operators.ifThenElse(operators.hasAttr(nixScope["rust"], "platform"), ()=>(operators.selectOrDefault(nixScope["rust"], ["platform", "os"], "none")), ()=>((operators.ifThenElse(nixScope["final"]["isDarwin"], ()=>("macos"), ()=>((operators.ifThenElse(operators.and(nixScope["final"]["isWasm"], operators.negate(nixScope["final"]["isWasi"])), ()=>("unknown"), ()=>(nixScope["final"]["parsed"]["kernel"]["name"]))))))))), "target-family": (operators.ifThenElse(operators.hasAttrPath(nixScope["args"], "rust", "platform", "target-family"), ()=>(nixScope["args"]["rust"]["platform"]["target-family"]), ()=>((operators.ifThenElse(operators.hasAttrPath(nixScope["args"], "rustc", "platform", "target-family"), ()=>(((function(){
+    const nixScope = {...runtime.scopeStack.slice(-1)[0]};
+    runtime.scopeStack.push(nixScope);
+    try {
+        Object.defineProperty(nixScope, "f", {enumerable: true, get(){return nixScope["args"]["rustc"]["platform"]["target-family"];}});
+        return (operators.ifThenElse(nixScope["isList"](nixScope["f"]), ()=>(nixScope["f"]), ()=>([nixScope["f"]])));
+    } finally {
+        runtime.scopeStack.pop();
+    }
+})())), ()=>(operators.listConcat(nixScope["optional"](nixScope["final"]["isUnix"])("unix"), operators.listConcat(nixScope["optional"](nixScope["final"]["isWindows"])("windows"), nixScope["optional"](nixScope["final"]["isWasm"])("wasm"))))))))), "vendor": (function(){
+    const nixScope = {...runtime.scopeStack.slice(-1)[0]};
+    runtime.scopeStack.push(nixScope);
+    try {
+        nixScope["vendor"] = nixScope["final"]["parsed"]["vendor"];
+        return operators.selectOrDefault(nixScope["rust"], ["platform", "vendor"], operators.selectOrDefault(({"w64": "pc"}), [nixScope["vendor"]["name"]], nixScope["vendor"]["name"]));
+    } finally {
+        runtime.scopeStack.pop();
+    }
+})()})), "rustcTarget": (function(){
+    const nixScope = {...runtime.scopeStack.slice(-1)[0]};
+    runtime.scopeStack.push(nixScope);
+    try {
+        nixScope["cpu"] = nixScope["final"]["parsed"]["cpu"];
+        nixScope["kernel"] = nixScope["final"]["parsed"]["kernel"];
+        nixScope["abi"] = nixScope["final"]["parsed"]["abi"];
+        Object.defineProperty(nixScope, "cpu_", {enumerable: true, get(){return operators.selectOrDefault(nixScope["rust"], ["platform", "arch"], operators.selectOrDefault(({"armv7a": "armv7", "armv7l": "armv7", "armv6l": "arm", "armv5tel": "armv5te", "riscv32": "riscv32gc", "riscv64": "riscv64gc"}), [nixScope["cpu"]["name"]], nixScope["cpu"]["name"]));}});
+        Object.defineProperty(nixScope, "vendor_", {enumerable: true, get(){return nixScope["final"]["rust"]["platform"]["vendor"];}});
+        return operators.selectOrDefault(nixScope["args"], ["rust", "rustcTarget"], operators.selectOrDefault(nixScope["args"], ["rustc", "config"], ((operators.ifThenElse(nixScope["final"]["isWasi"], ()=>((new InterpolatedString(["", "-wasip1"], [()=>(nixScope["cpu_"])]))), ()=>((new InterpolatedString(["", "-", "-", "", ""], [()=>(nixScope["cpu_"]), ()=>(nixScope["vendor_"]), ()=>(nixScope["kernel"]["name"]), ()=>(nixScope["optionalString"]((operators.notEqual(nixScope["abi"]["name"], "unknown")))((new InterpolatedString(["-", ""], [()=>(nixScope["abi"]["name"])]))))]))))))));
+    } finally {
+        runtime.scopeStack.pop();
+    }
+})(), "rustcTargetSpec": operators.selectOrDefault(nixScope["rust"], ["rustcTargetSpec"], ((operators.ifThenElse(operators.hasAttr(nixScope["rust"], "platform"), ()=>(nixScope["builtins"]["toFile"]((operators.add(nixScope["final"]["rust"]["rustcTarget"], ".json")))((nixScope["toJSON"](nixScope["rust"]["platform"])))), ()=>(nixScope["final"]["rust"]["rustcTarget"]))))), "cargoShortTarget": nixScope["removeSuffix"](".json")((nixScope["baseNameOf"]((new InterpolatedString(["", ""], [()=>(nixScope["final"]["rust"]["rustcTargetSpec"])]))))), "cargoEnvVarTarget": nixScope["replaceString"]("-")("_")((nixScope["toUpper"](nixScope["final"]["rust"]["cargoShortTarget"]))), "isNoStdTarget": nixScope["any"](((function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["t"] = arg; runtime.scopeStack.push(nixScope); try { return nixScope["hasInfix"](nixScope["t"])(nixScope["final"]["rust"]["rustcTarget"]); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])))(["-none","nvptx","switch","-uefi"])}))}), ({"go": ({"GOARCH": operators.selectOrDefault(({"aarch64": "arm64", "arm": "arm", "armv5tel": "arm", "armv6l": "arm", "armv7l": "arm", "i686": "386", "loongarch64": "loong64", "mips": "mips", "mips64el": "mips64le", "mipsel": "mipsle", "powerpc64": "ppc64", "powerpc64le": "ppc64le", "riscv64": "riscv64", "s390x": "s390x", "x86_64": "amd64", "wasm32": "wasm"}), [nixScope["final"]["parsed"]["cpu"]["name"]], null), "GOOS": (operators.ifThenElse(nixScope["final"]["isWasi"], ()=>("wasip1"), ()=>(nixScope["final"]["parsed"]["kernel"]["name"]))), "GOARM": nixScope["toString"]((nixScope["lib"]["intersectLists"]([(operators.selectOrDefault(nixScope["final"], ["parsed", "cpu", "version"], ""))])(["5","6","7"])))})})))))));}});
+        return ((_cond)=>{
+    if (!_cond) {
+        throw new Error("assertion failed: " + "final.useAndroidPrebuilt -> final.isAndroid");
+    }
+    return ((_cond)=>{
+    if (!_cond) {
+        throw new Error("assertion failed: " + "foldl (pass: { assertion, message }: if assertion final then pass else throw message) true (\n      final.parsed.abi.assertions or [ ]\n    )");
+    }
+    return nixScope["final"];
+})(nixScope["foldl"](((function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["pass"] = arg; runtime.scopeStack.push(nixScope); try { return (function(arg){
+                    const nixScope = {
+                        // inherit parent scope
+                        ...runtime.scopeStack.slice(-1)[0],
+                        // inherit default arguments
+                        
+                        // inherit arguments
+                        ...arg,
+                        // all-args arg (if @ syntax is used)
+                        
+                    }
+                    runtime.scopeStack.push(nixScope)
+                    try {
+                        return (operators.ifThenElse(nixScope["assertion"](nixScope["final"]), ()=>(nixScope["pass"]), ()=>(nixScope["throw"](nixScope["message"]))))
+                    } finally {
+                        runtime.scopeStack.pop()
+                    }
+                }); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])))(true)((operators.selectOrDefault(nixScope["final"], ["parsed", "abi", "assertions"], []))));
+})(operators.implication(nixScope["final"]["useAndroidPrebuilt"], nixScope["final"]["isAndroid"]));
+    } finally {
+        runtime.scopeStack.pop();
+    }
+})(); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1]);}});
+        return ({"architectures": nixScope["architectures"], "doubles": nixScope["doubles"], "elaborate": nixScope["elaborate"], "equals": nixScope["equals"], "examples": nixScope["examples"], "flakeExposed": nixScope["flakeExposed"], "inspect": nixScope["inspect"], "parse": nixScope["parse"], "platforms": nixScope["platforms"], "systemToAttrs": nixScope["systemToAttrs"]});
+    } finally {
+        runtime.scopeStack.pop();
+    }
+})()
+                    } finally {
+                        runtime.scopeStack.pop()
+                    }
+                })
