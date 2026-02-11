@@ -10,8 +10,6 @@
  * 3. Global registry: https://channels.nixos.org/flake-registry.json
  */
 
-import { FileSystem } from "https://deno.land/x/quickr@0.6.51/main/file_system.js"
-
 const GLOBAL_REGISTRY_URL = "https://channels.nixos.org/flake-registry.json"
 const USER_REGISTRY_PATH = `${Deno.env.get("HOME") || "~"}/.config/nix/registry.json`
 const SYSTEM_REGISTRY_PATH = "/etc/nix/registry.json"

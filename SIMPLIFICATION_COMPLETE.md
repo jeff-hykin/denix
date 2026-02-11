@@ -2,8 +2,8 @@
 
 ## What Was Done
 
-### Removed Documentation Bloat
-- ✅ Deleted `prompt.md` - agent-specific instructions (7KB)
+### Documentation Status
+- ✅ Kept `prompt.md` - active agent instructions (240 lines, 8KB)
 - ✅ This file replaces SIMPLIFICATION_PLAN.md
 
 **Result**: Cleaner repository with only essential documentation
@@ -64,9 +64,9 @@ main/
 **Keep:**
 - ✅ README.md - User-facing documentation
 - ✅ TODO.md - Development priorities
+- ✅ prompt.md - Active agent instructions (NOT deleted)
 
 **Removed:**
-- ✅ prompt.md - Agent instructions (deleted)
 - ✅ SIMPLIFICATION_PLAN.md - Replaced by this file
 
 ## Conclusion
