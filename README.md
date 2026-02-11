@@ -2,7 +2,7 @@
 
 A Nix → JavaScript translator with 1-to-1 parity for Nix 2.18 builtins, implemented in Deno.
 
-[![Tests](https://img.shields.io/badge/tests-240%2B%20passing-brightgreen)](#testing)
+[![Tests](https://img.shields.io/badge/tests-413%2B%20passing-brightgreen)](#testing)
 [![Nix](https://img.shields.io/badge/Nix-2.18-blue)](https://nix.dev/manual/nix/2.18/language/builtins)
 [![Deno](https://img.shields.io/badge/Deno-latest-blue)](https://deno.land/)
 
@@ -77,30 +77,40 @@ const result = eval(jsCode)  // 3n
 
 ```
 denix/
-├── main.js                 # Nix → JS translator
+├── main.js                 # Nix → JS translator (1,264 lines)
 ├── main/
-│   ├── runtime.js          # 109 Nix builtins + operators
-│   └── tests/              # Test suite (33 files, 413+ tests)
-├── tools/                  # Utilities (hashing, store paths)
-├── test.sh                 # Test runner
-├── prompt.md               # Current priorities
-└── ARCHITECTURE.md         # System design
+│   ├── runtime.js          # 109 Nix builtins + operators (2,513 lines)
+│   └── tests/              # Test suite (36 files, 413+ tests)
+├── tools/                  # Utilities (hashing, store paths, 10 modules)
+├── test.sh                 # Smart test runner with filters
+└── prompt.md               # Current priorities & task breakdown
 ```
 
 ## Testing
 
-**Current coverage:** 413+ tests passing
-- Runtime tests: ~260+
-- Translator tests: 87
-- Integration tests: ~66+
+**Current coverage:** 413+ tests passing across 36 test files
+- Runtime builtins: ~260+ tests (16 files)
+- Translator: 87 tests (4 files)
+- Import system: 49 tests (5 files)
+- Derivations: 12 tests (2 files)
+- Infrastructure: 30+ tests (4 files)
+- Integration: 66+ tests (2 files - nixpkgs.lib validation)
 
-**Test categories:**
-1. Runtime builtins (builtins_*_test.js)
-2. Translator (translator_test.js)
-3. Derivations (derivation/*)
-4. Import system (import_*_test.js)
-5. Infrastructure (fetcher, tar, nar_hash, store_manager)
-6. Integration (nixpkgs.lib validation)
+**Smart test runner:**
+```bash
+./test.sh              # Run all tests
+./test.sh math         # Run math & bitwise tests
+./test.sh lists        # Run list operation tests
+./test.sh translator   # Run translator tests
+./test.sh derivation   # Run derivation tests
+./test.sh integration  # Run nixpkgs.lib integration tests
+```
+
+**Test by pattern:**
+```bash
+./test.sh fetchGit     # Run tests matching "fetchGit"
+deno test --allow-all --filter="import"
+```
 
 ## Implementation Status
 
