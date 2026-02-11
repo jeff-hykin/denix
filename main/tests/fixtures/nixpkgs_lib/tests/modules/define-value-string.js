@@ -1,2 +1,1 @@
-
-export default ({"value": "24"})
+export default ({ "value": "24" });

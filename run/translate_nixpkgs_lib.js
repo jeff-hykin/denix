@@ -45,7 +45,7 @@ async function translateFile(nixPath) {
         const runtimePath = `${upDirs}../../runtime.js`  // Then navigate to main/runtime.js
 
         // Translate to JavaScript with correct runtime path
-        const jsCode = convertToJs(nixCode, { runtimePath })
+        const jsCode = await convertToJs(nixCode, { runtimePath })
 
         // Generate output path (.nix -> .js) - already done above
 

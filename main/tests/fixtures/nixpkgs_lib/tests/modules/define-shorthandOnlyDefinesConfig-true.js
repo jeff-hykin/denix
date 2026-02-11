@@ -1,2 +1,1 @@
-
-export default ({"shorthandOnlyDefinesConfig": true})
+export default ({ "shorthandOnlyDefinesConfig": true });

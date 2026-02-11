@@ -4,12 +4,16 @@
  * Tests that translated code produces correct results
  */
 
-import { convertToJs } from "../../translator.js"
+import { convertToJsSync } from "../../translator.js"
+import { createRuntime as createFullRuntime } from "../runtime.js"
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts"
 
 // Helper to evaluate the translated JavaScript code
 const evalTranslated = (nixCode) => {
-    let jsCode = convertToJs(nixCode)
+    let jsCode = convertToJsSync(nixCode)
+
+    // Get createFunc from real runtime
+    const { createFunc } = createFullRuntime()
 
     // Create a simple runtime for testing
     const runtime = {
@@ -63,11 +67,13 @@ const evalTranslated = (nixCode) => {
         },
     }
 
-    // Strip import statement if present (for simple expressions that don't need runtime)
-    if (jsCode.includes('import { createRuntime }')) {
-        jsCode = jsCode.replace(/import \{ createRuntime \}.*\n/, '')
-        jsCode = jsCode.replace(/const runtime = createRuntime\(\)\n/, '')
-    }
+    // Strip import and export statements (for simple expressions that don't need runtime)
+    jsCode = jsCode.replace(/import \{ createRuntime \}[^\n]*\n/g, '')
+    jsCode = jsCode.replace(/const \{runtime, createFunc\} = createRuntime\(\)[^\n]*\n/g, '')
+    jsCode = jsCode.replace(/const operators = runtime\.operators[^\n]*\n/g, '')
+    jsCode = jsCode.replace(/const builtins = runtime\.builtins[^\n]*\n/g, '')
+    jsCode = jsCode.replace(/^export\s+default\s+/m, '')
+    jsCode = jsCode.trim()
 
     // Wrap in function to provide runtime context
     const wrappedCode = `
@@ -76,8 +82,8 @@ const evalTranslated = (nixCode) => {
         })()
     `
 
-    const fn = new Function('runtime', 'operators', wrappedCode)
-    return fn(runtime, operators)
+    const fn = new Function('runtime', 'operators', 'createFunc', wrappedCode)
+    return fn(runtime, operators, createFunc)
 }
 
 console.log("Testing Nix to JavaScript translator\n")

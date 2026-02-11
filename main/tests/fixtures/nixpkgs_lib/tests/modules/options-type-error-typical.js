@@ -1,7 +1,3 @@
-
-export default // args: {
-//    lib,
-//}
-createFunc({}, null, {}, (nixScope)=>(
-                ({"options": ({"result": nixScope["lib"]["types"]["str"]})})
-            ))
+export default createFunc({}, null, {}, (nixScope) => (
+  { "options": ({ "result": nixScope.lib["types"]["str"] }) }
+));

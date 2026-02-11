@@ -1,7 +1,3 @@
-
-export default // args: {
-
-//}
-createFunc({}, null, {}, (nixScope)=>(
-                ({"disabledModules": [(new Path(["./define-enable.nix"], []))]})
-            ))
+export default createFunc({}, null, {}, (nixScope) => (
+  { "disabledModules": [new Path(["./define-enable.nix"], [])] }
+));

@@ -1,9 +1,5 @@
-
-export default ({"outputs": 
-
-// args: {
-//    self,
-//}
-createFunc({}, null, {}, (nixScope)=>(
-                ({"subflakeOutput": 1n})
-            ))})
+export default ({
+  "outputs": createFunc({}, null, {}, (nixScope) => (
+    { "subflakeOutput": 1n }
+  )),
+});

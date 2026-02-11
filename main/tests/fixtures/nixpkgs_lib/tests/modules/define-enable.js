@@ -1,2 +1,1 @@
-
-export default ({"enable": true})
+export default ({ "enable": true });

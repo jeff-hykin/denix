@@ -1,8 +1,6 @@
-
-export default // args: {
-//    _class,
-//    lib,
-//}
-createFunc({}, null, {}, (nixScope)=>(
-                ({"options": ({"foo": nixScope["lib"]["mkOption"](({"default": nixScope["_class"]}))})})
-            ))
+export default createFunc({}, null, {}, (nixScope) => (
+  {
+    "options":
+      ({ "foo": nixScope.lib["mkOption"]({ "default": nixScope._class }) }),
+  }
+));

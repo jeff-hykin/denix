@@ -1,7 +1,3 @@
-
-export default // args: {
-//    custom,
-//}
-createFunc({}, null, {}, (nixScope)=>(
-                ({"config": ({"enable": nixScope["custom"]})})
-            ))
+export default createFunc({}, null, {}, (nixScope) => (
+  { "config": ({ "enable": nixScope.custom }) }
+));

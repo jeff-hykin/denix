@@ -1,7 +1,3 @@
-
-export default // args: {
-
-//}
-createFunc({}, null, {}, (nixScope)=>(
-                "d"
-            ))
+export default createFunc({}, null, {}, (nixScope) => (
+  "d"
+));

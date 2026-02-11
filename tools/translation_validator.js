@@ -76,7 +76,7 @@ async function evaluateWithNix(nixExpr) {
 async function evaluateWithDenix(nixExpr) {
     try {
         // Translate to JS
-        let jsCode = convertToJs(nixExpr)
+        let jsCode = await convertToJs(nixExpr)
 
         // Create runtime
         const runtimeContext = createRuntime()

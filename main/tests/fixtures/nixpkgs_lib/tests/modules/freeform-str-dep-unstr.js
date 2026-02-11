@@ -1,15 +1,17 @@
-
-export default // args: {
-//    lib,
-//    config,
-//}
-createFunc({}, null, {}, (nixScope)=>(
-                (function(){
-        const obj = {};
-        if (obj["options"] === undefined) obj["options"] = {};
-        obj["options"]["foo"] = nixScope["lib"]["mkOption"](({"type": nixScope["lib"]["types"]["nullOr"](nixScope["lib"]["types"]["str"]), "default": null}));
-        if (obj["config"] === undefined) obj["config"] = {};
-        obj["config"]["foo"] = nixScope["lib"]["mkIf"]((operators.hasAttr(nixScope["config"], "value")))(nixScope["config"]["value"]);
-        return obj;
-    })()
-            ))
+export default createFunc({}, null, {}, (nixScope) => (
+  createScope((nixScope) => {
+    const obj = {};
+    if (obj["options"] === undefined) obj["options"] = {};
+    obj["options"]["foo"] = nixScope.lib["mkOption"](
+      {
+        "type": nixScope.lib["types"]["nullOr"](nixScope.lib["types"]["str"]),
+        "default": null,
+      },
+    );
+    if (obj["config"] === undefined) obj["config"] = {};
+    obj["config"]["foo"] = nixScope.lib["mkIf"](
+      operators.hasAttr(nixScope.config, "value"),
+    )(nixScope.config["value"]);
+    return obj;
+  })
+));

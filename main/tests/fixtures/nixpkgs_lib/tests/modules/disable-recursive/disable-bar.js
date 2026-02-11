@@ -1,2 +1,1 @@
-
-export default ({"disabledModules": [(new Path(["./bar.nix"], []))]})
+export default ({ "disabledModules": [new Path(["./bar.nix"], [])] });

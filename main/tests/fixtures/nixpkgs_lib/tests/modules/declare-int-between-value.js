@@ -1,7 +1,10 @@
-
-export default // args: {
-//    lib,
-//}
-createFunc({}, null, {}, (nixScope)=>(
-                ({"options": ({"value": nixScope["lib"]["mkOption"](({"type": nixScope["lib"]["types"]["ints"]["between"]((-21n))(43n)}))})})
-            ))
+export default createFunc({}, null, {}, (nixScope) => (
+  {
+    "options":
+      ({
+        "value": nixScope.lib["mkOption"](
+          { "type": nixScope.lib["types"]["ints"]["between"](-21n)(43n) },
+        ),
+      }),
+  }
+));

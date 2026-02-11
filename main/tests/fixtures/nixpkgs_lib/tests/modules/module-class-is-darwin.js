@@ -1,2 +1,1 @@
-
-export default ({"_class": "darwin", "config": {}})
+export default ({ "_class": "darwin", "config": {} });

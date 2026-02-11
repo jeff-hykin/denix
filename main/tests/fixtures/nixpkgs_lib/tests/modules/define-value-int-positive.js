@@ -1,2 +1,1 @@
-
-export default ({"value": 42n})
+export default ({ "value": 42n });

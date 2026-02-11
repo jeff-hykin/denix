@@ -1,2 +1,1 @@
-
-export default ({"imports": [({"_type": "flake"})]})
+export default ({ "imports": [{ "_type": "flake" }] });

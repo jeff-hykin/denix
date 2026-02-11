@@ -1,7 +1,3 @@
-
-export default // args: {
-//    lib,
-//}
-createFunc({}, null, {}, (nixScope)=>(
-                ({"imports": [(nixScope["lib"]["mkIf"](true)(({"enable": true})))]})
-            ))
+export default createFunc({}, null, {}, (nixScope) => (
+  { "imports": [nixScope.lib["mkIf"](true)({ "enable": true })] }
+));

@@ -1,2 +1,1 @@
-
-export default ({"_class": "nixos", "config": {}})
+export default ({ "_class": "nixos", "config": {} });

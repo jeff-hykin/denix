@@ -1,2 +1,1 @@
-
-export default ({"value": "foobar"})
+export default ({ "value": "foobar" });

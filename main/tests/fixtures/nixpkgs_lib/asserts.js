@@ -1,42 +1,133 @@
-import { createRuntime, createFunc } from "../../../../../../../../../../../../runtime.js"
-const runtime = createRuntime()
-const operators = runtime.operators
-
-export default // args: {
-//    lib,
-//}
-createFunc({}, null, {}, (nixScope)=>(
-                (function(){
-        const nixScope = {...runtime.scopeStack.slice(-1)[0]};
-        runtime.scopeStack.push(nixScope);
-        try {
-            nixScope["concatStringsSep"] = nixScope["lib"]["strings"]["concatStringsSep"];
-            nixScope["filter"] = nixScope["lib"]["lists"]["filter"];
-            nixScope["showWarnings"] = nixScope["lib"]["trivial"]["showWarnings"];
-            return (function(){
-        const nixScope = Object.create(runtime.scopeStack.slice(-1)[0]);
-        runtime.scopeStack.push(nixScope);
-        try {
-            Object.defineProperty(nixScope, "assertMsg", {enumerable: true, get(){return (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["pred"] = arg; runtime.scopeStack.push(nixScope); try { return (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["msg"] = arg; runtime.scopeStack.push(nixScope); try { return operators.or(nixScope["pred"], nixScope["builtins"]["throw"](nixScope["msg"])); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1]); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1]);}});
-            Object.defineProperty(nixScope, "assertOneOf", {enumerable: true, get(){return (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["name"] = arg; runtime.scopeStack.push(nixScope); try { return (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["val"] = arg; runtime.scopeStack.push(nixScope); try { return (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["xs"] = arg; runtime.scopeStack.push(nixScope); try { return nixScope["assertMsg"]((nixScope["lib"]["elem"](nixScope["val"])(nixScope["xs"])))((new InterpolatedString(["", " must be one of ", ", but is: ", ""], [()=>(nixScope["name"]), ()=>(nixScope["lib"]["generators"]["toPretty"]({})(nixScope["xs"])), ()=>(nixScope["lib"]["generators"]["toPretty"]({})(nixScope["val"]))]))); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1]); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1]); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1]);}});
-            Object.defineProperty(nixScope, "assertEachOneOf", {enumerable: true, get(){return (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["name"] = arg; runtime.scopeStack.push(nixScope); try { return (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["vals"] = arg; runtime.scopeStack.push(nixScope); try { return (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["xs"] = arg; runtime.scopeStack.push(nixScope); try { return nixScope["assertMsg"]((nixScope["lib"]["all"](((function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["val"] = arg; runtime.scopeStack.push(nixScope); try { return nixScope["lib"]["elem"](nixScope["val"])(nixScope["xs"]); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])))(nixScope["vals"])))((new InterpolatedString(["each element in ", " must be one of ", ", but is: ", ""], [()=>(nixScope["name"]), ()=>(nixScope["lib"]["generators"]["toPretty"]({})(nixScope["xs"])), ()=>(nixScope["lib"]["generators"]["toPretty"]({})(nixScope["vals"]))]))); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1]); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1]); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1]);}});
-            Object.defineProperty(nixScope, "checkAssertWarn", {enumerable: true, get(){return (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["assertions"] = arg; runtime.scopeStack.push(nixScope); try { return (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["warnings"] = arg; runtime.scopeStack.push(nixScope); try { return (function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["val"] = arg; runtime.scopeStack.push(nixScope); try { return (function(){
-        const nixScope = {...runtime.scopeStack.slice(-1)[0]};
-        runtime.scopeStack.push(nixScope);
-        try {
-            Object.defineProperty(nixScope, "failedAssertions", {enumerable: true, get(){return nixScope["map"](((function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["x"] = arg; runtime.scopeStack.push(nixScope); try { return nixScope["x"]["message"]; } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])))((nixScope["filter"](((function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["x"] = arg; runtime.scopeStack.push(nixScope); try { return operators.negate(nixScope["x"]["assertion"]); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])))(nixScope["assertions"])));}});
-            return (operators.ifThenElse(operators.notEqual(nixScope["failedAssertions"], []), ()=>(nixScope["throw"]((new InterpolatedString(["Failed assertions:", ""], [()=>(nixScope["concatStringsSep"]("")((nixScope["map"](((function(__capturedScope){ return (arg)=>{ const nixScope = Object.create(__capturedScope || runtime.scopeStack[runtime.scopeStack.length-1]); nixScope["x"] = arg; runtime.scopeStack.push(nixScope); try { return (new InterpolatedString(["- ", ""], [()=>(nixScope["x"])])); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1])))(nixScope["failedAssertions"]))))])))), ()=>(nixScope["showWarnings"](nixScope["warnings"])(nixScope["val"]))));
-        } finally {
-            runtime.scopeStack.pop();
-        }
-    })(); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1]); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1]); } finally { runtime.scopeStack.pop(); } }; })(runtime.scopeStack[runtime.scopeStack.length-1]);}});
-            return nixScope;
-        } finally {
-            runtime.scopeStack.pop();
-        }
-    })();
-        } finally {
-            runtime.scopeStack.pop();
-        }
-    })()
+export default createFunc({}, null, {}, (nixScope) => (
+  /*let*/ createScope((nixScope) => {
+    nixScope.concatStringsSep = nixScope.lib["strings"]["concatStringsSep"];
+    nixScope.filter = nixScope.lib["lists"]["filter"];
+    nixScope.showWarnings = nixScope.lib["trivial"]["showWarnings"];
+    return /*rec*/ createScope((nixScope) => {
+      Object.defineProperty(nixScope, "assertMsg", {
+        enumerable: true,
+        get() {
+          return createFunc(/*arg:*/ "pred", null, {}, (nixScope) => (
+            createFunc(/*arg:*/ "msg", null, {}, (nixScope) => (
+              operators.or(
+                nixScope.pred,
+                nixScope.builtins["throw"](nixScope.msg),
+              )
             ))
+          ));
+        },
+      });
+      Object.defineProperty(nixScope, "assertOneOf", {
+        enumerable: true,
+        get() {
+          return createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
+            createFunc(/*arg:*/ "val", null, {}, (nixScope) => (
+              createFunc(/*arg:*/ "xs", null, {}, (nixScope) => (
+                nixScope.assertMsg(
+                  nixScope.lib["elem"](nixScope.val)(nixScope.xs),
+                )(
+                  new InterpolatedString([
+                    "",
+                    " must be one of ",
+                    ", but is: ",
+                    "",
+                  ], [
+                    () => (nixScope.name),
+                    () => (nixScope.lib["generators"]["toPretty"]({})(
+                      nixScope.xs,
+                    )),
+                    () => (nixScope.lib["generators"]["toPretty"]({})(
+                      nixScope.val,
+                    )),
+                  ]),
+                )
+              ))
+            ))
+          ));
+        },
+      });
+      Object.defineProperty(nixScope, "assertEachOneOf", {
+        enumerable: true,
+        get() {
+          return createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
+            createFunc(/*arg:*/ "vals", null, {}, (nixScope) => (
+              createFunc(/*arg:*/ "xs", null, {}, (nixScope) => (
+                nixScope.assertMsg(
+                  nixScope.lib["all"](
+                    createFunc(/*arg:*/ "val", null, {}, (nixScope) => (
+                      nixScope.lib["elem"](nixScope.val)(nixScope.xs)
+                    )),
+                  )(nixScope.vals),
+                )(
+                  new InterpolatedString([
+                    "each element in ",
+                    " must be one of ",
+                    ", but is: ",
+                    "",
+                  ], [
+                    () => (nixScope.name),
+                    () => (nixScope.lib["generators"]["toPretty"]({})(
+                      nixScope.xs,
+                    )),
+                    () => (nixScope.lib["generators"]["toPretty"]({})(
+                      nixScope.vals,
+                    )),
+                  ]),
+                )
+              ))
+            ))
+          ));
+        },
+      });
+      Object.defineProperty(nixScope, "checkAssertWarn", {
+        enumerable: true,
+        get() {
+          return createFunc(/*arg:*/ "assertions", null, {}, (nixScope) => (
+            createFunc(/*arg:*/ "warnings", null, {}, (nixScope) => (
+              createFunc(/*arg:*/ "val", null, {}, (nixScope) => (
+                /*let*/ createScope((nixScope) => {
+                  Object.defineProperty(nixScope, "failedAssertions", {
+                    enumerable: true,
+                    get() {
+                      return nixScope.map(
+                        createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+                          nixScope.x["message"]
+                        )),
+                      )(
+                        nixScope.filter(
+                          createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+                            operators.negate(nixScope.x["assertion"])
+                          )),
+                        )(nixScope.assertions),
+                      );
+                    },
+                  });
+                  return (operators.ifThenElse(
+                    operators.notEqual(nixScope.failedAssertions, []),
+                    () => (nixScope.throw(
+                      new InterpolatedString(["Failed assertions:", ""], [
+                        () => (nixScope.concatStringsSep("")(
+                          nixScope.map(
+                            createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+                              new InterpolatedString(["- ", ""], [
+                                () => (nixScope.x),
+                              ])
+                            )),
+                          )(nixScope.failedAssertions),
+                        )),
+                      ]),
+                    )),
+                    () => (nixScope.showWarnings(nixScope.warnings)(
+                      nixScope.val,
+                    )),
+                  ));
+                })
+              ))
+            ))
+          ));
+        },
+      });
+      return nixScope;
+    });
+  })
+));
