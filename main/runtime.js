@@ -2838,55 +2838,9 @@ import { resolveIndirectReference } from "./registry.js"
         },
     }
     
-    // Detect the current file by walking the JS stack trace, skipping frames
-    // that belong to this runtime module. Mirrors the shape of
-    // FileSystem.thisFolder in quickr: pull every URL-looking path out of the
-    // stack, and for each, try to resolve it to a real file on disk. For
-    // non-file URL schemes we fall back to the URL's pathname. Returns null
-    // when nothing usable is found (the caller can then fall back to cwd).
-    const RUNTIME_FILE_URL = import.meta.url
-    const STACK_URL_RE = /\b(file|https?|ftp|ipfs):\/\/[^\s)]+/g
-    const detectCurrentFileFromStack = () => {
-        try {
-            const stack = (new Error()).stack || ""
-            const raws = (stack.match(STACK_URL_RE) || [])
-                // Strip trailing ":line:col" that V8 appends to each frame's URL
-                .map(each => each.replace(/:\d+:\d+$/, ""))
-            // Skip any frames that refer to this runtime module itself
-            const urlLikes = raws.filter(each => each !== RUNTIME_FILE_URL)
-            for (let each of urlLikes) {
-                if (!each.startsWith("file://")) {
-                    // non-file URL (https://, etc.) — return its pathname
-                    try {
-                        return (new URL(each)).pathname
-                    } catch (error) {
-                        return each
-                    }
-                } else {
-                    // NOTE: these look like URLs but Deno does not escape
-                    // characters like spaces/hashes/newlines, so treat as a
-                    // plain path with the "file://" prefix stripped.
-                    each = each.slice(7)
-                    try {
-                        if (Deno.statSync(each).isFile) {
-                            return each
-                        }
-                    } catch (error) {}
-                }
-            }
-        } catch (error) {}
-        return null
-    }
-
     export const createRuntime = ()=>{
         // Create import cache for this runtime instance
         const importCache = new ImportCache()
-
-        // Backing field for currentFile. When null, the getter falls back to
-        // walking the JS stack trace to find the calling .js file. When set
-        // explicitly (e.g. by importFn during nested Nix import evaluation),
-        // that value takes precedence.
-        let _currentFile = null
 
         // Create runtime object that will be passed to builtins
         const runtime = {
@@ -2895,14 +2849,7 @@ import { resolveIndirectReference } from "./registry.js"
             InterpolatedString,
             Path,
             importCache,
-            // Track current file for relative imports. Auto-detected from the
-            // stack trace when not set explicitly.
-            get currentFile() {
-                return _currentFile ?? detectCurrentFileFromStack()
-            },
-            set currentFile(v) {
-                _currentFile = v
-            },
+            currentFile: null, // Track current file for relative imports
         }
 
         // Initialize import functions with runtime context

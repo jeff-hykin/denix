@@ -161,9 +161,12 @@ const buildPreamble = (output, options) => {
     // import/abort/throw, which is why things like nixScope.builtins and
     // nixScope.true resolve at the top level.
     pre += `const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1]\n`
-    // NOTE: runtime.currentFile is auto-detected from the JS stack trace at
-    // runtime (see detectCurrentFileFromStack in runtime.js), so there is no
-    // longer a need to inject it here from options.sourceFile.
+    // Tell the runtime what file this translated module came from, so
+    // relative `import ./foo` paths inside the nix source resolve correctly
+    // regardless of the Deno process cwd.
+    if (options.sourceFile) {
+        pre += `runtime.currentFile = ${JSON.stringify(options.sourceFile)}\n`
+    }
     if (output.includes("operators.")) {
         pre += `const operators = runtime.operators\n`
     }
