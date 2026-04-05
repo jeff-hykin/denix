@@ -114,7 +114,7 @@ async function runNix() {
 async function translateNixToJs() {
     const source = await Deno.readTextFile(nixFilePath)
     const runtimeAbs = new URL("../main/runtime.js", import.meta.url).href
-    return await convertToJs(source, { runtimePath: runtimeAbs })
+    return await convertToJs(source, { runtimePath: runtimeAbs, sourceFile: nixFilePath })
 }
 
 // ------------------------------------------------------------------

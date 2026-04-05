@@ -138,11 +138,49 @@ import { isValidKeyLiteral } from 'https://esm.sh/gh/jeff-hykin/good-js@1.18.2.0
     // record unsafeGetAttrPos for each function/scope/identifier
     // handle converting <nixpkgs> to builtins.findFile builtins.nixPath "nixpkgs"
 
-// 
+//
+// build the runtime-import preamble for a chunk of translated JS.
+// Shared by both convertToJs and convertToJsSync so the two paths stay in
+// lockstep.
+//
+const buildPreamble = (output, options) => {
+    // whenever the output references any runtime-provided identifier, we
+    // need the createRuntime() import. \b is outside the group so it applies
+    // to every alternative.
+    const needsRuntime =
+        /\b(runtime|createFunc|createScope|defGetter|nixScope|operators|Path)\b/.test(output)
+    if (!needsRuntime) return ""
+
+    const runtimePath = options.runtimePath || "./main/runtime.js"
+    const needsPath = /\bnew Path\b/.test(output)
+    let pre = ""
+    pre += `import { createRuntime${needsPath ? ", Path" : ""} } from "${runtimePath}"\n`
+    pre += `const {runtime, createFunc, createScope, defGetter} = createRuntime()\n`
+    // Module-level nixScope, bound to the runtime's current (root) scope.
+    // The root scope is seeded with builtins/true/false/null/derivation/
+    // import/abort/throw, which is why things like nixScope.builtins and
+    // nixScope.true resolve at the top level.
+    pre += `const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1]\n`
+    // Tell the runtime what file this translated module came from, so
+    // relative `import ./foo` paths inside the nix source resolve correctly
+    // regardless of the Deno process cwd.
+    if (options.sourceFile) {
+        pre += `runtime.currentFile = ${JSON.stringify(options.sourceFile)}\n`
+    }
+    if (output.includes("operators.")) {
+        pre += `const operators = runtime.operators\n`
+    }
+    if (output.includes("builtins.") && !/nixScope(\["builtins"\]|\.builtins)/.test(output)) {
+        pre += `const builtins = runtime.builtins\n`
+    }
+    return pre
+}
+
+//
 //
 // The Main function! nix comes in js comes out
 //
-// 
+//
 export const convertToJs = async (code, options = {}) => {
     const tree = parse(code)
     const rootNode = tree.rootNode
@@ -151,31 +189,7 @@ export const convertToJs = async (code, options = {}) => {
         output += nixNodeToJs(node)
     }
 
-    // short hack to determine if we need runtime imports
-    const needsRuntime = output.includes("runtime")
-
-    // Handle runtime import path (default to relative path from root)
-    const runtimePath = options.runtimePath || "./main/runtime.js"
-
-    let result = ""
-
-    if (needsRuntime) {
-        result += `import { createRuntime } from "${runtimePath}"\n`
-        result += `const {runtime, createFunc, createScope, defGetter} = createRuntime()\n`
-        // Module-level nixScope, bound to the runtime's current (root) scope.
-        // The root scope is seeded with builtins/true/false/null/derivation/
-        // import/abort/throw, which is why things like nixScope.builtins and
-        // nixScope.true resolve at the top level.
-        result += `const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1]\n`
-
-        // Extract commonly used runtime components if they're referenced
-        if (output.includes("operators.")) {
-            result += `const operators = runtime.operators\n`
-        }
-        if (output.includes("builtins.") && !/nixScope(\["builtins"\]|\.builtins)/.test(output)) {
-            result += `const builtins = runtime.builtins\n`
-        }
-    }
+    let result = buildPreamble(output, options)
 
     // Always export the result as a module
     result += `\nexport default ${output.trim()}`
@@ -218,26 +232,7 @@ export const convertToJsSync = (code, options = {}) => {
         output += nixNodeToJs(node)
     }
 
-    // Determine if we need runtime imports
-    const needsRuntime = output.includes("runtime")
-
-    // Handle runtime import path (default to relative path from root)
-    const runtimePath = options.runtimePath || "./main/runtime.js"
-
-    let result = ""
-
-    if (needsRuntime) {
-        result += `import { createRuntime } from "${runtimePath}"\n`
-        result += `const {runtime, createFunc, createScope, defGetter} = createRuntime()\n`
-
-        // Extract commonly used runtime components if they're referenced
-        if (output.includes("operators.")) {
-            result += `const operators = runtime.operators\n`
-        }
-        if (output.includes("builtins.")) {
-            result += `const builtins = runtime.builtins\n`
-        }
-    }
+    let result = buildPreamble(output, options)
 
     // Always export the result as a module
     result += `\nexport default ${output.trim()}`

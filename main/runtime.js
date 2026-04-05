@@ -2957,6 +2957,12 @@ import { resolveIndirectReference } from "./registry.js"
             runtime, // Expose runtime for use by import system
             importCache,
             operators,
+            // Mirror currentFile onto the inner runtime (which is what
+            // globalImportState.importFn checks) so that generated code which
+            // does `runtime.currentFile = "..."` on the outer handle just
+            // works.
+            get currentFile() { return runtime.currentFile },
+            set currentFile(v) { runtime.currentFile = v },
         }
         return {
             createFunc: createCreateFunc(runtimeWithScope),
