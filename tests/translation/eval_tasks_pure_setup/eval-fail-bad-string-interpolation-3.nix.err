@@ -1,0 +1,8 @@
+error:
+       … while evaluating a path segment
+         at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-bad-string-interpolation-3.nix:1:3:
+            1| ''${x: x}''
+             |   ^
+            2|
+
+       error: cannot coerce a function to a string: «lambda @ /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-bad-string-interpolation-3.nix:1:5»

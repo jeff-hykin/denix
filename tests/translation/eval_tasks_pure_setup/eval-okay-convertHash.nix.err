@@ -1,0 +1,16 @@
+error:
+       … in the condition of the assert statement
+         at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-convertHash.nix:114:1:
+          113| # hashesBase16
+          114| assert outputHashes.hashesBase16 == hashesBase16;
+             | ^
+          115| # standard SRI hashes
+
+       … while calling the 'import' builtin
+         at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-convertHash.nix:16:18:
+           15|   ];
+           16|   hashesBase16 = import ./eval-okay-hashstring.exp;
+             |                  ^
+           17|   map2 =
+
+       error: path '/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-hashstring.exp' does not exist

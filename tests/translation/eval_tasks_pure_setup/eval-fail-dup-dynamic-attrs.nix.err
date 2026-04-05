@@ -1,0 +1,14 @@
+error:
+       … while evaluating the attribute 'set'
+         at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-dup-dynamic-attrs.nix:2:3:
+            1| {
+            2|   set = {
+             |   ^
+            3|     "${"" + "b"}" = 1;
+
+       error: dynamic attribute 'b' already defined at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-dup-dynamic-attrs.nix:3:5
+       at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-dup-dynamic-attrs.nix:6:5:
+            5|   set = {
+            6|     "${"b" + ""}" = 2;
+             |     ^
+            7|   };

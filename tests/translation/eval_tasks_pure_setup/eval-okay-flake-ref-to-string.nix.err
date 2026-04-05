@@ -1,0 +1,8 @@
+error:
+       … while calling the 'flakeRefToString' builtin
+         at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-flake-ref-to-string.nix:1:1:
+            1| builtins.flakeRefToString {
+             | ^
+            2|   type = "github";
+
+       error: experimental Nix feature 'flakes' is disabled; add '--extra-experimental-features flakes' to enable it

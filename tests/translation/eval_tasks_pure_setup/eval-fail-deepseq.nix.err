@@ -1,0 +1,20 @@
+error:
+       … while calling the 'deepSeq' builtin
+         at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-deepseq.nix:1:1:
+            1| builtins.deepSeq { x = abort "foo"; } 456
+             | ^
+            2|
+
+       … while evaluating the attribute 'x'
+         at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-deepseq.nix:1:20:
+            1| builtins.deepSeq { x = abort "foo"; } 456
+             |                    ^
+            2|
+
+       … while calling the 'abort' builtin
+         at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-deepseq.nix:1:24:
+            1| builtins.deepSeq { x = abort "foo"; } 456
+             |                        ^
+            2|
+
+       error: evaluation aborted with the following error message: 'foo'

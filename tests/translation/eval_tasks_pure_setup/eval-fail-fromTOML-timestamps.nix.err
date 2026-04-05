@@ -1,0 +1,8 @@
+error:
+       … while calling the 'fromTOML' builtin
+         at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-fromTOML-timestamps.nix:1:1:
+            1| builtins.fromTOML ''
+             | ^
+            2|   key = "value"
+
+       error: while parsing TOML: Dates and times are not supported

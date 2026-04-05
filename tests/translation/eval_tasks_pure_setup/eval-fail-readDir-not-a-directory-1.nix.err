@@ -1,0 +1,16 @@
+error:
+       … while evaluating the attribute 'regularFile'
+         at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-readDir-not-a-directory-1.nix:2:3:
+            1| {
+            2|   regularFile = builtins.readDir ../source_code/nix_lang/readDir/bar;
+             |   ^
+            3| }
+
+       … while calling the 'readDir' builtin
+         at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-readDir-not-a-directory-1.nix:2:17:
+            1| {
+            2|   regularFile = builtins.readDir ../source_code/nix_lang/readDir/bar;
+             |                 ^
+            3| }
+
+       error: cannot read directory "/Users/jeffhykin/repos/denix/tests/translation/source_code/nix_lang/readDir/bar": Not a directory

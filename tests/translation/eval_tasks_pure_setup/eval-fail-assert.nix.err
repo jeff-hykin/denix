@@ -1,0 +1,30 @@
+error:
+       … while evaluating the attribute 'body'
+         at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-assert.nix:7:3:
+            6|
+            7|   body = x "x";
+             |   ^
+            8| }
+
+       … from call site
+         at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-assert.nix:7:10:
+            6|
+            7|   body = x "x";
+             |          ^
+            8| }
+
+       … while calling 'x'
+         at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-assert.nix:3:5:
+            2|   x =
+            3|     arg:
+             |     ^
+            4|     assert arg == "y";
+
+       … while evaluating the condition of the assertion '(arg == "y")'
+         at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-assert.nix:4:5:
+            3|     arg:
+            4|     assert arg == "y";
+             |     ^
+            5|     123;
+
+       error: string '"x"' is not equal to string '"y"'

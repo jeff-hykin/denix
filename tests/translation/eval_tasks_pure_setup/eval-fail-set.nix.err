@@ -1,0 +1,5 @@
+error: undefined variable 'x'
+       at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-set.nix:1:3:
+            1| 8.x
+             |   ^
+            2|

@@ -1,0 +1,13 @@
+error:
+       … from call site
+         at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-missing-arg.nix:1:1:
+            1| (
+             | ^
+            2|   {
+
+       error: function 'anonymous lambda' called without required argument 'y'
+       at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-missing-arg.nix:2:3:
+            1| (
+            2|   {
+             |   ^
+            3|     x,

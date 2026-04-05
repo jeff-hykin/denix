@@ -1,0 +1,8 @@
+error:
+       … while calling the 'substring' builtin
+         at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-substring.nix:1:1:
+            1| builtins.substring (builtins.sub 0 1) 1 "x"
+             | ^
+            2|
+
+       error: negative start position in 'substring'

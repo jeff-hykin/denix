@@ -1,0 +1,14 @@
+error:
+       … in the right operand of the update (//) operator
+         at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-recursion.nix:2:14:
+            1| let
+            2|   a = { } // a;
+             |              ^
+            3| in
+
+       error: infinite recursion encountered
+       at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-recursion.nix:2:14:
+            1| let
+            2|   a = { } // a;
+             |              ^
+            3| in

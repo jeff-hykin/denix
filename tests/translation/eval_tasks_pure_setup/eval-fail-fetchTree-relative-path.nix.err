@@ -1,0 +1,5 @@
+error: attribute 'fetchTree' missing
+       at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-fetchTree-relative-path.nix:1:1:
+            1| builtins.fetchTree "file:./relative-path.tar.gz"
+             | ^
+            2|

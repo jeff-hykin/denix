@@ -1,0 +1,9 @@
+error:
+       … while calling the 'scopedImport' builtin
+         at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-import.nix:13:1:
+           12| in
+           13| scopedImport overrides ./imported.nix
+             | ^
+           14|
+
+       error: path '/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/imported.nix' does not exist

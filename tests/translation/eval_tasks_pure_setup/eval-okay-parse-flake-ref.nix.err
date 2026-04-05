@@ -1,0 +1,8 @@
+error:
+       … while calling the 'parseFlakeRef' builtin
+         at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-parse-flake-ref.nix:1:1:
+            1| builtins.parseFlakeRef "github:NixOS/nixpkgs/23.05?dir=lib"
+             | ^
+            2|
+
+       error: experimental Nix feature 'flakes' is disabled; add '--extra-experimental-features flakes' to enable it

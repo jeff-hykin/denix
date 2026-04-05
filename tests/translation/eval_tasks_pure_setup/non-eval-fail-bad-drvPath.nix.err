@@ -1,0 +1,9 @@
+error:
+       … while evaluating the 'drvPath' attribute of a derivation
+         at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/non-eval-fail-bad-drvPath.nix:8:5:
+            7|     # Illegal, because does not end in `.drv`
+            8|     drvPath = "${builtins.storeDir}/2chwzswhhmpxbgc981i2vcz7xj4d1in9-cachix-1.7.3-bin";
+             |     ^
+            9|     outputName = "out";
+
+       error: store path '2chwzswhhmpxbgc981i2vcz7xj4d1in9-cachix-1.7.3-bin' is not a valid derivation path

@@ -1,0 +1,13 @@
+error:
+       … while evaluating list element at index 0
+
+       … while calling the 'path' builtin
+         at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-path.nix:3:4:
+            2|   # NAR hash of directory with filter
+            3|   (builtins.path {
+             |    ^
+            4|     path = ./.;
+
+       … while adding path '/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup'
+
+       error: store path mismatch in (possibly filtered) path added from '/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup'

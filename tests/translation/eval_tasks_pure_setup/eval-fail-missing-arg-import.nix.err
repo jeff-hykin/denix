@@ -1,0 +1,12 @@
+error:
+       … from call site
+         at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-missing-arg-import.nix:1:1:
+            1| import ../source_code/nix_lang/non-eval-trivial-lambda-formals.nix { }
+             | ^
+            2|
+
+       error: function 'anonymous lambda' called without required argument 'a'
+       at /Users/jeffhykin/repos/denix/tests/translation/source_code/nix_lang/non-eval-trivial-lambda-formals.nix:1:1:
+            1| { a }: a
+             | ^
+            2|

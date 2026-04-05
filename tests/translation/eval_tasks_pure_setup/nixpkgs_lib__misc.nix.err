@@ -1,0 +1,3 @@
+evaluation warning: lib.cli.toGNUCommandLine is deprecated, please use lib.cli.toCommandLine or lib.cli.toCommandLineShellGNU instead.
+evaluation warning: lib.cli.toGNUCommandLineShell is deprecated, please use lib.cli.toCommandLineShell or lib.cli.toCommandLineShellGNU instead.
+evaluation warning: Using `lib.generators.toPlist` without `escape = true` is deprecated

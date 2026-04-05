@@ -1,0 +1,9 @@
+error:
+       … while calling the 'sub' builtin
+         at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-overflowing-sub.nix:5:3:
+            4| in
+            5| a - b
+             |   ^
+            6|
+
+       error: integer overflow in subtracting -9223372036854775807 - 2

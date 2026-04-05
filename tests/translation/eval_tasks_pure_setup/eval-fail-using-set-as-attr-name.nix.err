@@ -1,0 +1,14 @@
+error:
+       … while evaluating an attribute name
+         at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-using-set-as-attr-name.nix:7:8:
+            6| in
+            7| attr.${key}
+             |        ^
+            8|
+
+       error: expected a string but found a set: { }
+       at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-using-set-as-attr-name.nix:7:8:
+            6| in
+            7| attr.${key}
+             |        ^
+            8|

@@ -1,0 +1,5 @@
+error: attribute 'fetchTree' missing
+       at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-fetchTree-negative.nix:1:1:
+            1| builtins.fetchTree {
+             | ^
+            2|   type = "file";

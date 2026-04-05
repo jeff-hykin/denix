@@ -1,0 +1,9 @@
+error:
+       … while evaluating the condition of the assertion '((length __nixPath) == 5)'
+         at /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-search-path.nix:6:1:
+            5|
+            6| assert length __nixPath == 5;
+             | ^
+            7| assert length (filter (x: baseNameOf x.path == "dir4") __nixPath) == 1;
+
+       error: an integer with value '7' is not equal to an integer with value '5'
