@@ -31,11 +31,42 @@ if (!RECORD_DIR) { console.error("nix_eval_spy: NIX_EVAL_SHIM_RECORD_DIR unset")
 
 const argv = [...Deno.args]
 const cwd  = Deno.cwd()
-const env  = Deno.env.toObject()
-// Strip our own control vars from the recorded env (they'd just be noise).
-delete env["NIX_EVAL_SHIM_REAL"]
-delete env["NIX_EVAL_SHIM_RECORD_DIR"]
-delete env["NIX_EVAL_SHIM_SCRIPT"]
+const rawEnv = Deno.env.toObject()
+
+// Allowlist: only keep env vars the Nix lang test suite could plausibly
+// reference. Everything else (CLAUDE_*, VSCODE_*, HOMEBREW_*, STARSHIP_*,
+// FNM_*, EXA_*, terminal junk, etc.) is machine-specific noise that would
+// make these records non-portable. The tests only ever read env via
+// `builtins.getEnv "NAME"`, and the names they read are well-known:
+//   TEST_VAR, IMPURE_VAR1, IMPURE_VAR2, HOME, NIX_PATH, ...
+const ALLOWED_EXACT = new Set([
+    // identity / locale / basic shell
+    "HOME", "PATH", "SHELL", "USER", "LOGNAME", "PWD", "OLDPWD",
+    "TMPDIR", "TMP", "TEMP", "LANG", "LC_ALL", "LC_CTYPE", "LC_COLLATE",
+    "LC_MESSAGES", "LC_NUMERIC", "LC_TIME", "PAGER", "EDITOR",
+
+    // explicitly set by lang.sh / vars.sh for test determinism
+    "TEST_VAR", "IMPURE_VAR1", "IMPURE_VAR2",
+
+    // git isolation vars set by vars.sh
+    "GIT_CONFIG_SYSTEM", "GIT_CONFIG_GLOBAL",
+
+    // harness internals (some tests / error messages may reference these)
+    "TEST_ROOT", "TEST_HOME", "TEST_SUITE_NAME", "TEST_NAME",
+])
+const ALLOWED_PREFIXES = [
+    // all of these are read by either nix itself or the test harness
+    "NIX_", "_NIX_",
+]
+
+const env: Record<string, string> = {}
+for (const [k, v] of Object.entries(rawEnv)) {
+    // never leak our own spy control vars
+    if (k === "NIX_EVAL_SHIM_REAL" || k === "NIX_EVAL_SHIM_RECORD_DIR" || k === "NIX_EVAL_SHIM_SCRIPT") continue
+    if (ALLOWED_EXACT.has(k) || ALLOWED_PREFIXES.some(p => k.startsWith(p))) {
+        env[k] = v
+    }
+}
 
 // Find the .nix file argument (skip `-E`, `--expr`, flag values, `-`, etc.).
 // We only record invocations that actually evaluate a file on disk.
