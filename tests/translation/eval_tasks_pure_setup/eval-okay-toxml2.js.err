@@ -1,0 +1,11 @@
+denix_eval: eval failed: RangeError: Maximum call stack size exceeded
+    at file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1
+    at Array.map (<anonymous>)
+    at toXml (file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1)
+    at file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1
+    at Array.map (<anonymous>)
+    at toXml (file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1)
+    at file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1
+    at Array.map (<anonymous>)
+    at toXml (file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1)
+    at file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1

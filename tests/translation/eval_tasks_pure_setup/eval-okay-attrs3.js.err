@@ -1,0 +1,11 @@
+denix_eval: eval failed: RangeError: Maximum call stack size exceeded
+    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_3feff93906f688c3/translated.js:1:1
+    at Object.get [as config] (file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1)
+    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_3feff93906f688c3/translated.js:1:1
+    at Object.get [as config] (file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1)
+    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_3feff93906f688c3/translated.js:1:1
+    at Object.get [as config] (file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1)
+    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1)

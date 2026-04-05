@@ -1,0 +1,4 @@
+denix_eval: eval failed: NotADirectory: Not a directory (os error 20): readdir '/Users/jeffhykin/repos/denix/tests/translation/source_code/nix_lang/readDir/linked'
+    at Object.readDirSync (ext:deno_fs/30_fs.js:211:10)
+    at Object.readDir (file:///Users/jeffhykin/repos/denix/main/runtime.js:1980:42)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_c45e591f4e034fa6/translated.js:11:55

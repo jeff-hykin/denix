@@ -1,0 +1,11 @@
+denix_eval: eval failed: Error: Called builtins.typeOf, which only works with valid nix values, but instead got type undefined, with a value of: undefined 
+    at Object.typeOf (file:///Users/jeffhykin/repos/denix/main/runtime.js:370:31)
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:2712:84)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_ef6b66795f95eb71/translated.js:60:30
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:2714:43)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_ef6b66795f95eb71/translated.js:55:21
+    at file:///Users/jeffhykin/repos/denix/main/runtime.js:60:32
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_ef6b66795f95eb71/translated.js:57:58
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:2714:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_ef6b66795f95eb71/translated.js:55:21
+    at file:///Users/jeffhykin/repos/denix/main/runtime.js:60:32

@@ -1,0 +1,36 @@
+denix_eval: eval failed: Error: assertion failed: split "[[:space:]]+|([',.!?])" ''
+    Nix Rocks!
+    That's why I use it.
+  '' == [
+    "Nix"
+    [ null ]
+    "Rocks"
+    [ "!" ]
+    ""
+    [ null ]
+    "That"
+    [ "'" ]
+    "s"
+    [ null ]
+    "why"
+    [ null ]
+    "I"
+    [ null ]
+    "use"
+    [ null ]
+    "it"
+    [ "." ]
+    ""
+    [ null ]
+    ""
+  ]
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_372ac845453cc941/translated.js:153:55
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_372ac845453cc941/translated.js:220:47
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_372ac845453cc941/translated.js:253:45
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_372ac845453cc941/translated.js:261:43
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_372ac845453cc941/translated.js:267:41
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_372ac845453cc941/translated.js:273:39
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_372ac845453cc941/translated.js:279:37
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_372ac845453cc941/translated.js:285:35
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_372ac845453cc941/translated.js:291:33
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_372ac845453cc941/translated.js:297:31

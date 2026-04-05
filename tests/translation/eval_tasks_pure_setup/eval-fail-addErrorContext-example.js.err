@@ -1,0 +1,8 @@
+denix_eval: eval failed: ReferenceError: InterpolatedString is not defined
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_d27629c2eb934af6/translated.js:18:17
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:2714:43)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_d27629c2eb934af6/translated.js:14:19
+    at Object.<anonymous> (file:///Users/jeffhykin/repos/denix/main/runtime.js:60:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_d27629c2eb934af6/translated.js:28:19
+    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:115:24)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_d27629c2eb934af6/translated.js:8:24

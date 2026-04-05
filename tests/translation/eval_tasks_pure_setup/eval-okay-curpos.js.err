@@ -1,0 +1,4 @@
+denix_eval: eval failed: TypeError: Cannot read properties of undefined (reading 'line')
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_12523d7c7c853e06/translated.js:12:15
+    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:115:24)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_12523d7c7c853e06/translated.js:8:9

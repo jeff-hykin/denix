@@ -1,0 +1,5 @@
+denix_eval: translation failed: Error: Dynamic attribute keys are not supported in rec sets
+    at nixNodeToJs (file:///Users/jeffhykin/repos/denix/translator.js:743:35)
+    at convertToJs (file:///Users/jeffhykin/repos/denix/translator.js:189:19)
+    at file:///Users/jeffhykin/repos/denix/run/denix_eval:99:24
+    at __drainNextTickAndMacrotasks (ext:core/01_core.js:439:7)

@@ -1,0 +1,6 @@
+denix_eval: eval failed: Error: error: value is a int while a string was expected
+    at requireString (file:///Users/jeffhykin/repos/denix/main/runtime.js:221:19)
+    at Object.flakeRefToString (file:///Users/jeffhykin/repos/denix/main/runtime.js:2621:38)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_5d78f6772ffe5809/translated.js:10:42
+    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:115:24)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_5d78f6772ffe5809/translated.js:7:24

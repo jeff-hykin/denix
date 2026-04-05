@@ -1,0 +1,2 @@
+denix_eval: eval failed: ReferenceError: InterpolatedString is not defined
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_639c19eb2fd6734f/translated.js:7:21

@@ -1,0 +1,2 @@
+denix_eval: eval failed: TypeError: 8 is not a function
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_b96cd6a4eae8c4f6/translated.js:7:18

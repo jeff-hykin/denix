@@ -1,0 +1,6 @@
+denix_eval: eval failed: Error: Import path does not exist: /Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/symlink-resolution/foo/overlays/overlay.nix
+    at validateImportPath (file:///Users/jeffhykin/repos/denix/tools/import_resolver.js:114:15)
+    at loadAndEvaluateSync (file:///Users/jeffhykin/repos/denix/main/import_loader.js:191:5)
+    at Object.globalImportState.importFn (file:///Users/jeffhykin/repos/denix/main/runtime.js:2879:32)
+    at Object.import (file:///Users/jeffhykin/repos/denix/main/runtime.js:1694:42)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_623870f2695efb27/translated.js:10:31

@@ -1,0 +1,6 @@
+denix_eval: eval failed: TypeError: Cannot read properties of null (reading 'column')
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_14a6c8f551ca2a48/translated.js:26:31
+    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:115:24)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_14a6c8f551ca2a48/translated.js:24:10
+    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:115:24)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_14a6c8f551ca2a48/translated.js:7:24

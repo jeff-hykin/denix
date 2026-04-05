@@ -1,0 +1,10 @@
+denix_eval: eval failed: Error: Not the final value, but is still forced!
+    at Object.throw (file:///Users/jeffhykin/repos/denix/main/runtime.js:1756:35)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_1282693eb6f63149/translated.js:14:19
+    at Object.f (file:///Users/jeffhykin/repos/denix/main/runtime.js:60:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_1282693eb6f63149/translated.js:10:14
+    at file:///Users/jeffhykin/repos/denix/main/runtime.js:60:32
+    at file:///Users/jeffhykin/repos/denix/main/runtime.js:791:75
+    at Array.reduce (<anonymous>)
+    at file:///Users/jeffhykin/repos/denix/main/runtime.js:791:49
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_1282693eb6f63149/translated.js:12:10

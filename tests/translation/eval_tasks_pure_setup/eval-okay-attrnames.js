@@ -1,0 +1,59 @@
+import {
+  createRuntime,
+  Path,
+} from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
+const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-attrnames.nix";
+const operators = runtime.operators;
+
+export default ((_withAttrs) => {
+  const nixScope = { ...runtime.scopeStack.slice(-1)[0], ..._withAttrs };
+  runtime.scopeStack.push(nixScope);
+  try {
+    return /*let*/ createScope((nixScope) => {
+      defGetter(
+        nixScope,
+        "attrs",
+        (nixScope) =>
+          operators.merge(
+            { "y": "y", "x": "x", "foo": "foo" },
+            /*rec*/ createScope((nixScope) => {
+              nixScope.x = "newx";
+              defGetter(nixScope, "bar", (nixScope) => nixScope.x);
+              return nixScope;
+            }),
+          ),
+      );
+      defGetter(
+        nixScope,
+        "names",
+        (nixScope) => nixScope.builtins["attrNames"](nixScope.attrs),
+      );
+      defGetter(
+        nixScope,
+        "values",
+        (nixScope) =>
+          nixScope.map(createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
+            nixScope.builtins["getAttr"](nixScope.name)(nixScope.attrs)
+          )))(nixScope.names),
+      );
+      return ((_cond) => {
+        if (!_cond) {
+          throw new Error(
+            "assertion failed: " + "values == builtins.attrValues attrs",
+          );
+        }
+        return nixScope.concat(nixScope.values);
+      })(
+        operators.equal(
+          nixScope.values,
+          nixScope.builtins["attrValues"](nixScope.attrs),
+        ),
+      );
+    });
+  } finally {
+    runtime.scopeStack.pop();
+  }
+})(nixScope.import(new Path(["../source_code/nix_lang/lib.nix"], [])));

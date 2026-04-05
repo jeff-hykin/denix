@@ -1,0 +1,1 @@
+{ owner = "NixOS"; ref = "23.05?dir=lib"; repo = "nixpkgs"; type = "github"; }

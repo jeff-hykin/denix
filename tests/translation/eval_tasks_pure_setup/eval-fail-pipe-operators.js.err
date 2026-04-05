@@ -1,0 +1,5 @@
+denix_eval: translation failed: Error: error: operator | is not supported yet
+    at nixNodeToJs (file:///Users/jeffhykin/repos/denix/translator.js:324:23)
+    at convertToJs (file:///Users/jeffhykin/repos/denix/translator.js:189:19)
+    at file:///Users/jeffhykin/repos/denix/run/denix_eval:99:24
+    at __drainNextTickAndMacrotasks (ext:core/01_core.js:439:7)

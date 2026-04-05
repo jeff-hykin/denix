@@ -1,0 +1,10 @@
+Warning: Failed to format generated JavaScript: [0m[1m[31merror[0m: Expression expected at file:///_stdin.ts:2:1
+
+  export default //
+  ~~~~~~
+
+denix_eval: eval failed: TypeError: The module's source code could not be parsed: Expression expected at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_1d22b95f9991130a/translated.js:2:15
+
+  export default //
+                ~
+    at async file:///Users/jeffhykin/repos/denix/run/denix_eval:124:17
