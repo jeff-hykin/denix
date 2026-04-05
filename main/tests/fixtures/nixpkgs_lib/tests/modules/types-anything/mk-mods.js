@@ -49,7 +49,7 @@ export default createFunc({}, null, {}, (nixScope) => (
           nixScope.lib["mkIf"](true)(
             {
               "foo": nixScope.lib["mkIf"](true)(nixScope.lib["mkForce"](1n)),
-              "bar": ({ "baz": nixScope.lib["mkDefault"]("baz") }),
+              "bar": { "baz": nixScope.lib["mkDefault"]("baz") },
             },
           ),
         ]);

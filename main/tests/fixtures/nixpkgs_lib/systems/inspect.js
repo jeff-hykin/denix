@@ -38,89 +38,81 @@ export default createFunc({}, null, {}, (nixScope) => (
         "patterns",
         (nixScope) =>
           /*rec*/ createScope((nixScope) => {
-            nixScope.isx86_32 = { "cpu": ({ "family": "x86", "bits": 32n }) };
-            nixScope.isx86_64 = { "cpu": ({ "family": "x86", "bits": 64n }) };
-            nixScope.isPower = { "cpu": ({ "family": "power" }) };
-            nixScope.isPower64 = {
-              "cpu": ({ "family": "power", "bits": 64n }),
-            };
-            nixScope.isAbiElfv1 = { "abi": ({ "abi": "elfv1" }) };
+            nixScope.isx86_32 = { "cpu": { "family": "x86", "bits": 32n } };
+            nixScope.isx86_64 = { "cpu": { "family": "x86", "bits": 64n } };
+            nixScope.isPower = { "cpu": { "family": "power" } };
+            nixScope.isPower64 = { "cpu": { "family": "power", "bits": 64n } };
+            nixScope.isAbiElfv1 = { "abi": { "abi": "elfv1" } };
             nixScope.isAbiElfv2 = [
-              { "abi": ({ "abi": "elfv2" }) },
+              { "abi": { "abi": "elfv2" } },
               {
-                "abi": ({ "name": "musl" }),
-                "cpu": ({ "family": "power", "bits": 64n }),
+                "abi": { "name": "musl" },
+                "cpu": { "family": "power", "bits": 64n },
               },
             ];
-            nixScope.isx86 = { "cpu": ({ "family": "x86" }) };
-            nixScope.isAarch32 = { "cpu": ({ "family": "arm", "bits": 32n }) };
-            nixScope.isAarch64 = { "cpu": ({ "family": "arm", "bits": 64n }) };
-            nixScope.isAarch = { "cpu": ({ "family": "arm" }) };
-            nixScope.isMicroBlaze = { "cpu": ({ "family": "microblaze" }) };
-            nixScope.isMips = { "cpu": ({ "family": "mips" }) };
-            nixScope.isMips32 = { "cpu": ({ "family": "mips", "bits": 32n }) };
-            nixScope.isMips64 = { "cpu": ({ "family": "mips", "bits": 64n }) };
+            nixScope.isx86 = { "cpu": { "family": "x86" } };
+            nixScope.isAarch32 = { "cpu": { "family": "arm", "bits": 32n } };
+            nixScope.isAarch64 = { "cpu": { "family": "arm", "bits": 64n } };
+            nixScope.isAarch = { "cpu": { "family": "arm" } };
+            nixScope.isMicroBlaze = { "cpu": { "family": "microblaze" } };
+            nixScope.isMips = { "cpu": { "family": "mips" } };
+            nixScope.isMips32 = { "cpu": { "family": "mips", "bits": 32n } };
+            nixScope.isMips64 = { "cpu": { "family": "mips", "bits": 64n } };
             nixScope.isMips64n32 = {
-              "cpu": ({ "family": "mips", "bits": 64n }),
-              "abi": ({ "abi": "n32" }),
+              "cpu": { "family": "mips", "bits": 64n },
+              "abi": { "abi": "n32" },
             };
             nixScope.isMips64n64 = {
-              "cpu": ({ "family": "mips", "bits": 64n }),
-              "abi": ({ "abi": "64" }),
+              "cpu": { "family": "mips", "bits": 64n },
+              "abi": { "abi": "64" },
             };
-            nixScope.isMmix = { "cpu": ({ "family": "mmix" }) };
-            nixScope.isRiscV = { "cpu": ({ "family": "riscv" }) };
-            nixScope.isRiscV32 = {
-              "cpu": ({ "family": "riscv", "bits": 32n }),
-            };
-            nixScope.isRiscV64 = {
-              "cpu": ({ "family": "riscv", "bits": 64n }),
-            };
-            nixScope.isRx = { "cpu": ({ "family": "rx" }) };
-            nixScope.isSparc = { "cpu": ({ "family": "sparc" }) };
-            nixScope.isSparc64 = {
-              "cpu": ({ "family": "sparc", "bits": 64n }),
-            };
-            nixScope.isWasm = { "cpu": ({ "family": "wasm" }) };
-            nixScope.isMsp430 = { "cpu": ({ "family": "msp430" }) };
-            nixScope.isVc4 = { "cpu": ({ "family": "vc4" }) };
-            nixScope.isAvr = { "cpu": ({ "family": "avr" }) };
-            nixScope.isAlpha = { "cpu": ({ "family": "alpha" }) };
-            nixScope.isOr1k = { "cpu": ({ "family": "or1k" }) };
-            nixScope.isM68k = { "cpu": ({ "family": "m68k" }) };
-            nixScope.isS390 = { "cpu": ({ "family": "s390" }) };
-            nixScope.isS390x = { "cpu": ({ "family": "s390", "bits": 64n }) };
+            nixScope.isMmix = { "cpu": { "family": "mmix" } };
+            nixScope.isRiscV = { "cpu": { "family": "riscv" } };
+            nixScope.isRiscV32 = { "cpu": { "family": "riscv", "bits": 32n } };
+            nixScope.isRiscV64 = { "cpu": { "family": "riscv", "bits": 64n } };
+            nixScope.isRx = { "cpu": { "family": "rx" } };
+            nixScope.isSparc = { "cpu": { "family": "sparc" } };
+            nixScope.isSparc64 = { "cpu": { "family": "sparc", "bits": 64n } };
+            nixScope.isWasm = { "cpu": { "family": "wasm" } };
+            nixScope.isMsp430 = { "cpu": { "family": "msp430" } };
+            nixScope.isVc4 = { "cpu": { "family": "vc4" } };
+            nixScope.isAvr = { "cpu": { "family": "avr" } };
+            nixScope.isAlpha = { "cpu": { "family": "alpha" } };
+            nixScope.isOr1k = { "cpu": { "family": "or1k" } };
+            nixScope.isM68k = { "cpu": { "family": "m68k" } };
+            nixScope.isS390 = { "cpu": { "family": "s390" } };
+            nixScope.isS390x = { "cpu": { "family": "s390", "bits": 64n } };
             nixScope.isLoongArch64 = {
-              "cpu": ({ "family": "loongarch", "bits": 64n }),
+              "cpu": { "family": "loongarch", "bits": 64n },
             };
-            nixScope.is32bit = { "cpu": ({ "bits": 32n }) };
-            nixScope.is64bit = { "cpu": ({ "bits": 64n }) };
+            nixScope.is32bit = { "cpu": { "bits": 32n } };
+            nixScope.is64bit = { "cpu": { "bits": 64n } };
             nixScope.isBSD = {
-              "kernel": ({
+              "kernel": {
                 "families": createScope((nixScope) => {
                   const obj = {};
                   obj.bsd = nixScope.kernelFamilies.bsd;
                   return obj;
                 }),
-              }),
+              },
             };
             nixScope.isDarwin = {
-              "kernel": ({
+              "kernel": {
                 "families": createScope((nixScope) => {
                   const obj = {};
                   obj.darwin = nixScope.kernelFamilies.darwin;
                   return obj;
                 }),
-              }),
+              },
             };
-            nixScope.isFreeBSD = { "kernel": ({ "name": "freebsd" }) };
+            nixScope.isFreeBSD = { "kernel": { "name": "freebsd" } };
             nixScope.isEfi = [
-              { "cpu": ({ "family": "arm", "version": "6" }) },
-              { "cpu": ({ "family": "arm", "version": "7" }) },
-              { "cpu": ({ "family": "arm", "version": "8" }) },
-              { "cpu": ({ "family": "riscv" }) },
-              { "cpu": ({ "family": "x86" }) },
-              { "cpu": ({ "family": "loongarch" }) },
+              { "cpu": { "family": "arm", "version": "6" } },
+              { "cpu": { "family": "arm", "version": "7" } },
+              { "cpu": { "family": "arm", "version": "8" } },
+              { "cpu": { "family": "riscv" } },
+              { "cpu": { "family": "x86" } },
+              { "cpu": { "family": "loongarch" } },
             ];
             defGetter(
               nixScope,
@@ -129,7 +121,7 @@ export default createFunc({}, null, {}, (nixScope) => (
             );
             defGetter(nixScope, "isArmv7", (nixScope) =>
               nixScope.map(createFunc({}, null, {}, (nixScope) => (
-                { "cpu": ({ "arch": nixScope.arch }) }
+                { "cpu": { "arch": nixScope.arch } }
               )))(
                 nixScope.filter(
                   createFunc(/*arg:*/ "cpu", null, {}, (nixScope) => (
@@ -146,30 +138,27 @@ export default createFunc({}, null, {}, (nixScope) => (
             );
             defGetter(nixScope, "isILP32", (nixScope) =>
               operators.listConcat(
-                [{ "cpu": ({ "family": "wasm", "bits": 32n }) }],
+                [{ "cpu": { "family": "wasm", "bits": 32n } }],
                 nixScope.map(createFunc(/*arg:*/ "a", null, {}, (nixScope) => (
-                  { "abi": ({ "abi": nixScope.a }) }
+                  { "abi": { "abi": nixScope.a } }
                 )))(["n32", "ilp32", "x32"]),
               ));
             defGetter(
               nixScope,
               "isBigEndian",
               (nixScope) => ({
-                "cpu":
-                  ({
-                    "significantByte": nixScope.significantBytes["bigEndian"],
-                  }),
+                "cpu": {
+                  "significantByte": nixScope.significantBytes["bigEndian"],
+                },
               }),
             );
             defGetter(
               nixScope,
               "isLittleEndian",
               (nixScope) => ({
-                "cpu":
-                  ({
-                    "significantByte":
-                      nixScope.significantBytes["littleEndian"],
-                  }),
+                "cpu": {
+                  "significantByte": nixScope.significantBytes["littleEndian"],
+                },
               }),
             );
             defGetter(
@@ -359,7 +348,9 @@ export default createFunc({}, null, {}, (nixScope) => (
             defGetter(nixScope, "isMacho", (nixScope) =>
               createScope((nixScope) => {
                 const obj = {};
-                if (obj["kernel"] === undefined) obj["kernel"] = {};
+                if (obj["kernel"] === undefined) {
+                  obj["kernel"] = {};
+                }
                 obj["kernel"]["execFormat"] = nixScope.execFormats["macho"];
                 return obj;
               }));
@@ -480,7 +471,7 @@ export default createFunc({}, null, {}, (nixScope) => (
             createFunc(/*arg:*/ "p", null, {}, (nixScope) => (
               operators.merge({ "parsed": {} }, nixScope.p)
             ))
-          )))({ "isStatic": ({ "isStatic": true }) }),
+          )))({ "isStatic": { "isStatic": true } }),
       );
       return nixScope;
     });

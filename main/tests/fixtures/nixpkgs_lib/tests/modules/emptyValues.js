@@ -2,7 +2,7 @@ export default createFunc({}, null, {}, (nixScope) => (
   /*let*/ createScope((nixScope) => {
     nixScope.types = nixScope.lib["types"];
     return ({
-      "options": ({
+      "options": {
         "int": nixScope.lib["mkOption"](
           { "type": nixScope.types["lazyAttrsOf"](nixScope.types["int"]) },
         ),
@@ -41,7 +41,7 @@ export default createFunc({}, null, {}, (nixScope) => (
             ),
           },
         ),
-      }),
+      },
       "config": createScope((nixScope) => {
         const obj = {};
         if (obj["int"] === undefined) obj["int"] = {};

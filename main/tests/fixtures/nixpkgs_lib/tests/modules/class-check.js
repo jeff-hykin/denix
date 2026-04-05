@@ -1,7 +1,7 @@
 export default createFunc({}, null, {}, (nixScope) => (
   {
-    "options": ({
-      "sub": ({
+    "options": {
+      "sub": {
         "nixosOk": nixScope.lib["mkOption"](
           {
             "type": nixScope.lib["types"]["submoduleWith"](
@@ -29,23 +29,21 @@ export default createFunc({}, null, {}, (nixScope) => (
             "default": {},
           },
         ),
-      }),
-    }),
+      },
+    },
     "imports": [
       {
-        "options":
-          ({
-            "sub":
-              ({
-                "mergeFail": nixScope.lib["mkOption"](
-                  {
-                    "type": nixScope.lib["types"]["submoduleWith"](
-                      { "class": "darwin", "modules": [] },
-                    ),
-                  },
+        "options": {
+          "sub": {
+            "mergeFail": nixScope.lib["mkOption"](
+              {
+                "type": nixScope.lib["types"]["submoduleWith"](
+                  { "class": "darwin", "modules": [] },
                 ),
-              }),
-          }),
+              },
+            ),
+          },
+        },
       },
     ],
     "config": createScope((nixScope) => {

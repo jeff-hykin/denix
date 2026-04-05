@@ -7,7 +7,7 @@ export default createFunc(
       nixScope.import(new Path(["../.."], []))(
         {
           "system": nixScope.system,
-          "config": ({ "permittedInsecurePackages": ["nix-2.3.18"] }),
+          "config": { "permittedInsecurePackages": ["nix-2.3.18"] },
         },
       ),
       {

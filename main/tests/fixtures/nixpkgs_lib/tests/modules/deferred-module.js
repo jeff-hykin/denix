@@ -59,7 +59,7 @@ export default createFunc({}, null, {}, (nixScope) => (
         },
         {
           "_file": "default-a-is-b.nix",
-          "default": (new Path(["./define-settingsDict-a-is-b.nix"], [])),
+          "default": new Path(["./define-settingsDict-a-is-b.nix"], []),
         },
         createScope((nixScope) => {
           const obj = {};

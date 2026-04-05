@@ -1,3 +1,3 @@
 export default createFunc({}, null, {}, (nixScope) => (
-  { "config": ({ "enable": nixScope.custom }) }
+  { "config": { "enable": nixScope.custom } }
 ));

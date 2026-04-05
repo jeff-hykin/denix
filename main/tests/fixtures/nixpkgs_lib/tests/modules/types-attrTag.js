@@ -19,7 +19,7 @@ export default createFunc({}, null, {}, (nixScope) => (
         ))["extensible"],
     );
     return ({
-      "options": ({
+      "options": {
         "intStrings": nixScope.mkOption({
           "type": nixScope.types["attrsOf"](
             nixScope.types["attrTag"](
@@ -67,12 +67,11 @@ export default createFunc({}, null, {}, (nixScope) => (
               {
                 "type": nixScope.types["submodule"](
                   {
-                    "options":
-                      ({
-                        "bar": nixScope.mkOption(
-                          { "type": nixScope.types["int"] },
-                        ),
-                      }),
+                    "options": {
+                      "bar": nixScope.mkOption(
+                        { "type": nixScope.types["int"] },
+                      ),
+                    },
                   },
                 ),
               },
@@ -86,7 +85,7 @@ export default createFunc({}, null, {}, (nixScope) => (
           })),
         }),
         "okChecks": nixScope.mkOption({}),
-      }),
+      },
       "imports": [
         new Path(["./docs.nix"], []),
         createScope((nixScope) => {

@@ -3,7 +3,7 @@ export default createFunc({}, null, {}, (nixScope) => (
     nixScope.pkgs = {};
     nixScope.pkgs["hello"] = { "type": "derivation", "pname": "hello" };
     return ({
-      "options": ({
+      "options": {
         "package": nixScope.lib["mkPackageOption"](nixScope.pkgs)("hello")({}),
         "namedPackage": nixScope.lib["mkPackageOption"](nixScope.pkgs)("Hello")(
           { "default": ["hello"] },
@@ -66,7 +66,7 @@ export default createFunc({}, null, {}, (nixScope) => (
         "packageInvalidIdentifierExample": nixScope.lib["mkPackageOption"](
           nixScope.pkgs,
         )("hello")({ "example": ["123", "with", "hello"] }),
-      }),
+      },
     });
   })
 ));

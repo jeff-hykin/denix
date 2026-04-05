@@ -12,7 +12,7 @@ export default createFunc({}, null, {}, (nixScope) => (
     nixScope.raw = nixScope.types["raw"];
     nixScope.enum = nixScope.types["enum"];
     return ({
-      "options": ({
+      "options": {
         "deferred": nixScope.mkOption({ "type": nixScope.deferredModule }),
         "result": nixScope.mkOption(
           {
@@ -22,12 +22,12 @@ export default createFunc({}, null, {}, (nixScope) => (
               ))["config"]["result"],
           },
         ),
-      }),
-      "config": ({
+      },
+      "config": {
         "deferred": createFunc({}, null, {}, (nixScope) => (
           true
         )),
-      }),
+      },
     });
   })
 ));

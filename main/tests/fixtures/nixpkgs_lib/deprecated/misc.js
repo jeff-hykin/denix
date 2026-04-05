@@ -381,7 +381,7 @@ export default createFunc({}, null, {}, (nixScope) => (
                 return nixScope.uniqListExt(
                   {
                     "outputList": nixScope.newOutputList,
-                    "inputList": (nixScope.tail(nixScope.inputList)),
+                    "inputList": nixScope.tail(nixScope.inputList),
                     "getter": nixScope.getter,
                     "compare": nixScope.compare,
                   },
@@ -558,9 +558,7 @@ export default createFunc({}, null, {}, (nixScope) => (
       (nixScope) =>
         createFunc(/*arg:*/ "list", null, {}, (nixScope) => (
           nixScope.uniqList(
-            {
-              "inputList": (nixScope.innerClosePropagation([])(nixScope.list)),
-            },
+            { "inputList": nixScope.innerClosePropagation([])(nixScope.list) },
           )
         )),
     );

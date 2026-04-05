@@ -228,8 +228,11 @@ createFunc({}, null, {}, (nixScope) => (
               );
               return nixScope.lib["cleanSourceWith"](
                 {
-                  "filter":
-                    (createFunc(/*arg:*/ "path", null, {}, (nixScope) => (
+                  "filter": createFunc(
+                    /*arg:*/ "path",
+                    null,
+                    {},
+                    (nixScope) => (
                       createFunc(/*arg:*/ "type", null, {}, (nixScope) => (
                         /*let*/ createScope((nixScope) => {
                           defGetter(nixScope, "relPath", (nixScope) =>
@@ -249,7 +252,8 @@ createFunc({}, null, {}, (nixScope) => (
                           )(nixScope.regexes);
                         })
                       ))
-                    ))),
+                    ),
+                  ),
                   "src": nixScope.src,
                 },
               );
@@ -567,28 +571,25 @@ createFunc({}, null, {}, (nixScope) => (
                 operators.hasAttr(nixScope.src, "_isLibCleanSourceWith"),
             );
             return ({
-              "origSrc":
-                (operators.ifThenElse(
-                  nixScope.isFiltered,
-                  () => (nixScope.src["origSrc"]),
-                  () => (nixScope.src),
-                )),
-              "filter":
-                (operators.ifThenElse(
-                  nixScope.isFiltered,
-                  () => (nixScope.src["filter"]),
-                  () => (createFunc(/*arg:*/ "_", null, {}, (nixScope) => (
-                    createFunc(/*arg:*/ "_", null, {}, (nixScope) => (
-                      true
-                    ))
-                  ))),
-                )),
-              "name":
-                (operators.ifThenElse(
-                  nixScope.isFiltered,
-                  () => (nixScope.src["name"]),
-                  () => ("source"),
-                )),
+              "origSrc": operators.ifThenElse(
+                nixScope.isFiltered,
+                () => (nixScope.src["origSrc"]),
+                () => (nixScope.src),
+              ),
+              "filter": operators.ifThenElse(
+                nixScope.isFiltered,
+                () => (nixScope.src["filter"]),
+                () => (createFunc(/*arg:*/ "_", null, {}, (nixScope) => (
+                  createFunc(/*arg:*/ "_", null, {}, (nixScope) => (
+                    true
+                  ))
+                ))),
+              ),
+              "name": operators.ifThenElse(
+                nixScope.isFiltered,
+                () => (nixScope.src["name"]),
+                () => ("source"),
+              ),
             });
           })
         )),

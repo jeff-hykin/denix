@@ -7,11 +7,11 @@ export default createFunc({}, null, {}, (nixScope) => (
       "moduleWithKey",
       (nixScope) => ({
         "key": "disable-module-with-key.nix#moduleWithKey",
-        "config": ({ "enable": true }),
+        "config": { "enable": true },
       }),
     );
     return ({
-      "options": ({
+      "options": {
         "positive": nixScope.mkOption(
           {
             "type": nixScope.types["submodule"](
@@ -37,7 +37,7 @@ export default createFunc({}, null, {}, (nixScope) => (
           ),
           "default": {},
         }),
-      }),
+      },
     });
   })
 ));

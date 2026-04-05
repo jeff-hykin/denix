@@ -44,16 +44,14 @@ export default /*let*/ createScope((nixScope) => {
         "key": nixScope.toString(new Path(["./a.nix"], [])),
         "file": nixScope.toString(new Path(["./a.nix"], [])),
         "imports": [{
-          "key":
-            (new InterpolatedString(["", ":anon-1"], [
-              () => (nixScope.toString(new Path(["./a.nix"], []))),
-            ])),
+          "key": new InterpolatedString(["", ":anon-1"], [
+            () => (nixScope.toString(new Path(["./a.nix"], []))),
+          ]),
           "file": nixScope.toString(new Path(["./a.nix"], [])),
           "imports": [{
-            "key":
-              (new InterpolatedString(["", ":anon-1:anon-1"], [
-                () => (nixScope.toString(new Path(["./a.nix"], []))),
-              ])),
+            "key": new InterpolatedString(["", ":anon-1:anon-1"], [
+              () => (nixScope.toString(new Path(["./a.nix"], []))),
+            ]),
             "file": nixScope.toString(new Path(["./a.nix"], [])),
             "imports": [],
             "disabled": false,

@@ -5,10 +5,10 @@ export default createFunc({}, null, {}, (nixScope) => (
     defGetter(
       nixScope,
       "moduleWithKey",
-      (nixScope) => ({ "key": 123n, "config": ({ "enable": true }) }),
+      (nixScope) => ({ "key": 123n, "config": { "enable": true } }),
     );
     return ({
-      "options": ({
+      "options": {
         "positive": nixScope.mkOption(
           {
             "type": nixScope.types["submodule"](
@@ -36,7 +36,7 @@ export default createFunc({}, null, {}, (nixScope) => (
             "default": {},
           },
         ),
-      }),
+      },
     });
   })
 ));

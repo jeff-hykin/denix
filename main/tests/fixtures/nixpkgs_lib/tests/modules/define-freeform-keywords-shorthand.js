@@ -18,12 +18,7 @@ export default createFunc({}, null, {}, (nixScope) => (
         nixScope.builtins["deepSeq"](nixScope.r)(nixScope.r),
       )(operators.equal(
         nixScope.r,
-        {
-          "a": "one",
-          "b": "two",
-          "class": ({ "just": "data" }),
-          "meta": "meta",
-        },
+        { "a": "one", "b": "two", "class": { "just": "data" }, "meta": "meta" },
       ));
     });
     return obj;

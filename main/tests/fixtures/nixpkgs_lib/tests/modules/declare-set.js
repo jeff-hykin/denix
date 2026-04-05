@@ -5,7 +5,7 @@ export default createFunc({}, null, {}, (nixScope) => (
     obj["options"]["set"] = nixScope.lib["mkOption"](
       {
         "default": {},
-        "example": ({ "a": 1n }),
+        "example": { "a": 1n },
         "type": nixScope.lib["types"]["attrsOf"](nixScope.lib["types"]["int"]),
         "description": `
           Some descriptive text

@@ -57,12 +57,11 @@ export default createFunc({}, null, {}, (nixScope) => (
                       ["meta"],
                       {},
                     ),
-                    "passthru":
-                      (operators.ifThenElse(
-                        operators.hasAttr(nixScope.drv, "passthru"),
-                        () => (nixScope.drv["passthru"]),
-                        () => ({}),
-                      )),
+                    "passthru": operators.ifThenElse(
+                      operators.hasAttr(nixScope.drv, "passthru"),
+                      () => (nixScope.drv["passthru"]),
+                      () => ({}),
+                    ),
                   },
                   operators.merge(
                     operators.selectOrDefault(nixScope.drv, ["passthru"], {}),

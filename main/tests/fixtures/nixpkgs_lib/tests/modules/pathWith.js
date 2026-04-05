@@ -6,7 +6,7 @@ export default createFunc({}, null, {}, (nixScope) => (
     return createScope((nixScope) => {
       const obj = {};
       obj.imports = [{
-        "options": ({
+        "options": {
           "pathInStore": nixScope.mkOption(
             {
               "type": nixScope.types["lazyAttrsOf"](
@@ -47,9 +47,9 @@ export default createFunc({}, null, {}, (nixScope) => (
               ),
             },
           ),
-        }),
+        },
       }, {
-        "options": ({
+        "options": {
           "pathNotInStore": nixScope.mkOption(
             {
               "type": nixScope.types["lazyAttrsOf"](
@@ -62,7 +62,7 @@ export default createFunc({}, null, {}, (nixScope) => (
           "conflictingPathOptionType": nixScope.mkOption(
             { "type": nixScope.types["pathWith"]({ "absolute": false }) },
           ),
-        }),
+        },
       }];
       obj.conflictingPathOptionType = "/foo/bar";
       obj.impossiblePathOptionType = "/foo/bar";

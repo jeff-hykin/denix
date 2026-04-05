@@ -31,9 +31,9 @@ export default createFunc({}, null, {}, (nixScope) => (
       });
       if (obj["config"] === undefined) obj["config"] = {};
       obj["config"]["examples"] = {
-        "merged": ({ "a": "aye" }),
-        "override": ({ "a": "aye" }),
-        "badLazyType": ({ "a": true }),
+        "merged": { "a": "aye" },
+        "override": { "a": "aye" },
+        "badLazyType": { "a": true },
       };
       return obj;
     });

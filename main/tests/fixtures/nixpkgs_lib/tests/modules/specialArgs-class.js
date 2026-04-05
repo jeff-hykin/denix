@@ -1,7 +1,7 @@
 export default createFunc({}, null, {}, (nixScope) => (
   {
-    "options": ({
-      "sub": ({
+    "options": {
+      "sub": {
         "nixos": nixScope.lib["mkOption"](
           {
             "type": nixScope.lib["types"]["submoduleWith"](
@@ -35,8 +35,8 @@ export default createFunc({}, null, {}, (nixScope) => (
             "default": {},
           },
         ),
-      }),
-    }),
+      },
+    },
     "config": createScope((nixScope) => {
       const obj = {};
       obj.nixos = nixScope.lib["evalModules"](

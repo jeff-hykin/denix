@@ -74,10 +74,10 @@ export default /**
               {
                 "default": false,
                 "example": true,
-                "description":
-                  (new InterpolatedString(["Whether to enable ", "."], [
-                    () => (nixScope.name),
-                  ])),
+                "description": new InterpolatedString([
+                  "Whether to enable ",
+                  ".",
+                ], [() => (nixScope.name)]),
                 "type": nixScope.lib["types"]["bool"],
               },
             )
@@ -483,20 +483,19 @@ export default /**
                           "internal": operators.selectOrDefault(nixScope.opt, [
                             "internal",
                           ], false),
-                          "visible":
-                            (operators.ifThenElse(
-                              operators.and(
-                                operators.hasAttr(nixScope.opt, "visible"),
-                                operators.equal(
-                                  nixScope.opt["visible"],
-                                  "shallow",
-                                ),
+                          "visible": operators.ifThenElse(
+                            operators.and(
+                              operators.hasAttr(nixScope.opt, "visible"),
+                              operators.equal(
+                                nixScope.opt["visible"],
+                                "shallow",
                               ),
-                              () => (true),
-                              () => (operators.selectOrDefault(nixScope.opt, [
-                                "visible",
-                              ], true)),
-                            )),
+                            ),
+                            () => (true),
+                            () => (operators.selectOrDefault(nixScope.opt, [
+                              "visible",
+                            ], true)),
+                          ),
                           "readOnly": operators.selectOrDefault(nixScope.opt, [
                             "readOnly",
                           ], false),
@@ -569,10 +568,14 @@ export default /**
                       ));
                     defGetter(nixScope, "subOptions", (nixScope) =>
                       /*let*/ createScope((nixScope) => {
-                        defGetter(nixScope, "ss", (nixScope) =>
-                          nixScope.opt["type"]["getSubOptions"](
-                            nixScope.opt["loc"],
-                          ));
+                        defGetter(
+                          nixScope,
+                          "ss",
+                          (nixScope) =>
+                            nixScope.opt["type"]["getSubOptions"](
+                              nixScope.opt["loc"],
+                            ),
+                        );
                         return (operators.ifThenElse(
                           operators.notEqual(nixScope.ss, {}),
                           () => (nixScope["optionAttrSetToDocList'"](

@@ -124,27 +124,25 @@ createFunc({}, null, {}, (nixScope) => (
                         nixScope.optionalAttrs(
                           operators.notEqual(nixScope.h, null),
                         )({
-                          "outputHashAlgo":
-                            (operators.ifThenElse(
-                              operators.equal(nixScope.h["name"], "hash"),
-                              () => (null),
-                              () => (nixScope.h["name"]),
+                          "outputHashAlgo": operators.ifThenElse(
+                            operators.equal(nixScope.h["name"], "hash"),
+                            () => (null),
+                            () => (nixScope.h["name"]),
+                          ),
+                          "outputHash": operators.ifThenElse(
+                            operators.equal(nixScope.h["value"], ""),
+                            () => (operators.selectOrDefault(
+                              nixScope.fakeH,
+                              [nixScope.h["name"]],
+                              nixScope.throw(
+                                new InterpolatedString([
+                                  "no “fake hash” defined for ",
+                                  "",
+                                ], [() => (nixScope.h["name"])]),
+                              ),
                             )),
-                          "outputHash":
-                            (operators.ifThenElse(
-                              operators.equal(nixScope.h["value"], ""),
-                              () => (operators.selectOrDefault(
-                                nixScope.fakeH,
-                                [nixScope.h["name"]],
-                                nixScope.throw(
-                                  new InterpolatedString([
-                                    "no “fake hash” defined for ",
-                                    "",
-                                  ], [() => (nixScope.h["name"])]),
-                                ),
-                              )),
-                              () => (nixScope.h["value"]),
-                            )),
+                            () => (nixScope.h["value"]),
+                          ),
                         }),
                       );
                     })),

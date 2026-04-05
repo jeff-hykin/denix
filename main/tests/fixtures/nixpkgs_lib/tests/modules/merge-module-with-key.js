@@ -2,25 +2,26 @@ export default createFunc({}, null, {}, (nixScope) => (
   /*let*/ createScope((nixScope) => {
     nixScope.mkOption = nixScope.lib["mkOption"];
     nixScope.types = nixScope.lib["types"];
-    nixScope.moduleWithoutKey = { "config": ({ "raw": "pear" }) };
+    nixScope.moduleWithoutKey = { "config": { "raw": "pear" } };
     defGetter(
       nixScope,
       "moduleWithKey",
       (nixScope) => ({
         "key": operators.add(nixScope.__curPos["file"], "#moduleWithKey"),
-        "config": ({ "raw": "pear" }),
+        "config": { "raw": "pear" },
       }),
     );
     defGetter(
       nixScope,
       "decl",
       (nixScope) => ({
-        "options":
-          ({ "raw": nixScope.mkOption({ "type": nixScope.types["lines"] }) }),
+        "options": {
+          "raw": nixScope.mkOption({ "type": nixScope.types["lines"] }),
+        },
       }),
     );
     return ({
-      "options": ({
+      "options": {
         "once": nixScope.mkOption(
           {
             "type": nixScope.types["submodule"](
@@ -49,7 +50,7 @@ export default createFunc({}, null, {}, (nixScope) => (
             "default": {},
           },
         ),
-      }),
+      },
     });
   })
 ));

@@ -29,12 +29,9 @@ export default /**
             "type": nixScope.types["attrsOf"](
               nixScope.types["submodule"](
                 {
-                  "options":
-                    ({
-                      "bar": nixScope.mkOption(
-                        { "type": nixScope.types["str"] },
-                      ),
-                    }),
+                  "options": {
+                    "bar": nixScope.mkOption({ "type": nixScope.types["str"] }),
+                  },
                 },
               ),
             ),

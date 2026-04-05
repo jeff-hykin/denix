@@ -14,7 +14,7 @@ createFunc(
       defGetter(nixScope, "teamModule", (nixScope) =>
         createFunc({}, null, {}, (nixScope) => (
           {
-            "options": ({
+            "options": {
               "shortName": nixScope.lib["mkOption"](
                 { "type": nixScope.types["str"] },
               ),
@@ -40,7 +40,7 @@ createFunc(
                   "default": [],
                 },
               ),
-            }),
+            },
           }
         )));
       defGetter(nixScope, "checkTeam", (nixScope) =>

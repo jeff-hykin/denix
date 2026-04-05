@@ -1555,46 +1555,40 @@ export default createFunc({}, null, {}, (nixScope) => (
                   ));
                 return ({
                   "matchedOptions": nixScope.matchedOptions,
-                  "unmatchedDefns":
-                    (operators.ifThenElse(
-                      operators.equal(nixScope.configs, []),
-                      () => [],
-                      () => (nixScope.concatLists(
-                        nixScope.mapAttrsToList(
-                          createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
-                            createFunc(
-                              /*arg:*/ "defs",
-                              null,
-                              {},
-                              (nixScope) => (
-                                nixScope.map(
-                                  createFunc(
-                                    /*arg:*/ "def",
-                                    null,
-                                    {},
-                                    (nixScope) => (
-                                      operators.merge(
-                                        nixScope.def,
-                                        {
-                                          "prefix": operators.listConcat(
-                                            [nixScope.name],
-                                            operators.selectOrDefault(
-                                              nixScope.def,
-                                              ["prefix"],
-                                              [],
-                                            ),
-                                          ),
-                                        },
-                                      )
-                                    ),
-                                  ),
-                                )(nixScope.defs)
+                  "unmatchedDefns": operators.ifThenElse(
+                    operators.equal(nixScope.configs, []),
+                    () => [],
+                    () => (nixScope.concatLists(
+                      nixScope.mapAttrsToList(
+                        createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
+                          createFunc(/*arg:*/ "defs", null, {}, (nixScope) => (
+                            nixScope.map(
+                              createFunc(
+                                /*arg:*/ "def",
+                                null,
+                                {},
+                                (nixScope) => (
+                                  operators.merge(
+                                    nixScope.def,
+                                    {
+                                      "prefix": operators.listConcat(
+                                        [nixScope.name],
+                                        operators.selectOrDefault(
+                                          nixScope.def,
+                                          ["prefix"],
+                                          [],
+                                        ),
+                                      ),
+                                    },
+                                  )
+                                ),
                               ),
-                            )
-                          )),
-                        )(nixScope.unmatchedDefnsByName),
-                      )),
+                            )(nixScope.defs)
+                          ))
+                        )),
+                      )(nixScope.unmatchedDefnsByName),
                     )),
+                  ),
                 });
               })
             ))
@@ -1719,18 +1713,17 @@ export default createFunc({}, null, {}, (nixScope) => (
                           () => (operators.ifThenElse(
                             nixScope.typesMergeable,
                             () => ({
-                              "type":
-                                (operators.ifThenElse(
-                                  operators.hasAttrPath(
-                                    nixScope.mergedType,
-                                    "functor",
-                                    "wrappedDeprecationMessage",
-                                  ),
-                                  () => (nixScope.addDeprecatedWrapped(
-                                    nixScope.mergedType,
-                                  )),
-                                  () => (nixScope.mergedType),
+                              "type": operators.ifThenElse(
+                                operators.hasAttrPath(
+                                  nixScope.mergedType,
+                                  "functor",
+                                  "wrappedDeprecationMessage",
+                                ),
+                                () => (nixScope.addDeprecatedWrapped(
+                                  nixScope.mergedType,
                                 )),
+                                () => (nixScope.mergedType),
+                              ),
                             }),
                             () => (nixScope.throw(
                               new InterpolatedString([
@@ -2708,17 +2701,16 @@ export default createFunc({}, null, {}, (nixScope) => (
                         "assertion": operators.negate(
                           nixScope.opt["isDefined"],
                         ),
-                        "message":
-                          (new InterpolatedString([
-                            "\n              The option definition \\`",
-                            "' in ",
-                            " no longer has any effect; please remove it.\n              ",
-                            "\n            ",
-                          ], [
-                            () => (nixScope.showOption(nixScope.optionName)),
-                            () => (nixScope.showFiles(nixScope.opt["files"])),
-                            () => (nixScope.replacementInstructions),
-                          ])),
+                        "message": new InterpolatedString([
+                          "\n              The option definition \\`",
+                          "' in ",
+                          " no longer has any effect; please remove it.\n              ",
+                          "\n            ",
+                        ], [
+                          () => (nixScope.showOption(nixScope.optionName)),
+                          () => (nixScope.showFiles(nixScope.opt["files"])),
+                          () => (nixScope.replacementInstructions),
+                        ]),
                       }];
                     },
                   );
@@ -2976,11 +2968,10 @@ export default createFunc({}, null, {}, (nixScope) => (
                     operators.merge(
                       nixScope.mkOption({
                         "visible": nixScope.visible,
-                        "description":
-                          (new InterpolatedString(
-                            ["Alias of {option}`", "`."],
-                            [() => (nixScope.showOption(nixScope.to))],
-                          )),
+                        "description": new InterpolatedString([
+                          "Alias of {option}`",
+                          "`.",
+                        ], [() => (nixScope.showOption(nixScope.to))]),
                         "apply": createFunc(
                           /*arg:*/ "x",
                           null,

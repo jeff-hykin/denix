@@ -1,6 +1,6 @@
 export default createFunc({}, null, {}, (nixScope) => (
   {
-    "options": ({
+    "options": {
       "processedToplevel": nixScope.lib["mkOption"](
         { "type": nixScope.lib["types"]["raw"] },
       ),
@@ -20,7 +20,7 @@ export default createFunc({}, null, {}, (nixScope) => (
           ),
         },
       ),
-    }),
+    },
     "config": createScope((nixScope) => {
       const obj = {};
       obj.processedToplevel = nixScope.lib["mkIf"](true)(10n);

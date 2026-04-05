@@ -4,7 +4,7 @@ export default createFunc(
   {},
   (nixScope) => (
     {
-      "options": ({ "result": nixScope.lib["mkOption"]({}) }),
+      "options": { "result": nixScope.lib["mkOption"]({}) },
       "config": createScope((nixScope) => {
         const obj = {};
         obj.result = nixScope.a;

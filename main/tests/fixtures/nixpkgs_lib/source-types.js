@@ -18,7 +18,7 @@ export default createFunc({}, null, {}, (nixScope) => (
         ))
       )),
     )({
-      "fromSource": ({ "isSource": true }),
+      "fromSource": { "isSource": true },
       "binaryNativeCode": {},
       "binaryBytecode": {},
       "binaryFirmware": {},

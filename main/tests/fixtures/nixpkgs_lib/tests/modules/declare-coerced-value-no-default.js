@@ -1,6 +1,6 @@
 export default createFunc({}, null, {}, (nixScope) => (
   {
-    "options": ({
+    "options": {
       "value": nixScope.lib["mkOption"](
         {
           "type": nixScope.lib["types"]["coercedTo"](
@@ -8,6 +8,6 @@ export default createFunc({}, null, {}, (nixScope) => (
           )(nixScope.builtins["toString"])(nixScope.lib["types"]["str"]),
         },
       ),
-    }),
+    },
   }
 ));

@@ -6,7 +6,7 @@ export default //
 //
 createFunc({}, null, {}, (nixScope) => (
   /*rec*/ createScope((nixScope) => {
-    nixScope.bluefield2 = { "gcc": ({ "arch": "armv8-a+fp+simd+crc+crypto" }) };
+    nixScope.bluefield2 = { "gcc": { "arch": "armv8-a+fp+simd+crc+crypto" } };
     nixScope["armv7a-android"] = createScope((nixScope) => {
       const obj = {};
       obj.gcc = {
@@ -19,41 +19,31 @@ createFunc({}, null, {}, (nixScope) => (
       return obj;
     });
     nixScope["apple-m1"] = {
-      "gcc":
-        ({
-          "arch": "armv8.3-a+crypto+sha2+aes+crc+fp16+lse+simd+ras+rdm+rcpc",
-          "cpu": "apple-a13",
-        }),
+      "gcc": {
+        "arch": "armv8.3-a+crypto+sha2+aes+crc+fp16+lse+simd+ras+rdm+rcpc",
+        "cpu": "apple-a13",
+      },
     };
     nixScope.ben_nanonote = {
-      "linux-kernel": ({ "name": "ben_nanonote" }),
-      "gcc": ({ "arch": "mips32", "float": "soft" }),
+      "linux-kernel": { "name": "ben_nanonote" },
+      "gcc": { "arch": "mips32", "float": "soft" },
     };
-    nixScope.gcc_mips32r2_o32 = {
-      "gcc": ({ "arch": "mips32r2", "abi": "32" }),
-    };
-    nixScope.gcc_mips32r6_o32 = {
-      "gcc": ({ "arch": "mips32r6", "abi": "32" }),
-    };
-    nixScope.gcc_mips64r2_n32 = {
-      "gcc": ({ "arch": "mips64r2", "abi": "n32" }),
-    };
-    nixScope.gcc_mips64r6_n32 = {
-      "gcc": ({ "arch": "mips64r6", "abi": "n32" }),
-    };
-    nixScope.gcc_mips64r2_64 = { "gcc": ({ "arch": "mips64r2", "abi": "64" }) };
-    nixScope.gcc_mips64r6_64 = { "gcc": ({ "arch": "mips64r6", "abi": "64" }) };
+    nixScope.gcc_mips32r2_o32 = { "gcc": { "arch": "mips32r2", "abi": "32" } };
+    nixScope.gcc_mips32r6_o32 = { "gcc": { "arch": "mips32r6", "abi": "32" } };
+    nixScope.gcc_mips64r2_n32 = { "gcc": { "arch": "mips64r2", "abi": "n32" } };
+    nixScope.gcc_mips64r6_n32 = { "gcc": { "arch": "mips64r6", "abi": "n32" } };
+    nixScope.gcc_mips64r2_64 = { "gcc": { "arch": "mips64r2", "abi": "64" } };
+    nixScope.gcc_mips64r6_64 = { "gcc": { "arch": "mips64r6", "abi": "64" } };
     defGetter(
       nixScope,
       "pc",
       (nixScope) => ({
-        "linux-kernel":
-          ({
-            "name": "pc",
-            "baseConfig": "defconfig",
-            "autoModules": true,
-            "target": "bzImage",
-          }),
+        "linux-kernel": {
+          "name": "pc",
+          "baseConfig": "defconfig",
+          "autoModules": true,
+          "target": "bzImage",
+        },
       }),
     );
     defGetter(
@@ -71,13 +61,12 @@ createFunc({}, null, {}, (nixScope) => (
       nixScope,
       "powernv",
       (nixScope) => ({
-        "linux-kernel":
-          ({
-            "name": "PowerNV",
-            "baseConfig": "powernv_defconfig",
-            "target": "vmlinux",
-            "autoModules": true,
-            "extraConfig": `
+        "linux-kernel": {
+          "name": "PowerNV",
+          "baseConfig": "powernv_defconfig",
+          "target": "vmlinux",
+          "autoModules": true,
+          "extraConfig": `
             PPC_64K_PAGES n
             PPC_4K_PAGES y
             IPV6 y
@@ -86,19 +75,18 @@ createFunc({}, null, {}, (nixScope) => (
             ATA_SFF y
             VIRTIO_MENU y
           `,
-          }),
+        },
       }),
     );
     defGetter(
       nixScope,
       "pogoplug4",
       (nixScope) => ({
-        "linux-kernel":
-          ({
-            "name": "pogoplug4",
-            "baseConfig": "multi_v5_defconfig",
-            "autoModules": false,
-            "extraConfig": `
+        "linux-kernel": {
+          "name": "pogoplug4",
+          "baseConfig": "multi_v5_defconfig",
+          "autoModules": false,
+          "extraConfig": `
             # Ubi for the mtd
             MTD_UBI y
             UBIFS_FS y
@@ -108,22 +96,21 @@ createFunc({}, null, {}, (nixScope) => (
             UBIFS_FS_ZLIB y
             UBIFS_FS_DEBUG n
           `,
-            "makeFlags": ["LOADADDR=0x8000"],
-            "target": "uImage",
-          }),
-        "gcc": ({ "arch": "armv5te" }),
+          "makeFlags": ["LOADADDR=0x8000"],
+          "target": "uImage",
+        },
+        "gcc": { "arch": "armv5te" },
       }),
     );
     defGetter(
       nixScope,
       "sheevaplug",
       (nixScope) => ({
-        "linux-kernel":
-          ({
-            "name": "sheevaplug",
-            "baseConfig": "multi_v5_defconfig",
-            "autoModules": false,
-            "extraConfig": `
+        "linux-kernel": {
+          "name": "sheevaplug",
+          "baseConfig": "multi_v5_defconfig",
+          "autoModules": false,
+          "extraConfig": `
             BLK_DEV_RAM y
             BLK_DEV_INITRD y
             BLK_DEV_CRYPTOLOOP m
@@ -221,32 +208,31 @@ createFunc({}, null, {}, (nixScope) => (
             KGDB_SERIAL_CONSOLE y
             KGDB_KDB y
           `,
-            "makeFlags": ["LOADADDR=0x0200000"],
-            "target": "uImage",
-            "DTB": true,
-          }),
-        "gcc": ({ "arch": "armv5te" }),
+          "makeFlags": ["LOADADDR=0x0200000"],
+          "target": "uImage",
+          "DTB": true,
+        },
+        "gcc": { "arch": "armv5te" },
       }),
     );
     defGetter(
       nixScope,
       "raspberrypi",
       (nixScope) => ({
-        "linux-kernel":
-          ({
-            "name": "raspberrypi",
-            "baseConfig": "bcm2835_defconfig",
-            "DTB": true,
-            "autoModules": true,
-            "preferBuiltin": true,
-            "extraConfig": `
+        "linux-kernel": {
+          "name": "raspberrypi",
+          "baseConfig": "bcm2835_defconfig",
+          "DTB": true,
+          "autoModules": true,
+          "preferBuiltin": true,
+          "extraConfig": `
             # Disable OABI to have seccomp_filter (required for systemd)
             # https://github.com/raspberrypi/firmware/issues/651
             OABI_COMPAT n
           `,
-            "target": "zImage",
-          }),
-        "gcc": ({ "arch": "armv6kz", "fpu": "vfpv2" }),
+          "target": "zImage",
+        },
+        "gcc": { "arch": "armv6kz", "fpu": "vfpv2" },
       }),
     );
     defGetter(
@@ -255,38 +241,35 @@ createFunc({}, null, {}, (nixScope) => (
       (nixScope) => nixScope["armv7l-hf-multiplatform"],
     );
     defGetter(nixScope, "zero-gravitas", (nixScope) => ({
-      "linux-kernel":
-        ({
-          "name": "zero-gravitas",
-          "baseConfig": "zero-gravitas_defconfig",
-          "target": "zImage",
-          "autoModules": false,
-          "DTB": true,
-        }),
-      "gcc": ({ "fpu": "neon", "cpu": "cortex-a9" }),
+      "linux-kernel": {
+        "name": "zero-gravitas",
+        "baseConfig": "zero-gravitas_defconfig",
+        "target": "zImage",
+        "autoModules": false,
+        "DTB": true,
+      },
+      "gcc": { "fpu": "neon", "cpu": "cortex-a9" },
     }));
     defGetter(nixScope, "zero-sugar", (nixScope) => ({
-      "linux-kernel":
-        ({
-          "name": "zero-sugar",
-          "baseConfig": "zero-sugar_defconfig",
-          "DTB": true,
-          "autoModules": false,
-          "preferBuiltin": true,
-          "target": "zImage",
-        }),
-      "gcc": ({ "cpu": "cortex-a7", "fpu": "neon-vfpv4", "float-abi": "hard" }),
+      "linux-kernel": {
+        "name": "zero-sugar",
+        "baseConfig": "zero-sugar_defconfig",
+        "DTB": true,
+        "autoModules": false,
+        "preferBuiltin": true,
+        "target": "zImage",
+      },
+      "gcc": { "cpu": "cortex-a7", "fpu": "neon-vfpv4", "float-abi": "hard" },
     }));
     defGetter(
       nixScope,
       "utilite",
       (nixScope) => ({
-        "linux-kernel":
-          ({
-            "name": "utilite",
-            "maseConfig": "multi_v7_defconfig",
-            "autoModules": false,
-            "extraConfig": `
+        "linux-kernel": {
+          "name": "utilite",
+          "maseConfig": "multi_v7_defconfig",
+          "autoModules": false,
+          "extraConfig": `
             # Ubi for the mtd
             MTD_UBI y
             UBIFS_FS y
@@ -296,11 +279,11 @@ createFunc({}, null, {}, (nixScope) => (
             UBIFS_FS_ZLIB y
             UBIFS_FS_DEBUG n
           `,
-            "makeFlags": ["LOADADDR=0x10800000"],
-            "target": "uImage",
-            "DTB": true,
-          }),
-        "gcc": ({ "cpu": "cortex-a9", "fpu": "neon" }),
+          "makeFlags": ["LOADADDR=0x10800000"],
+          "target": "uImage",
+          "DTB": true,
+        },
+        "gcc": { "cpu": "cortex-a9", "fpu": "neon" },
       }),
     );
     defGetter(
@@ -322,19 +305,18 @@ createFunc({}, null, {}, (nixScope) => (
       (nixScope) =>
         nixScope.lib["recursiveUpdate"](nixScope["armv7l-hf-multiplatform"])(
           {
-            "linux-kernel":
-              ({
-                "name": "beaglebone",
-                "baseConfig": "bb.org_defconfig",
-                "autoModules": false,
-                "extraConfig": "",
-                "target": "zImage",
-              }),
+            "linux-kernel": {
+              "name": "beaglebone",
+              "baseConfig": "bb.org_defconfig",
+              "autoModules": false,
+              "extraConfig": "",
+              "target": "zImage",
+            },
           },
         ),
     );
     defGetter(nixScope, "armv7l-hf-multiplatform", (nixScope) => ({
-      "linux-kernel": ({
+      "linux-kernel": {
         "name": "armv7l-hf-multiplatform",
         "Major": "2.6",
         "baseConfig": "multi_v7_defconfig",
@@ -362,21 +344,20 @@ createFunc({}, null, {}, (nixScope) => (
             # See: https://lore.kernel.org/netdev/20210116164828.40545-1-marex@denx.de/T/
             KS8851_MLL y
           `,
-      }),
-      "gcc": ({ "arch": "armv7-a", "fpu": "vfpv3-d16" }),
+      },
+      "gcc": { "arch": "armv7-a", "fpu": "vfpv3-d16" },
     }));
     defGetter(
       nixScope,
       "aarch64-multiplatform",
       (nixScope) => ({
-        "linux-kernel":
-          ({
-            "name": "aarch64-multiplatform",
-            "baseConfig": "defconfig",
-            "DTB": true,
-            "autoModules": true,
-            "preferBuiltin": true,
-            "extraConfig": `
+        "linux-kernel": {
+          "name": "aarch64-multiplatform",
+          "baseConfig": "defconfig",
+          "DTB": true,
+          "autoModules": true,
+          "preferBuiltin": true,
+          "extraConfig": `
             # Raspberry Pi 3 stuff. Not needed for   s >= 4.10.
             ARCH_BCM2835 y
             BCM2835_MBOX y
@@ -397,21 +378,20 @@ createFunc({}, null, {}, (nixScope) => (
             # which our initrd builder can't currently do easily.
             USB_XHCI_TEGRA m
           `,
-            "target": "Image",
-          }),
-        "gcc": ({ "arch": "armv8-a" }),
+          "target": "Image",
+        },
+        "gcc": { "arch": "armv8-a" },
       }),
     );
     defGetter(
       nixScope,
       "fuloong2f_n32",
       (nixScope) => ({
-        "linux-kernel":
-          ({
-            "name": "fuloong2f_n32",
-            "baseConfig": "lemote2f_defconfig",
-            "autoModules": false,
-            "extraConfig": `
+        "linux-kernel": {
+          "name": "fuloong2f_n32",
+          "baseConfig": "lemote2f_defconfig",
+          "autoModules": false,
+          "extraConfig": `
             MIGRATION n
             COMPACTION n
     
@@ -475,23 +455,22 @@ createFunc({}, null, {}, (nixScope) => (
             # The kernel doesn't boot at all, with FTRACE
             FTRACE n
           `,
-            "target": "vmlinux",
-          }),
-        "gcc": ({ "arch": "loongson2f", "float": "hard", "abi": "n32" }),
+          "target": "vmlinux",
+        },
+        "gcc": { "arch": "loongson2f", "float": "hard", "abi": "n32" },
       }),
     );
     defGetter(
       nixScope,
       "mips64el-qemu-linux-gnuabi64",
       (nixScope) => ({
-        "linux-kernel":
-          ({
-            "name": "mips64el",
-            "baseConfig": "64r2el_defconfig",
-            "target": "vmlinuz",
-            "autoModules": false,
-            "DTB": true,
-            "extraConfig": `
+        "linux-kernel": {
+          "name": "mips64el",
+          "baseConfig": "64r2el_defconfig",
+          "target": "vmlinuz",
+          "autoModules": false,
+          "DTB": true,
+          "extraConfig": `
             MIPS_MALTA y
             PAGE_SIZE_4KB y
             CPU_LITTLE_ENDIAN y
@@ -506,36 +485,33 @@ createFunc({}, null, {}, (nixScope) => (
             PCI y
             VIRTIO_PCI y
           `,
-          }),
+        },
       }),
     );
     defGetter(
       nixScope,
       "riscv-multiplatform",
       (nixScope) => ({
-        "linux-kernel":
-          ({
-            "name": "riscv-multiplatform",
-            "target": "Image",
-            "autoModules": true,
-            "preferBuiltin": true,
-            "baseConfig": "defconfig",
-            "DTB": true,
-          }),
-      }),
-    );
-    defGetter(nixScope, "loongarch64-multiplatform", (nixScope) => ({
-      "gcc":
-        ({ "arch": "la64v1.0", "strict-align": false, "cmodel": "medium" }),
-      "linux-kernel":
-        ({
-          "name": "loongarch-multiplatform",
-          "target": "vmlinuz.efi",
+        "linux-kernel": {
+          "name": "riscv-multiplatform",
+          "target": "Image",
           "autoModules": true,
           "preferBuiltin": true,
           "baseConfig": "defconfig",
           "DTB": true,
-        }),
+        },
+      }),
+    );
+    defGetter(nixScope, "loongarch64-multiplatform", (nixScope) => ({
+      "gcc": { "arch": "la64v1.0", "strict-align": false, "cmodel": "medium" },
+      "linux-kernel": {
+        "name": "loongarch-multiplatform",
+        "target": "vmlinuz.efi",
+        "autoModules": true,
+        "preferBuiltin": true,
+        "baseConfig": "defconfig",
+        "DTB": true,
+      },
     }));
     defGetter(
       nixScope,

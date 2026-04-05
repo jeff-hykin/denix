@@ -1,6 +1,6 @@
 export default createFunc({}, null, {}, (nixScope) => (
   {
-    "config": ({
+    "config": {
       "result": ((_cond) => {
         if (!_cond) {
           throw new Error("assertion failed: " + "config.services.foos == { }");
@@ -18,6 +18,6 @@ export default createFunc({}, null, {}, (nixScope) => (
           ),
         );
       })(operators.equal(nixScope.config["services"]["foos"], {})),
-    }),
+    },
   }
 ));

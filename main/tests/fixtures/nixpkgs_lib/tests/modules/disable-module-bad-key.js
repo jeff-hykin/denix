@@ -7,7 +7,7 @@ export default createFunc({}, null, {}, (nixScope) => (
       "moduleWithKey",
       (nixScope) =>
         createFunc({}, null, {}, (nixScope) => (
-          { "config": ({ "enable": true }) }
+          { "config": { "enable": true } }
         )),
     );
     return ({

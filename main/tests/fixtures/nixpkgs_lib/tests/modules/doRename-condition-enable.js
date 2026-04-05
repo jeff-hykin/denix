@@ -13,7 +13,7 @@ export default createFunc({}, null, {}, (nixScope) => (
       })(
         operators.equal(
           nixScope.config["services"]["foos"],
-          { "": ({ "bar": "baz" }) },
+          { "": { "bar": "baz" } },
         ),
       );
       if (obj["services"] === undefined) obj["services"] = {};

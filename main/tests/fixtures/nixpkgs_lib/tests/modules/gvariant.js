@@ -4,16 +4,15 @@ const operators = runtime.operators;
 
 export default createFunc({}, null, {}, (nixScope) => (
   {
-    "options":
-      ({
-        "examples": nixScope.lib["mkOption"](
-          { "type": nixScope.lib["types"]["attrs"] },
-        ),
-        "assertion": nixScope.lib["mkOption"](
-          { "type": nixScope.lib["types"]["bool"] },
-        ),
-      }),
-    "config": ({
+    "options": {
+      "examples": nixScope.lib["mkOption"](
+        { "type": nixScope.lib["types"]["attrs"] },
+      ),
+      "assertion": nixScope.lib["mkOption"](
+        { "type": nixScope.lib["types"]["bool"] },
+      ),
+    },
+    "config": {
       "examples": ((_withAttrs) => {
         const nixScope = { ...runtime.scopeStack.slice(-1)[0], ..._withAttrs };
         runtime.scopeStack.push(nixScope);
@@ -90,6 +89,6 @@ export default createFunc({}, null, {}, (nixScope) => (
           `,
         );
       }),
-    }),
+    },
   }
 ));

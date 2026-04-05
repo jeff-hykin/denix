@@ -6,44 +6,42 @@ export default createFunc({}, null, {}, (nixScope) => (
       obj.imports = [
         createFunc({}, null, {}, (nixScope) => (
           {
-            "options":
-              ({
-                "fun": nixScope.lib["mkOption"](
-                  {
-                    "type": nixScope.types["functionTo"](
-                      nixScope.types["submodule"](createScope((nixScope) => {
-                        const obj = {};
-                        if (obj["options"] === undefined) obj["options"] = {};
-                        obj["options"]["a"] = nixScope.lib["mkOption"](
-                          { "default": "a" },
-                        );
-                        return obj;
-                      })),
-                    ),
-                  },
-                ),
-              }),
+            "options": {
+              "fun": nixScope.lib["mkOption"](
+                {
+                  "type": nixScope.types["functionTo"](
+                    nixScope.types["submodule"](createScope((nixScope) => {
+                      const obj = {};
+                      if (obj["options"] === undefined) obj["options"] = {};
+                      obj["options"]["a"] = nixScope.lib["mkOption"](
+                        { "default": "a" },
+                      );
+                      return obj;
+                    })),
+                  ),
+                },
+              ),
+            },
           }
         )),
         createFunc({}, null, {}, (nixScope) => (
           {
-            "options":
-              ({
-                "fun": nixScope.lib["mkOption"](
-                  {
-                    "type": nixScope.types["functionTo"](
-                      nixScope.types["submodule"](createScope((nixScope) => {
-                        const obj = {};
-                        if (obj["options"] === undefined) obj["options"] = {};
-                        obj["options"]["b"] = nixScope.lib["mkOption"](
-                          { "default": "b" },
-                        );
-                        return obj;
-                      })),
-                    ),
-                  },
-                ),
-              }),
+            "options": {
+              "fun": nixScope.lib["mkOption"](
+                {
+                  "type": nixScope.types["functionTo"](
+                    nixScope.types["submodule"](createScope((nixScope) => {
+                      const obj = {};
+                      if (obj["options"] === undefined) obj["options"] = {};
+                      obj["options"]["b"] = nixScope.lib["mkOption"](
+                        { "default": "b" },
+                      );
+                      return obj;
+                    })),
+                  ),
+                },
+              ),
+            },
           }
         )),
       ];

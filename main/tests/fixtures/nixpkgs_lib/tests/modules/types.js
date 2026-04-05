@@ -4,16 +4,15 @@ export default createFunc({}, null, {}, (nixScope) => (
     nixScope.types = nixScope.lib["types"];
     nixScope.mkOption = nixScope.lib["mkOption"];
     return ({
-      "options":
-        ({
-          "pathInStore": nixScope.mkOption(
-            {
-              "type": nixScope.types["lazyAttrsOf"](
-                nixScope.types["pathInStore"],
-              ),
-            },
-          ),
-        }),
+      "options": {
+        "pathInStore": nixScope.mkOption(
+          {
+            "type": nixScope.types["lazyAttrsOf"](
+              nixScope.types["pathInStore"],
+            ),
+          },
+        ),
+      },
       "config": createScope((nixScope) => {
         const obj = {};
         if (obj["pathInStore"] === undefined) obj["pathInStore"] = {};

@@ -2,7 +2,7 @@ export default createFunc({}, null, {}, (nixScope) => (
   /*let*/ createScope((nixScope) => {
     nixScope.types = nixScope.lib["types"];
     return ({
-      "options": ({
+      "options": {
         "name": nixScope.lib["mkOption"]({ "type": nixScope.types["str"] }),
         "email": nixScope.lib["mkOption"](
           {
@@ -45,7 +45,7 @@ export default createFunc({}, null, {}, (nixScope) => (
             "default": [],
           },
         ),
-      }),
+      },
     });
   })
 ));

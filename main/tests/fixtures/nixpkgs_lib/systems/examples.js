@@ -17,10 +17,9 @@ createFunc({}, null, {}, (nixScope) => (
       (nixScope) =>
         createFunc(/*arg:*/ "bits", null, {}, (nixScope) => (
           {
-            "config":
-              (new InterpolatedString(["riscv", "-unknown-linux-gnu"], [
-                () => (nixScope.bits),
-              ])),
+            "config": new InterpolatedString(["riscv", "-unknown-linux-gnu"], [
+              () => (nixScope.bits),
+            ]),
           }
         )),
     );
@@ -39,7 +38,7 @@ createFunc({}, null, {}, (nixScope) => (
       };
       nixScope["ppc64-musl"] = {
         "config": "powerpc64-unknown-linux-musl",
-        "gcc": ({ "abi": "elfv2" }),
+        "gcc": { "abi": "elfv2" },
       };
       nixScope["armv7l-hf-multiplatform"] = {
         "config": "armv7l-unknown-linux-gnueabihf",
@@ -91,7 +90,7 @@ createFunc({}, null, {}, (nixScope) => (
       nixScope["armhf-embedded"] = {
         "config": "arm-none-eabihf",
         "libc": "newlib",
-        "gcc": ({ "arch": "armv5t", "fpu": "vfp" }),
+        "gcc": { "arch": "armv5t", "fpu": "vfp" },
       };
       nixScope["aarch64-embedded"] = createScope((nixScope) => {
         const obj = {};
@@ -349,7 +348,7 @@ createFunc({}, null, {}, (nixScope) => (
             nixScope.platforms["loongarch64-multiplatform"],
           )({
             "config": "loongarch64-unknown-linux-gnu",
-            "gcc": ({ "arch": "loongarch64", "strict-align": true }),
+            "gcc": { "arch": "loongarch64", "strict-align": true },
           }),
       );
       defGetter(

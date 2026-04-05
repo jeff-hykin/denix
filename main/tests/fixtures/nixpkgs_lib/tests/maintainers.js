@@ -116,16 +116,15 @@ createFunc(
       defGetter(nixScope, "failure", (nixScope) =>
         nixScope.pkgs["runCommand"]("checked-maintainers-failure")({
           "nativeBuildInputs": [nixScope.pkgs["curl"], nixScope.pkgs["jq"]],
-          "outputHash":
-            (new InterpolatedString(["sha256:", ""], [
-              () => (nixScope.lib["fakeSha256"]),
-            ])),
+          "outputHash": new InterpolatedString(["sha256:", ""], [
+            () => (nixScope.lib["fakeSha256"]),
+          ]),
           "outputHAlgo": "sha256",
           "outputHashMode": "flat",
-          "SSL_CERT_FILE":
-            (new InterpolatedString(["", "/etc/ssl/certs/ca-bundle.crt"], [
-              () => (nixScope.pkgs["cacert"]),
-            ])),
+          "SSL_CERT_FILE": new InterpolatedString([
+            "",
+            "/etc/ssl/certs/ca-bundle.crt",
+          ], [() => (nixScope.pkgs["cacert"])]),
         })(
           new InterpolatedString(["\n        ", "\n        exit 1\n      "], [
             () => (nixScope.lib["concatStringsSep"]("")(

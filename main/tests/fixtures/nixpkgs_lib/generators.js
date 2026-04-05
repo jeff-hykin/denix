@@ -1343,12 +1343,11 @@ export default /**
                     operators.merge(
                       nixScope.args,
                       {
-                        "indent":
-                          (operators.ifThenElse(
-                            nixScope.asBindings,
-                            () => (nixScope.indent),
-                            () => (nixScope.innerIndent),
-                          )),
+                        "indent": operators.ifThenElse(
+                          nixScope.asBindings,
+                          () => (nixScope.indent),
+                          () => (nixScope.innerIndent),
+                        ),
                         "asBindings": false,
                       },
                     ));

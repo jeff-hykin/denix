@@ -219,60 +219,58 @@ export default createFunc({}, null, {}, (nixScope) => (
                     nixScope.final["isFreeBSD"],
                     nixScope.final["isOpenBSD"],
                   ),
-                  "libc":
-                    (operators.ifThenElse(
-                      nixScope.final["isDarwin"],
-                      () => ("libSystem"),
+                  "libc": operators.ifThenElse(
+                    nixScope.final["isDarwin"],
+                    () => ("libSystem"),
+                    () => (operators.ifThenElse(
+                      nixScope.final["isMsvc"],
+                      () => ("ucrt"),
                       () => (operators.ifThenElse(
-                        nixScope.final["isMsvc"],
-                        () => ("ucrt"),
+                        nixScope.final["isMinGW"],
+                        () => ("msvcrt"),
                         () => (operators.ifThenElse(
-                          nixScope.final["isMinGW"],
-                          () => ("msvcrt"),
+                          nixScope.final["isWasi"],
+                          () => ("wasilibc"),
                           () => (operators.ifThenElse(
-                            nixScope.final["isWasi"],
-                            () => ("wasilibc"),
+                            operators.and(
+                              nixScope.final["isWasm"],
+                              operators.negate(nixScope.final["isWasi"]),
+                            ),
+                            () => (null),
                             () => (operators.ifThenElse(
-                              operators.and(
-                                nixScope.final["isWasm"],
-                                operators.negate(nixScope.final["isWasi"]),
-                              ),
-                              () => (null),
+                              nixScope.final["isRedox"],
+                              () => ("relibc"),
                               () => (operators.ifThenElse(
-                                nixScope.final["isRedox"],
-                                () => ("relibc"),
+                                nixScope.final["isMusl"],
+                                () => ("musl"),
                                 () => (operators.ifThenElse(
-                                  nixScope.final["isMusl"],
-                                  () => ("musl"),
+                                  nixScope.final["isUClibc"],
+                                  () => ("uclibc"),
                                   () => (operators.ifThenElse(
-                                    nixScope.final["isUClibc"],
-                                    () => ("uclibc"),
+                                    nixScope.final["isAndroid"],
+                                    () => ("bionic"),
                                     () => (operators.ifThenElse(
-                                      nixScope.final["isAndroid"],
-                                      () => ("bionic"),
+                                      nixScope.final["isLinux"],
+                                      () => ("glibc"),
                                       () => (operators.ifThenElse(
-                                        nixScope.final["isLinux"],
-                                        () => ("glibc"),
+                                        nixScope.final["isFreeBSD"],
+                                        () => ("fblibc"),
                                         () => (operators.ifThenElse(
-                                          nixScope.final["isFreeBSD"],
-                                          () => ("fblibc"),
+                                          nixScope.final["isOpenBSD"],
+                                          () => ("oblibc"),
                                           () => (operators.ifThenElse(
-                                            nixScope.final["isOpenBSD"],
-                                            () => ("oblibc"),
+                                            nixScope.final["isNetBSD"],
+                                            () => ("nblibc"),
                                             () => (operators.ifThenElse(
-                                              nixScope.final["isNetBSD"],
-                                              () => ("nblibc"),
+                                              nixScope.final["isAvr"],
+                                              () => ("avrlibc"),
                                               () => (operators.ifThenElse(
-                                                nixScope.final["isAvr"],
-                                                () => ("avrlibc"),
+                                                nixScope.final["isGhcjs"],
+                                                () => (null),
                                                 () => (operators.ifThenElse(
-                                                  nixScope.final["isGhcjs"],
-                                                  () => (null),
-                                                  () => (operators.ifThenElse(
-                                                    nixScope.final["isNone"],
-                                                    () => ("newlib"),
-                                                    () => ("native/impure"),
-                                                  )),
+                                                  nixScope.final["isNone"],
+                                                  () => ("newlib"),
+                                                  () => ("native/impure"),
                                                 )),
                                               )),
                                             )),
@@ -288,75 +286,70 @@ export default createFunc({}, null, {}, (nixScope) => (
                         )),
                       )),
                     )),
-                  "linker":
-                    (operators.ifThenElse(
-                      operators.selectOrDefault(
-                        nixScope.final,
-                        ["useLLVM"],
-                        false,
-                      ),
-                      () => ("lld"),
-                      () => (operators.ifThenElse(
-                        nixScope.final["isDarwin"],
-                        () => ("cctools"),
-                        () => ("bfd"),
-                      )),
+                  ),
+                  "linker": operators.ifThenElse(
+                    operators.selectOrDefault(
+                      nixScope.final,
+                      ["useLLVM"],
+                      false,
+                    ),
+                    () => ("lld"),
+                    () => (operators.ifThenElse(
+                      nixScope.final["isDarwin"],
+                      () => ("cctools"),
+                      () => ("bfd"),
                     )),
-                  "libDir":
-                    (operators.ifThenElse(
-                      nixScope.final["isLinux"],
-                      () => (operators.ifThenElse(
+                  ),
+                  "libDir": operators.ifThenElse(
+                    nixScope.final["isLinux"],
+                    () => (operators.ifThenElse(
+                      operators.or(
                         operators.or(
-                          operators.or(
-                            nixScope.final["isx86_64"],
-                            nixScope.final["isMips64"],
-                          ),
-                          nixScope.final["isPower64"],
+                          nixScope.final["isx86_64"],
+                          nixScope.final["isMips64"],
                         ),
-                        () => ("lib64"),
-                        () => ("lib"),
-                      )),
-                      () => (null),
+                        nixScope.final["isPower64"],
+                      ),
+                      () => ("lib64"),
+                      () => ("lib"),
                     )),
+                    () => (null),
+                  ),
                   "extensions": operators.merge(
                     nixScope.optionalAttrs(
                       nixScope.final["hasSharedLibraries"],
                     )({
-                      "sharedLibrary":
-                        (operators.ifThenElse(
-                          nixScope.final["isDarwin"],
-                          () => (".dylib"),
-                          () => (operators.ifThenElse(
-                            nixScope.final["isWindows"],
-                            () => (".dll"),
-                            () => (".so"),
-                          )),
+                      "sharedLibrary": operators.ifThenElse(
+                        nixScope.final["isDarwin"],
+                        () => (".dylib"),
+                        () => (operators.ifThenElse(
+                          nixScope.final["isWindows"],
+                          () => (".dll"),
+                          () => (".so"),
                         )),
+                      ),
                     }),
                     {
-                      "staticLibrary":
-                        (operators.ifThenElse(
-                          nixScope.final["isWindows"],
-                          () => (".lib"),
-                          () => (".a"),
-                        )),
-                      "library":
-                        (operators.ifThenElse(
-                          nixScope.final["isStatic"],
-                          () => (nixScope.final["extensions"]["staticLibrary"]),
-                          () => (nixScope.final["extensions"]["sharedLibrary"]),
-                        )),
-                      "executable":
-                        (operators.ifThenElse(
-                          nixScope.final["isWindows"],
-                          () => (".exe"),
-                          () => (""),
-                        )),
+                      "staticLibrary": operators.ifThenElse(
+                        nixScope.final["isWindows"],
+                        () => (".lib"),
+                        () => (".a"),
+                      ),
+                      "library": operators.ifThenElse(
+                        nixScope.final["isStatic"],
+                        () => (nixScope.final["extensions"]["staticLibrary"]),
+                        () => (nixScope.final["extensions"]["sharedLibrary"]),
+                      ),
+                      "executable": operators.ifThenElse(
+                        nixScope.final["isWindows"],
+                        () => (".exe"),
+                        () => (""),
+                      ),
                     },
                   ),
                   "useAndroidPrebuilt": false,
                   "useiOSPrebuilt": false,
-                  "uname": ({
+                  "uname": {
                     "system": operators.selectOrDefault(
                       {
                         "linux": "Linux",
@@ -372,34 +365,33 @@ export default createFunc({}, null, {}, (nixScope) => (
                       [nixScope.final["parsed"]["kernel"]["name"]],
                       null,
                     ),
-                    "processor":
-                      (operators.ifThenElse(
-                        nixScope.final["isPower64"],
-                        () => (new InterpolatedString(["ppc64", ""], [
+                    "processor": operators.ifThenElse(
+                      nixScope.final["isPower64"],
+                      () => (new InterpolatedString(["ppc64", ""], [
+                        () => (nixScope.optionalString(
+                          nixScope.final["isLittleEndian"],
+                        )("le")),
+                      ])),
+                      () => (operators.ifThenElse(
+                        nixScope.final["isPower"],
+                        () => (new InterpolatedString(["ppc", ""], [
                           () => (nixScope.optionalString(
                             nixScope.final["isLittleEndian"],
                           )("le")),
                         ])),
                         () => (operators.ifThenElse(
-                          nixScope.final["isPower"],
-                          () => (new InterpolatedString(["ppc", ""], [
-                            () => (nixScope.optionalString(
-                              nixScope.final["isLittleEndian"],
-                            )("le")),
-                          ])),
+                          nixScope.final["isMips64"],
+                          () => ("mips64"),
                           () => (operators.ifThenElse(
-                            nixScope.final["isMips64"],
-                            () => ("mips64"),
-                            () => (operators.ifThenElse(
-                              nixScope.final["isDarwin"],
-                              () => (nixScope.final["darwinArch"]),
-                              () => (nixScope.final["parsed"]["cpu"]["name"]),
-                            )),
+                            nixScope.final["isDarwin"],
+                            () => (nixScope.final["darwinArch"]),
+                            () => (nixScope.final["parsed"]["cpu"]["name"]),
                           )),
                         )),
                       )),
+                    ),
                     "release": null,
-                  }),
+                  },
                   "hasSharedLibraries": ((_withAttrs) => {
                     const nixScope = {
                       ...runtime.scopeStack.slice(-1)[0],
@@ -457,43 +449,41 @@ export default createFunc({}, null, {}, (nixScope) => (
                     ["rustc"],
                     {},
                   ),
-                  "linuxArch":
-                    (operators.ifThenElse(
-                      nixScope.final["isAarch32"],
-                      () => ("arm"),
+                  "linuxArch": operators.ifThenElse(
+                    nixScope.final["isAarch32"],
+                    () => ("arm"),
+                    () => (operators.ifThenElse(
+                      nixScope.final["isAarch64"],
+                      () => ("arm64"),
                       () => (operators.ifThenElse(
-                        nixScope.final["isAarch64"],
-                        () => ("arm64"),
+                        nixScope.final["isx86_32"],
+                        () => ("i386"),
                         () => (operators.ifThenElse(
-                          nixScope.final["isx86_32"],
-                          () => ("i386"),
+                          nixScope.final["isx86_64"],
+                          () => ("x86_64"),
                           () => (operators.ifThenElse(
-                            nixScope.final["isx86_64"],
-                            () => ("x86_64"),
+                            nixScope.final["isMicroBlaze"],
+                            () => ("microblaze"),
                             () => (operators.ifThenElse(
-                              nixScope.final["isMicroBlaze"],
-                              () => ("microblaze"),
+                              nixScope.final["isMips32"],
+                              () => ("mips"),
                               () => (operators.ifThenElse(
-                                nixScope.final["isMips32"],
+                                nixScope.final["isMips64"],
                                 () => ("mips"),
                                 () => (operators.ifThenElse(
-                                  nixScope.final["isMips64"],
-                                  () => ("mips"),
+                                  nixScope.final["isPower"],
+                                  () => ("powerpc"),
                                   () => (operators.ifThenElse(
-                                    nixScope.final["isPower"],
-                                    () => ("powerpc"),
+                                    nixScope.final["isRiscV"],
+                                    () => ("riscv"),
                                     () => (operators.ifThenElse(
-                                      nixScope.final["isRiscV"],
-                                      () => ("riscv"),
+                                      nixScope.final["isS390"],
+                                      () => ("s390"),
                                       () => (operators.ifThenElse(
-                                        nixScope.final["isS390"],
-                                        () => ("s390"),
-                                        () => (operators.ifThenElse(
-                                          nixScope.final["isLoongArch64"],
-                                          () => ("loongarch"),
-                                          () => (nixScope
-                                            .final["parsed"]["cpu"]["name"]),
-                                        )),
+                                        nixScope.final["isLoongArch64"],
+                                        () => ("loongarch"),
+                                        () => (nixScope
+                                          .final["parsed"]["cpu"]["name"]),
                                       )),
                                     )),
                                   )),
@@ -504,105 +494,100 @@ export default createFunc({}, null, {}, (nixScope) => (
                         )),
                       )),
                     )),
-                  "ubootArch":
-                    (operators.ifThenElse(
-                      nixScope.final["isx86_32"],
-                      () => ("x86"),
-                      () => (operators.ifThenElse(
-                        nixScope.final["isMips64"],
-                        () => ("mips64"),
-                        () => (nixScope.final["linuxArch"]),
-                      )),
+                  ),
+                  "ubootArch": operators.ifThenElse(
+                    nixScope.final["isx86_32"],
+                    () => ("x86"),
+                    () => (operators.ifThenElse(
+                      nixScope.final["isMips64"],
+                      () => ("mips64"),
+                      () => (nixScope.final["linuxArch"]),
                     )),
-                  "qemuArch":
-                    (operators.ifThenElse(
-                      nixScope.final["isAarch32"],
-                      () => ("arm"),
+                  ),
+                  "qemuArch": operators.ifThenElse(
+                    nixScope.final["isAarch32"],
+                    () => ("arm"),
+                    () => (operators.ifThenElse(
+                      nixScope.final["isAarch64"],
+                      () => ("aarch64"),
                       () => (operators.ifThenElse(
-                        nixScope.final["isAarch64"],
-                        () => ("aarch64"),
+                        operators.and(
+                          nixScope.final["isS390"],
+                          operators.negate(nixScope.final["isS390x"]),
+                        ),
+                        () => (null),
                         () => (operators.ifThenElse(
-                          operators.and(
-                            nixScope.final["isS390"],
-                            operators.negate(nixScope.final["isS390x"]),
-                          ),
-                          () => (null),
+                          nixScope.final["isx86_64"],
+                          () => ("x86_64"),
                           () => (operators.ifThenElse(
-                            nixScope.final["isx86_64"],
-                            () => ("x86_64"),
+                            nixScope.final["isx86"],
+                            () => ("i386"),
                             () => (operators.ifThenElse(
-                              nixScope.final["isx86"],
-                              () => ("i386"),
+                              nixScope.final["isMips64n32"],
+                              () => (new InterpolatedString(["mipsn32", ""], [
+                                () => (nixScope.optionalString(
+                                  nixScope.final["isLittleEndian"],
+                                )("el")),
+                              ])),
                               () => (operators.ifThenElse(
-                                nixScope.final["isMips64n32"],
-                                () => (new InterpolatedString(["mipsn32", ""], [
+                                nixScope.final["isMips64"],
+                                () => (new InterpolatedString(["mips64", ""], [
                                   () => (nixScope.optionalString(
                                     nixScope.final["isLittleEndian"],
                                   )("el")),
                                 ])),
-                                () => (operators.ifThenElse(
-                                  nixScope.final["isMips64"],
-                                  () => (new InterpolatedString(
-                                    ["mips64", ""],
-                                    [() => (nixScope.optionalString(
-                                      nixScope.final["isLittleEndian"],
-                                    )("el"))],
-                                  )),
-                                  () => (nixScope.final["uname"]["processor"]),
-                                )),
+                                () => (nixScope.final["uname"]["processor"]),
                               )),
                             )),
                           )),
                         )),
                       )),
                     )),
-                  "efiArch":
-                    (operators.ifThenElse(
-                      nixScope.final["isx86_32"],
-                      () => ("ia32"),
+                  ),
+                  "efiArch": operators.ifThenElse(
+                    nixScope.final["isx86_32"],
+                    () => ("ia32"),
+                    () => (operators.ifThenElse(
+                      nixScope.final["isx86_64"],
+                      () => ("x64"),
                       () => (operators.ifThenElse(
-                        nixScope.final["isx86_64"],
-                        () => ("x64"),
+                        nixScope.final["isAarch32"],
+                        () => ("arm"),
                         () => (operators.ifThenElse(
-                          nixScope.final["isAarch32"],
-                          () => ("arm"),
-                          () => (operators.ifThenElse(
-                            nixScope.final["isAarch64"],
-                            () => ("aa64"),
-                            () => (nixScope.final["parsed"]["cpu"]["name"]),
-                          )),
+                          nixScope.final["isAarch64"],
+                          () => ("aa64"),
+                          () => (nixScope.final["parsed"]["cpu"]["name"]),
                         )),
                       )),
                     )),
+                  ),
                   "darwinArch": nixScope.parse["darwinArch"](
                     nixScope.final["parsed"]["cpu"],
                   ),
-                  "darwinPlatform":
-                    (operators.ifThenElse(
-                      nixScope.final["isMacOS"],
-                      () => ("macos"),
-                      () => (operators.ifThenElse(
-                        nixScope.final["isiOS"],
-                        () => ("ios"),
-                        () => (null),
-                      )),
+                  "darwinPlatform": operators.ifThenElse(
+                    nixScope.final["isMacOS"],
+                    () => ("macos"),
+                    () => (operators.ifThenElse(
+                      nixScope.final["isiOS"],
+                      () => ("ios"),
+                      () => (null),
                     )),
+                  ),
                   "darwinSdkVersion": operators.selectOrDefault(
                     nixScope.final,
                     ["sdkVer"],
                     "11.3",
                   ),
                   "darwinMinVersion": nixScope.final["darwinSdkVersion"],
-                  "darwinMinVersionVariable":
-                    (operators.ifThenElse(
-                      nixScope.final["isMacOS"],
-                      () => ("MACOSX_DEPLOYMENT_TARGET"),
-                      () => (operators.ifThenElse(
-                        nixScope.final["isiOS"],
-                        () => ("IPHONEOS_DEPLOYMENT_TARGET"),
-                        () => (null),
-                      )),
+                  "darwinMinVersionVariable": operators.ifThenElse(
+                    nixScope.final["isMacOS"],
+                    () => ("MACOSX_DEPLOYMENT_TARGET"),
+                    () => (operators.ifThenElse(
+                      nixScope.final["isiOS"],
+                      () => ("IPHONEOS_DEPLOYMENT_TARGET"),
+                      () => (null),
                     )),
+                  ),
                   "androidSdkVersion": operators.selectOrDefault(
                     nixScope.args,
                     ["androidSdkVersion"],
@@ -770,105 +755,90 @@ export default createFunc({}, null, {}, (nixScope) => (
                                 "platform",
                               ], {}),
                               {
-                                "arch":
-                                  (operators.ifThenElse(
-                                    operators.hasAttr(
-                                      nixScope.rust,
-                                      "platform",
-                                    ),
-                                    () => (nixScope.rust["platform"]["arch"]),
+                                "arch": operators.ifThenElse(
+                                  operators.hasAttr(nixScope.rust, "platform"),
+                                  () => (nixScope.rust["platform"]["arch"]),
+                                  () => (operators.ifThenElse(
+                                    nixScope.final["isAarch32"],
+                                    () => ("arm"),
                                     () => (operators.ifThenElse(
-                                      nixScope.final["isAarch32"],
-                                      () => ("arm"),
+                                      nixScope.final["isMips64"],
+                                      () => ("mips64"),
                                       () => (operators.ifThenElse(
-                                        nixScope.final["isMips64"],
-                                        () => ("mips64"),
-                                        () => (operators.ifThenElse(
-                                          nixScope.final["isPower64"],
-                                          () => ("powerpc64"),
-                                          () => (nixScope
-                                            .final["parsed"]["cpu"]["name"]),
-                                        )),
-                                      )),
-                                    )),
-                                  )),
-                                "os":
-                                  (operators.ifThenElse(
-                                    operators.hasAttr(
-                                      nixScope.rust,
-                                      "platform",
-                                    ),
-                                    () => (operators.selectOrDefault(
-                                      nixScope.rust,
-                                      ["platform", "os"],
-                                      "none",
-                                    )),
-                                    () => (operators.ifThenElse(
-                                      nixScope.final["isDarwin"],
-                                      () => ("macos"),
-                                      () => (operators.ifThenElse(
-                                        operators.and(
-                                          nixScope.final["isWasm"],
-                                          operators.negate(
-                                            nixScope.final["isWasi"],
-                                          ),
-                                        ),
-                                        () => ("unknown"),
+                                        nixScope.final["isPower64"],
+                                        () => ("powerpc64"),
                                         () => (nixScope
-                                          .final["parsed"]["kernel"]["name"]),
+                                          .final["parsed"]["cpu"]["name"]),
                                       )),
                                     )),
                                   )),
-                                "target-family":
-                                  (operators.ifThenElse(
+                                ),
+                                "os": operators.ifThenElse(
+                                  operators.hasAttr(nixScope.rust, "platform"),
+                                  () => (operators.selectOrDefault(
+                                    nixScope.rust,
+                                    ["platform", "os"],
+                                    "none",
+                                  )),
+                                  () => (operators.ifThenElse(
+                                    nixScope.final["isDarwin"],
+                                    () => ("macos"),
+                                    () => (operators.ifThenElse(
+                                      operators.and(
+                                        nixScope.final["isWasm"],
+                                        operators.negate(
+                                          nixScope.final["isWasi"],
+                                        ),
+                                      ),
+                                      () => ("unknown"),
+                                      () => (nixScope
+                                        .final["parsed"]["kernel"]["name"]),
+                                    )),
+                                  )),
+                                ),
+                                "target-family": operators.ifThenElse(
+                                  operators.hasAttrPath(
+                                    nixScope.args,
+                                    "rust",
+                                    "platform",
+                                    "target-family",
+                                  ),
+                                  () => (nixScope
+                                    .args["rust"]["platform"]["target-family"]),
+                                  () => (operators.ifThenElse(
                                     operators.hasAttrPath(
                                       nixScope.args,
-                                      "rust",
+                                      "rustc",
                                       "platform",
                                       "target-family",
                                     ),
-                                    () => (nixScope
-                                      .args["rust"]["platform"][
-                                        "target-family"
-                                      ]),
-                                    () => (operators.ifThenElse(
-                                      operators.hasAttrPath(
-                                        nixScope.args,
-                                        "rustc",
-                                        "platform",
-                                        "target-family",
-                                      ),
-                                      () => (/*let*/ createScope((nixScope) => {
-                                        defGetter(
-                                          nixScope,
-                                          "f",
-                                          (nixScope) =>
-                                            nixScope
-                                              .args["rustc"]["platform"][
-                                                "target-family"
-                                              ],
-                                        );
-                                        return (operators.ifThenElse(
-                                          nixScope.isList(nixScope.f),
-                                          () => (nixScope.f),
-                                          () => [nixScope.f],
-                                        ));
-                                      })),
-                                      () => (operators.listConcat(
+                                    () => (/*let*/ createScope((nixScope) => {
+                                      defGetter(nixScope, "f", (nixScope) =>
+                                        nixScope
+                                          .args["rustc"]["platform"][
+                                            "target-family"
+                                          ]);
+                                      return (operators.ifThenElse(
+                                        nixScope.isList(nixScope.f),
+                                        () => (nixScope.f),
+                                        () => [nixScope.f],
+                                      ));
+                                    })),
+                                    () => (operators.listConcat(
+                                      nixScope.optional(
+                                        nixScope.final["isUnix"],
+                                      )("unix"),
+                                      operators.listConcat(
                                         nixScope.optional(
-                                          nixScope.final["isUnix"],
-                                        )("unix"),
-                                        operators.listConcat(
-                                          nixScope.optional(
-                                            nixScope.final["isWindows"],
-                                          )("windows"),
-                                          nixScope.optional(
-                                            nixScope.final["isWasm"],
-                                          )("wasm"),
-                                        ),
-                                      )),
+                                          nixScope.final["isWindows"],
+                                        )("windows"),
+                                        nixScope.optional(
+                                          nixScope.final["isWasm"],
+                                        )("wasm"),
+                                      ),
                                     )),
                                   )),
+                                ),
                                 "vendor": /*let*/ createScope((nixScope) => {
                                   nixScope.vendor =
                                     nixScope.final["parsed"]["vendor"];
@@ -983,7 +953,7 @@ export default createFunc({}, null, {}, (nixScope) => (
                             )(["-none", "nvptx", "switch", "-uefi"]),
                           }),
                         }, {
-                          "go": ({
+                          "go": {
                             "GOARCH": operators.selectOrDefault(
                               {
                                 "aarch64": "arm64",
@@ -1006,13 +976,12 @@ export default createFunc({}, null, {}, (nixScope) => (
                               [nixScope.final["parsed"]["cpu"]["name"]],
                               null,
                             ),
-                            "GOOS":
-                              (operators.ifThenElse(
-                                nixScope.final["isWasi"],
-                                () => ("wasip1"),
-                                () => (nixScope
-                                  .final["parsed"]["kernel"]["name"]),
-                              )),
+                            "GOOS": operators.ifThenElse(
+                              nixScope.final["isWasi"],
+                              () => ("wasip1"),
+                              () => (nixScope
+                                .final["parsed"]["kernel"]["name"]),
+                            ),
                             "GOARM": nixScope.toString(
                               nixScope.lib["intersectLists"]([
                                 operators.selectOrDefault(nixScope.final, [
@@ -1022,7 +991,7 @@ export default createFunc({}, null, {}, (nixScope) => (
                                 ], ""),
                               ])(["5", "6", "7"]),
                             ),
-                          }),
+                          },
                         }),
                       ),
                     ),

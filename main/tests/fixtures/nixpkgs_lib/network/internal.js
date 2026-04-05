@@ -231,87 +231,86 @@ export default createFunc(
               nixScope.parseExpandedIpv6(nixScope.expandIpv6(nixScope.addr))
             )));
           return ({
-            "_ipv6":
-              ({
-                "toStringFromExpandedIp": createFunc(
-                  /*arg:*/ "pieces",
-                  null,
-                  {},
-                  (nixScope) => (
-                    nixScope.strings["concatMapStringsSep"](":")(
-                      createFunc(/*arg:*/ "piece", null, {}, (nixScope) => (
-                        nixScope.strings["toLower"](
-                          nixScope.trivial["toHexString"](nixScope.piece),
-                        )
-                      )),
-                    )(nixScope.pieces)
-                  ),
+            "_ipv6": {
+              "toStringFromExpandedIp": createFunc(
+                /*arg:*/ "pieces",
+                null,
+                {},
+                (nixScope) => (
+                  nixScope.strings["concatMapStringsSep"](":")(
+                    createFunc(/*arg:*/ "piece", null, {}, (nixScope) => (
+                      nixScope.strings["toLower"](
+                        nixScope.trivial["toHexString"](nixScope.piece),
+                      )
+                    )),
+                  )(nixScope.pieces)
                 ),
-                "split": createFunc(/*arg:*/ "addr", null, {}, (nixScope) => (
-                  /*let*/ createScope((nixScope) => {
-                    defGetter(
-                      nixScope,
-                      "splitted",
-                      (nixScope) =>
-                        nixScope.strings["splitString"]("/")(nixScope.addr),
-                    );
-                    defGetter(
-                      nixScope,
-                      "splittedLength",
-                      (nixScope) => nixScope.length(nixScope.splitted),
-                    );
-                    return (operators.ifThenElse(
-                      operators.equal(nixScope.splittedLength, 1n),
+              ),
+              "split": createFunc(/*arg:*/ "addr", null, {}, (nixScope) => (
+                /*let*/ createScope((nixScope) => {
+                  defGetter(
+                    nixScope,
+                    "splitted",
+                    (nixScope) =>
+                      nixScope.strings["splitString"]("/")(nixScope.addr),
+                  );
+                  defGetter(
+                    nixScope,
+                    "splittedLength",
+                    (nixScope) => nixScope.length(nixScope.splitted),
+                  );
+                  return (operators.ifThenElse(
+                    operators.equal(nixScope.splittedLength, 1n),
+                    () => ({
+                      "address": nixScope.parseIpv6FromString(nixScope.addr),
+                      "prefixLength": nixScope.ipv6Bits,
+                    }),
+                    () => (operators.ifThenElse(
+                      operators.equal(nixScope.splittedLength, 2n),
                       () => ({
-                        "address": nixScope.parseIpv6FromString(nixScope.addr),
-                        "prefixLength": nixScope.ipv6Bits,
-                      }),
-                      () => (operators.ifThenElse(
-                        operators.equal(nixScope.splittedLength, 2n),
-                        () => ({
-                          "address": nixScope.parseIpv6FromString(
-                            nixScope.head(nixScope.splitted),
-                          ),
-                          "prefixLength": /*let*/ createScope((nixScope) => {
-                            defGetter(nixScope, "n", (nixScope) =>
-                              nixScope.strings["toInt"](
-                                nixScope.last(nixScope.splitted),
-                              ));
-                            return (operators.ifThenElse(
-                              operators.and(
-                                operators.lessThanOrEqual(1n, nixScope.n),
-                                operators.lessThanOrEqual(
-                                  nixScope.n,
-                                  nixScope.ipv6Bits,
-                                ),
-                              ),
-                              () => (nixScope.n),
-                              () => (nixScope.throw(
-                                new InterpolatedString([
-                                  "",
-                                  " IPv6 subnet should be in range [1;",
-                                  "], got ",
-                                  "",
-                                ], [
-                                  () => (nixScope.addr),
-                                  () => (nixScope.toString(nixScope.ipv6Bits)),
-                                  () => (nixScope.toString(nixScope.n)),
-                                ]),
-                              )),
+                        "address": nixScope.parseIpv6FromString(
+                          nixScope.head(nixScope.splitted),
+                        ),
+                        "prefixLength": /*let*/ createScope((nixScope) => {
+                          defGetter(nixScope, "n", (nixScope) =>
+                            nixScope.strings["toInt"](
+                              nixScope.last(nixScope.splitted),
                             ));
-                          }),
+                          return (operators.ifThenElse(
+                            operators.and(
+                              operators.lessThanOrEqual(1n, nixScope.n),
+                              operators.lessThanOrEqual(
+                                nixScope.n,
+                                nixScope.ipv6Bits,
+                              ),
+                            ),
+                            () => (nixScope.n),
+                            () => (nixScope.throw(
+                              new InterpolatedString([
+                                "",
+                                " IPv6 subnet should be in range [1;",
+                                "], got ",
+                                "",
+                              ], [
+                                () => (nixScope.addr),
+                                () => (nixScope.toString(nixScope.ipv6Bits)),
+                                () => (nixScope.toString(nixScope.n)),
+                              ]),
+                            )),
+                          ));
                         }),
-                        () => (nixScope.throw(
-                          new InterpolatedString([
-                            "",
-                            " is not a valid IPv6 address in CIDR notation",
-                          ], [() => (nixScope.addr)]),
-                        )),
+                      }),
+                      () => (nixScope.throw(
+                        new InterpolatedString([
+                          "",
+                          " is not a valid IPv6 address in CIDR notation",
+                        ], [() => (nixScope.addr)]),
                       )),
-                    ));
-                  })
-                )),
-              }),
+                    )),
+                  ));
+                })
+              )),
+            },
           });
         });
       });

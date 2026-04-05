@@ -266,41 +266,35 @@ export default //
     })(nixScope.lib["systems"]["doubles"]),
     operators.merge(
       {
-        "test_equals_example_x86_64-linux": ({
+        "test_equals_example_x86_64-linux": {
           "expr": nixScope.lib["systems"]["equals"](
             nixScope.lib["systems"]["elaborate"]("x86_64-linux"),
           )(nixScope.lib["systems"]["elaborate"]("x86_64-linux")),
           "expected": true,
-        }),
-        "test_toLosslessStringMaybe_example_x86_64-linux":
-          ({
-            "expr": nixScope.toLosslessStringMaybe(
+        },
+        "test_toLosslessStringMaybe_example_x86_64-linux": {
+          "expr": nixScope.toLosslessStringMaybe(
+            nixScope.lib["systems"]["elaborate"]("x86_64-linux"),
+          ),
+          "expected": "x86_64-linux",
+        },
+        "test_toLosslessStringMaybe_fail": {
+          "expr": nixScope.toLosslessStringMaybe(
+            operators.merge(
               nixScope.lib["systems"]["elaborate"]("x86_64-linux"),
+              { "something": "extra" },
             ),
-            "expected": "x86_64-linux",
-          }),
-        "test_toLosslessStringMaybe_fail":
-          ({
-            "expr": nixScope.toLosslessStringMaybe(
-              operators.merge(
-                nixScope.lib["systems"]["elaborate"]("x86_64-linux"),
-                { "something": "extra" },
-              ),
-            ),
-            "expected": null,
-          }),
-        "test_elaborate_config_over_system":
-          ({
-            "expr":
-              (nixScope.lib["systems"]["elaborate"](
-                {
-                  "config": "i686-unknown-linux-gnu",
-                  "system": "x86_64-linux",
-                },
-              ))["system"],
-            "expected": "i686-linux",
-          }),
-        "test_elaborate_config_over_parsed": ({
+          ),
+          "expected": null,
+        },
+        "test_elaborate_config_over_system": {
+          "expr":
+            (nixScope.lib["systems"]["elaborate"](
+              { "config": "i686-unknown-linux-gnu", "system": "x86_64-linux" },
+            ))["system"],
+          "expected": "i686-linux",
+        },
+        "test_elaborate_config_over_parsed": {
           "expr":
             (nixScope.lib["systems"]["elaborate"](
               {
@@ -312,8 +306,8 @@ export default //
               },
             ))["parsed"]["cpu"]["arch"],
           "expected": "i686",
-        }),
-        "test_elaborate_system_over_parsed": ({
+        },
+        "test_elaborate_system_over_parsed": {
           "expr":
             (nixScope.lib["systems"]["elaborate"](
               {
@@ -325,7 +319,7 @@ export default //
               },
             ))["parsed"]["cpu"]["arch"],
           "expected": "i686",
-        }),
+        },
       },
       nixScope.lib["concatMapAttrs"](
         createFunc(/*arg:*/ "platformAttrName", null, {}, (nixScope) => (

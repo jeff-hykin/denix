@@ -6,24 +6,23 @@ export default createFunc({}, null, {}, (nixScope) => (
       (nixScope) =>
         createFunc({}, null, {}, (nixScope) => (
           {
-            "options":
-              ({
-                "enable": nixScope.lib["mkOption"](
-                  {
-                    "default": false,
-                    "example": true,
-                    "type": nixScope.lib["types"]["bool"],
-                    "description": `
+            "options": {
+              "enable": nixScope.lib["mkOption"](
+                {
+                  "default": false,
+                  "example": true,
+                  "type": nixScope.lib["types"]["bool"],
+                  "description": `
                     Some descriptive text
                   `,
-                  },
-                ),
-              }),
+                },
+              ),
+            },
           }
         )),
     );
     return ({
-      "options": ({
+      "options": {
         "attrsOfSub": nixScope.lib["mkOption"](
           {
             "default": {},
@@ -36,7 +35,7 @@ export default createFunc({}, null, {}, (nixScope) => (
           `,
           },
         ),
-      }),
+      },
     });
   })
 ));

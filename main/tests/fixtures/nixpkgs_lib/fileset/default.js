@@ -376,10 +376,9 @@ export default /**
             nixScope.imap0(createFunc(/*arg:*/ "i", null, {}, (nixScope) => (
               createFunc(/*arg:*/ "el", null, {}, (nixScope) => (
                 {
-                  "context":
-                    (new InterpolatedString(["Element ", ""], [
-                      () => (nixScope.toString(nixScope.i)),
-                    ])),
+                  "context": new InterpolatedString(["Element ", ""], [
+                    () => (nixScope.toString(nixScope.i)),
+                  ]),
                   "value": nixScope.el,
                 }
               ))

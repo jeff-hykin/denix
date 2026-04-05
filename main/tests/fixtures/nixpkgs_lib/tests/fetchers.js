@@ -38,7 +38,7 @@ export default /*let*/ createScope((nixScope) => {
               runtime.scopeStack.pop();
             }
           })(nixScope.builtins),
-          "expected": ({ "success": false, "value": false }),
+          "expected": { "success": false, "value": false },
         }
       )),
   );
@@ -64,7 +64,7 @@ export default /*let*/ createScope((nixScope) => {
               "expr": nixScope.f({})(
                 { "outputHash": "", "outputHashAlgo": "md42" },
               ),
-              "expected": ({ "outputHash": "", "outputHashAlgo": "md42" }),
+              "expected": { "outputHash": "", "outputHashAlgo": "md42" },
             };
             obj[
               new InterpolatedString(["test", "EmptySha256"], [
@@ -72,11 +72,10 @@ export default /*let*/ createScope((nixScope) => {
               ])
             ] = {
               "expr": nixScope.f({})({ "sha256": "" }),
-              "expected":
-                ({
-                  "outputHash": nixScope.fakeSha256,
-                  "outputHashAlgo": "sha256",
-                }),
+              "expected": {
+                "outputHash": nixScope.fakeSha256,
+                "outputHashAlgo": "sha256",
+              },
             };
             obj[
               new InterpolatedString(["test", "EmptySha512"], [
@@ -84,11 +83,10 @@ export default /*let*/ createScope((nixScope) => {
               ])
             ] = {
               "expr": nixScope.f({ "hashTypes": ["sha512"] })({ "sha512": "" }),
-              "expected":
-                ({
-                  "outputHash": nixScope.fakeSha512,
-                  "outputHashAlgo": "sha512",
-                }),
+              "expected": {
+                "outputHash": nixScope.fakeSha512,
+                "outputHashAlgo": "sha512",
+              },
             };
             obj[
               new InterpolatedString(["test", "EmptyHash"], [
@@ -96,22 +94,28 @@ export default /*let*/ createScope((nixScope) => {
               ])
             ] = {
               "expr": nixScope.f({})({ "hash": "" }),
-              "expected":
-                ({ "outputHash": nixScope.fakeHash, "outputHashAlgo": null }),
+              "expected": {
+                "outputHash": nixScope.fakeHash,
+                "outputHashAlgo": null,
+              },
             };
             obj[
               new InterpolatedString(["test", "Sri256"], [() => (nixScope.n)])
             ] = {
               "expr": nixScope.f({})({ "hash": nixScope.sri256 }),
-              "expected":
-                ({ "outputHash": nixScope.sri256, "outputHashAlgo": null }),
+              "expected": {
+                "outputHash": nixScope.sri256,
+                "outputHashAlgo": null,
+              },
             };
             obj[
               new InterpolatedString(["test", "Sri512"], [() => (nixScope.n)])
             ] = {
               "expr": nixScope.f({})({ "hash": nixScope.sri512 }),
-              "expected":
-                ({ "outputHash": nixScope.sri512, "outputHashAlgo": null }),
+              "expected": {
+                "outputHash": nixScope.sri512,
+                "outputHashAlgo": null,
+              },
             };
             obj[
               new InterpolatedString(["test", "PreservesAttrs"], [
@@ -121,12 +125,11 @@ export default /*let*/ createScope((nixScope) => {
               "expr": nixScope.f({})(
                 { "hash": "aaaa", "destination": "Earth" },
               ),
-              "expected":
-                ({
-                  "outputHash": "aaaa",
-                  "outputHashAlgo": null,
-                  "destination": "Earth",
-                }),
+              "expected": {
+                "outputHash": "aaaa",
+                "outputHashAlgo": null,
+                "destination": "Earth",
+              },
             };
             obj[
               new InterpolatedString(["test", "RejectsSha1ByDefault"], [
@@ -159,15 +162,14 @@ export default /*let*/ createScope((nixScope) => {
         ),
       ),
       {
-        "testNormalizeNotRequiredEquivalent":
-          ({
-            "expr": nixScope.normalizeHash({ "required": false })(
-              { "hash": "", "prof": "shadoko" },
-            ),
-            "expected": nixScope.normalizeHash({})(
-              { "hash": "", "prof": "shadoko" },
-            ),
-          }),
+        "testNormalizeNotRequiredEquivalent": {
+          "expr": nixScope.normalizeHash({ "required": false })(
+            { "hash": "", "prof": "shadoko" },
+          ),
+          "expected": nixScope.normalizeHash({})(
+            { "hash": "", "prof": "shadoko" },
+          ),
+        },
         "testNormalizeNotRequiredPassthru": createScope((nixScope) => {
           const obj = {};
           obj.expr = nixScope.normalizeHash({ "required": false })(
@@ -219,22 +221,21 @@ export default /*let*/ createScope((nixScope) => {
           obj["expected"]["hash"] = true;
           return obj;
         }),
-        "testPreservesArgsMetadata":
-          ({
-            "expr": nixScope.functionArgs(
-              nixScope.withNormalizedHash({})(
-                createFunc(
-                  { "pumping": (nixScope) => (true) },
-                  null,
-                  {},
-                  (nixScope) => (
-                    {}
-                  ),
+        "testPreservesArgsMetadata": {
+          "expr": nixScope.functionArgs(
+            nixScope.withNormalizedHash({})(
+              createFunc(
+                { "pumping": (nixScope) => (true) },
+                null,
+                {},
+                (nixScope) => (
+                  {}
                 ),
               ),
             ),
-            "expected": ({ "hash": false, "pumping": true }),
-          }),
+          ),
+          "expected": { "hash": false, "pumping": true },
+        },
         "testRejectsMissingHashArg": nixScope.testingThrow(
           nixScope.withNormalizedHash({})(
             createFunc({}, null, {}, (nixScope) => (

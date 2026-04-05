@@ -4,7 +4,7 @@ export default createFunc({}, null, {}, (nixScope) => (
     nixScope.mkOption = nixScope.lib["mkOption"];
     nixScope.attrNames = nixScope.lib["attrNames"];
     return ({
-      "options": ({
+      "options": {
         "attrs": nixScope.mkOption(
           { "type": nixScope.types["attrsOf"](nixScope.lib["types"]["int"]) },
         ),
@@ -12,7 +12,7 @@ export default createFunc({}, null, {}, (nixScope) => (
         "resultFoo": nixScope.mkOption({}),
         "resultFooBar": nixScope.mkOption({}),
         "resultFooFoo": nixScope.mkOption({}),
-      }),
+      },
       "config": createScope((nixScope) => {
         const obj = {};
         obj.resultFoo = nixScope.lib["concatMapStringsSep"](" ")(
