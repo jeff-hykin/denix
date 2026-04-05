@@ -164,6 +164,25 @@ async function unifiedDiff(pathA, pathB) {
 }
 
 // ------------------------------------------------------------------
+// Sanitise machine-specific values so committed output is portable.
+// Replace longer strings first so e.g. CWD (which often contains HOME)
+// doesn't get partially replaced.
+// ------------------------------------------------------------------
+const sanitizeReplacements = [
+    [Deno.cwd(), "$PWD"],
+    [Deno.env.get("HOME"), "$HOME"],
+    [Deno.env.get("USER"), "$USER"],
+].filter(([v]) => v != null && v.length > 0)
+   .sort((a, b) => b[0].length - a[0].length)
+
+function sanitize(text) {
+    for (const [value, placeholder] of sanitizeReplacements) {
+        text = text.replaceAll(value, placeholder)
+    }
+    return text
+}
+
+// ------------------------------------------------------------------
 // Go.
 // ------------------------------------------------------------------
 log(`mode:    ${mode}`)
@@ -174,6 +193,8 @@ log("")
 
 log("[1/3] running real nix-instantiate ...")
 const nixResult = await runNix()
+nixResult.stdout = sanitize(nixResult.stdout)
+nixResult.stderr = sanitize(nixResult.stderr)
 await Deno.writeTextFile(`${outDir}/nix.out`, nixResult.stdout)
 await Deno.writeTextFile(`${outDir}/nix.err`, nixResult.stderr)
 await Deno.writeTextFile(`${outDir}/nix.exit`, String(nixResult.code) + "\n")
@@ -188,6 +209,8 @@ try {
     jsResult = { stdout: "", stderr: `<denix_eval launch failed>\n${msg}\n`, code: 98 }
 }
 const translateError = null
+jsResult.stdout = sanitize(jsResult.stdout)
+jsResult.stderr = sanitize(jsResult.stderr)
 await Deno.writeTextFile(`${outDir}/js.out`, jsResult.stdout)
 await Deno.writeTextFile(`${outDir}/js.err`, jsResult.stderr)
 await Deno.writeTextFile(`${outDir}/js.exit`, String(jsResult.code) + "\n")

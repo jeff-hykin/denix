@@ -163,10 +163,9 @@ const buildPreamble = (output, options) => {
     pre += `const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1]\n`
     // Tell the runtime what file this translated module came from, so
     // relative `import ./foo` paths inside the nix source resolve correctly
-    // regardless of the Deno process cwd.
-    if (options.sourceFile) {
-        pre += `runtime.currentFile = ${JSON.stringify(options.sourceFile)}\n`
-    }
+    // regardless of the Deno process cwd. Derived from import.meta.url at
+    // load time rather than baking in an absolute path at translation time.
+    pre += `runtime.currentFile = import.meta.url.startsWith("file://") ? import.meta.url.slice(7) : new URL(import.meta.url).pathname\n`
     if (output.includes("operators.")) {
         pre += `const operators = runtime.operators\n`
     }
