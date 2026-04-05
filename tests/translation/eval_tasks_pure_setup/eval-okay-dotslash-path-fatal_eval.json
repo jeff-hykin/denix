@@ -1,0 +1,24 @@
+{
+    "nix_file": "eval-okay-dotslash-path-fatal.nix",
+    "cwd": "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup",
+    "argv": [
+        "/nix/var/nix/profiles/default/bin/nix-instantiate",
+        "--lint-short-path-literals",
+        "fatal",
+        "--eval",
+        "--strict",
+        "eval-okay-dotslash-path-fatal.nix"
+    ],
+    "env": {
+        "LOGNAME": "jeffhykin",
+        "IMPURE_VAR1": "foo",
+        "NIX_PATH": "../source_code/nix_lang/dir3:../source_code/nix_lang/dir4",
+        "USER": "jeffhykin",
+        "IMPURE_VAR2": "bar",
+        "LANG": "en_US.UTF-8",
+        "NIX_STORE_DIR": "/nix/store",
+        "NIX_REMOTE": "dummy://",
+        "TEST_VAR": "foo",
+        "HOME": "/fake-home"
+    }
+}

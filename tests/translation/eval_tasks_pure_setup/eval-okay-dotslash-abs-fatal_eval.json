@@ -1,0 +1,24 @@
+{
+    "nix_file": "eval-okay-dotslash-abs-fatal.nix",
+    "cwd": "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup",
+    "argv": [
+        "/nix/var/nix/profiles/default/bin/nix-instantiate",
+        "--lint-absolute-path-literals",
+        "fatal",
+        "--eval",
+        "--strict",
+        "eval-okay-dotslash-abs-fatal.nix"
+    ],
+    "env": {
+        "USER": "jeffhykin",
+        "NIX_STORE_DIR": "/nix/store",
+        "HOME": "/fake-home",
+        "LOGNAME": "jeffhykin",
+        "IMPURE_VAR2": "bar",
+        "LANG": "en_US.UTF-8",
+        "NIX_PATH": "../source_code/nix_lang/dir3:../source_code/nix_lang/dir4",
+        "TEST_VAR": "foo",
+        "IMPURE_VAR1": "foo",
+        "NIX_REMOTE": "dummy://"
+    }
+}

@@ -1,0 +1,22 @@
+{
+    "nix_file": "eval-fail-genericClosure-operator-not-function.nix",
+    "cwd": "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup",
+    "argv": [
+        "/nix/var/nix/profiles/default/bin/nix-instantiate",
+        "--eval",
+        "--strict",
+        "--show-trace",
+        "eval-fail-genericClosure-operator-not-function.nix"
+    ],
+    "env": {
+        "NIX_REMOTE": "dummy://",
+        "LOGNAME": "jeffhykin",
+        "LANG": "en_US.UTF-8",
+        "HOME": "/private/var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/nix-test/denix/lang/test-home",
+        "NIX_STORE_DIR": "/nix/store",
+        "IMPURE_VAR1": "foo",
+        "USER": "jeffhykin",
+        "IMPURE_VAR2": "bar",
+        "TEST_VAR": "foo"
+    }
+}

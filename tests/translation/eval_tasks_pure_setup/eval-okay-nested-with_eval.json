@@ -1,0 +1,22 @@
+{
+    "nix_file": "eval-okay-nested-with.nix",
+    "cwd": "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup",
+    "argv": [
+        "/nix/var/nix/profiles/default/bin/nix-instantiate",
+        "--eval",
+        "--strict",
+        "eval-okay-nested-with.nix"
+    ],
+    "env": {
+        "NIX_PATH": "../source_code/nix_lang/dir3:../source_code/nix_lang/dir4",
+        "NIX_STORE_DIR": "/nix/store",
+        "NIX_REMOTE": "dummy://",
+        "TEST_VAR": "foo",
+        "LOGNAME": "jeffhykin",
+        "HOME": "/fake-home",
+        "IMPURE_VAR2": "bar",
+        "LANG": "en_US.UTF-8",
+        "USER": "jeffhykin",
+        "IMPURE_VAR1": "foo"
+    }
+}

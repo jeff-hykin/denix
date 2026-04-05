@@ -1,0 +1,22 @@
+{
+    "nix_file": "eval-okay-equal-function-direct-identical.nix",
+    "cwd": "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup",
+    "argv": [
+        "/nix/var/nix/profiles/default/bin/nix-instantiate",
+        "--eval",
+        "--strict",
+        "eval-okay-equal-function-direct-identical.nix"
+    ],
+    "env": {
+        "IMPURE_VAR2": "bar",
+        "TEST_VAR": "foo",
+        "LOGNAME": "jeffhykin",
+        "NIX_REMOTE": "dummy://",
+        "USER": "jeffhykin",
+        "IMPURE_VAR1": "foo",
+        "HOME": "/fake-home",
+        "LANG": "en_US.UTF-8",
+        "NIX_STORE_DIR": "/nix/store",
+        "NIX_PATH": "../source_code/nix_lang/dir3:../source_code/nix_lang/dir4"
+    }
+}

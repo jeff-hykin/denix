@@ -1,0 +1,22 @@
+{
+    "nix_file": "eval-okay-fromjson-escapes.nix",
+    "cwd": "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup",
+    "argv": [
+        "/nix/var/nix/profiles/default/bin/nix-instantiate",
+        "--eval",
+        "--strict",
+        "eval-okay-fromjson-escapes.nix"
+    ],
+    "env": {
+        "HOME": "/fake-home",
+        "LANG": "en_US.UTF-8",
+        "LOGNAME": "jeffhykin",
+        "NIX_PATH": "../source_code/nix_lang/dir3:../source_code/nix_lang/dir4",
+        "IMPURE_VAR1": "foo",
+        "TEST_VAR": "foo",
+        "NIX_REMOTE": "dummy://",
+        "IMPURE_VAR2": "bar",
+        "USER": "jeffhykin",
+        "NIX_STORE_DIR": "/nix/store"
+    }
+}

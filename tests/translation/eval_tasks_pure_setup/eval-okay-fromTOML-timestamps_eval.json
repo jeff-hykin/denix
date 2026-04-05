@@ -1,0 +1,24 @@
+{
+    "nix_file": "eval-okay-fromTOML-timestamps.nix",
+    "cwd": "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup",
+    "argv": [
+        "/nix/var/nix/profiles/default/bin/nix-instantiate",
+        "--extra-experimental-features",
+        "parse-toml-timestamps",
+        "--eval",
+        "--strict",
+        "eval-okay-fromTOML-timestamps.nix"
+    ],
+    "env": {
+        "NIX_REMOTE": "dummy://",
+        "IMPURE_VAR1": "foo",
+        "NIX_STORE_DIR": "/nix/store",
+        "TEST_VAR": "foo",
+        "HOME": "/fake-home",
+        "NIX_PATH": "../source_code/nix_lang/dir3:../source_code/nix_lang/dir4",
+        "LOGNAME": "jeffhykin",
+        "USER": "jeffhykin",
+        "LANG": "en_US.UTF-8",
+        "IMPURE_VAR2": "bar"
+    }
+}

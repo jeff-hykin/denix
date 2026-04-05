@@ -1,0 +1,11 @@
+{
+    "nix_file": "nixpkgs_lib__maintainer-module.nix",
+    "cwd": "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup",
+    "argv": [
+        "/nix/var/nix/profiles/default/bin/nix-instantiate",
+        "--eval",
+        "--strict",
+        "nixpkgs_lib__maintainer-module.nix"
+    ],
+    "env": {}
+}

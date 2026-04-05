@@ -1,0 +1,22 @@
+{
+    "nix_file": "eval-okay-curpos.nix",
+    "cwd": "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup",
+    "argv": [
+        "/nix/var/nix/profiles/default/bin/nix-instantiate",
+        "--eval",
+        "--strict",
+        "eval-okay-curpos.nix"
+    ],
+    "env": {
+        "TEST_VAR": "foo",
+        "LANG": "en_US.UTF-8",
+        "IMPURE_VAR2": "bar",
+        "HOME": "/fake-home",
+        "USER": "jeffhykin",
+        "IMPURE_VAR1": "foo",
+        "NIX_STORE_DIR": "/nix/store",
+        "NIX_PATH": "../source_code/nix_lang/dir3:../source_code/nix_lang/dir4",
+        "NIX_REMOTE": "dummy://",
+        "LOGNAME": "jeffhykin"
+    }
+}

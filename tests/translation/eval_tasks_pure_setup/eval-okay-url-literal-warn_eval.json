@@ -1,0 +1,24 @@
+{
+    "nix_file": "eval-okay-url-literal-warn.nix",
+    "cwd": "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup",
+    "argv": [
+        "/nix/var/nix/profiles/default/bin/nix-instantiate",
+        "--lint-url-literals",
+        "warn",
+        "--eval",
+        "--strict",
+        "eval-okay-url-literal-warn.nix"
+    ],
+    "env": {
+        "NIX_STORE_DIR": "/nix/store",
+        "LANG": "en_US.UTF-8",
+        "IMPURE_VAR1": "foo",
+        "NIX_PATH": "../source_code/nix_lang/dir3:../source_code/nix_lang/dir4",
+        "TEST_VAR": "foo",
+        "NIX_REMOTE": "dummy://",
+        "IMPURE_VAR2": "bar",
+        "USER": "jeffhykin",
+        "LOGNAME": "jeffhykin",
+        "HOME": "/fake-home"
+    }
+}

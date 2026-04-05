@@ -1,0 +1,22 @@
+{
+    "nix_file": "eval-fail-fromTOML-underflow.nix",
+    "cwd": "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup",
+    "argv": [
+        "/nix/var/nix/profiles/default/bin/nix-instantiate",
+        "--eval",
+        "--strict",
+        "--show-trace",
+        "eval-fail-fromTOML-underflow.nix"
+    ],
+    "env": {
+        "NIX_REMOTE": "dummy://",
+        "IMPURE_VAR1": "foo",
+        "HOME": "/private/var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/nix-test/denix/lang/test-home",
+        "LOGNAME": "jeffhykin",
+        "USER": "jeffhykin",
+        "IMPURE_VAR2": "bar",
+        "LANG": "en_US.UTF-8",
+        "TEST_VAR": "foo",
+        "NIX_STORE_DIR": "/nix/store"
+    }
+}

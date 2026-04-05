@@ -1,0 +1,22 @@
+{
+    "nix_file": "eval-fail-to-path.nix",
+    "cwd": "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup",
+    "argv": [
+        "/nix/var/nix/profiles/default/bin/nix-instantiate",
+        "--eval",
+        "--strict",
+        "--show-trace",
+        "eval-fail-to-path.nix"
+    ],
+    "env": {
+        "HOME": "/private/var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/nix-test/denix/lang/test-home",
+        "TEST_VAR": "foo",
+        "NIX_REMOTE": "dummy://",
+        "IMPURE_VAR2": "bar",
+        "LANG": "en_US.UTF-8",
+        "IMPURE_VAR1": "foo",
+        "LOGNAME": "jeffhykin",
+        "NIX_STORE_DIR": "/nix/store",
+        "USER": "jeffhykin"
+    }
+}

@@ -1,0 +1,22 @@
+{
+    "nix_file": "eval-okay-concat.nix",
+    "cwd": "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup",
+    "argv": [
+        "/nix/var/nix/profiles/default/bin/nix-instantiate",
+        "--eval",
+        "--strict",
+        "eval-okay-concat.nix"
+    ],
+    "env": {
+        "HOME": "/fake-home",
+        "IMPURE_VAR2": "bar",
+        "NIX_STORE_DIR": "/nix/store",
+        "IMPURE_VAR1": "foo",
+        "TEST_VAR": "foo",
+        "NIX_REMOTE": "dummy://",
+        "LOGNAME": "jeffhykin",
+        "NIX_PATH": "../source_code/nix_lang/dir3:../source_code/nix_lang/dir4",
+        "LANG": "en_US.UTF-8",
+        "USER": "jeffhykin"
+    }
+}

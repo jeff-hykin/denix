@@ -1,0 +1,22 @@
+{
+    "nix_file": "eval-okay-ind-string.nix",
+    "cwd": "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup",
+    "argv": [
+        "/nix/var/nix/profiles/default/bin/nix-instantiate",
+        "--eval",
+        "--strict",
+        "eval-okay-ind-string.nix"
+    ],
+    "env": {
+        "LANG": "en_US.UTF-8",
+        "HOME": "/fake-home",
+        "NIX_STORE_DIR": "/nix/store",
+        "TEST_VAR": "foo",
+        "LOGNAME": "jeffhykin",
+        "IMPURE_VAR2": "bar",
+        "NIX_REMOTE": "dummy://",
+        "NIX_PATH": "../source_code/nix_lang/dir3:../source_code/nix_lang/dir4",
+        "USER": "jeffhykin",
+        "IMPURE_VAR1": "foo"
+    }
+}

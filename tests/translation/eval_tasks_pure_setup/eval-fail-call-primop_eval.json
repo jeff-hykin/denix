@@ -1,0 +1,22 @@
+{
+    "nix_file": "eval-fail-call-primop.nix",
+    "cwd": "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup",
+    "argv": [
+        "/nix/var/nix/profiles/default/bin/nix-instantiate",
+        "--eval",
+        "--strict",
+        "--show-trace",
+        "eval-fail-call-primop.nix"
+    ],
+    "env": {
+        "LANG": "en_US.UTF-8",
+        "TEST_VAR": "foo",
+        "IMPURE_VAR2": "bar",
+        "HOME": "/private/var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/nix-test/denix/lang/test-home",
+        "NIX_STORE_DIR": "/nix/store",
+        "USER": "jeffhykin",
+        "LOGNAME": "jeffhykin",
+        "IMPURE_VAR1": "foo",
+        "NIX_REMOTE": "dummy://"
+    }
+}

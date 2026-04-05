@@ -1,0 +1,22 @@
+{
+    "nix_file": "eval-okay-regression-20220125.nix",
+    "cwd": "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup",
+    "argv": [
+        "/nix/var/nix/profiles/default/bin/nix-instantiate",
+        "--eval",
+        "--strict",
+        "eval-okay-regression-20220125.nix"
+    ],
+    "env": {
+        "TEST_VAR": "foo",
+        "USER": "jeffhykin",
+        "NIX_PATH": "../source_code/nix_lang/dir3:../source_code/nix_lang/dir4",
+        "NIX_STORE_DIR": "/nix/store",
+        "HOME": "/fake-home",
+        "NIX_REMOTE": "dummy://",
+        "LANG": "en_US.UTF-8",
+        "LOGNAME": "jeffhykin",
+        "IMPURE_VAR2": "bar",
+        "IMPURE_VAR1": "foo"
+    }
+}
