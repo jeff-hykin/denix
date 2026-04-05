@@ -1,0 +1,181 @@
+#!/usr/bin/env -S deno run --allow-all
+// denix_eval — denix's equivalent of `nix-instantiate --eval`.
+//
+// Usage (mirrors a subset of nix-instantiate):
+//     denix_eval [flags] <file.nix>
+//
+// Supported flags (a skeleton — most are placeholder/passthrough):
+//     --eval                         (implicit; ignored)
+//     --strict                       (ignored; denix is strict-ish)
+//     --xml                          print result as XML via nixReprXml
+//     --show-trace / --no-show-trace (ignored)
+//     --impure                       (ignored)
+//     --max-call-depth N             (ignored)
+//     --lint-absolute-path-literals X (ignored; placeholder)
+//     -A <attr.path>                 select sub-attribute on the result
+//     -I <path>                      prepended to NIX_PATH (placeholder)
+//     --arg <name> <expr>            bind function arg to evaluated nix expr
+//     --argstr <name> <string>       bind function arg to literal string
+//
+// Exits non-zero with a message on stderr when translation or eval fails.
+
+import { convertToJs } from "../translator.js"
+
+const argv = [...Deno.args]
+
+// --------------------------------------------------------------
+// arg parser (permissive — unknown flags are ignored, not errored)
+// --------------------------------------------------------------
+const passThroughNoArg = new Set([
+    "--eval", "--strict", "--show-trace", "--no-show-trace",
+    "--impure", "--parse", "--read-write-mode",
+])
+const passThroughOneArg = new Set([
+    "--max-call-depth", "--lint-absolute-path-literals",
+    "--option",            // takes two args actually; we consume one extra below
+    "--include", "-i",
+    "--expr", "-E",
+])
+
+let nixFile = null
+let xmlMode = false
+const attrPath = []     // from -A
+const includes = []     // from -I
+const args = {}         // from --arg / --argstr, value is { kind, expr }
+const unknownFlags = []
+let emitTranslated = null   // from --emit-translated <path>
+
+for (let i = 0; i < argv.length; i++) {
+    const a = argv[i]
+    if (a === "--xml") { xmlMode = true; continue }
+    if (a === "--emit-translated") { emitTranslated = argv[++i]; continue }
+    if (a === "-A" || a === "--attr") {
+        const path = argv[++i]
+        if (path) for (const p of path.split(".")) attrPath.push(p)
+        continue
+    }
+    if (a === "-I") { includes.push(argv[++i]); continue }
+    if (a === "--arg") {
+        const name = argv[++i]; const expr = argv[++i]
+        args[name] = { kind: "expr", value: expr }
+        continue
+    }
+    if (a === "--argstr") {
+        const name = argv[++i]; const value = argv[++i]
+        args[name] = { kind: "str", value }
+        continue
+    }
+    if (a === "--option") { i += 2; continue }
+    if (passThroughNoArg.has(a)) continue
+    if (passThroughOneArg.has(a)) { i += 1; continue }
+    if (a.startsWith("-")) { unknownFlags.push(a); continue }
+    if (!nixFile) { nixFile = a; continue }
+    // extra positional — ignore for now
+}
+
+if (!nixFile) {
+    console.error("denix_eval: no .nix file given")
+    Deno.exit(2)
+}
+
+// --------------------------------------------------------------
+// resolve the nix file (relative to cwd)
+// --------------------------------------------------------------
+let nixFileAbs
+try {
+    nixFileAbs = await Deno.realPath(nixFile)
+} catch (err) {
+    console.error(`denix_eval: cannot resolve ${JSON.stringify(nixFile)}: ${err.message}`)
+    Deno.exit(1)
+}
+
+// --------------------------------------------------------------
+// translate
+// --------------------------------------------------------------
+let translated
+try {
+    const source = await Deno.readTextFile(nixFileAbs)
+    const runtimeAbs = new URL("../main/runtime.js", import.meta.url).href
+    translated = await convertToJs(source, { runtimePath: runtimeAbs, sourceFile: nixFileAbs })
+} catch (err) {
+    console.error(`denix_eval: translation failed: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}`)
+    Deno.exit(1)
+}
+
+// If requested, emit the translated JS alongside the .nix file (or wherever
+// the caller asked).
+if (emitTranslated) {
+    try {
+        await Deno.writeTextFile(emitTranslated, translated)
+    } catch (err) {
+        console.error(`denix_eval: could not write translated JS to ${emitTranslated}: ${err.message}`)
+    }
+}
+
+// --------------------------------------------------------------
+// write translated module to a temp .js and import it
+// --------------------------------------------------------------
+const tmpDir = await Deno.makeTempDir({ prefix: "denix_eval_" })
+const tmpJs = `${tmpDir}/translated.js`
+await Deno.writeTextFile(tmpJs, translated)
+
+let value
+try {
+    const mod = await import("file://" + tmpJs)
+    value = mod.default
+    if (value && typeof value.then === "function") value = await value
+} catch (err) {
+    console.error(`denix_eval: eval failed: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}`)
+    // best-effort cleanup
+    try { await Deno.remove(tmpDir, { recursive: true }) } catch {}
+    Deno.exit(1)
+}
+
+// --------------------------------------------------------------
+// apply --arg / --argstr (call the result if it's a function)
+// --------------------------------------------------------------
+if (Object.keys(args).length > 0) {
+    // Placeholder: only honor --argstr (straight strings) if value is a fn
+    // expecting an attrset. --arg (evaluated nix exprs) is a TODO.
+    if (typeof value === "function") {
+        try {
+            const argObj = {}
+            for (const [name, spec] of Object.entries(args)) {
+                if (spec.kind === "str") argObj[name] = spec.value
+                else argObj[name] = null  // TODO: evaluate nix expr
+            }
+            value = value(argObj)
+            if (value && typeof value.then === "function") value = await value
+        } catch (err) {
+            console.error(`denix_eval: --arg application failed: ${err instanceof Error ? (err.message) : String(err)}`)
+            try { await Deno.remove(tmpDir, { recursive: true }) } catch {}
+            Deno.exit(1)
+        }
+    }
+}
+
+// --------------------------------------------------------------
+// -A attr path traversal
+// --------------------------------------------------------------
+for (const part of attrPath) {
+    if (value == null) break
+    value = value[part]
+    if (value && typeof value.then === "function") value = await value
+}
+
+// --------------------------------------------------------------
+// print using the nix printer from runtime
+// --------------------------------------------------------------
+try {
+    const runtimeUrl = new URL("../main/runtime.js", import.meta.url).href
+    const { nixRepr, nixReprXml } = await import(runtimeUrl)
+    const text = xmlMode ? nixReprXml(value) : nixRepr(value)
+    await Deno.stdout.write(new TextEncoder().encode(text + "\n"))
+} catch (err) {
+    console.error(`denix_eval: print failed: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}`)
+    try { await Deno.remove(tmpDir, { recursive: true }) } catch {}
+    Deno.exit(1)
+}
+
+try { await Deno.remove(tmpDir, { recursive: true }) } catch {}
+Deno.exit(0)

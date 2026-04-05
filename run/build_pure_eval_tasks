@@ -1,0 +1,267 @@
+#!/usr/bin/env -S deno run --allow-all
+// build_pure_eval_tasks — populate tests/translation/eval_tasks_pure_setup/
+// with self-contained <name>.nix + <name>_eval.json pairs by rewriting
+// the eval tasks in tests/nix_evals/.
+//
+// Also copies shared nix-lang fixtures (lib.nix, dir[1-4]/, readDir/,
+// symlink-resolution/, binary-data, data, …) into
+// tests/translation/source_code/nix_lang/.
+//
+// Usage:
+//     ./run/build_pure_eval_tasks
+
+const repoRoot = new URL("..", import.meta.url).pathname.replace(/\/$/, "")
+
+const NIX_EVALS_DIR   = `${repoRoot}/tests/nix_evals`
+const NIX_LANG_SRC    = `${repoRoot}/tests/nix_tests/nix_lang_tests/tests/functional/lang`
+const NIXPKGS_LIB_SRC = `${repoRoot}/tests/nix_tests/nixpkgs_lib_tests`
+const SRC_NIXLANG_DST = `${repoRoot}/tests/translation/source_code/nix_lang`
+const PURE_DIR        = `${repoRoot}/tests/translation/eval_tasks_pure_setup`
+const SKIPPED_FILE    = `${PURE_DIR}/_skipped.txt`
+
+// env vars that are specific to the nix-test harness sandbox — these should be
+// dropped; nix-instantiate --eval does not need them.
+const DROP_ENV = new Set([
+    "TEST_ROOT", "NIX_STATE_DIR", "NIX_LOG_DIR", "NIX_CONF_DIR",
+    "_NIX_TEST_SHARED", "_NIX_IN_TEST", "NIX_DAEMON_SOCKET_PATH",
+    "_NIX_TEST_BUILD_DIR", "_NIX_TEST_SOURCE_DIR", "TEST_HOME",
+    "TMPDIR", "NIX_LOCALSTATE_DIR", "PWD",
+    "_NIX_TEST_NO_LSOF", "_NIX_TEST_NO_ENVIRONMENT_WARNINGS",
+    "TEST_NAME", "TEST_SUITE_NAME",
+    "GIT_CONFIG_GLOBAL", "GIT_CONFIG_SYSTEM",
+    "NIX_REMOTE_", "NIX_STORE",
+    "PATH", "SHELL", "PAGER", "EDITOR",
+])
+
+// -----------------------------------------------------------------
+// fixture copy (step 2 of plan, done first so .nix files referencing
+// them exist by the time we rewrite).
+// -----------------------------------------------------------------
+async function copyTree(src, dst) {
+    const st = await Deno.lstat(src)
+    if (st.isSymlink) {
+        const target = await Deno.readLink(src)
+        try { await Deno.remove(dst) } catch {}
+        await Deno.symlink(target, dst)
+        return
+    }
+    if (st.isDirectory) {
+        await Deno.mkdir(dst, { recursive: true })
+        for await (const entry of Deno.readDir(src)) {
+            await copyTree(`${src}/${entry.name}`, `${dst}/${entry.name}`)
+        }
+        return
+    }
+    // regular file
+    await Deno.copyFile(src, dst)
+}
+
+async function copyFixtures() {
+    await Deno.mkdir(SRC_NIXLANG_DST, { recursive: true })
+    const items = [
+        "lib.nix",
+        "dir1", "dir2", "dir3", "dir4",
+        "readDir", "symlink-resolution",
+        "binary-data", "data",
+        "non-eval-trivial-lambda-formals.nix",
+        "infinite-nesting.nix",
+    ]
+    for (const name of items) {
+        const src = `${NIX_LANG_SRC}/${name}`
+        const dst = `${SRC_NIXLANG_DST}/${name}`
+        try {
+            await Deno.lstat(src)
+        } catch {
+            console.warn(`WARN: fixture missing, skipping: ${src}`)
+            continue
+        }
+        await copyTree(src, dst)
+    }
+}
+
+// -----------------------------------------------------------------
+// source rewrite table (nix_lang tests)
+// -----------------------------------------------------------------
+// For each pattern, match `./<name>` with right boundary (not followed by
+// an identifier char). Replace with `../source_code/nix_lang/<name>`.
+const REWRITES = [
+    "lib.nix",
+    "dir1", "dir2", "dir3", "dir4",
+    "readDir", "symlink-resolution",
+    "binary-data", "data",
+    "non-eval-trivial-lambda-formals.nix",
+    "infinite-nesting.nix",
+]
+
+function rewriteNixLangSource(src) {
+    let out = src
+    for (const name of REWRITES) {
+        const escaped = name.replace(/\./g, "\\.")
+        const re = new RegExp(`\\./${escaped}(?![A-Za-z0-9_\\-])`, "g")
+        out = out.replace(re, `../source_code/nix_lang/${name}`)
+    }
+    return out
+}
+
+// -----------------------------------------------------------------
+// argv + env rewrite
+// -----------------------------------------------------------------
+// Replace `lang/…` → `../source_code/nix_lang/…` inside a single string.
+function rewritePathArg(s) {
+    // Covers plain `lang/dir3`, `dir5=lang/dir3`, etc.
+    return s.replace(/(^|[=:])lang\//g, "$1../source_code/nix_lang/")
+}
+
+function rewriteNixPath(v) {
+    // colon-separated list of entries, each may be `name=path` or just `path`.
+    return v.split(":").map(rewritePathArg).join(":")
+}
+
+// -----------------------------------------------------------------
+// Per-task processors
+// -----------------------------------------------------------------
+async function processNixLangTask(jsonPath) {
+    const raw = await Deno.readTextFile(jsonPath)
+    const task = JSON.parse(raw)
+    const stem = jsonPath.split("/").pop().replace(/_eval\.json$/, "")
+
+    // Skip the one --arg/--argstr task that can't be captured.
+    if (task.argv.includes("--arg") || task.argv.includes("--argstr")) {
+        return { skipped: true, stem, reason: "uses --arg/--argstr with a nix expression arg" }
+    }
+
+    // Load & rewrite source.
+    let source
+    try {
+        source = await Deno.readTextFile(task.nix_file_abs)
+    } catch (err) {
+        return { skipped: true, stem, reason: `cannot read source: ${err.message}` }
+    }
+    const newSource = rewriteNixLangSource(source)
+
+    // Write rewritten .nix
+    const newNixPath = `${PURE_DIR}/${stem}.nix`
+    await Deno.writeTextFile(newNixPath, newSource)
+
+    // Build new argv: keep original flags, replace the .nix arg, and rewrite
+    // any `lang/...` path arguments.
+    const origArgv = task.argv
+    const newArgv = []
+    let replacedNixArg = false
+    for (let i = 0; i < origArgv.length; i++) {
+        const a = origArgv[i]
+        if (i === 0) { newArgv.push(a); continue }
+        if (!replacedNixArg && !a.startsWith("-") && a.endsWith(".nix")) {
+            newArgv.push(`${stem}.nix`)
+            replacedNixArg = true
+            continue
+        }
+        newArgv.push(rewritePathArg(a))
+    }
+    if (!replacedNixArg) {
+        // very defensive — shouldn't happen
+        newArgv.push(`${stem}.nix`)
+    }
+
+    // Filter env, rewrite NIX_PATH
+    const newEnv = {}
+    for (const [k, v] of Object.entries(task.env)) {
+        if (DROP_ENV.has(k)) continue
+        if (k === "NIX_EVAL_SHIM_REAL" || k === "NIX_EVAL_SHIM_RECORD_DIR" || k === "NIX_EVAL_SHIM_SCRIPT") continue
+        if (k === "NIX_PATH") { newEnv[k] = rewriteNixPath(v); continue }
+        newEnv[k] = v
+    }
+
+    const newTask = {
+        nix_file: `${stem}.nix`,
+        cwd: PURE_DIR,
+        argv: newArgv,
+        env: newEnv,
+    }
+    await Deno.writeTextFile(`${PURE_DIR}/${stem}_eval.json`, JSON.stringify(newTask, null, 4) + "\n")
+    return { skipped: false, stem }
+}
+
+async function processNixpkgsLibTask(jsonPath) {
+    const raw = await Deno.readTextFile(jsonPath)
+    const task = JSON.parse(raw)
+    const baseStem = jsonPath.split("/").pop().replace(/_eval\.json$/, "")
+    const stem = `nixpkgs_lib__${baseStem}`
+
+    // Stub that imports the corresponding source file. The transitive imports
+    // (./maintainers.nix, ../default.nix, ../..) resolve within the copied
+    // nixpkgs_lib tree at tests/translation/source_code/nixpkgs_lib/lib/tests/.
+    const stubSource = `import ../source_code/nixpkgs_lib/lib/tests/${baseStem}.nix\n`
+    await Deno.writeTextFile(`${PURE_DIR}/${stem}.nix`, stubSource)
+
+    const origArgv = task.argv
+    const newArgv = []
+    let replacedNixArg = false
+    for (let i = 0; i < origArgv.length; i++) {
+        const a = origArgv[i]
+        if (i === 0) { newArgv.push(a); continue }
+        if (!replacedNixArg && !a.startsWith("-") && a.endsWith(".nix")) {
+            newArgv.push(`${stem}.nix`)
+            replacedNixArg = true
+            continue
+        }
+        newArgv.push(a)
+    }
+    if (!replacedNixArg) newArgv.push(`${stem}.nix`)
+
+    const newEnv = {}
+    for (const [k, v] of Object.entries(task.env || {})) {
+        if (DROP_ENV.has(k)) continue
+        newEnv[k] = v
+    }
+
+    const newTask = {
+        nix_file: `${stem}.nix`,
+        cwd: PURE_DIR,
+        argv: newArgv,
+        env: newEnv,
+    }
+    await Deno.writeTextFile(`${PURE_DIR}/${stem}_eval.json`, JSON.stringify(newTask, null, 4) + "\n")
+    return { skipped: false, stem }
+}
+
+// -----------------------------------------------------------------
+// main
+// -----------------------------------------------------------------
+async function listJsonFiles(dir) {
+    const out = []
+    for await (const entry of Deno.readDir(dir)) {
+        if (entry.isFile && entry.name.endsWith("_eval.json")) out.push(`${dir}/${entry.name}`)
+    }
+    out.sort()
+    return out
+}
+
+await Deno.mkdir(PURE_DIR, { recursive: true })
+
+console.log("copying shared nix_lang fixtures...")
+await copyFixtures()
+
+console.log("processing nix_lang tests...")
+const skipped = []
+let okLang = 0
+for (const jsonPath of await listJsonFiles(`${NIX_EVALS_DIR}/nix_lang_tests`)) {
+    const r = await processNixLangTask(jsonPath)
+    if (r.skipped) skipped.push(`nix_lang/${r.stem}: ${r.reason}`)
+    else okLang++
+}
+
+console.log("processing nixpkgs_lib tests...")
+let okLib = 0
+for (const jsonPath of await listJsonFiles(`${NIX_EVALS_DIR}/nixpkgs_lib_tests`)) {
+    const r = await processNixpkgsLibTask(jsonPath)
+    if (r.skipped) skipped.push(`nixpkgs_lib/${r.stem}: ${r.reason}`)
+    else okLib++
+}
+
+await Deno.writeTextFile(SKIPPED_FILE, skipped.length ? skipped.join("\n") + "\n" : "")
+
+console.log(`\ndone.`)
+console.log(`  nix_lang tasks:    ${okLang} written`)
+console.log(`  nixpkgs_lib tasks: ${okLib} written`)
+console.log(`  skipped:           ${skipped.length} (see ${SKIPPED_FILE})`)

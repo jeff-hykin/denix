@@ -1,0 +1,135 @@
+#!/usr/bin/env -S deno run --allow-all
+// tests — run every pure-setup eval task through nix-instantiate and
+// denix_eval, writing each pair's output next to the corresponding .nix
+// file.
+//
+// Usage:
+//     ./run/tests [--silent]
+//
+// For each eval_tasks_pure_setup/<stem>_eval.json + <stem>.nix, this
+// writes the following into eval_tasks_pure_setup/ :
+//     <stem>.nix.out    (stdout from real nix-instantiate)
+//     <stem>.nix.err    (stderr from real nix-instantiate)
+//     <stem>.js.out     (stdout from ./run/denix_eval)
+//     <stem>.js.err     (stderr from ./run/denix_eval)
+//
+// Exits 0 regardless of per-task match/mismatch — this script is a
+// report, not a gate.
+
+const repoRoot = new URL("..", import.meta.url).pathname.replace(/\/$/, "")
+const PURE_DIR = `${repoRoot}/tests/translation/eval_tasks_pure_setup`
+const denixEvalPath = `${repoRoot}/run/denix_eval`
+
+const argv = [...Deno.args]
+const silent = argv.includes("--silent") || argv.includes("-s")
+const log = silent ? () => {} : (...a) => console.log(...a)
+
+// --------------------------------------------------------------
+// discover tasks
+// --------------------------------------------------------------
+const tasks = []
+for await (const entry of Deno.readDir(PURE_DIR)) {
+    if (entry.isFile && entry.name.endsWith("_eval.json")) {
+        const stem = entry.name.replace(/_eval\.json$/, "")
+        tasks.push({
+            stem,
+            jsonPath: `${PURE_DIR}/${entry.name}`,
+            nixPath:  `${PURE_DIR}/${stem}.nix`,
+        })
+    }
+}
+tasks.sort((a, b) => a.stem < b.stem ? -1 : a.stem > b.stem ? 1 : 0)
+
+log(`discovered ${tasks.length} tasks in ${PURE_DIR}`)
+
+// --------------------------------------------------------------
+// helpers
+// --------------------------------------------------------------
+const decoder = new TextDecoder()
+
+async function runNix(setup) {
+    const env = { ...setup.env }
+    delete env["NIX_EVAL_SHIM_REAL"]
+    delete env["NIX_EVAL_SHIM_RECORD_DIR"]
+    delete env["NIX_EVAL_SHIM_SCRIPT"]
+    const proc = new Deno.Command(setup.argv[0], {
+        args: setup.argv.slice(1),
+        cwd: setup.cwd,
+        env,
+        clearEnv: true,
+        stdout: "piped", stderr: "piped",
+    })
+    const { stdout, stderr, code } = await proc.output()
+    return { stdout: decoder.decode(stdout), stderr: decoder.decode(stderr), code }
+}
+
+async function runDenix(setup, jsPath) {
+    // Forward test env + minimally-needed parent-env shims for deno itself.
+    const subEnv = { ...setup.env }
+    for (const k of ["DENO_DIR", "DENO_INSTALL_ROOT", "XDG_CACHE_HOME"]) {
+        const v = Deno.env.get(k); if (v != null) subEnv[k] = v
+    }
+    for (const k of ["HOME", "PATH", "TMPDIR"]) {
+        if (subEnv[k] == null) {
+            const v = Deno.env.get(k); if (v != null) subEnv[k] = v
+        }
+    }
+    if (!subEnv["DENO_DIR"]) {
+        const ph = Deno.env.get("HOME")
+        if (ph) subEnv["DENO_DIR"] = `${ph}/.cache/deno`
+    }
+    const proc = new Deno.Command(Deno.execPath(), {
+        args: ["run", "--allow-all", "--quiet", denixEvalPath,
+               "--emit-translated", jsPath,
+               ...setup.argv.slice(1)],
+        cwd: setup.cwd,
+        env: subEnv,
+        clearEnv: true,
+        stdout: "piped", stderr: "piped",
+    })
+    const { stdout, stderr, code } = await proc.output()
+    return { stdout: decoder.decode(stdout), stderr: decoder.decode(stderr), code }
+}
+
+// --------------------------------------------------------------
+// main loop
+// --------------------------------------------------------------
+let matched = 0
+let mismatched = 0
+let errored = 0
+
+for (let i = 0; i < tasks.length; i++) {
+    const t = tasks[i]
+    let setup
+    try {
+        setup = JSON.parse(await Deno.readTextFile(t.jsonPath))
+    } catch (err) {
+        errored++
+        log(`[${i+1}/${tasks.length}] ERR ${t.stem}: ${err.message}`)
+        continue
+    }
+
+    // Delete any stale translated-JS artifact from a prior run so that its
+    // presence is a signal that translation succeeded on this run.
+    const jsPath = `${PURE_DIR}/${t.stem}.js`
+    try { await Deno.remove(jsPath) } catch {}
+
+    const nixRes   = await runNix(setup)
+    const denixRes = await runDenix(setup, jsPath)
+
+    await Deno.writeTextFile(`${PURE_DIR}/${t.stem}.nix.out`, nixRes.stdout)
+    await Deno.writeTextFile(`${PURE_DIR}/${t.stem}.nix.err`, nixRes.stderr)
+    await Deno.writeTextFile(`${PURE_DIR}/${t.stem}.js.out`,  denixRes.stdout)
+    await Deno.writeTextFile(`${PURE_DIR}/${t.stem}.js.err`,  denixRes.stderr)
+
+    const match = nixRes.stdout === denixRes.stdout
+    if (match) matched++; else mismatched++
+
+    if (!silent) {
+        const mark = match ? "✓" : "✗"
+        log(`[${i+1}/${tasks.length}] ${mark} ${t.stem}`)
+    }
+}
+
+// Final summary (always printed, even when silent)
+console.log(`\n${matched} matched  /  ${mismatched} mismatched  /  ${errored} errored  /  ${tasks.length} total`)

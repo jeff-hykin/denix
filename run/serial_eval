@@ -24,7 +24,9 @@
 //     diff.txt           `diff -u nix.out js.out`
 //     meta.json          mode (text/xml), argv used, etc.
 
-import { convertToJs } from "../translator.js"
+// denix_eval CLI is used as a subprocess (so the same tool exercised by
+// ./run/tests is what serial_eval measures).
+const denixEvalPath = new URL("./denix_eval", import.meta.url).pathname
 
 // ------------------------------------------------------------------
 // arg parsing
@@ -109,32 +111,37 @@ async function runNix() {
 }
 
 // ------------------------------------------------------------------
-// Step 2: translate file.nix → JS via denix's convertToJs.
+// Step 2+3: run denix_eval as a subprocess, forwarding the argv from
+// the setup (minus argv[0] = nix-instantiate). --arg / --argstr / -A etc.
+// are forwarded as-is. The .nix argument was replaced above to point
+// at nixFilePath.
 // ------------------------------------------------------------------
-async function translateNixToJs() {
-    const source = await Deno.readTextFile(nixFilePath)
-    const runtimeAbs = new URL("../main/runtime.js", import.meta.url).href
-    return await convertToJs(source, { runtimePath: runtimeAbs, sourceFile: nixFilePath })
-}
-
-// ------------------------------------------------------------------
-// Step 3: execute translated.js via a runner script that imports the
-// module, awaits its default export, and prints using the nix-style
-// printer so the output is byte-for-byte comparable to nix.out.
-// ------------------------------------------------------------------
-async function runJs(translatedJsPath, mode) {
-    const runtimeUrl = new URL("../main/runtime.js", import.meta.url).href
-    const runnerPath = `${outDir}/_runner.js`
-    const runnerSrc =
-`import mod from ${JSON.stringify("file://" + translatedJsPath)}
-import { nixRepr, nixReprXml } from ${JSON.stringify(runtimeUrl)}
-const resolved = (mod && typeof mod.then === "function") ? await mod : mod
-const text = ${JSON.stringify(mode)} === "xml" ? nixReprXml(resolved) : nixRepr(resolved)
-await Deno.stdout.write(new TextEncoder().encode(text + "\\n"))
-`
-    await Deno.writeTextFile(runnerPath, runnerSrc)
+async function runDenixEval() {
+    // Start from the test env, but preserve a few parent-env vars needed by
+    // deno itself (cache, tmp, PATH, etc.) — otherwise a test that sets
+    // HOME=/fake-home breaks module loading.
+    const subprocessEnv = { ...env }
+    for (const k of ["DENO_DIR", "DENO_INSTALL_ROOT", "XDG_CACHE_HOME"]) {
+        const v = Deno.env.get(k)
+        if (v != null) subprocessEnv[k] = v
+    }
+    // If the test didn't set HOME/PATH, inherit the parent's.
+    for (const k of ["HOME", "PATH", "TMPDIR"]) {
+        if (subprocessEnv[k] == null) {
+            const v = Deno.env.get(k)
+            if (v != null) subprocessEnv[k] = v
+        }
+    }
+    // Force a writable deno cache location independent of the test's HOME.
+    if (!subprocessEnv["DENO_DIR"]) {
+        const parentHome = Deno.env.get("HOME")
+        if (parentHome) subprocessEnv["DENO_DIR"] = `${parentHome}/.cache/deno`
+    }
     const proc = new Deno.Command(Deno.execPath(), {
-        args: ["run", "--allow-all", "--quiet", runnerPath],
+        args: ["run", "--allow-all", "--quiet", denixEvalPath, ...argv.slice(1)],
+        cwd: setup.cwd,
+        env: subprocessEnv,
+        clearEnv: true,
         stdout: "piped",
         stderr: "piped",
     })
@@ -172,35 +179,15 @@ await Deno.writeTextFile(`${outDir}/nix.err`, nixResult.stderr)
 await Deno.writeTextFile(`${outDir}/nix.exit`, String(nixResult.code) + "\n")
 log(`      exit=${nixResult.code}  stdout=${nixResult.stdout.length}B  stderr=${nixResult.stderr.length}B`)
 
-log("[2/3] translating nix -> js ...")
-let translatedJs = ""
-let translateError = null
-try {
-    translatedJs = await translateNixToJs()
-} catch (err) {
-    translateError = err instanceof Error ? (err.stack ?? err.message) : String(err)
-}
-const translatedPath = `${outDir}/translated.js`
-if (translateError) {
-    await Deno.writeTextFile(translatedPath, `// translation failed:\n// ${translateError.replace(/\n/g, "\n// ")}\n`)
-    log(`      translation FAILED: ${translateError.split("\n")[0]}`)
-} else {
-    await Deno.writeTextFile(translatedPath, translatedJs)
-    log(`      wrote ${translatedJs.length}B -> ${translatedPath}`)
-}
-
-log("[3/3] running translated js ...")
+log("[2/2] running denix_eval ...")
 let jsResult
-if (translateError) {
-    jsResult = { stdout: "", stderr: `<translation failed>\n${translateError}\n`, code: 99 }
-} else {
-    try {
-        jsResult = await runJs(translatedPath, mode)
-    } catch (err) {
-        const msg = err instanceof Error ? (err.stack ?? err.message) : String(err)
-        jsResult = { stdout: "", stderr: `<js runner crashed>\n${msg}\n`, code: 98 }
-    }
+try {
+    jsResult = await runDenixEval()
+} catch (err) {
+    const msg = err instanceof Error ? (err.stack ?? err.message) : String(err)
+    jsResult = { stdout: "", stderr: `<denix_eval launch failed>\n${msg}\n`, code: 98 }
 }
+const translateError = null
 await Deno.writeTextFile(`${outDir}/js.out`, jsResult.stdout)
 await Deno.writeTextFile(`${outDir}/js.err`, jsResult.stderr)
 await Deno.writeTextFile(`${outDir}/js.exit`, String(jsResult.code) + "\n")
