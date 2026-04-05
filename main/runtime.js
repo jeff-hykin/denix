@@ -228,21 +228,65 @@ import { resolveIndirectReference } from "./registry.js"
         }
         return value
     }
+    // Text representation matching `nix-instantiate --eval --strict` output,
+    // byte-for-byte where practical. Used by error messages and by the
+    // serial_eval harness to diff against real nix.
     export const nixRepr = (value)=>{
-        if (typeof value === 'string') {
-            return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n').replace(/\t/g, '\\t')}"`
+        if (value === null) return "null"
+        if (value === true) return "true"
+        if (value === false) return "false"
+        if (typeof value === "bigint") return value.toString()
+        if (typeof value === "number") return String(value)
+        if (value instanceof InterpolatedString) return nixRepr(value.toString())
+        if (typeof value === "string") {
+            return '"' + value
+                .replace(/\\/g, "\\\\")
+                .replace(/"/g, '\\"')
+                .replace(/\n/g, "\\n")
+                .replace(/\t/g, "\\t")
+                .replace(/\r/g, "\\r")
+                + '"'
         }
-        if (typeof value === 'bigint') {
-            return value.toString()
+        if (value instanceof Path) return value.toString()
+        if (typeof value === "function") return "<LAMBDA>"
+        if (Array.isArray(value)) {
+            if (value.length === 0) return "[ ]"
+            return "[ " + value.map(nixRepr).join(" ") + " ]"
         }
-        if (typeof value === 'boolean' || value === null) {
-            return String(value)
+        if (typeof value === "object") {
+            const keys = Object.keys(value).sort()
+            if (keys.length === 0) return "{ }"
+            return "{ " + keys.map(k => `${k} = ${nixRepr(value[k])};`).join(" ") + " }"
         }
-        try {
-            return JSON.stringify(value)
-        } catch {
-            return String(value)
+        return String(value)
+    }
+
+    // XML representation matching `nix-instantiate --xml --no-location` output
+    // (with the outer `<expr>` wrapper, unlike `builtins.toXML` which does
+    // not wrap). Used by the serial_eval harness for XML-mode diffs.
+    export const nixReprXml = (value)=>{
+        const xmlEscape = (s) => s
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+        const inner = (v) => {
+            if (v === null) return "<null />"
+            if (v === true || v === false) return `<bool value="${v}" />`
+            if (typeof v === "bigint") return `<int value="${v.toString()}" />`
+            if (typeof v === "number") return `<float value="${v}" />`
+            if (v instanceof InterpolatedString) return inner(v.toString())
+            if (typeof v === "string") return `<string value="${xmlEscape(v)}" />`
+            if (v instanceof Path) return `<path value="${xmlEscape(v.toString())}" />`
+            if (typeof v === "function") return "<function />"
+            if (Array.isArray(v)) return `<list>${v.map(inner).join("")}</list>`
+            if (typeof v === "object") {
+                const keys = Object.keys(v).sort()
+                return `<attrs>${keys.map(k => `<attr name="${xmlEscape(k)}">${inner(v[k])}</attr>`).join("")}</attrs>`
+            }
+            return "<unknown />"
         }
+        return `<?xml version='1.0' encoding='utf-8'?>\n<expr>\n  ${inner(value)}\n</expr>`
     }
 
     // Convert POSIX regex patterns to JavaScript-compatible regex

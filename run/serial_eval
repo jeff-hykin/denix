@@ -1,0 +1,241 @@
+#!/usr/bin/env -S deno run --allow-all
+// serial_eval — run a Nix eval test through both the real Nix interpreter
+// and denix's JS transpiler, producing files suitable for byte-for-byte
+// text diff.
+//
+// Usage:
+//     ./run/serial_eval <setup.json> <file.nix> [--out-dir <dir>]
+//
+// <setup.json>  is a record produced by tests/tools/nix_eval_spy.ts
+//               (tests/nix_evals/<path>_eval.json). It contains argv
+//               + env + cwd for the original nix invocation.
+// <file.nix>    is the Nix source file to evaluate. It substitutes
+//               into argv (replacing the original .nix arg), so you
+//               can reuse one setup.json for other files.
+//
+// Outputs (default /tmp/denix_serial_eval/<stem>/):
+//     nix.out            stdout from real nix-instantiate
+//     nix.err            stderr from real nix-instantiate
+//     nix.exit           exit code
+//     translated.js      denix's JS output for file.nix
+//     js.out             stdout from running translated.js (via nix printer)
+//     js.err             stderr from running translated.js
+//     js.exit            exit code
+//     diff.txt           `diff -u nix.out js.out`
+//     meta.json          mode (text/xml), argv used, etc.
+
+import { convertToJs } from "../translator.js"
+
+// ------------------------------------------------------------------
+// arg parsing
+// ------------------------------------------------------------------
+const cliArgs = [...Deno.args]
+let outDir = null
+let quiet = false
+{
+    const i = cliArgs.indexOf("--out-dir")
+    if (i >= 0) {
+        outDir = cliArgs[i + 1]
+        cliArgs.splice(i, 2)
+    }
+    const q = cliArgs.indexOf("--quiet")
+    if (q >= 0) {
+        quiet = true
+        cliArgs.splice(q, 1)
+    }
+}
+let maxPrint = 2000
+{
+    const i = cliArgs.indexOf("--max-print")
+    if (i >= 0) {
+        maxPrint = Number(cliArgs[i + 1])
+        if (!Number.isFinite(maxPrint) || maxPrint < 0) {
+            console.error(`error: --max-print expects a non-negative number, got ${JSON.stringify(cliArgs[i + 1])}`)
+            Deno.exit(2)
+        }
+        cliArgs.splice(i, 2)
+    }
+}
+if (cliArgs.length !== 2) {
+    console.error("usage: serial_eval <setup.json> <file.nix> [--out-dir <dir>] [--quiet] [--max-print <bytes>]")
+    Deno.exit(2)
+}
+const log = quiet ? () => {} : (...a) => console.log(...a)
+const [setupPath, nixFilePathRaw] = cliArgs
+const nixFilePath = await Deno.realPath(nixFilePathRaw)
+const setup = JSON.parse(await Deno.readTextFile(setupPath))
+
+const stem = nixFilePath.split("/").pop().replace(/\.nix$/, "")
+outDir = outDir ?? `/tmp/denix_serial_eval/${stem}`
+await Deno.mkdir(outDir, { recursive: true })
+
+// ------------------------------------------------------------------
+// Build invocation: use setup.argv, swap the .nix arg with nixFilePath.
+// ------------------------------------------------------------------
+const argv = [...setup.argv]
+const nixArgIdx = argv.findIndex((a, i) => i > 0 && !a.startsWith("-") && a.endsWith(".nix"))
+if (nixArgIdx < 0) {
+    console.error("error: no .nix arg found in setup.argv")
+    Deno.exit(2)
+}
+argv[nixArgIdx] = nixFilePath
+
+const isXmlMode = argv.includes("--xml")
+const mode = isXmlMode ? "xml" : "text"
+
+const env = { ...setup.env }
+delete env["NIX_EVAL_SHIM_REAL"]
+delete env["NIX_EVAL_SHIM_RECORD_DIR"]
+delete env["NIX_EVAL_SHIM_SCRIPT"]
+
+// ------------------------------------------------------------------
+// Step 1: run real nix-instantiate with setup env + cwd.
+// ------------------------------------------------------------------
+async function runNix() {
+    const proc = new Deno.Command(argv[0], {
+        args: argv.slice(1),
+        cwd: setup.cwd,
+        env,
+        clearEnv: true,
+        stdout: "piped",
+        stderr: "piped",
+    })
+    const { stdout, stderr, code } = await proc.output()
+    return {
+        stdout: new TextDecoder().decode(stdout),
+        stderr: new TextDecoder().decode(stderr),
+        code,
+    }
+}
+
+// ------------------------------------------------------------------
+// Step 2: translate file.nix → JS via denix's convertToJs.
+// ------------------------------------------------------------------
+async function translateNixToJs() {
+    const source = await Deno.readTextFile(nixFilePath)
+    const runtimeAbs = new URL("../main/runtime.js", import.meta.url).href
+    return await convertToJs(source, { runtimePath: runtimeAbs })
+}
+
+// ------------------------------------------------------------------
+// Step 3: execute translated.js via a runner script that imports the
+// module, awaits its default export, and prints using the nix-style
+// printer so the output is byte-for-byte comparable to nix.out.
+// ------------------------------------------------------------------
+async function runJs(translatedJsPath, mode) {
+    const runtimeUrl = new URL("../main/runtime.js", import.meta.url).href
+    const runnerPath = `${outDir}/_runner.js`
+    const runnerSrc =
+`import mod from ${JSON.stringify("file://" + translatedJsPath)}
+import { nixRepr, nixReprXml } from ${JSON.stringify(runtimeUrl)}
+const resolved = (mod && typeof mod.then === "function") ? await mod : mod
+const text = ${JSON.stringify(mode)} === "xml" ? nixReprXml(resolved) : nixRepr(resolved)
+await Deno.stdout.write(new TextEncoder().encode(text + "\\n"))
+`
+    await Deno.writeTextFile(runnerPath, runnerSrc)
+    const proc = new Deno.Command(Deno.execPath(), {
+        args: ["run", "--allow-all", "--quiet", runnerPath],
+        stdout: "piped",
+        stderr: "piped",
+    })
+    const { stdout, stderr, code } = await proc.output()
+    return {
+        stdout: new TextDecoder().decode(stdout),
+        stderr: new TextDecoder().decode(stderr),
+        code,
+    }
+}
+
+async function unifiedDiff(pathA, pathB) {
+    const proc = new Deno.Command("diff", {
+        args: ["-u", pathA, pathB],
+        stdout: "piped",
+        stderr: "piped",
+    })
+    const { stdout } = await proc.output()
+    return new TextDecoder().decode(stdout)
+}
+
+// ------------------------------------------------------------------
+// Go.
+// ------------------------------------------------------------------
+log(`mode:    ${mode}`)
+log(`nix:     ${argv[0]} (cwd=${setup.cwd})`)
+log(`nix src: ${nixFilePath}`)
+log(`out dir: ${outDir}`)
+log("")
+
+log("[1/3] running real nix-instantiate ...")
+const nixResult = await runNix()
+await Deno.writeTextFile(`${outDir}/nix.out`, nixResult.stdout)
+await Deno.writeTextFile(`${outDir}/nix.err`, nixResult.stderr)
+await Deno.writeTextFile(`${outDir}/nix.exit`, String(nixResult.code) + "\n")
+log(`      exit=${nixResult.code}  stdout=${nixResult.stdout.length}B  stderr=${nixResult.stderr.length}B`)
+
+log("[2/3] translating nix -> js ...")
+let translatedJs = ""
+let translateError = null
+try {
+    translatedJs = await translateNixToJs()
+} catch (err) {
+    translateError = err instanceof Error ? (err.stack ?? err.message) : String(err)
+}
+const translatedPath = `${outDir}/translated.js`
+if (translateError) {
+    await Deno.writeTextFile(translatedPath, `// translation failed:\n// ${translateError.replace(/\n/g, "\n// ")}\n`)
+    log(`      translation FAILED: ${translateError.split("\n")[0]}`)
+} else {
+    await Deno.writeTextFile(translatedPath, translatedJs)
+    log(`      wrote ${translatedJs.length}B -> ${translatedPath}`)
+}
+
+log("[3/3] running translated js ...")
+let jsResult
+if (translateError) {
+    jsResult = { stdout: "", stderr: `<translation failed>\n${translateError}\n`, code: 99 }
+} else {
+    try {
+        jsResult = await runJs(translatedPath, mode)
+    } catch (err) {
+        const msg = err instanceof Error ? (err.stack ?? err.message) : String(err)
+        jsResult = { stdout: "", stderr: `<js runner crashed>\n${msg}\n`, code: 98 }
+    }
+}
+await Deno.writeTextFile(`${outDir}/js.out`, jsResult.stdout)
+await Deno.writeTextFile(`${outDir}/js.err`, jsResult.stderr)
+await Deno.writeTextFile(`${outDir}/js.exit`, String(jsResult.code) + "\n")
+log(`      exit=${jsResult.code}  stdout=${jsResult.stdout.length}B  stderr=${jsResult.stderr.length}B`)
+
+const diff = await unifiedDiff(`${outDir}/nix.out`, `${outDir}/js.out`)
+await Deno.writeTextFile(`${outDir}/diff.txt`, diff)
+
+await Deno.writeTextFile(`${outDir}/meta.json`, JSON.stringify({
+    mode,
+    setup_path: setupPath,
+    nix_file:   nixFilePath,
+    argv,
+    cwd:        setup.cwd,
+    nix_exit:   nixResult.code,
+    js_exit:    jsResult.code,
+    match:      nixResult.stdout === jsResult.stdout,
+    translate_error: translateError,
+}, null, 2) + "\n")
+
+const match = nixResult.stdout === jsResult.stdout
+if (quiet) {
+    console.log(`${match ? "✓" : "✗"} ${outDir}`)
+}
+log("")
+log(`match:   ${match ? "YES" : "no"}`)
+if (!match) {
+    if (jsResult.stderr.length > 0) {
+        log("")
+        log("--- js.err ---")
+        log(jsResult.stderr.slice(0, maxPrint))
+    }
+    log("")
+    log("--- diff (nix.out vs js.out) ---")
+    log(diff.slice(0, maxPrint))
+}
+
+Deno.exit(0)
