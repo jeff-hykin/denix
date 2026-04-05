@@ -1,0 +1,12 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/ingydotnet/git-subrepo#readme
+;
+[subrepo]
+	remote = git@github.com:nix-community/nixpkgs.lib.git
+	branch = master
+	commit = 2890b0f0d5edd3b5bf795294a04f9879d9d50fef
+	parent = c9e29eea6f0362b7f19ef6a1be957bfc4d4a3d58
+	method = merge
+	cmdver = 0.4.9
