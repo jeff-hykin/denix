@@ -1,0 +1,469 @@
+#!/usr/bin/env -S deno run --allow-all
+// translate_shell_tests — mechanical bash-to-JS translator for the
+// in-scope nixpkgs_lib_tests shell scripts.
+//
+// Usage:
+//     ./run/translate_shell_tests [<script-slug> ...]
+//
+// With no args, translates every configured script. The slugs correspond
+// to entries in the SCRIPTS table below (modules, filesystem, network,
+// debug).
+//
+// For each recognized helper invocation in the .sh file, emits one .js
+// file under tests/translation/eval_tasks_complex/<category>/, prefixed
+// with a zero-padded index so alpha-sort matches source order. Lines that
+// don't match a pattern are logged to <category>/_unhandled.txt.
+
+const repoRoot = new URL("..", import.meta.url).pathname.replace(/\/$/, "")
+const SOURCE_ROOT = `${repoRoot}/tests/nix_tests/nixpkgs_lib_tests/lib/tests`
+const OUT_ROOT = `${repoRoot}/tests/translation/eval_tasks_complex`
+
+// --------------------------------------------------------------
+// Per-script config.
+// --------------------------------------------------------------
+// Each entry describes:
+//   - source: path to the .sh
+//   - category: output subdirectory under eval_tasks_complex/
+//   - helpers: map from bash-helper-name -> descriptor
+//
+// Descriptor fields:
+//   emit:        "expectSuccess" | "expectFailure" | "expectEqual"
+//                | "checkConfigOutput" | "checkConfigError"
+//   argCount:    number of positional args to consume from the line
+//   wrapExpr:    (rawArg) => js-string literal for the nix expression,
+//                used to glue per-script prefix expressions around `$1`.
+//   matchKind:   "regex" | "exact"   (controls how to turn arg2 into a
+//                JS RegExp/string for the emitted helper call.)
+//   envSetup:    JS snippet placed above the helper call to build `env`.
+
+const NIX_PATH_ENV = {
+    code: [
+        `const NIX_PATH = \`nixpkgs=\${SOURCE_CODE_ROOT}nixpkgs_lib\``,
+    ].join("\n"),
+    passAs: "env: { NIX_PATH }",
+    needsSourceRoot: true,
+}
+
+const SCRIPTS = {
+    modules: {
+        source: `${SOURCE_ROOT}/modules.sh`,
+        category: "module_system",
+        fixtureRoot: "nixpkgs_lib/lib/tests/modules",
+        helpers: {
+            checkConfigOutput: { emit: "checkConfigOutput", style: "moduleSystem", matchKind: "regex" },
+            checkConfigError:  { emit: "checkConfigError",  style: "moduleSystem", matchKind: "regex" },
+        },
+    },
+    filesystem: {
+        source: `${SOURCE_ROOT}/filesystem.sh`,
+        category: "filesystem",
+        helpers: {
+            expectSuccess: {
+                emit: "expectSuccess", style: "prefixedExpr",
+                prefix: "with (import <nixpkgs/lib>).filesystem; ",
+                matchKind: "regex", env: NIX_PATH_ENV,
+            },
+            expectFailure: {
+                emit: "expectFailure", style: "prefixedExpr",
+                prefix: "with (import <nixpkgs/lib>).filesystem; ",
+                matchKind: "regex", env: NIX_PATH_ENV,
+            },
+        },
+    },
+    debug: {
+        source: `${SOURCE_ROOT}/debug.sh`,
+        category: "debug",
+        helpers: {
+            expectSuccess: {
+                emit: "expectSuccess", style: "prefixedExpr",
+                prefix: "with (import <nixpkgs/lib>).debug; ",
+                matchKind: "regex", env: NIX_PATH_ENV,
+            },
+            expectFailure: {
+                emit: "expectFailure", style: "prefixedExpr",
+                prefix: "with (import <nixpkgs/lib>).debug; ",
+                matchKind: "regex", env: NIX_PATH_ENV,
+            },
+        },
+    },
+    network: {
+        source: `${SOURCE_ROOT}/network.sh`,
+        category: "network",
+        helpers: {
+            expectSuccess: {
+                emit: "expectSuccess", style: "prefixedExpr",
+                prefix: [
+                    "let",
+                    "  lib = import <nixpkgs/lib>;",
+                    "  internal = import <nixpkgs/lib/network/internal.nix> { inherit lib; };",
+                    "in",
+                    "with lib; with lib.network; (",
+                ].join("\n"),
+                suffix: "\n)",
+                matchKind: "exact", env: NIX_PATH_ENV,
+            },
+            expectSuccessRegex: {
+                emit: "expectSuccess", style: "prefixedExpr",
+                prefix: [
+                    "let",
+                    "  lib = import <nixpkgs/lib>;",
+                    "  internal = import <nixpkgs/lib/network/internal.nix> { inherit lib; };",
+                    "in",
+                    "with lib; with lib.network; (",
+                ].join("\n"),
+                suffix: "\n)",
+                matchKind: "regex", env: NIX_PATH_ENV,
+            },
+            expectFailure: {
+                emit: "expectFailure", style: "prefixedExpr",
+                prefix: [
+                    "let",
+                    "  lib = import <nixpkgs/lib>;",
+                    "  internal = import <nixpkgs/lib/network/internal.nix> { inherit lib; };",
+                    "in",
+                    "with lib; with lib.network; (",
+                ].join("\n"),
+                suffix: "\n)",
+                matchKind: "regex", env: NIX_PATH_ENV,
+            },
+        },
+    },
+}
+
+// --------------------------------------------------------------
+// quote-aware argument splitter for a single bash command line.
+// --------------------------------------------------------------
+// Supports:
+//   'single quoted strings'       (no escapes honored inside)
+//   "double quoted strings"       (\" and \\ honored)
+//   bare words up to whitespace
+// Multiple quoted segments with no whitespace between are concatenated
+// into a single arg, matching bash semantics ('a'"b"c -> abc).
+function splitShellArgs(line) {
+    const args = []
+    let i = 0
+    const n = line.length
+    // skip leading whitespace
+    while (i < n && (line[i] === " " || line[i] === "\t")) i++
+    while (i < n) {
+        let current = ""
+        let consumedAny = false
+        while (i < n && line[i] !== " " && line[i] !== "\t") {
+            const c = line[i]
+            if (c === "'") {
+                i++
+                while (i < n && line[i] !== "'") { current += line[i]; i++ }
+                if (i < n) i++ // consume closing quote
+                consumedAny = true
+            } else if (c === '"') {
+                i++
+                while (i < n && line[i] !== '"') {
+                    if (line[i] === "\\" && i + 1 < n) {
+                        const nxt = line[i + 1]
+                        if (nxt === '"' || nxt === "\\" || nxt === "$" || nxt === "`") {
+                            current += nxt
+                            i += 2
+                            continue
+                        }
+                    }
+                    current += line[i]; i++
+                }
+                if (i < n) i++
+                consumedAny = true
+            } else if (c === "\\" && i + 1 < n) {
+                current += line[i + 1]
+                i += 2
+                consumedAny = true
+            } else {
+                current += c
+                i++
+                consumedAny = true
+            }
+        }
+        if (consumedAny) args.push(current)
+        // skip whitespace
+        while (i < n && (line[i] === " " || line[i] === "\t")) i++
+    }
+    return args
+}
+
+// --------------------------------------------------------------
+// line continuations: collapse `\\\n` sequences into a single logical
+// line. Returns an array of { line, sourceLine } pairs.
+// --------------------------------------------------------------
+function quoteState(text) {
+    // Returns the open-quote character ("'" or '"') after scanning, or
+    // null if the line ends outside of any quote. Used to detect when a
+    // logical line extends across raw newlines.
+    let inSingle = false
+    let inDouble = false
+    for (let i = 0; i < text.length; i++) {
+        const c = text[i]
+        if (c === "\\" && !inSingle) { i++; continue }
+        if (c === "'" && !inDouble) inSingle = !inSingle
+        else if (c === '"' && !inSingle) inDouble = !inDouble
+    }
+    return inSingle ? "'" : inDouble ? '"' : null
+}
+
+function logicalLines(text) {
+    const rawLines = text.split("\n")
+    const out = []
+    let buffer = ""
+    let bufferStart = 0
+    let openQuote = null
+    for (let i = 0; i < rawLines.length; i++) {
+        let l = rawLines[i]
+        if (buffer === "") bufferStart = i + 1
+        // Backslash line continuation
+        if (openQuote == null && l.endsWith("\\")) {
+            buffer += l.slice(0, -1) + " "
+            continue
+        }
+        // If we're inside a quote, preserve newline inside the buffer.
+        if (openQuote != null) {
+            buffer += "\n" + l
+        } else {
+            buffer += l
+        }
+        openQuote = quoteState(buffer)
+        if (openQuote == null) {
+            out.push({ line: buffer, sourceLine: bufferStart })
+            buffer = ""
+        }
+    }
+    if (buffer !== "") out.push({ line: buffer, sourceLine: bufferStart })
+    return out
+}
+
+// --------------------------------------------------------------
+// emit helpers
+// --------------------------------------------------------------
+function jsStringLit(s) {
+    // Prefer a backtick template string so embedded double-quotes & nix
+    // expression newlines survive unmangled. Escape only backticks and $.
+    if (!s.includes("`") && !s.includes("${")) {
+        return "`" + s + "`"
+    }
+    return JSON.stringify(s)
+}
+
+function jsRegexLit(pattern) {
+    // Quick check: if the pattern can be safely embedded as a RegExp
+    // literal (no slashes, no newlines), use /.../ form. Otherwise emit
+    // `new RegExp(...)`.
+    if (!pattern.includes("/") && !pattern.includes("\n") && pattern.length < 200) {
+        // Escape nothing — the bash pattern is already a regex. But
+        // RegExp literals need to escape backslashes not further. Pass
+        // through verbatim.
+        return `/${pattern}/`
+    }
+    return `new RegExp(${JSON.stringify(pattern)})`
+}
+
+function slugify(s, maxLen = 40) {
+    const cleaned = s
+        .replace(/<nixpkgs\/lib>/g, "lib")
+        .replace(/[^a-zA-Z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, maxLen)
+    return cleaned || "expr"
+}
+
+function fmtIdx(i, pad = 4) {
+    return String(i).padStart(pad, "0")
+}
+
+// --------------------------------------------------------------
+// translators per emit-style
+// --------------------------------------------------------------
+function emitModuleSystem({ scriptCfg, descr, args, idx, srcRel, sourceLine }) {
+    // modules.sh shape:
+    //   checkConfigOutput <pattern> <attr> <module ...>
+    //   checkConfigError  <pattern> <attr> <module ...>
+    if (args.length < 3) return null
+    const [pattern, attr, ...modules] = args
+    const modulesLit = modules.map((m) => jsStringLit(m)).join(", ")
+    const slug = slugify(attr + "_" + (modules[0] || ""))
+    const fname = `${fmtIdx(idx)}_${descr.emit}_${slug}.js`
+    const body = [
+        `#!/usr/bin/env -S deno run --allow-all`,
+        `// Auto-generated from ${srcRel}:${sourceLine}`,
+        `// ${descr.emit} ${args.map((a) => JSON.stringify(a)).join(" ").replace(/\n/g, " ").slice(0, 200)}`,
+        ``,
+        `import { ${descr.emit} } from "../shared_tooling/index.js"`,
+        ``,
+        `await ${descr.emit}({`,
+        `    pattern: ${jsRegexLit(pattern)},`,
+        `    attr:    ${jsStringLit(attr)},`,
+        `    modules: [${modulesLit}],`,
+        `    fixtureRoot: ${JSON.stringify(scriptCfg.fixtureRoot)},`,
+        `    label: ${JSON.stringify(attr + " @ " + (modules[0] || ""))},`,
+        `})`,
+        ``,
+    ].join("\n")
+    return { fname, body }
+}
+
+function emitPrefixedExpr({ scriptCfg, descr, args, idx, srcRel, sourceLine, bashHelperName }) {
+    if (args.length < 2) return null
+    const [rawExpr, rawPattern] = args
+    const fullExpr = (descr.prefix || "") + rawExpr + (descr.suffix || "")
+    const slug = slugify(rawExpr)
+    const fname = `${fmtIdx(idx)}_${descr.emit}_${slug}.js`
+    const envCode = descr.env ? descr.env.code : null
+    const envArg = descr.env ? descr.env.passAs + "," : ""
+    const needsSrc = descr.env && descr.env.needsSourceRoot
+    const importList = needsSrc
+        ? `{ ${descr.emit}, SOURCE_CODE_ROOT }`
+        : `{ ${descr.emit} }`
+    const patternLit = descr.matchKind === "exact"
+        ? "new RegExp('^' + " + JSON.stringify(escapeForRegex(rawPattern)) + " + '$')"
+        : jsRegexLit(rawPattern)
+    const lines = [
+        `#!/usr/bin/env -S deno run --allow-all`,
+        `// Auto-generated from ${srcRel}:${sourceLine}`,
+        `// ${bashHelperName} ${args.map((a) => JSON.stringify(a)).join(" ").replace(/\n/g, " ").slice(0, 200)}`,
+        ``,
+        `import ${importList} from "../shared_tooling/index.js"`,
+        ``,
+    ]
+    if (envCode) lines.push(envCode, ``)
+    lines.push(
+        `await ${descr.emit}({`,
+        `    expr: ${jsStringLit(fullExpr)},`,
+        `    pattern: ${patternLit},`,
+    )
+    if (envArg) lines.push(`    ${envArg}`)
+    lines.push(
+        `    label: ${JSON.stringify(rawExpr.slice(0, 60))},`,
+        `})`,
+        ``,
+    )
+    return { fname, body: lines.join("\n") }
+}
+
+function escapeForRegex(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+}
+
+// --------------------------------------------------------------
+// per-script driver
+// --------------------------------------------------------------
+async function translateScript(slug) {
+    const scriptCfg = SCRIPTS[slug]
+    if (!scriptCfg) throw new Error(`unknown script: ${slug}`)
+    const outDir = `${OUT_ROOT}/${scriptCfg.category}`
+    await Deno.mkdir(outDir, { recursive: true })
+
+    // Purge any existing auto-generated files so stale translations
+    // don't linger. We keep any hand-ported files (prefix "hand_") and
+    // any non-.js files.
+    for await (const entry of Deno.readDir(outDir)) {
+        if (!entry.isFile) continue
+        if (entry.name.endsWith(".js") && /^\d{4}_/.test(entry.name)) {
+            await Deno.remove(`${outDir}/${entry.name}`)
+        }
+        if (entry.name === "_unhandled.txt") {
+            await Deno.remove(`${outDir}/${entry.name}`)
+        }
+    }
+
+    const srcText = await Deno.readTextFile(scriptCfg.source)
+    const srcRel = scriptCfg.source.replace(repoRoot + "/", "")
+    const lines = logicalLines(srcText)
+    const unhandled = []
+
+    let emitCount = 0
+    let idx = 0
+    let recognized = 0
+
+    for (const { line, sourceLine } of lines) {
+        const trimmed = line.trim()
+        if (trimmed === "") continue
+        if (trimmed.startsWith("#")) continue
+
+        // Attempt quote-aware split and see if first word is a helper we know.
+        let parts
+        try { parts = splitShellArgs(trimmed) } catch { parts = [] }
+        if (parts.length === 0) continue
+        // strip leading env-var-assignment words (BAR=1 BAZ=2 cmd ...)
+        const envVars = {}
+        while (parts.length > 0 && /^[A-Za-z_][A-Za-z0-9_]*=/.test(parts[0])) {
+            const kv = parts.shift()
+            const eq = kv.indexOf("=")
+            envVars[kv.slice(0, eq)] = kv.slice(eq + 1)
+        }
+        if (parts.length === 0) continue
+        const head = parts[0]
+        const descr = scriptCfg.helpers[head]
+        if (!descr) {
+            // Suppress noise for obvious shell machinery.
+            if (/^(set|shopt|if|fi|then|else|elif|for|done|do|while|case|esac|function|local|echo|export|trap|cd|mkdir|touch|ln|mkfifo|rm|tmp=|work=|pass=|fail=|DIR=|NIX_PATH=|die\(\)|\}|\{|logFailure|logEndFailure|logStartFailure|line|loc|evalConfig|reportFailure|checkExpression|invertIfUnset|globalErrorLogCheck|local-nix-instantiate|clean_up|prefixExpression=)/.test(trimmed)) continue
+            unhandled.push(`${sourceLine}: ${trimmed}`)
+            continue
+        }
+
+        const args = parts.slice(1)
+        // Skip wrapper-style invocations that forward $@.
+        if (args.some((a) => a === "$@" || a.includes("$@"))) {
+            unhandled.push(`${sourceLine}: ${trimmed}  [forwards $@]`)
+            continue
+        }
+        // Skip args containing unexpanded shell variables; they depend
+        // on runtime bash state (scratch dirs, etc.) and need a hand port.
+        if (args.some((a) => /\$[A-Za-z_{]/.test(a) || a.includes("$("))) {
+            unhandled.push(`${sourceLine}: ${trimmed}  [shell-var arg]`)
+            continue
+        }
+        recognized += 1
+        idx += 1
+        let emit = null
+        if (descr.style === "moduleSystem") {
+            emit = emitModuleSystem({ scriptCfg, descr, args, idx, srcRel, sourceLine })
+        } else if (descr.style === "prefixedExpr") {
+            emit = emitPrefixedExpr({ scriptCfg, descr, args, idx, srcRel, sourceLine, bashHelperName: head })
+        }
+        if (!emit) { unhandled.push(`${sourceLine}: ${trimmed}  [emitter rejected]`); continue }
+
+        // Ensure filename uniqueness across the output dir.
+        let finalName = emit.fname
+        let dedup = 1
+        while (await exists(`${outDir}/${finalName}`)) {
+            finalName = emit.fname.replace(/\.js$/, `_${dedup}.js`)
+            dedup += 1
+        }
+        await Deno.writeTextFile(`${outDir}/${finalName}`, emit.body)
+        emitCount += 1
+    }
+
+    if (unhandled.length > 0) {
+        await Deno.writeTextFile(
+            `${outDir}/_unhandled.txt`,
+            `# ${srcRel}\n# ${unhandled.length} lines not recognized by the translator\n\n` +
+                unhandled.join("\n") + "\n",
+        )
+    }
+
+    console.log(`${slug.padEnd(14)} → ${outDir.replace(repoRoot + "/", "")}`)
+    console.log(`  recognized: ${recognized}  emitted: ${emitCount}  unhandled: ${unhandled.length}`)
+    return { slug, recognized, emitCount, unhandled: unhandled.length }
+}
+
+async function exists(p) {
+    try { await Deno.stat(p); return true } catch { return false }
+}
+
+// --------------------------------------------------------------
+// main
+// --------------------------------------------------------------
+const wanted = Deno.args.length > 0 ? Deno.args : Object.keys(SCRIPTS)
+const summary = []
+for (const slug of wanted) {
+    summary.push(await translateScript(slug))
+}
+console.log("")
+console.log("summary:")
+for (const s of summary) {
+    console.log(`  ${s.slug.padEnd(14)} ${s.emitCount} emitted / ${s.unhandled} unhandled`)
+}

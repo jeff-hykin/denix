@@ -1,0 +1,42 @@
+# tests/nix_tests/nixpkgs_lib_tests/lib/tests/modules.sh
+# 39 lines not recognized by the translator
+
+24: nix-instantiate --timeout 1 --eval-only --show-trace --read-write-mode --json "$@"
+38: caller=( $(caller $depth) )
+55: printf '\033[1;31mTEST FAILED\033[0m at %s\n' "$(loc 2)"
+60: shift
+65: nix_args+=(--option abort-on-warn true)
+69: nix_args+=(--strict)
+78: shift
+82: ((++fail))
+85: checkConfigOutput() {
+87: shift
+89: ((++pass))
+102: shift
+104: "$@"
+106: ! "$@"
+120: return 1
+128: output="$(local-nix-instantiate --strict "$path" 2>&1)" && ((++pass))
+132: ((++fail))
+138: checkConfigError() {
+141: shift
+159: ((++pass))
+362: checkConfigOutput '^true$' "$@"  [forwards $@]
+363: checkConfigOutput '^false$' "$@" ./disable-define-enable.nix  [forwards $@]
+364: checkConfigOutput '^false$' "$@" ./disable-define-enable-string-path.nix  [forwards $@]
+365: checkConfigError "The option .*enable.* does not exist. Definition values:\n\s*- In .*: true" "$@" ./disable-declare-enable.nix  [forwards $@]
+366: checkConfigError "attribute .*enable.* in selection path .*config.enable.* not found" "$@" ./disable-define-enable.nix ./disable-declare-enable.nix  [forwards $@]
+367: checkConfigError "attribute .*enable.* in selection path .*config.enable.* not found" "$@" ./disable-enable-modules.nix  [forwards $@]
+379: checkConfigError 'while evaluating the module argument .*custom.* in .*define-enable-with-custom-arg.nix.*:' "$@"  [forwards $@]
+380: checkConfigOutput '^true$' "$@" ./define-_module-args-custom.nix  [forwards $@]
+385: REQUIRE_INFINITE_RECURSION_HINT=1 checkConfigError 'while evaluating the module argument .*custom.* in .*import-custom-arg.nix.*:' "$@"  [forwards $@]
+386: REQUIRE_INFINITE_RECURSION_HINT=1 checkConfigError 'infinite recursion encountered' "$@"  [forwards $@]
+390: checkConfigError 'The option .* does not exist. Definition values:\n\s*- In .*' "$@"  [forwards $@]
+391: checkConfigOutput '^true$' "$@" ./define-module-check.nix  [forwards $@]
+894: cat <<EOF
+895: ====== module tests ======
+896: $pass Pass
+897: $fail Fail
+898: EOF
+901: exit 1
+903: exit 0

@@ -22,6 +22,8 @@ const denixEvalPath = `${repoRoot}/run/denix_eval`
 
 const argv = [...Deno.args]
 const silent = argv.includes("--silent") || argv.includes("-s")
+const complexOnly = argv.includes("--complex-only")
+const pureOnly = argv.includes("--pure-only")
 const log = silent ? () => {} : (...a) => console.log(...a)
 
 // --------------------------------------------------------------
@@ -40,6 +42,7 @@ for await (const entry of Deno.readDir(PURE_DIR)) {
 }
 tasks.sort((a, b) => a.stem < b.stem ? -1 : a.stem > b.stem ? 1 : 0)
 
+if (complexOnly) tasks.length = 0
 log(`discovered ${tasks.length} tasks in ${PURE_DIR}`)
 
 // --------------------------------------------------------------
@@ -140,6 +143,7 @@ console.log(`\npure_setup: ${matched} match / ${mismatched} mismatch / ${errored
 // Results are grouped by category (top-level dir under eval_tasks_complex).
 // --------------------------------------------------------------
 const COMPLEX_DIR = `${repoRoot}/tests/translation/eval_tasks_complex`
+if (pureOnly) Deno.exit(0)
 
 async function listJsTests(dir, out, category) {
     for await (const entry of Deno.readDir(dir)) {

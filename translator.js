@@ -161,12 +161,9 @@ const buildPreamble = (output, options) => {
     // import/abort/throw, which is why things like nixScope.builtins and
     // nixScope.true resolve at the top level.
     pre += `const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1]\n`
-    // Tell the runtime what file this translated module came from, so
-    // relative `import ./foo` paths inside the nix source resolve correctly
-    // regardless of the Deno process cwd.
-    if (options.sourceFile) {
-        pre += `runtime.currentFile = ${JSON.stringify(options.sourceFile)}\n`
-    }
+    // NOTE: runtime.currentFile is auto-detected from the JS stack trace at
+    // runtime (see detectCurrentFileFromStack in runtime.js), so there is no
+    // longer a need to inject it here from options.sourceFile.
     if (output.includes("operators.")) {
         pre += `const operators = runtime.operators\n`
     }
@@ -496,6 +493,12 @@ const nixNodeToJs = (node)=>{
         strings.push(currentString)
 
         return `(new Path([${strings.map(s => JSON.stringify(s)).join(", ")}], [${getters.join(", ")}]))`
+    } else if (node.type == "spath_expression") {
+        // <...> — nix search-path lookup; desugars to
+        //   (builtins.findFile builtins.nixPath "...").
+        const text = node.text || ""
+        const inner = text.replace(/^</, "").replace(/>$/, "")
+        return `(nixScope["builtins"]["findFile"](nixScope["builtins"]["nixPath"]()))(${JSON.stringify(inner)})`
     } else if (node.type == "apply_expression") { // function call
         const children = valueBasedChildren(node)
         return `${nixNodeToJs(children[0])}(${nixNodeToJs(children[1])})`

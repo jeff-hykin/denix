@@ -1,0 +1,25 @@
+# tests/nix_tests/nixpkgs_lib_tests/lib/tests/filesystem.sh
+# 22 lines not recognized by the translator
+
+16: exit 1
+38: expectSuccess() {
+43: die "$expr failed to evaluate, but it was expected to succeed"
+46: die "$expr == $result, but $expectedResultRegex was expected"
+50: expectFailure() {
+55: die "$expr evaluated successfully to $result, but it was expected to fail"
+58: die "Error was $(<"$work/stderr"), but $expectedErrorRegex was expected"
+63: expectSuccess "pathType $PWD/directory" '"directory"'  [shell-var arg]
+64: expectSuccess "pathType $PWD/regular" '"regular"'  [shell-var arg]
+65: expectSuccess "pathType $PWD/symlink" '"symlink"'  [shell-var arg]
+66: expectSuccess "pathType $PWD/fifo" '"unknown"'  [shell-var arg]
+72: expectFailure "pathType $PWD/non-existent"          "error: evaluation aborted with the following error message: 'lib.filesystem.pathType: Path $PWD/non-existent does not exist.'"  [shell-var arg]
+77: expectSuccess "pathIsDirectory $PWD/directory" "true"  [shell-var arg]
+78: expectSuccess "pathIsDirectory $PWD/regular" "false"  [shell-var arg]
+79: expectSuccess "pathIsDirectory $PWD/symlink" "false"  [shell-var arg]
+80: expectSuccess "pathIsDirectory $PWD/fifo" "false"  [shell-var arg]
+81: expectSuccess "pathIsDirectory $PWD/non-existent" "false"  [shell-var arg]
+84: expectSuccess "pathIsRegularFile $PWD/directory" "false"  [shell-var arg]
+85: expectSuccess "pathIsRegularFile $PWD/regular" "true"  [shell-var arg]
+86: expectSuccess "pathIsRegularFile $PWD/symlink" "false"  [shell-var arg]
+87: expectSuccess "pathIsRegularFile $PWD/fifo" "false"  [shell-var arg]
+88: expectSuccess "pathIsRegularFile $PWD/non-existent" "false"  [shell-var arg]

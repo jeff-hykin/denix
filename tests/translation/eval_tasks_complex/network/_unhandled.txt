@@ -1,0 +1,13 @@
+# tests/nix_tests/nixpkgs_lib_tests/lib/tests/network.sh
+# 10 lines not recognized by the translator
+
+21: exit 1
+44: expectSuccess() {
+49: die "$expr failed to evaluate, but it was expected to succeed"
+52: die "$expr == $result, but $expectedResult was expected"
+56: expectSuccessRegex() {
+61: die "$expr failed to evaluate, but it was expected to succeed"
+64: die "$expr == $result, but $expectedResultRegex was expected"
+68: expectFailure() {
+73: die "$expr evaluated successfully to $result, but it was expected to fail"
+76: die "Error was $(<"$work/stderr"), but $expectedErrorRegex was expected"

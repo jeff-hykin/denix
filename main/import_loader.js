@@ -8,7 +8,7 @@
  * - Integrating with import cache
  */
 
-import { getImportType, validateImportPath } from "../tools/import_resolver.js"
+import { canonicalizePath, getImportType, validateImportPath } from "../tools/import_resolver.js"
 import { convertToJs, convertToJsSync } from "../translator.js"
 
 /**
@@ -20,6 +20,7 @@ import { convertToJs, convertToJsSync } from "../translator.js"
  */
 export async function loadAndEvaluate(filepath, runtime) {
     // Validate the path exists
+    filepath = canonicalizePath(filepath)
     validateImportPath(filepath)
 
     // Read file contents
@@ -64,9 +65,12 @@ async function loadNixFile(content, runtime) {
     // Strip import, export, and runtime creation (we already have runtime available)
     jsCode = jsCode
         .replace(/^import\s+.*$/gm, '')  // Remove import lines
+        .replace(/^const\s*\{[^}]*\}\s*=\s*createRuntime\(\).*$/gm, '')  // Remove destructured createRuntime()
         .replace(/^const\s+runtime\s+=\s+createRuntime\(\).*$/gm, '')  // Remove runtime creation
         .replace(/^const\s+operators\s+=\s+.*$/gm, '')  // Remove operators extraction
         .replace(/^const\s+builtins\s+=\s+.*$/gm, '')  // Remove builtins extraction
+        .replace(/^const\s+nixScope\s+=\s+.*$/gm, '')  // Remove nixScope binding
+        .replace(/^runtime\.currentFile\s*=\s*.*$/gm, '')  // Remove currentFile assignment
         .replace(/^export\s+default\s+/m, '')  // Remove export default
         .trim()
 
@@ -98,6 +102,9 @@ async function loadNixFile(content, runtime) {
         'nixScope',
         'InterpolatedString',
         'Path',
+        'createFunc',
+        'createScope',
+        'defGetter',
         `return ${cleanCode}`
     )
 
@@ -108,7 +115,10 @@ async function loadNixFile(content, runtime) {
         runtime.builtins,
         nixScope,
         runtime.InterpolatedString,
-        runtime.Path
+        runtime.Path,
+        runtime.createFunc,
+        runtime.createScope,
+        runtime.defGetter,
     )
 
     return result
@@ -128,9 +138,12 @@ function loadNixFileSync(content, runtime) {
     // Strip import, export, and runtime creation (we already have runtime available)
     jsCode = jsCode
         .replace(/^import\s+.*$/gm, '')  // Remove import lines
+        .replace(/^const\s*\{[^}]*\}\s*=\s*createRuntime\(\).*$/gm, '')  // Remove destructured createRuntime()
         .replace(/^const\s+runtime\s+=\s+createRuntime\(\).*$/gm, '')  // Remove runtime creation
         .replace(/^const\s+operators\s+=\s+.*$/gm, '')  // Remove operators extraction
         .replace(/^const\s+builtins\s+=\s+.*$/gm, '')  // Remove builtins extraction
+        .replace(/^const\s+nixScope\s+=\s+.*$/gm, '')  // Remove nixScope binding
+        .replace(/^runtime\.currentFile\s*=\s*.*$/gm, '')  // Remove currentFile assignment
         .replace(/^export\s+default\s+/m, '')  // Remove export default
         .trim()
 
@@ -162,6 +175,9 @@ function loadNixFileSync(content, runtime) {
         'nixScope',
         'InterpolatedString',
         'Path',
+        'createFunc',
+        'createScope',
+        'defGetter',
         `return ${cleanCode}`
     )
 
@@ -172,7 +188,10 @@ function loadNixFileSync(content, runtime) {
         runtime.builtins,
         nixScope,
         runtime.InterpolatedString,
-        runtime.Path
+        runtime.Path,
+        runtime.createFunc,
+        runtime.createScope,
+        runtime.defGetter,
     )
 
     return result
@@ -188,6 +207,7 @@ function loadNixFileSync(content, runtime) {
  */
 export function loadAndEvaluateSync(filepath, runtime) {
     // Validate the path exists
+    filepath = canonicalizePath(filepath)
     validateImportPath(filepath)
 
     // Read file contents synchronously
