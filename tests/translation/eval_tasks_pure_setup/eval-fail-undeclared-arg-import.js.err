@@ -4,4 +4,4 @@ denix_eval: eval failed: SyntaxError: Unexpected token 'const'
     at loadAndEvaluateSync (file:///Users/jeffhykin/repos/denix/main/import_loader.js:204:16)
     at Object.globalImportState.importFn (file:///Users/jeffhykin/repos/denix/main/runtime.js:2879:32)
     at Object.import (file:///Users/jeffhykin/repos/denix/main/runtime.js:1694:42)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_2558679090d691dc/translated.js:10:31
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_d3beb5debf828722/translated.js:10:31

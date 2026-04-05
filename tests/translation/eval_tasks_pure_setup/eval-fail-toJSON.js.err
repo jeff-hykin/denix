@@ -1,7 +1,7 @@
 denix_eval: eval failed: Error: hah no
     at Object.throw (file:///Users/jeffhykin/repos/denix/main/runtime.js:1756:35)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_d5af1eed4e86c3a4/translated.js:17:37
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_99470462e98764ce/translated.js:17:37
     at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:115:24)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_d5af1eed4e86c3a4/translated.js:14:5
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_99470462e98764ce/translated.js:14:5
     at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:115:24)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_d5af1eed4e86c3a4/translated.js:7:44
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_99470462e98764ce/translated.js:7:44

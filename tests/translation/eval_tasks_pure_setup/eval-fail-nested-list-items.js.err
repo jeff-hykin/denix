@@ -1,3 +1,3 @@
 denix_eval: eval failed: Error: error: cannot add string to list
     at Object.add (file:///Users/jeffhykin/repos/denix/main/runtime.js:2741:23)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_88c5e9fbb6afa37e/translated.js:17:11
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_fb0986b19dfc0f4/translated.js:17:11

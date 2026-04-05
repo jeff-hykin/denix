@@ -2,4 +2,4 @@ denix_eval: eval failed: Error: Called builtins.typeOf, which only works with va
     at Object.typeOf (file:///Users/jeffhykin/repos/denix/main/runtime.js:370:31)
     at requireList (file:///Users/jeffhykin/repos/denix/main/runtime.js:227:62)
     at Object.genericClosure (file:///Users/jeffhykin/repos/denix/main/runtime.js:2658:34)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_162f27a699f7c9c7/translated.js:7:51
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_194968123d40410/translated.js:7:51

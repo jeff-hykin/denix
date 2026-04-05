@@ -3,4 +3,4 @@ denix_eval: eval failed: Error: Failed to download https://example.com/foo.tar.g
     at __drainNextTickAndMacrotasks (ext:core/01_core.js:439:7)
     at async downloadWithRetry (file:///Users/jeffhykin/repos/denix/main/fetcher.js:54:20)
     at async Object.fetchurl (file:///Users/jeffhykin/repos/denix/main/runtime.js:953:17)
-    at async file:///Users/jeffhykin/repos/denix/run/denix_eval:126:60
+    at async file:///Users/jeffhykin/repos/denix/run/denix_eval:136:60

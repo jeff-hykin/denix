@@ -1,5 +1,5 @@
 denix_eval: translation failed: Error: This is a bug with convertToJs(), it means this node was unexpected/unhandled and couldn't be converted: type="let_attrset_expression", "let {\n  attrs = {\n    x = 123;\n    y = 456;\n  };\n\n  body = (removeAttrs attrs [ \"x\" ]).x;\n}"
     at nixNodeToJs (file:///Users/jeffhykin/repos/denix/translator.js:1263:15)
     at convertToJs (file:///Users/jeffhykin/repos/denix/translator.js:189:19)
-    at file:///Users/jeffhykin/repos/denix/run/denix_eval:99:24
+    at file:///Users/jeffhykin/repos/denix/run/denix_eval:109:24
     at __drainNextTickAndMacrotasks (ext:core/01_core.js:439:7)

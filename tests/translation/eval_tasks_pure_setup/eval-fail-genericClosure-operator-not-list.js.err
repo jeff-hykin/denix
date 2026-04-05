@@ -1,4 +1,4 @@
 denix_eval: eval failed: Error: error: value is a string while a list was expected
     at requireList (file:///Users/jeffhykin/repos/denix/main/runtime.js:227:19)
     at Object.genericClosure (file:///Users/jeffhykin/repos/denix/main/runtime.js:2683:25)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_68783c313e0178e9/translated.js:7:51
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_79759dece6c1269d/translated.js:7:51

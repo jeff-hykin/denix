@@ -1,11 +1,11 @@
 denix_eval: eval failed: RangeError: Maximum call stack size exceeded
     at file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1
     at file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_e996783c89811024/translated.js:1:1
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_6a8def2c796c47a4/translated.js:1:1
     at Object.get [as long] (file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1)
     at file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1
     at file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_e996783c89811024/translated.js:1:1
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_6a8def2c796c47a4/translated.js:1:1
     at Object.get [as long] (file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1)
     at file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1
     at file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1

@@ -5,4 +5,4 @@ denix_eval: eval failed: Error: Failed to download file:./relative-path.tar.gz a
     at downloadWithRetry (file:///Users/jeffhykin/repos/denix/main/fetcher.js:75:11)
     at async Object.fetchTarball (file:///Users/jeffhykin/repos/denix/main/runtime.js:1013:17)
     at async Object.fetchTree (file:///Users/jeffhykin/repos/denix/main/runtime.js:1503:32)
-    at async file:///Users/jeffhykin/repos/denix/run/denix_eval:126:60
+    at async file:///Users/jeffhykin/repos/denix/run/denix_eval:136:60
