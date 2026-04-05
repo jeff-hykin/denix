@@ -28,16 +28,17 @@ const argv = [...Deno.args]
 // --------------------------------------------------------------
 const passThroughNoArg = new Set([
     "--eval", "--strict", "--show-trace", "--no-show-trace",
-    "--impure", "--parse", "--read-write-mode",
+    "--impure", "--parse", "--read-write-mode", "--eval-only", "--json",
 ])
 const passThroughOneArg = new Set([
     "--max-call-depth", "--lint-absolute-path-literals",
     "--option",            // takes two args actually; we consume one extra below
     "--include", "-i",
-    "--expr", "-E",
+    "--timeout",
 ])
 
 let nixFile = null
+let inlineExpr = null   // from --expr / -E
 let xmlMode = false
 const attrPath = []     // from -A
 const includes = []     // from -I
@@ -55,6 +56,7 @@ for (let i = 0; i < argv.length; i++) {
         continue
     }
     if (a === "-I") { includes.push(argv[++i]); continue }
+    if (a === "--expr" || a === "-E") { inlineExpr = argv[++i]; continue }
     if (a === "--arg") {
         const name = argv[++i]; const expr = argv[++i]
         args[name] = { kind: "expr", value: expr }
@@ -73,20 +75,28 @@ for (let i = 0; i < argv.length; i++) {
     // extra positional — ignore for now
 }
 
-if (!nixFile) {
-    console.error("denix_eval: no .nix file given")
+if (!nixFile && inlineExpr == null) {
+    console.error("denix_eval: no .nix file or --expr given")
     Deno.exit(2)
 }
 
 // --------------------------------------------------------------
-// resolve the nix file (relative to cwd)
+// resolve the nix file (relative to cwd) or stage the inline expr in a
+// temp .nix file so the rest of the pipeline works uniformly.
 // --------------------------------------------------------------
 let nixFileAbs
-try {
-    nixFileAbs = await Deno.realPath(nixFile)
-} catch (err) {
-    console.error(`denix_eval: cannot resolve ${JSON.stringify(nixFile)}: ${err.message}`)
-    Deno.exit(1)
+let inlineTmpDir = null
+if (nixFile) {
+    try {
+        nixFileAbs = await Deno.realPath(nixFile)
+    } catch (err) {
+        console.error(`denix_eval: cannot resolve ${JSON.stringify(nixFile)}: ${err.message}`)
+        Deno.exit(1)
+    }
+} else {
+    inlineTmpDir = await Deno.makeTempDir({ prefix: "denix_eval_expr_" })
+    nixFileAbs = `${inlineTmpDir}/expr.nix`
+    await Deno.writeTextFile(nixFileAbs, inlineExpr)
 }
 
 // --------------------------------------------------------------
@@ -128,6 +138,7 @@ try {
     console.error(`denix_eval: eval failed: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}`)
     // best-effort cleanup
     try { await Deno.remove(tmpDir, { recursive: true }) } catch {}
+if (inlineTmpDir) { try { await Deno.remove(inlineTmpDir, { recursive: true }) } catch {} }
     Deno.exit(1)
 }
 
@@ -149,6 +160,7 @@ if (Object.keys(args).length > 0) {
         } catch (err) {
             console.error(`denix_eval: --arg application failed: ${err instanceof Error ? (err.message) : String(err)}`)
             try { await Deno.remove(tmpDir, { recursive: true }) } catch {}
+if (inlineTmpDir) { try { await Deno.remove(inlineTmpDir, { recursive: true }) } catch {} }
             Deno.exit(1)
         }
     }
@@ -174,8 +186,10 @@ try {
 } catch (err) {
     console.error(`denix_eval: print failed: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}`)
     try { await Deno.remove(tmpDir, { recursive: true }) } catch {}
+if (inlineTmpDir) { try { await Deno.remove(inlineTmpDir, { recursive: true }) } catch {} }
     Deno.exit(1)
 }
 
 try { await Deno.remove(tmpDir, { recursive: true }) } catch {}
+if (inlineTmpDir) { try { await Deno.remove(inlineTmpDir, { recursive: true }) } catch {} }
 Deno.exit(0)

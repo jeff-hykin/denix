@@ -131,5 +131,79 @@ for (let i = 0; i < tasks.length; i++) {
     }
 }
 
-// Final summary (always printed, even when silent)
-console.log(`\n${matched} matched  /  ${mismatched} mismatched  /  ${errored} errored  /  ${tasks.length} total`)
+// Final summary for pure_setup (always printed, even when silent)
+console.log(`\npure_setup: ${matched} match / ${mismatched} mismatch / ${errored} err / ${tasks.length} total`)
+
+// --------------------------------------------------------------
+// eval_tasks_complex — run each .js file in-process.
+// Every test is a standalone Deno script that exits 0 on pass.
+// Results are grouped by category (top-level dir under eval_tasks_complex).
+// --------------------------------------------------------------
+const COMPLEX_DIR = `${repoRoot}/tests/translation/eval_tasks_complex`
+
+async function listJsTests(dir, out, category) {
+    for await (const entry of Deno.readDir(dir)) {
+        if (entry.name === "shared_tooling") continue
+        if (entry.name.startsWith("_")) continue
+        const full = `${dir}/${entry.name}`
+        if (entry.isDirectory) {
+            const nextCategory = category ?? entry.name
+            await listJsTests(full, out, nextCategory)
+        } else if (entry.isFile && entry.name.endsWith(".js")) {
+            out.push({ path: full, category: category ?? "root" })
+        }
+    }
+}
+
+const complexTests = []
+try {
+    await listJsTests(COMPLEX_DIR, complexTests, null)
+} catch {}
+complexTests.sort((a, b) => a.path < b.path ? -1 : a.path > b.path ? 1 : 0)
+
+const perCategory = new Map()
+for (const t of complexTests) {
+    if (!perCategory.has(t.category)) perCategory.set(t.category, { pass: 0, fail: 0, total: 0 })
+}
+
+const results = { categories: {}, failures: [] }
+
+for (let i = 0; i < complexTests.length; i++) {
+    const t = complexTests[i]
+    const proc = new Deno.Command(Deno.execPath(), {
+        args: ["run", "--allow-all", "--quiet", t.path],
+        stdout: "piped", stderr: "piped",
+    })
+    const { code, stdout, stderr } = await proc.output()
+    const bucket = perCategory.get(t.category)
+    bucket.total += 1
+    if (code === 0) { bucket.pass += 1 }
+    else {
+        bucket.fail += 1
+        results.failures.push({
+            path: t.path.replace(repoRoot + "/", ""),
+            code,
+            stdout: decoder.decode(stdout),
+            stderr: decoder.decode(stderr),
+        })
+    }
+    if (!silent) {
+        const mark = code === 0 ? "✓" : "✗"
+        log(`[${i+1}/${complexTests.length}] ${mark} ${t.category}/${t.path.split("/").pop()}`)
+    }
+}
+
+for (const [cat, c] of perCategory) {
+    results.categories[cat] = c
+    const pad = cat.padEnd(18, " ")
+    console.log(`${pad} ${c.pass} pass / ${c.fail} fail / ${c.total} total`)
+}
+
+// Persist results for later inspection.
+try {
+    await Deno.mkdir(COMPLEX_DIR, { recursive: true })
+    await Deno.writeTextFile(
+        `${COMPLEX_DIR}/_results.json`,
+        JSON.stringify(results, null, 2) + "\n",
+    )
+} catch {}
