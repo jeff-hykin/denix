@@ -2956,6 +2956,7 @@ import { resolveIndirectReference } from "./registry.js"
             rootScope: rootScope,
             runtime, // Expose runtime for use by import system
             importCache,
+            operators,
         }
         return {
             createFunc: createCreateFunc(runtimeWithScope),

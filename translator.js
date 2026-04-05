@@ -162,12 +162,17 @@ export const convertToJs = async (code, options = {}) => {
     if (needsRuntime) {
         result += `import { createRuntime } from "${runtimePath}"\n`
         result += `const {runtime, createFunc, createScope, defGetter} = createRuntime()\n`
+        // Module-level nixScope, bound to the runtime's current (root) scope.
+        // The root scope is seeded with builtins/true/false/null/derivation/
+        // import/abort/throw, which is why things like nixScope.builtins and
+        // nixScope.true resolve at the top level.
+        result += `const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1]\n`
 
         // Extract commonly used runtime components if they're referenced
         if (output.includes("operators.")) {
             result += `const operators = runtime.operators\n`
         }
-        if (output.includes("builtins.") && !output.includes("nixScope[\"builtins\"]")) {
+        if (output.includes("builtins.") && !/nixScope(\["builtins"\]|\.builtins)/.test(output)) {
             result += `const builtins = runtime.builtins\n`
         }
     }
