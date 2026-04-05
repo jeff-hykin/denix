@@ -1,0 +1,12 @@
+{
+    "nix_file": "lib/tests/nix-for-tests.nix",
+    "nix_file_abs": "/Users/jeffhykin/repos/denix/tests/nix_tests/nixpkgs_lib_tests/lib/tests/nix-for-tests.nix",
+    "cwd": "/Users/jeffhykin/repos/denix/tests/nix_tests/nixpkgs_lib_tests",
+    "argv": [
+        "/nix/var/nix/profiles/default/bin/nix-instantiate",
+        "--eval",
+        "--strict",
+        "lib/tests/nix-for-tests.nix"
+    ],
+    "env": {}
+}
