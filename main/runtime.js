@@ -2944,10 +2944,23 @@ import { resolveIndirectReference } from "./registry.js"
             null: builtins.null,
 
             // https://nixos.org/manual/nix/stable/language/builtins.html
+            // These builtins are available at the top-level scope in Nix
+            // (without the builtins. prefix).
             derivation: builtins.derivation,
             import: builtins.import,
             abort: builtins.abort,
             throw: builtins.throw,
+            baseNameOf: builtins.baseNameOf,
+            dirOf: builtins.dirOf,
+            fetchGit: builtins.fetchGit,
+            fetchTarball: builtins.fetchTarball,
+            fromTOML: builtins.fromTOML,
+            isNull: builtins.isNull,
+            map: builtins.map,
+            placeholder: builtins.placeholder,
+            removeAttrs: builtins.removeAttrs,
+            scopedImport: builtins.scopedImport,
+            toString: builtins.toString,
         }
 
         // Store runtime globally for use by getFlake

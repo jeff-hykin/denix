@@ -270,6 +270,9 @@ const nixNodeToJs = (node)=>{
     } else if (node.type == "float_expression") {
         // Scientific notation (1.5e10) is already supported - just pass through
         return node.text
+    } else if (node.type == "uri_expression") {
+        // Unquoted URL literals in Nix are just strings
+        return JSON.stringify(node.text)
     } else if (node.type == "parenthesized_expression") {
         // FUTURE: there could be an optimization here where if the result is atomic (ex: operators.add(1,2)) then we can skip the parentheses
         return `(${nixNodeToJs(valueBasedChildren(node)[1])})`
@@ -354,12 +357,13 @@ const nixNodeToJs = (node)=>{
                             .replace(/\r/g, "\\r")
                             .replace(/\t/g, "\\t")
                     } else if (child.type === "escape_sequence") {
-                        // Nix escapes: \n \r \t \\ \" \$ — pass through as-is
-                        // (they map 1:1 to JS escapes, except \$ which JS
-                        //  doesn't need but tolerates as literal $)
+                        // Nix escapes: \n \r \t \\ \" \$ and \<newline>
                         const seq = child.text
                         if (seq === "\\$") {
                             text += "$"
+                        } else if (seq === "\\\n") {
+                            // \<newline> in Nix = literal newline
+                            text += "\\n"
                         } else {
                             text += seq
                         }
@@ -443,15 +447,36 @@ const nixNodeToJs = (node)=>{
         const hasInterpolation = children.some(each=>each.type=="interpolation")
 
         if (!hasInterpolation) {
-            // Simple indented string without interpolation
-            let text = children[1].text
-            // Handle indented string escapes
-            text = text.replace(/\\./g, "\\$&") // preserve literal backslashes
-            text = text.replace(/(''')*''\$/g, "$1\\$")             // ''$ => \$
-            text = text.replace(/(''')*''\\\\([nrt"'])/g, "$1\\$2") // ''\n => \n
-            text = text.replace(/(''')*''\\\\([^nrt"'])/g, "$1$2")  // ''\b => b
-            text = text.replace(/'''/g, "''")                       // ''' => ''
-            text = text.replace(/`/g, "\\`")                        // escape backticks
+            // Collect text from all string_fragment and escape_sequence children.
+            let text = ""
+            for (const child of children) {
+                if (child.type === "string_fragment") {
+                    let frag = child.text
+                    frag = frag.replace(/\\/g, "\\\\") // preserve literal backslashes
+                    frag = frag.replace(/`/g, "\\`")
+                    frag = frag.replace(/\$/g, "\\$")  // escape $ for JS template literal
+                    text += frag
+                } else if (child.type === "escape_sequence") {
+                    const seq = child.text
+                    if (seq === "''\\\n" || seq === "''\\") {
+                        // ''\<newline> = literal newline
+                        text += "\\n"
+                    } else if (seq === "''$") {
+                        text += "\\$"
+                    } else if (seq === "'''") {
+                        text += "''"
+                    } else if (seq === "''\\n") {
+                        text += "\\n"
+                    } else if (seq === "''\\r") {
+                        text += "\\r"
+                    } else if (seq === "''\\t") {
+                        text += "\\t"
+                    } else {
+                        // Unknown escape — pass through
+                        text += seq
+                    }
+                }
+            }
             return `\`${text}\``
         }
 
