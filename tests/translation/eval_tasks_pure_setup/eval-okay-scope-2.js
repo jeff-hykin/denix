@@ -10,7 +10,20 @@ export default ((createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
     /*rec*/ createScope((nixScope) => {
       nixScope.x = 1n;
       defGetter(nixScope, "y", (nixScope) => nixScope.x);
-      return nixScope;
+      const __result = {};
+      Object.defineProperty(__result, "x", {
+        enumerable: true,
+        get() {
+          return nixScope.x;
+        },
+      });
+      Object.defineProperty(__result, "y", {
+        enumerable: true,
+        get() {
+          return nixScope.y;
+        },
+      });
+      return __result;
     })
   ))
 )))(2n)({ "x": 3n }))["y"];

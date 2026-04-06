@@ -11,6 +11,25 @@ export default /*let*/ createScope((nixScope) => {
     nixScope.a = 1n;
     defGetter(nixScope, "__overrides", (nixScope) => nixScope.overrides);
     defGetter(nixScope, "x", (nixScope) => nixScope.a);
-    return nixScope;
+    const __result = {};
+    Object.defineProperty(__result, "__overrides", {
+      enumerable: true,
+      get() {
+        return nixScope.__overrides;
+      },
+    });
+    Object.defineProperty(__result, "x", {
+      enumerable: true,
+      get() {
+        return nixScope.x;
+      },
+    });
+    Object.defineProperty(__result, "a", {
+      enumerable: true,
+      get() {
+        return nixScope.a;
+      },
+    });
+    return __result;
   }))["x"];
 });

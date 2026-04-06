@@ -1,11 +1,11 @@
-denix_eval: eval failed: RangeError: Maximum call stack size exceeded
-    at Object.get [as drv] (file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1)
-    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:1:1
-    at Object.get [as desired-context] (file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1)
-    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:1:1
-    at Object.get [as desired-context] (file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1)
-    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:1:1
-    at Object.get [as desired-context] (file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1)
+denix_eval: eval failed: Error: error: cannot coerce path to a string
+    at InterpolatedString.toString (file:///Users/jeffhykin/repos/denix/main/runtime.js:197:35)
+    at InterpolatedString.toString (file:///Users/jeffhykin/repos/denix/main/runtime.js:200:35)
+    at Object.unsafeDiscardStringContext (file:///Users/jeffhykin/repos/denix/main/runtime.js:2630:26)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:69:56
+    at Object.get [as reconstructed-path] (file:///Users/jeffhykin/repos/denix/main/runtime.js:137:34)
+    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:112:48)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:40:7
+    at Object.get [as desired-context] (file:///Users/jeffhykin/repos/denix/main/runtime.js:137:34)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:130:58
+    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:118:24)

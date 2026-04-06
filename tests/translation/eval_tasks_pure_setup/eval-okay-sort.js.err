@@ -1,8 +1,8 @@
 denix_eval: eval failed: TypeError: Cannot read properties of undefined (reading 'key')
     at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:23:40
     at file:///Users/jeffhykin/repos/denix/main/runtime.js:60:32
-    at file:///Users/jeffhykin/repos/denix/main/runtime.js:800:62
+    at file:///Users/jeffhykin/repos/denix/main/runtime.js:812:62
     at Array.sort (<anonymous>)
-    at file:///Users/jeffhykin/repos/denix/main/runtime.js:800:34
+    at file:///Users/jeffhykin/repos/denix/main/runtime.js:812:34
     at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:25:10
     at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:70:3

@@ -44,5 +44,60 @@ export default /*rec*/ createScope((nixScope) => {
         nixScope.x
       )),
   );
-  return nixScope;
+  const __result = {};
+  Object.defineProperty(__result, "x", {
+    enumerable: true,
+    get() {
+      return nixScope.x;
+    },
+  });
+  Object.defineProperty(__result, "y", {
+    enumerable: true,
+    get() {
+      return nixScope.y;
+    },
+  });
+  Object.defineProperty(__result, "a", {
+    enumerable: true,
+    get() {
+      return nixScope.a;
+    },
+  });
+  Object.defineProperty(__result, "b", {
+    enumerable: true,
+    get() {
+      return nixScope.b;
+    },
+  });
+  Object.defineProperty(__result, "c", {
+    enumerable: true,
+    get() {
+      return nixScope.c;
+    },
+  });
+  Object.defineProperty(__result, "f", {
+    enumerable: true,
+    get() {
+      return nixScope.f;
+    },
+  });
+  Object.defineProperty(__result, "id", {
+    enumerable: true,
+    get() {
+      return nixScope.id;
+    },
+  });
+  Object.defineProperty(__result, "at", {
+    enumerable: true,
+    get() {
+      return nixScope.at;
+    },
+  });
+  Object.defineProperty(__result, "ellipsis", {
+    enumerable: true,
+    get() {
+      return nixScope.ellipsis;
+    },
+  });
+  return __result;
 });

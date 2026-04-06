@@ -8,5 +8,18 @@ runtime.currentFile = import.meta.url.startsWith("file://")
 export default /*rec*/ createScope((nixScope) => {
   nixScope.y = nixScope.x["y"];
   nixScope.x = { "y": 1n };
-  return nixScope;
+  const __result = {};
+  Object.defineProperty(__result, "y", {
+    enumerable: true,
+    get() {
+      return nixScope.y;
+    },
+  });
+  Object.defineProperty(__result, "x", {
+    enumerable: true,
+    get() {
+      return nixScope.x;
+    },
+  });
+  return __result;
 })["y"];

@@ -26,6 +26,11 @@ export default /*let*/ createScope(nixScope=>{
     nixScope.d = nixScope.y["d"];
     .x["c"] = [];
     .__overrides["y"]["d"] = [];
-        return nixScope;
+        const __result = {};
+        Object.defineProperty(__result, "c", { enumerable: true, get() { return nixScope.c; } });
+        Object.defineProperty(__result, "d", { enumerable: true, get() { return nixScope.d; } });
+        Object.defineProperty(__result, "x", { enumerable: true, get() { return nixScope.x; } });
+        Object.defineProperty(__result, "__overrides", { enumerable: true, get() { return nixScope.__overrides; } });
+        return __result;
 }),nixScope.merged];
 })

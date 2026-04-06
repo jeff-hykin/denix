@@ -1,5 +1,5 @@
 denix_eval: eval failed: Error: error: cannot convert a function to JSON
-    at Object.toJSON (file:///Users/jeffhykin/repos/denix/main/runtime.js:484:31)
-    at Object.toJSON (file:///Users/jeffhykin/repos/denix/main/runtime.js:508:66)
-    at Object.toJSON (file:///Users/jeffhykin/repos/denix/main/runtime.js:508:66)
+    at Object.toJSON (file:///Users/jeffhykin/repos/denix/main/runtime.js:496:31)
+    at Object.toJSON (file:///Users/jeffhykin/repos/denix/main/runtime.js:520:66)
+    at Object.toJSON (file:///Users/jeffhykin/repos/denix/main/runtime.js:520:66)
     at async file:///Users/jeffhykin/repos/denix/run/denix_eval:136:60

@@ -12,6 +12,19 @@ export default nixScope.builtins["toXML"]([
   /*rec*/ createScope((nixScope) => {
     nixScope.x = "x";
     defGetter(nixScope, "y", (nixScope) => nixScope.x);
-    return nixScope;
+    const __result = {};
+    Object.defineProperty(__result, "x", {
+      enumerable: true,
+      get() {
+        return nixScope.x;
+      },
+    });
+    Object.defineProperty(__result, "y", {
+      enumerable: true,
+      get() {
+        return nixScope.y;
+      },
+    });
+    return __result;
   }),
 ]);

@@ -11,6 +11,19 @@ export default operators.equal([
   /*rec*/ createScope((nixScope) => {
     nixScope.x = 1n;
     defGetter(nixScope, "y", (nixScope) => nixScope.x);
-    return nixScope;
+    const __result = {};
+    Object.defineProperty(__result, "x", {
+      enumerable: true,
+      get() {
+        return nixScope.x;
+      },
+    });
+    Object.defineProperty(__result, "y", {
+      enumerable: true,
+      get() {
+        return nixScope.y;
+      },
+    });
+    return __result;
   }),
 ], [operators.add("foo", "bar"), { "x": 1n, "y": 1n }]);

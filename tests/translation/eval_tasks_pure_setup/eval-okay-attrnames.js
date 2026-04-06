@@ -23,7 +23,20 @@ export default ((_withAttrs) => {
             /*rec*/ createScope((nixScope) => {
               nixScope.x = "newx";
               defGetter(nixScope, "bar", (nixScope) => nixScope.x);
-              return nixScope;
+              const __result = {};
+              Object.defineProperty(__result, "x", {
+                enumerable: true,
+                get() {
+                  return nixScope.x;
+                },
+              });
+              Object.defineProperty(__result, "bar", {
+                enumerable: true,
+                get() {
+                  return nixScope.bar;
+                },
+              });
+              return __result;
             }),
           ),
       );

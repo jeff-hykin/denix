@@ -13,7 +13,20 @@ createScope((nixScope) => {
   obj.a = /*rec*/ createScope((nixScope) => {
     nixScope.d = 2n;
     defGetter(nixScope, "b", (nixScope) => operators.add(nixScope.c, 1n));
-    return nixScope;
+    const __result = {};
+    Object.defineProperty(__result, "b", {
+      enumerable: true,
+      get() {
+        return nixScope.b;
+      },
+    });
+    Object.defineProperty(__result, "d", {
+      enumerable: true,
+      get() {
+        return nixScope.d;
+      },
+    });
+    return __result;
   });
   if (obj["a"] === undefined) obj["a"] = {};
   obj["a"]["c"] = operators.add(nixScope.d, 3n);
