@@ -2799,11 +2799,15 @@ import { resolveIndirectReference } from "./registry.js"
             return {...value, ...other}
         },
         equal: (value, other)=>{
+            // Functions are never equal when compared directly in Nix
+            if (typeof value === "function" || typeof other === "function") return false
             if (value === other) return true
             if (typeof value !== typeof other) return false
             if (value instanceof Array && other instanceof Array) {
                 if (value.length !== other.length) return false
                 for (let i = 0; i < value.length; i++) {
+                    // Value identity optimization: same reference means equal (even for functions inside compounds)
+                    if (value[i] === other[i]) continue
                     if (!operators.equal(value[i], other[i])) return false
                 }
                 return true
@@ -2814,6 +2818,8 @@ import { resolveIndirectReference } from "./registry.js"
                 if (keys1.length !== keys2.length) return false
                 for (let i = 0; i < keys1.length; i++) {
                     if (keys1[i] !== keys2[i]) return false
+                    // Value identity optimization: same reference means equal (even for functions inside compounds)
+                    if (value[keys1[i]] === other[keys2[i]]) continue
                     if (!operators.equal(value[keys1[i]], other[keys2[i]])) return false
                 }
                 return true
