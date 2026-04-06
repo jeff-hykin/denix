@@ -1,5 +1,8 @@
-import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+import {
+  createRuntime,
+  InterpolatedString,
+} from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -14,7 +17,8 @@ export default /*let*/ createScope((nixScope) => {
     nixScope,
     "drv0",
     (nixScope) =>
-      nixScope.derivation(
+      apply(
+        nixScope.derivation,
         {
           "name": "fail",
           "builder": "/bin/false",
@@ -27,7 +31,8 @@ export default /*let*/ createScope((nixScope) => {
     nixScope,
     "drv1",
     (nixScope) =>
-      nixScope.derivation(
+      apply(
+        nixScope.derivation,
         {
           "name": "fail-2",
           "builder": "/bin/false",
@@ -36,5 +41,8 @@ export default /*let*/ createScope((nixScope) => {
         },
       ),
   );
-  return nixScope.builtins["addDrvOutputDependencies"](nixScope["combo-path"]);
+  return apply(
+    nixScope.builtins["addDrvOutputDependencies"],
+    nixScope["combo-path"],
+  );
 });

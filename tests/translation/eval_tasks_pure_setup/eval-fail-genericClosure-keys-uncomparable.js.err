@@ -1,4 +1,5 @@
 denix_eval: eval failed: Error: error: cannot coerce a set to a string
-    at Object.toString (file:///Users/jeffhykin/repos/denix/main/runtime.js:448:35)
-    at Object.genericClosure (file:///Users/jeffhykin/repos/denix/main/runtime.js:2676:42)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:8:51
+    at Object.toString (file:///Users/jeffhykin/repos/denix/main/runtime.js:463:35)
+    at genericClosure (file:///Users/jeffhykin/repos/denix/main/runtime.js:2706:42)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:8:16

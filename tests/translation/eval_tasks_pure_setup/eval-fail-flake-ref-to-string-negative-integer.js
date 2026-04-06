@@ -1,5 +1,5 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -7,8 +7,10 @@ runtime.currentFile = import.meta.url.startsWith("file://")
 
 export default /*let*/ createScope((nixScope) => {
   defGetter(nixScope, "n", (nixScope) => -1n);
-  return nixScope.builtins["seq"](nixScope.n)(
-    nixScope.builtins["flakeRefToString"](
+  return apply(
+    apply(nixScope.builtins["seq"], nixScope.n),
+    apply(
+      nixScope.builtins["flakeRefToString"],
       {
         "type": "github",
         "owner": "NixOS",

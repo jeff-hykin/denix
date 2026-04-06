@@ -3,7 +3,7 @@ import {
   InterpolatedString,
   Path,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -24,7 +24,8 @@ export default /*let*/ createScope((nixScope) => {
     nixScope,
     "drv",
     (nixScope) =>
-      nixScope.derivation(
+      apply(
+        nixScope.derivation,
         {
           "name": "fail",
           "builder": "/bin/false",
@@ -41,7 +42,8 @@ export default /*let*/ createScope((nixScope) => {
         const obj = {};
         {
           const __k = new InterpolatedString(["", ""], [
-            () => (nixScope.builtins["unsafeDiscardStringContext"](
+            () => (apply(
+              nixScope.builtins["unsafeDiscardStringContext"],
               nixScope.path,
             )),
           ]);
@@ -49,7 +51,8 @@ export default /*let*/ createScope((nixScope) => {
         }
         {
           const __k = new InterpolatedString(["", ""], [
-            () => (nixScope.builtins["unsafeDiscardStringContext"](
+            () => (apply(
+              nixScope.builtins["unsafeDiscardStringContext"],
               nixScope.drv["drvPath"],
             )),
           ]);
@@ -63,15 +66,23 @@ export default /*let*/ createScope((nixScope) => {
   defGetter(
     nixScope,
     "legit-context",
-    (nixScope) => nixScope.builtins["getContext"](nixScope["combo-path"]),
+    (nixScope) =>
+      apply(nixScope.builtins["getContext"], nixScope["combo-path"]),
   );
   defGetter(
     nixScope,
     "reconstructed-path",
     (nixScope) =>
-      nixScope.builtins["appendContext"](
-        nixScope.builtins["unsafeDiscardStringContext"](nixScope["combo-path"]),
-      )(nixScope["desired-context"]),
+      apply(
+        apply(
+          nixScope.builtins["appendContext"],
+          apply(
+            nixScope.builtins["unsafeDiscardStringContext"],
+            nixScope["combo-path"],
+          ),
+        ),
+        nixScope["desired-context"],
+      ),
   );
   defGetter(
     nixScope,
@@ -80,9 +91,16 @@ export default /*let*/ createScope((nixScope) => {
       createFunc(/*arg:*/ "str", null, {}, (nixScope) => (
         operators.equal(
           nixScope.str,
-          nixScope.builtins["appendContext"](
-            nixScope.builtins["unsafeDiscardStringContext"](nixScope.str),
-          )(nixScope.builtins["getContext"](nixScope.str)),
+          apply(
+            apply(
+              nixScope.builtins["appendContext"],
+              apply(
+                nixScope.builtins["unsafeDiscardStringContext"],
+                nixScope.str,
+              ),
+            ),
+            apply(nixScope.builtins["getContext"], nixScope.str),
+          ),
         )
       )),
   );
@@ -93,8 +111,12 @@ export default /*let*/ createScope((nixScope) => {
       createFunc(/*arg:*/ "str", null, {}, (nixScope) => (
         operators.equal(
           nixScope.str,
-          nixScope.builtins["addDrvOutputDependencies"](
-            nixScope.builtins["unsafeDiscardOutputDependency"](nixScope.str),
+          apply(
+            nixScope.builtins["addDrvOutputDependencies"],
+            apply(
+              nixScope.builtins["unsafeDiscardOutputDependency"],
+              nixScope.str,
+            ),
           ),
         )
       )),
@@ -105,9 +127,10 @@ export default /*let*/ createScope((nixScope) => {
     (nixScope) =>
       createFunc(/*arg:*/ "str", null, {}, (nixScope) => (
         operators.equal(
-          nixScope.builtins["addDrvOutputDependencies"](nixScope.str),
-          nixScope.builtins["addDrvOutputDependencies"](
-            nixScope.builtins["addDrvOutputDependencies"](nixScope.str),
+          apply(nixScope.builtins["addDrvOutputDependencies"], nixScope.str),
+          apply(
+            nixScope.builtins["addDrvOutputDependencies"],
+            apply(nixScope.builtins["addDrvOutputDependencies"], nixScope.str),
           ),
         )
       )),
@@ -123,9 +146,9 @@ export default /*let*/ createScope((nixScope) => {
         (
           nixScope,
         ) => [
-          nixScope.etaRule(nixScope.str),
-          nixScope.almostEtaRule(nixScope.str),
-          nixScope.addDrvOutputDependencies_idempotent(nixScope.str),
+          apply(nixScope.etaRule, nixScope.str),
+          apply(nixScope.almostEtaRule, nixScope.str),
+          apply(nixScope.addDrvOutputDependencies_idempotent, nixScope.str),
         ],
       ),
   );
@@ -133,13 +156,17 @@ export default /*let*/ createScope((nixScope) => {
     [
       operators.equal(nixScope["legit-context"], nixScope["desired-context"]),
       operators.equal(nixScope["reconstructed-path"], nixScope["combo-path"]),
-      nixScope.etaRule("foo"),
-      nixScope.etaRule(nixScope.drv["foo"]["outPath"]),
+      apply(nixScope.etaRule, "foo"),
+      apply(nixScope.etaRule, nixScope.drv["foo"]["outPath"]),
     ],
-    nixScope.builtins["concatMap"](nixScope.rules)([
+    apply(apply(nixScope.builtins["concatMap"], nixScope.rules), [
       nixScope.drv["drvPath"],
-      nixScope.builtins["addDrvOutputDependencies"](nixScope.drv["drvPath"]),
-      nixScope.builtins["unsafeDiscardOutputDependency"](
+      apply(
+        nixScope.builtins["addDrvOutputDependencies"],
+        nixScope.drv["drvPath"],
+      ),
+      apply(
+        nixScope.builtins["unsafeDiscardOutputDependency"],
         nixScope.drv["drvPath"],
       ),
     ]),

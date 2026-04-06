@@ -2,7 +2,7 @@ import {
   createRuntime,
   Path,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -25,7 +25,7 @@ export default ((_cond) => {
           nixScope,
         ) => (operators.ifThenElse(
           operators.hasAttr(nixScope.builtins, "dirOf"),
-          () => (nixScope.builtins["dirOf"](new Path(["/foo/bar"], []))),
+          () => (apply(nixScope.builtins["dirOf"], new Path(["/foo/bar"], []))),
           () => (""),
         )),
       );
@@ -36,7 +36,7 @@ export default ((_cond) => {
           nixScope,
         ) => (operators.ifThenElse(
           operators.hasAttr(nixScope.builtins, "fnord"),
-          () => (nixScope.builtins["fnord"]("foo")),
+          () => (apply(nixScope.builtins["fnord"], "foo")),
           () => (""),
         )),
       );

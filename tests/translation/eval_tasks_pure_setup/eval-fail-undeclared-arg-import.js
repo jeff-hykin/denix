@@ -2,12 +2,19 @@ import {
   createRuntime,
   Path,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
   : new URL(import.meta.url).pathname;
 
-export default nixScope.import(
-  new Path(["../source_code/nix_lang/non-eval-trivial-lambda-formals.nix"], []),
-)({ "a": "a", "b": "b" });
+export default apply(
+  apply(
+    nixScope.import,
+    new Path(
+      ["../source_code/nix_lang/non-eval-trivial-lambda-formals.nix"],
+      [],
+    ),
+  ),
+  { "a": "a", "b": "b" },
+);

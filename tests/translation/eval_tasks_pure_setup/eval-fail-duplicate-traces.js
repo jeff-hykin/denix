@@ -1,5 +1,5 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -16,10 +16,13 @@ export default //
       createFunc(/*arg:*/ "n", null, {}, (nixScope) => (
         operators.ifThenElse(
           operators.greaterThan(nixScope.n, 0n),
-          () => (nixScope.throwAfter(operators.subtract(nixScope.n, 1n))),
-          () => (nixScope.throw("Uh oh!")),
+          () => (apply(
+            nixScope.throwAfter,
+            operators.subtract(nixScope.n, 1n),
+          )),
+          () => (apply(nixScope.throw, "Uh oh!")),
         )
       )),
   );
-  return nixScope.throwAfter(2n);
+  return apply(nixScope.throwAfter, 2n);
 });

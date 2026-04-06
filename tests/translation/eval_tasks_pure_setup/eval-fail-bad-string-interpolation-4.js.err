@@ -1,4 +1,11 @@
-denix_eval: eval failed: ReferenceError: InterpolatedString is not defined
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:48:3
-    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:115:24)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:8:24
+denix_eval: print failed: Error: Called builtins.typeOf, which only works with valid nix values, but instead got type undefined, with a value of: undefined 
+    at Object.typeOf (file:///Users/jeffhykin/repos/denix/main/runtime.js:385:31)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3025:105)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:19:18
+    at file:///Users/jeffhykin/repos/denix/main/runtime.js:60:32
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:36:7
+    at Object.get [as has] (file:///Users/jeffhykin/repos/denix/main/runtime.js:137:34)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:59:58
+    at Object.get [as pkgs] (file:///Users/jeffhykin/repos/denix/main/runtime.js:137:34)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:61:61

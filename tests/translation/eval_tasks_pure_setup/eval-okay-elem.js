@@ -2,7 +2,7 @@ import {
   createRuntime,
   Path,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -13,14 +13,18 @@ export default ((_withAttrs) => {
   runtime.scopeStack.push(nixScope);
   try {
     return /*let*/ createScope((nixScope) => {
-      defGetter(nixScope, "xs", (nixScope) => nixScope.range(10n)(40n));
+      defGetter(
+        nixScope,
+        "xs",
+        (nixScope) => apply(apply(nixScope.range, 10n), 40n),
+      );
       return [
-        nixScope.builtins["elem"](23n)(nixScope.xs),
-        nixScope.builtins["elem"](42n)(nixScope.xs),
-        nixScope.builtins["elemAt"](nixScope.xs)(20n),
+        apply(apply(nixScope.builtins["elem"], 23n), nixScope.xs),
+        apply(apply(nixScope.builtins["elem"], 42n), nixScope.xs),
+        apply(apply(nixScope.builtins["elemAt"], nixScope.xs), 20n),
       ];
     });
   } finally {
     runtime.scopeStack.pop();
   }
-})(nixScope.import(new Path(["../source_code/nix_lang/lib.nix"], [])));
+})(apply(nixScope.import, new Path(["../source_code/nix_lang/lib.nix"], [])));

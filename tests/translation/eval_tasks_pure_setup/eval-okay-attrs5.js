@@ -2,7 +2,7 @@ import {
   createRuntime,
   Path,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -68,10 +68,14 @@ export default ((_withAttrs) => {
           ["bla"],
           operators.selectOrDefault(null, ["foo"], "xyzzy"),
         ),
-        nixScope.fold(nixScope.or)([])([true, false, false]),
+        apply(apply(apply(nixScope.fold, nixScope.or), []), [
+          true,
+          false,
+          false,
+        ]),
       ];
     });
   } finally {
     runtime.scopeStack.pop();
   }
-})(nixScope.import(new Path(["../source_code/nix_lang/lib.nix"], [])));
+})(apply(nixScope.import, new Path(["../source_code/nix_lang/lib.nix"], [])));

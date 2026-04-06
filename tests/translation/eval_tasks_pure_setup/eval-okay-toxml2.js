@@ -1,12 +1,12 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
   : new URL(import.meta.url).pathname;
 const operators = runtime.operators;
 
-export default nixScope.builtins["toXML"]([
+export default apply(nixScope.builtins["toXML"], [
   operators.add("a", "b"),
   10n,
   /*rec*/ createScope((nixScope) => {

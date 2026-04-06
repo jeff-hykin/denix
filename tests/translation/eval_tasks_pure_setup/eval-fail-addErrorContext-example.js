@@ -1,5 +1,8 @@
-import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+import {
+  createRuntime,
+  InterpolatedString,
+} from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -14,17 +17,21 @@ export default /*let*/ createScope((nixScope) => {
       createFunc(/*arg:*/ "n", null, {}, (nixScope) => (
         operators.ifThenElse(
           operators.equal(nixScope.n, 0n),
-          () => (nixScope.throw("kaboom")),
-          () => (nixScope.builtins["addErrorContext"](
-            new InterpolatedString(["while counting down; n = ", ""], [
-              () => (nixScope.toString(nixScope.n)),
-            ]),
-          )(operators.add(
-            "x",
-            nixScope.countDown(operators.subtract(nixScope.n, 1n)),
-          ))),
+          () => (apply(nixScope.throw, "kaboom")),
+          () => (apply(
+            apply(
+              nixScope.builtins["addErrorContext"],
+              new InterpolatedString(["while counting down; n = ", ""], [
+                () => (apply(nixScope.toString, nixScope.n)),
+              ]),
+            ),
+            operators.add(
+              "x",
+              apply(nixScope.countDown, operators.subtract(nixScope.n, 1n)),
+            ),
+          )),
         )
       )),
   );
-  return nixScope.countDown(10n);
+  return apply(nixScope.countDown, 10n);
 });

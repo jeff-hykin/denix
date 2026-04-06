@@ -2,5 +2,6 @@
             throw new NixError(`error: value is a ${builtins.typeOf(value)} while a string was expected`)
 [0m[31m                  ^[0m
     at [0m[1m[3mrequireString[0m ([0m[36mfile:///Users/jeffhykin/repos/denix/main/runtime.js[0m:[0m[33m236[0m:[0m[33m19[0m)
-    at [0m[1m[3mObject.path[0m ([0m[36mfile:///Users/jeffhykin/repos/denix/main/runtime.js[0m:[0m[33m1882[0m:[0m[33m36[0m)
-    at [0m[36mfile:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js[0m:[0m[33m13[0m:[0m[33m28[0m
+    at [0m[1m[3mpath[0m ([0m[36mfile:///Users/jeffhykin/repos/denix/main/runtime.js[0m:[0m[33m1882[0m:[0m[33m36[0m)
+    at [0m[1m[3mapply[0m ([0m[36mfile:///Users/jeffhykin/repos/denix/main/runtime.js[0m:[0m[33m3021[0m:[0m[33m50[0m)
+    at [0m[36mfile:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js[0m:[0m[33m13[0m:[0m[33m3[0m

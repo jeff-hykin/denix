@@ -2,7 +2,7 @@ import {
   createRuntime,
   InterpolatedString,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -15,24 +15,29 @@ export default ((_withAttrs) => {
   try {
     return /*let*/ createScope((nixScope) => {
       nixScope.s = new InterpolatedString(["", ""], [
-        () => (nixScope.builtins["derivation"](
+        () => (apply(
+          nixScope.builtins["derivation"],
           { "name": "test", "builder": "/bin/sh", "system": "x86_64-linux" },
         )),
       ]);
       return (operators.ifThenElse(
         operators.equal(
-          nixScope.getContext(nixScope.s),
-          nixScope.getContext(
+          apply(nixScope.getContext, nixScope.s),
+          apply(
+            nixScope.getContext,
             new InterpolatedString(["", ""], [
               () => (operators.add(
-                nixScope.substring(0n)(0n)(nixScope.s),
-                nixScope.unsafeDiscardStringContext(nixScope.s),
+                apply(apply(apply(nixScope.substring, 0n), 0n), nixScope.s),
+                apply(nixScope.unsafeDiscardStringContext, nixScope.s),
               )),
             ]),
           ),
         ),
         () => ("okay"),
-        () => (nixScope.throw("empty substring should preserve context")),
+        () => (apply(
+          nixScope.throw,
+          "empty substring should preserve context",
+        )),
       ));
     });
   } finally {

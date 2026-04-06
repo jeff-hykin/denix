@@ -4,6 +4,6 @@ Download attempt 3 failed, retrying in 4000ms...
 denix_eval: eval failed: Error: Failed to download file://eval-fail-fetchTree-negative.nix after 4 attempts: Could not convert URL to file path.
   URL: file://eval-fail-fetchtree-negative.nix/
     at downloadWithRetry (file:///Users/jeffhykin/repos/denix/main/fetcher.js:75:11)
-    at async Object.fetchurl (file:///Users/jeffhykin/repos/denix/main/runtime.js:953:17)
-    at async Object.fetchTree (file:///Users/jeffhykin/repos/denix/main/runtime.js:1513:32)
+    at async Object.fetchurl (file:///Users/jeffhykin/repos/denix/main/runtime.js:971:17)
+    at async fetchTree (file:///Users/jeffhykin/repos/denix/main/runtime.js:1531:32)
     at async file:///Users/jeffhykin/repos/denix/run/denix_eval:136:60

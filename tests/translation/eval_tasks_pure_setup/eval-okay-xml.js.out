@@ -1,4 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<expr>
-  <attrs><attr name="a"><string value="foo" /></attr><attr name="at"><function /></attr><attr name="b"><string value="bar" /></attr><attr name="c"><string value="foobar" /></attr><attr name="ellipsis"><function /></attr><attr name="f"><function /></attr><attr name="id"><function /></attr><attr name="x"><int value="123" /></attr><attr name="y"><float value="567.89" /></attr></attrs>
-</expr>

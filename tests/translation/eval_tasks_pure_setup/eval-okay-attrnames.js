@@ -2,7 +2,7 @@ import {
   createRuntime,
   Path,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -43,15 +43,24 @@ export default ((_withAttrs) => {
       defGetter(
         nixScope,
         "names",
-        (nixScope) => nixScope.builtins["attrNames"](nixScope.attrs),
+        (nixScope) => apply(nixScope.builtins["attrNames"], nixScope.attrs),
       );
       defGetter(
         nixScope,
         "values",
         (nixScope) =>
-          nixScope.map(createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
-            nixScope.builtins["getAttr"](nixScope.name)(nixScope.attrs)
-          )))(nixScope.names),
+          apply(
+            apply(
+              nixScope.map,
+              createFunc(/*arg:*/ "name", null, {}, (nixScope) => (
+                apply(
+                  apply(nixScope.builtins["getAttr"], nixScope.name),
+                  nixScope.attrs,
+                )
+              )),
+            ),
+            nixScope.names,
+          ),
       );
       return ((_cond) => {
         if (!_cond) {
@@ -59,15 +68,15 @@ export default ((_withAttrs) => {
             "assertion failed: " + "values == builtins.attrValues attrs",
           );
         }
-        return nixScope.concat(nixScope.values);
+        return apply(nixScope.concat, nixScope.values);
       })(
         operators.equal(
           nixScope.values,
-          nixScope.builtins["attrValues"](nixScope.attrs),
+          apply(nixScope.builtins["attrValues"], nixScope.attrs),
         ),
       );
     });
   } finally {
     runtime.scopeStack.pop();
   }
-})(nixScope.import(new Path(["../source_code/nix_lang/lib.nix"], [])));
+})(apply(nixScope.import, new Path(["../source_code/nix_lang/lib.nix"], [])));

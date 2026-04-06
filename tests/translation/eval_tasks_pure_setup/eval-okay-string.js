@@ -3,7 +3,7 @@ import {
   InterpolatedString,
   Path,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -20,14 +20,16 @@ export default operators.add(
               operators.add(
                 operators.add(
                   operators.add("foo", "bar"),
-                  nixScope.toString(
+                  apply(
+                    nixScope.toString,
                     operators.add(
                       new Path(["/a/b"], []),
                       new Path(["/c/d"], []),
                     ),
                   ),
                 ),
-                nixScope.toString(
+                apply(
+                  nixScope.toString,
                   operators.add(
                     operators.add(new Path(["/foo/bar"], []), "/../xyzzy/."),
                     "/foo.txt",
@@ -36,7 +38,7 @@ export default operators.add(
               ),
               operators.add(
                 "/../foo",
-                nixScope.toString(new Path(["/x/y"], [])),
+                apply(nixScope.toString, new Path(["/x/y"], [])),
               ),
             ),
             'escape: "quote" \n \\',

@@ -2,7 +2,7 @@ import {
   createRuntime,
   Path,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -27,7 +27,8 @@ export default /*let*/ createScope((nixScope) => {
   defGetter(
     nixScope,
     "hashesBase16",
-    (nixScope) => nixScope.import(new Path(["./eval-okay-hashstring.exp"], [])),
+    (nixScope) =>
+      apply(nixScope.import, new Path(["./eval-okay-hashstring.exp"], [])),
   );
   defGetter(
     nixScope,
@@ -39,15 +40,18 @@ export default /*let*/ createScope((nixScope) => {
             operators.equal(nixScope.fsts, []),
             () => [],
             () => (operators.listConcat(
-              [
-                nixScope.f(nixScope.builtins["head"](nixScope.fsts))(
-                  nixScope.builtins["head"](nixScope.snds),
+              [apply(
+                apply(
+                  nixScope.f,
+                  apply(nixScope.builtins["head"], nixScope.fsts),
                 ),
-              ],
-              nixScope.map2(nixScope.f)(
+                apply(nixScope.builtins["head"], nixScope.snds),
+              )],
+              apply(
+                apply(nixScope.map2, nixScope.f),
                 {
-                  "fsts": nixScope.builtins["tail"](nixScope.fsts),
-                  "snds": nixScope.builtins["tail"](nixScope.snds),
+                  "fsts": apply(nixScope.builtins["tail"], nixScope.fsts),
+                  "snds": apply(nixScope.builtins["tail"], nixScope.snds),
                 },
               ),
             )),
@@ -62,7 +66,8 @@ export default /*let*/ createScope((nixScope) => {
       createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
         createFunc(/*arg:*/ "fsts", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "snds", null, {}, (nixScope) => (
-            nixScope.map2(nixScope.f)(
+            apply(
+              apply(nixScope.map2, nixScope.f),
               { "fsts": nixScope.fsts, "snds": nixScope.snds },
             )
           ))
@@ -75,71 +80,111 @@ export default /*let*/ createScope((nixScope) => {
     (nixScope) =>
       createFunc(/*arg:*/ "hashes", null, {}, (nixScope) => (
         {
-          "hashesBase16": nixScope["map2'"](
-            createFunc(/*arg:*/ "hashAlgo", null, {}, (nixScope) => (
-              createFunc(/*arg:*/ "hash", null, {}, (nixScope) => (
-                nixScope.builtins["convertHash"](
-                  {
-                    "hash": nixScope.hash,
-                    "hashAlgo": nixScope.hashAlgo,
-                    "toHashFormat": "base16",
-                  },
-                )
-              ))
-            )),
-          )(nixScope.hashAlgos)(nixScope.hashes),
-          "hashesNix32": nixScope["map2'"](
-            createFunc(/*arg:*/ "hashAlgo", null, {}, (nixScope) => (
-              createFunc(/*arg:*/ "hash", null, {}, (nixScope) => (
-                nixScope.builtins["convertHash"](
-                  {
-                    "hash": nixScope.hash,
-                    "hashAlgo": nixScope.hashAlgo,
-                    "toHashFormat": "nix32",
-                  },
-                )
-              ))
-            )),
-          )(nixScope.hashAlgos)(nixScope.hashes),
-          "hashesBase32": nixScope["map2'"](
-            createFunc(/*arg:*/ "hashAlgo", null, {}, (nixScope) => (
-              createFunc(/*arg:*/ "hash", null, {}, (nixScope) => (
-                nixScope.builtins["convertHash"](
-                  {
-                    "hash": nixScope.hash,
-                    "hashAlgo": nixScope.hashAlgo,
-                    "toHashFormat": "base32",
-                  },
-                )
-              ))
-            )),
-          )(nixScope.hashAlgos)(nixScope.hashes),
-          "hashesBase64": nixScope["map2'"](
-            createFunc(/*arg:*/ "hashAlgo", null, {}, (nixScope) => (
-              createFunc(/*arg:*/ "hash", null, {}, (nixScope) => (
-                nixScope.builtins["convertHash"](
-                  {
-                    "hash": nixScope.hash,
-                    "hashAlgo": nixScope.hashAlgo,
-                    "toHashFormat": "base64",
-                  },
-                )
-              ))
-            )),
-          )(nixScope.hashAlgos)(nixScope.hashes),
-          "hashesSRI": nixScope["map2'"](
-            createFunc(/*arg:*/ "hashAlgo", null, {}, (nixScope) => (
-              createFunc(/*arg:*/ "hash", null, {}, (nixScope) => (
-                nixScope.builtins["convertHash"](
-                  {
-                    "hash": nixScope.hash,
-                    "hashAlgo": nixScope.hashAlgo,
-                    "toHashFormat": "sri",
-                  },
-                )
-              ))
-            )),
-          )(nixScope.hashAlgos)(nixScope.hashes),
+          "hashesBase16": apply(
+            apply(
+              apply(
+                nixScope["map2'"],
+                createFunc(/*arg:*/ "hashAlgo", null, {}, (nixScope) => (
+                  createFunc(/*arg:*/ "hash", null, {}, (nixScope) => (
+                    apply(
+                      nixScope.builtins["convertHash"],
+                      {
+                        "hash": nixScope.hash,
+                        "hashAlgo": nixScope.hashAlgo,
+                        "toHashFormat": "base16",
+                      },
+                    )
+                  ))
+                )),
+              ),
+              nixScope.hashAlgos,
+            ),
+            nixScope.hashes,
+          ),
+          "hashesNix32": apply(
+            apply(
+              apply(
+                nixScope["map2'"],
+                createFunc(/*arg:*/ "hashAlgo", null, {}, (nixScope) => (
+                  createFunc(/*arg:*/ "hash", null, {}, (nixScope) => (
+                    apply(
+                      nixScope.builtins["convertHash"],
+                      {
+                        "hash": nixScope.hash,
+                        "hashAlgo": nixScope.hashAlgo,
+                        "toHashFormat": "nix32",
+                      },
+                    )
+                  ))
+                )),
+              ),
+              nixScope.hashAlgos,
+            ),
+            nixScope.hashes,
+          ),
+          "hashesBase32": apply(
+            apply(
+              apply(
+                nixScope["map2'"],
+                createFunc(/*arg:*/ "hashAlgo", null, {}, (nixScope) => (
+                  createFunc(/*arg:*/ "hash", null, {}, (nixScope) => (
+                    apply(
+                      nixScope.builtins["convertHash"],
+                      {
+                        "hash": nixScope.hash,
+                        "hashAlgo": nixScope.hashAlgo,
+                        "toHashFormat": "base32",
+                      },
+                    )
+                  ))
+                )),
+              ),
+              nixScope.hashAlgos,
+            ),
+            nixScope.hashes,
+          ),
+          "hashesBase64": apply(
+            apply(
+              apply(
+                nixScope["map2'"],
+                createFunc(/*arg:*/ "hashAlgo", null, {}, (nixScope) => (
+                  createFunc(/*arg:*/ "hash", null, {}, (nixScope) => (
+                    apply(
+                      nixScope.builtins["convertHash"],
+                      {
+                        "hash": nixScope.hash,
+                        "hashAlgo": nixScope.hashAlgo,
+                        "toHashFormat": "base64",
+                      },
+                    )
+                  ))
+                )),
+              ),
+              nixScope.hashAlgos,
+            ),
+            nixScope.hashes,
+          ),
+          "hashesSRI": apply(
+            apply(
+              apply(
+                nixScope["map2'"],
+                createFunc(/*arg:*/ "hashAlgo", null, {}, (nixScope) => (
+                  createFunc(/*arg:*/ "hash", null, {}, (nixScope) => (
+                    apply(
+                      nixScope.builtins["convertHash"],
+                      {
+                        "hash": nixScope.hash,
+                        "hashAlgo": nixScope.hashAlgo,
+                        "toHashFormat": "sri",
+                      },
+                    )
+                  ))
+                )),
+              ),
+              nixScope.hashAlgos,
+            ),
+            nixScope.hashes,
+          ),
         }
       )),
   );
@@ -149,88 +194,128 @@ export default /*let*/ createScope((nixScope) => {
     (nixScope) =>
       createFunc(/*arg:*/ "hashes", null, {}, (nixScope) => (
         {
-          "hashesBase16": nixScope["map2'"](
-            createFunc(/*arg:*/ "hashAlgo", null, {}, (nixScope) => (
-              createFunc(/*arg:*/ "hashBody", null, {}, (nixScope) => (
-                nixScope.builtins["convertHash"](
-                  {
-                    "hash": operators.add(
-                      operators.add(nixScope.hashAlgo, ":"),
-                      nixScope.hashBody,
-                    ),
-                    "toHashFormat": "base16",
-                  },
-                )
-              ))
-            )),
-          )(nixScope.hashAlgos)(nixScope.hashes),
-          "hashesNix32": nixScope["map2'"](
-            createFunc(/*arg:*/ "hashAlgo", null, {}, (nixScope) => (
-              createFunc(/*arg:*/ "hashBody", null, {}, (nixScope) => (
-                nixScope.builtins["convertHash"](
-                  {
-                    "hash": operators.add(
-                      operators.add(nixScope.hashAlgo, ":"),
-                      nixScope.hashBody,
-                    ),
-                    "toHashFormat": "nix32",
-                  },
-                )
-              ))
-            )),
-          )(nixScope.hashAlgos)(nixScope.hashes),
-          "hashesBase32": nixScope["map2'"](
-            createFunc(/*arg:*/ "hashAlgo", null, {}, (nixScope) => (
-              createFunc(/*arg:*/ "hashBody", null, {}, (nixScope) => (
-                nixScope.builtins["convertHash"](
-                  {
-                    "hash": operators.add(
-                      operators.add(nixScope.hashAlgo, ":"),
-                      nixScope.hashBody,
-                    ),
-                    "toHashFormat": "base32",
-                  },
-                )
-              ))
-            )),
-          )(nixScope.hashAlgos)(nixScope.hashes),
-          "hashesBase64": nixScope["map2'"](
-            createFunc(/*arg:*/ "hashAlgo", null, {}, (nixScope) => (
-              createFunc(/*arg:*/ "hashBody", null, {}, (nixScope) => (
-                nixScope.builtins["convertHash"](
-                  {
-                    "hash": operators.add(
-                      operators.add(nixScope.hashAlgo, ":"),
-                      nixScope.hashBody,
-                    ),
-                    "toHashFormat": "base64",
-                  },
-                )
-              ))
-            )),
-          )(nixScope.hashAlgos)(nixScope.hashes),
-          "hashesSRI": nixScope["map2'"](
-            createFunc(/*arg:*/ "hashAlgo", null, {}, (nixScope) => (
-              createFunc(/*arg:*/ "hashBody", null, {}, (nixScope) => (
-                nixScope.builtins["convertHash"](
-                  {
-                    "hash": operators.add(
-                      operators.add(nixScope.hashAlgo, ":"),
-                      nixScope.hashBody,
-                    ),
-                    "toHashFormat": "sri",
-                  },
-                )
-              ))
-            )),
-          )(nixScope.hashAlgos)(nixScope.hashes),
+          "hashesBase16": apply(
+            apply(
+              apply(
+                nixScope["map2'"],
+                createFunc(/*arg:*/ "hashAlgo", null, {}, (nixScope) => (
+                  createFunc(/*arg:*/ "hashBody", null, {}, (nixScope) => (
+                    apply(
+                      nixScope.builtins["convertHash"],
+                      {
+                        "hash": operators.add(
+                          operators.add(nixScope.hashAlgo, ":"),
+                          nixScope.hashBody,
+                        ),
+                        "toHashFormat": "base16",
+                      },
+                    )
+                  ))
+                )),
+              ),
+              nixScope.hashAlgos,
+            ),
+            nixScope.hashes,
+          ),
+          "hashesNix32": apply(
+            apply(
+              apply(
+                nixScope["map2'"],
+                createFunc(/*arg:*/ "hashAlgo", null, {}, (nixScope) => (
+                  createFunc(/*arg:*/ "hashBody", null, {}, (nixScope) => (
+                    apply(
+                      nixScope.builtins["convertHash"],
+                      {
+                        "hash": operators.add(
+                          operators.add(nixScope.hashAlgo, ":"),
+                          nixScope.hashBody,
+                        ),
+                        "toHashFormat": "nix32",
+                      },
+                    )
+                  ))
+                )),
+              ),
+              nixScope.hashAlgos,
+            ),
+            nixScope.hashes,
+          ),
+          "hashesBase32": apply(
+            apply(
+              apply(
+                nixScope["map2'"],
+                createFunc(/*arg:*/ "hashAlgo", null, {}, (nixScope) => (
+                  createFunc(/*arg:*/ "hashBody", null, {}, (nixScope) => (
+                    apply(
+                      nixScope.builtins["convertHash"],
+                      {
+                        "hash": operators.add(
+                          operators.add(nixScope.hashAlgo, ":"),
+                          nixScope.hashBody,
+                        ),
+                        "toHashFormat": "base32",
+                      },
+                    )
+                  ))
+                )),
+              ),
+              nixScope.hashAlgos,
+            ),
+            nixScope.hashes,
+          ),
+          "hashesBase64": apply(
+            apply(
+              apply(
+                nixScope["map2'"],
+                createFunc(/*arg:*/ "hashAlgo", null, {}, (nixScope) => (
+                  createFunc(/*arg:*/ "hashBody", null, {}, (nixScope) => (
+                    apply(
+                      nixScope.builtins["convertHash"],
+                      {
+                        "hash": operators.add(
+                          operators.add(nixScope.hashAlgo, ":"),
+                          nixScope.hashBody,
+                        ),
+                        "toHashFormat": "base64",
+                      },
+                    )
+                  ))
+                )),
+              ),
+              nixScope.hashAlgos,
+            ),
+            nixScope.hashes,
+          ),
+          "hashesSRI": apply(
+            apply(
+              apply(
+                nixScope["map2'"],
+                createFunc(/*arg:*/ "hashAlgo", null, {}, (nixScope) => (
+                  createFunc(/*arg:*/ "hashBody", null, {}, (nixScope) => (
+                    apply(
+                      nixScope.builtins["convertHash"],
+                      {
+                        "hash": operators.add(
+                          operators.add(nixScope.hashAlgo, ":"),
+                          nixScope.hashBody,
+                        ),
+                        "toHashFormat": "sri",
+                      },
+                    )
+                  ))
+                )),
+              ),
+              nixScope.hashAlgos,
+            ),
+            nixScope.hashes,
+          ),
         }
       )),
   );
   defGetter(
     nixScope,
     "outputHashes",
-    (nixScope) => nixScope.getOutputHashes(nixScope.hashesBase16),
+    (nixScope) => apply(nixScope.getOutputHashes, nixScope.hashesBase16),
   );
   return ((_cond) => {
     if (!_cond) {
@@ -268,53 +353,68 @@ export default /*let*/ createScope((nixScope) => {
             }
             return nixScope.outputHashes;
           })(
-            nixScope.builtins["all"](
+            apply(
+              apply(
+                nixScope.builtins["all"],
+                createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+                  operators.equal(
+                    apply(nixScope.getOutputHashesColon, nixScope.x),
+                    nixScope.outputHashes,
+                  )
+                )),
+              ),
+              ((_withAttrs) => {
+                const nixScope = {
+                  ...runtime.scopeStack.slice(-1)[0],
+                  ..._withAttrs,
+                };
+                runtime.scopeStack.push(nixScope);
+                try {
+                  return [
+                    nixScope.hashesBase16,
+                    nixScope.hashesBase32,
+                    nixScope.hashesBase64,
+                  ];
+                } finally {
+                  runtime.scopeStack.pop();
+                }
+              })(nixScope.outputHashes),
+            ),
+          );
+        })(
+          apply(
+            apply(
+              nixScope.builtins["all"],
               createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
                 operators.equal(
-                  nixScope.getOutputHashesColon(nixScope.x),
+                  apply(nixScope.getOutputHashes, nixScope.x),
                   nixScope.outputHashes,
                 )
               )),
-            )(((_withAttrs) => {
-              const nixScope = {
-                ...runtime.scopeStack.slice(-1)[0],
-                ..._withAttrs,
-              };
-              runtime.scopeStack.push(nixScope);
-              try {
-                return [
-                  nixScope.hashesBase16,
-                  nixScope.hashesBase32,
-                  nixScope.hashesBase64,
-                ];
-              } finally {
-                runtime.scopeStack.pop();
-              }
-            })(nixScope.outputHashes)),
-          );
-        })(
-          nixScope.builtins["all"](
-            createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
-              operators.equal(
-                nixScope.getOutputHashes(nixScope.x),
-                nixScope.outputHashes,
-              )
-            )),
-          )(nixScope.builtins["attrValues"](nixScope.outputHashes)),
+            ),
+            apply(nixScope.builtins["attrValues"], nixScope.outputHashes),
+          ),
         );
       })(
         operators.equal(
           nixScope.outputHashes["hashesSRI"],
-          nixScope["map2'"](
-            createFunc(/*arg:*/ "hashAlgo", null, {}, (nixScope) => (
-              createFunc(/*arg:*/ "hashBody", null, {}, (nixScope) => (
-                operators.add(
-                  operators.add(nixScope.hashAlgo, "-"),
-                  nixScope.hashBody,
-                )
-              ))
-            )),
-          )(nixScope.hashAlgos)(nixScope.outputHashes["hashesBase64"]),
+          apply(
+            apply(
+              apply(
+                nixScope["map2'"],
+                createFunc(/*arg:*/ "hashAlgo", null, {}, (nixScope) => (
+                  createFunc(/*arg:*/ "hashBody", null, {}, (nixScope) => (
+                    operators.add(
+                      operators.add(nixScope.hashAlgo, "-"),
+                      nixScope.hashBody,
+                    )
+                  ))
+                )),
+              ),
+              nixScope.hashAlgos,
+            ),
+            nixScope.outputHashes["hashesBase64"],
+          ),
         ),
       );
     })(
@@ -325,11 +425,20 @@ export default /*let*/ createScope((nixScope) => {
     );
   })(
     operators.equal(
-      nixScope["map2'"](createFunc(/*arg:*/ "s1", null, {}, (nixScope) => (
-        createFunc(/*arg:*/ "s2", null, {}, (nixScope) => (
-          operators.add(nixScope.s1, nixScope.s2)
-        ))
-      )))(["a", "b"])(["c", "d"]),
+      apply(
+        apply(
+          apply(
+            nixScope["map2'"],
+            createFunc(/*arg:*/ "s1", null, {}, (nixScope) => (
+              createFunc(/*arg:*/ "s2", null, {}, (nixScope) => (
+                operators.add(nixScope.s1, nixScope.s2)
+              ))
+            )),
+          ),
+          ["a", "b"],
+        ),
+        ["c", "d"],
+      ),
       ["ac", "bd"],
     ),
   );

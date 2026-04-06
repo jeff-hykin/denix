@@ -1,5 +1,5 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -187,15 +187,23 @@ export default ((_withAttrs) => {
                                                       return true;
                                                     })(
                                                       operators.equal(
-                                                        nixScope.split(
-                                                          "([[:upper:]]+)",
-                                                        )("  FOO   "),
+                                                        apply(
+                                                          apply(
+                                                            nixScope.split,
+                                                            "([[:upper:]]+)",
+                                                          ),
+                                                          "  FOO   ",
+                                                        ),
                                                         ["  ", ["FOO"], "   "],
                                                       ),
                                                     );
                                                   })(
                                                     operators.equal(
-                                                      nixScope.split("(a)|(c)")(
+                                                      apply(
+                                                        apply(
+                                                          nixScope.split,
+                                                          "(a)|(c)",
+                                                        ),
                                                         "abc",
                                                       ),
                                                       ["", ["a", null], "b", [
@@ -206,7 +214,11 @@ export default ((_withAttrs) => {
                                                   );
                                                 })(
                                                   operators.equal(
-                                                    nixScope.split("([ac])")(
+                                                    apply(
+                                                      apply(
+                                                        nixScope.split,
+                                                        "([ac])",
+                                                      ),
                                                       "abc",
                                                     ),
                                                     ["", ["a"], "b", ["c"], ""],
@@ -214,18 +226,28 @@ export default ((_withAttrs) => {
                                                 );
                                               })(
                                                 operators.equal(
-                                                  nixScope.split("(a)b")("abc"),
+                                                  apply(
+                                                    apply(
+                                                      nixScope.split,
+                                                      "(a)b",
+                                                    ),
+                                                    "abc",
+                                                  ),
                                                   ["", ["a"], "c"],
                                                 ),
                                               );
                                             })(
                                               operators.equal(
-                                                nixScope.split(
-                                                  "[[:space:]]+|([',.!?])",
-                                                )(`
+                                                apply(
+                                                  apply(
+                                                    nixScope.split,
+                                                    "[[:space:]]+|([',.!?])",
+                                                  ),
+                                                  `
     Nix Rocks!
     That's why I use it.
-  `),
+  `,
+                                                ),
                                                 [
                                                   "Nix",
                                                   [null],
@@ -253,7 +275,8 @@ export default ((_withAttrs) => {
                                             );
                                           })(
                                             operators.equal(
-                                              nixScope.split("(b)")(
+                                              apply(
+                                                apply(nixScope.split, "(b)"),
                                                 "foobarbaz",
                                               ),
                                               ["foo", ["b"], "ar", ["b"], "az"],
@@ -261,89 +284,132 @@ export default ((_withAttrs) => {
                                           );
                                         })(
                                           operators.equal(
-                                            nixScope.split("(o+)")("oooofoooo"),
+                                            apply(
+                                              apply(nixScope.split, "(o+)"),
+                                              "oooofoooo",
+                                            ),
                                             ["", ["oooo"], "f", ["oooo"], ""],
                                           ),
                                         );
                                       })(
                                         operators.equal(
-                                          nixScope.split("(fo*)")("foobar"),
+                                          apply(
+                                            apply(nixScope.split, "(fo*)"),
+                                            "foobar",
+                                          ),
                                           ["", ["foo"], "bar"],
                                         ),
                                       );
                                     })(
                                       operators.equal(
-                                        nixScope.split("(fo{1,2})")("fooo"),
+                                        apply(
+                                          apply(nixScope.split, "(fo{1,2})"),
+                                          "fooo",
+                                        ),
                                         ["", ["foo"], "o"],
                                       ),
                                     );
                                   })(
                                     operators.equal(
-                                      nixScope.split("(fo{1,2})")("foo"),
+                                      apply(
+                                        apply(nixScope.split, "(fo{1,2})"),
+                                        "foo",
+                                      ),
                                       ["", ["foo"], ""],
                                     ),
                                   );
                                 })(
                                   operators.equal(
-                                    nixScope.split("(fo+)")("foo"),
+                                    apply(
+                                      apply(nixScope.split, "(fo+)"),
+                                      "foo",
+                                    ),
                                     ["", ["foo"], ""],
                                   ),
                                 );
                               })(
                                 operators.equal(
-                                  nixScope.split("(f)(o*)")("foo"),
+                                  apply(
+                                    apply(nixScope.split, "(f)(o*)"),
+                                    "foo",
+                                  ),
                                   ["", ["f", "oo"], ""],
                                 ),
                               );
                             })(
-                              operators.equal(nixScope.split("(f)(o*)")("f"), [
-                                "",
-                                ["f", ""],
-                                "",
-                              ]),
+                              operators.equal(
+                                apply(apply(nixScope.split, "(f)(o*)"), "f"),
+                                ["", ["f", ""], ""],
+                              ),
                             );
                           })(
-                            operators.equal(nixScope.split("(fo*)")("fo"), [
-                              "",
-                              ["fo"],
-                              "",
-                            ]),
+                            operators.equal(
+                              apply(apply(nixScope.split, "(fo*)"), "fo"),
+                              ["", ["fo"], ""],
+                            ),
                           );
                         })(
-                          operators.equal(nixScope.split("(fo+)")("f"), ["f"]),
+                          operators.equal(
+                            apply(apply(nixScope.split, "(fo+)"), "f"),
+                            ["f"],
+                          ),
                         );
                       })(
-                        operators.equal(nixScope.split("(fo*)")("f"), ["", [
-                          "f",
-                        ], ""]),
+                        operators.equal(
+                          apply(apply(nixScope.split, "(fo*)"), "f"),
+                          ["", ["f"], ""],
+                        ),
                       );
                     })(
-                      operators.equal(nixScope.split("fo*")("foobar"), [
-                        "",
-                        [],
-                        "bar",
-                      ]),
+                      operators.equal(
+                        apply(apply(nixScope.split, "fo*"), "foobar"),
+                        ["", [], "bar"],
+                      ),
                     );
                   })(
-                    operators.equal(nixScope.split("fo{1,2}")("fooo"), [
-                      "",
-                      [],
-                      "o",
-                    ]),
+                    operators.equal(
+                      apply(apply(nixScope.split, "fo{1,2}"), "fooo"),
+                      ["", [], "o"],
+                    ),
                   );
                 })(
-                  operators.equal(nixScope.split("fo{1,2}")("foo"), [
-                    "",
-                    [],
-                    "",
-                  ]),
+                  operators.equal(
+                    apply(apply(nixScope.split, "fo{1,2}"), "foo"),
+                    ["", [], ""],
+                  ),
                 );
-              })(operators.equal(nixScope.split("fo+")("foo"), ["", [], ""]));
-            })(operators.equal(nixScope.split("fo*")("foo"), ["", [], ""]));
-          })(operators.equal(nixScope.split("fo*")("fo"), ["", [], ""]));
-        })(operators.equal(nixScope.split("fo+")("f"), ["f"]));
-      })(operators.equal(nixScope.split("fo*")("f"), ["", [], ""]));
-    })(operators.equal(nixScope.split("foobar")("foobar"), ["", [], ""]));
+              })(
+                operators.equal(apply(apply(nixScope.split, "fo+"), "foo"), [
+                  "",
+                  [],
+                  "",
+                ]),
+              );
+            })(
+              operators.equal(apply(apply(nixScope.split, "fo*"), "foo"), [
+                "",
+                [],
+                "",
+              ]),
+            );
+          })(
+            operators.equal(apply(apply(nixScope.split, "fo*"), "fo"), [
+              "",
+              [],
+              "",
+            ]),
+          );
+        })(operators.equal(apply(apply(nixScope.split, "fo+"), "f"), ["f"]));
+      })(
+        operators.equal(apply(apply(nixScope.split, "fo*"), "f"), ["", [], ""]),
+      );
+    })(
+      operators.equal(apply(apply(nixScope.split, "foobar"), "foobar"), [
+        "",
+        [],
+        "",
+      ]),
+    );
   } finally {
     runtime.scopeStack.pop();
   }

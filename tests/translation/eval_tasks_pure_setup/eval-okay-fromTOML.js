@@ -1,12 +1,14 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
   : new URL(import.meta.url).pathname;
 
 export default [
-  nixScope.builtins["fromTOML"](`
+  apply(
+    nixScope.builtins["fromTOML"],
+    `
     # This is a TOML document.
 
     title = "TOML Example"
@@ -40,8 +42,11 @@ export default [
       "alpha",
       "omega"
     ]
-  `),
-  nixScope.builtins["fromTOML"](`
+  `,
+  ),
+  apply(
+    nixScope.builtins["fromTOML"],
+    `
     key = "value"
     bare_key = "value"
     bare-key = "value"
@@ -171,8 +176,11 @@ export default [
 
       [[fruit.variety]]
         name = "plantain"
-  `),
-  nixScope.builtins["fromTOML"](`
+  `,
+  ),
+  apply(
+    nixScope.builtins["fromTOML"],
+    `
     [[package]]
     name = "aho-corasick"
     version = "0.6.4"
@@ -201,10 +209,14 @@ export default [
     "checksum ansi_term 0.11.0 (registry+https://github.com/rust-lang/crates.io-index)" = "ee49baf6cb617b853aa8d93bf420db2383fab46d314482ca2803b40d5fde979b"
     "checksum ansi_term 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)" = "23ac7c30002a5accbf7e8987d0632fa6de155b7c3d39d0067317a391e00a2ef6"
     "checksum arrayvec 0.4.7 (registry+https://github.com/rust-lang/crates.io-index)" = "a1e964f9e24d588183fcb43503abda40d288c8657dfc27311516ce2f05675aef"
-  `),
-  nixScope.builtins["fromTOML"](`
+  `,
+  ),
+  apply(
+    nixScope.builtins["fromTOML"],
+    `
     a = [[{ b = true }]]
     c = [ [ { d = true } ] ]
     e = [[123]]
-  `),
+  `,
+  ),
 ];

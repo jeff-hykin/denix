@@ -1,5 +1,5 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -16,9 +16,9 @@ export default /*let*/ createScope((nixScope) => {
     return obj;
   });
   return [
-    nixScope.builtins["unsafeGetAttrPos"]("d")(nixScope.y),
-    nixScope.builtins["unsafeGetAttrPos"]("x")(nixScope.y),
-    nixScope.builtins["unsafeGetAttrPos"]("d")(nixScope.z),
-    nixScope.builtins["unsafeGetAttrPos"]("x")(nixScope.z),
+    apply(apply(nixScope.builtins["unsafeGetAttrPos"], "d"), nixScope.y),
+    apply(apply(nixScope.builtins["unsafeGetAttrPos"], "x"), nixScope.y),
+    apply(apply(nixScope.builtins["unsafeGetAttrPos"], "d"), nixScope.z),
+    apply(apply(nixScope.builtins["unsafeGetAttrPos"], "x"), nixScope.z),
   ];
 });

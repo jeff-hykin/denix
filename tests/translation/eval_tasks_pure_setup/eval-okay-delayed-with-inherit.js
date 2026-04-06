@@ -1,5 +1,5 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -13,7 +13,8 @@ export default /*let*/ createScope((nixScope) => {
       runtime.scopeStack.push(nixScope);
       try {
         return ({
-          "a": nixScope.derivation(
+          "a": apply(
+            nixScope.derivation,
             {
               "name": "a",
               "system": nixScope.builtins["currentSystem"],
@@ -34,7 +35,8 @@ export default /*let*/ createScope((nixScope) => {
     (nixScope) =>
       createFunc(/*arg:*/ "p", null, {}, (nixScope) => (
         {
-          "b": nixScope.derivation(
+          "b": apply(
+            nixScope.derivation,
             {
               "name": "b-overridden",
               "system": nixScope.builtins["currentSystem"],
@@ -51,7 +53,7 @@ export default /*let*/ createScope((nixScope) => {
     (nixScope) =>
       operators.merge(
         nixScope.pkgs_,
-        nixScope.packageOverrides(nixScope.pkgs_),
+        apply(nixScope.packageOverrides, nixScope.pkgs_),
       ),
   );
   return nixScope.pkgs["a"]["b"]["name"];

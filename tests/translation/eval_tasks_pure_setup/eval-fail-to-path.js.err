@@ -1,3 +1,4 @@
 denix_eval: eval failed: Error: error: string "foo/bar" doesn't represent an absolute path
-    at Object.toPath (file:///Users/jeffhykin/repos/denix/main/runtime.js:549:27)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:8:43
+    at toPath (file:///Users/jeffhykin/repos/denix/main/runtime.js:564:27)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:8:16

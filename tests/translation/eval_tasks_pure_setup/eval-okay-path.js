@@ -2,7 +2,7 @@ import {
   createRuntime,
   Path,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -10,12 +10,13 @@ runtime.currentFile = import.meta.url.startsWith("file://")
 const operators = runtime.operators;
 
 export default [
-  nixScope.builtins["path"](
+  apply(
+    nixScope.builtins["path"],
     {
       "path": new Path(["./."], []),
       "filter": createFunc(/*arg:*/ "path", null, {}, (nixScope) => (
         createFunc(/*arg:*/ "_", null, {}, (nixScope) => (
-          operators.equal(nixScope.baseNameOf(nixScope.path), "data")
+          operators.equal(apply(nixScope.baseNameOf, nixScope.path), "data")
         ))
       )),
       "recursive": true,
@@ -23,7 +24,8 @@ export default [
       "name": "output",
     },
   ),
-  nixScope.builtins["path"](
+  apply(
+    nixScope.builtins["path"],
     {
       "path": new Path(["../source_code/nix_lang/data"], []),
       "recursive": false,
@@ -31,7 +33,8 @@ export default [
       "name": "output",
     },
   ),
-  nixScope.builtins["path"](
+  apply(
+    nixScope.builtins["path"],
     {
       "path": new Path(["../source_code/nix_lang/dir1"], []),
       "sha256": "02vlkcjkl1rvy081n6d40qi73biv2w4b9x9biklay4ncgk77zr1f",

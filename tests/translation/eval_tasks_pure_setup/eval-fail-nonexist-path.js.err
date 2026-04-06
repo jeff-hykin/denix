@@ -1,2 +1,4 @@
-denix_eval: eval failed: ReferenceError: InterpolatedString is not defined
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:14:6
+denix_eval: print failed: Error: error: cannot coerce path to a string
+    at InterpolatedString.toString (file:///Users/jeffhykin/repos/denix/main/runtime.js:197:35)
+    at nixRepr (file:///Users/jeffhykin/repos/denix/main/runtime.js:255:71)
+    at file:///Users/jeffhykin/repos/denix/run/denix_eval:184:48

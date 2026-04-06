@@ -2,9 +2,10 @@ denix_eval: eval failed: Error: Called builtins.typeOf, which only works with va
     at Object.typeOf (file:///Users/jeffhykin/repos/denix/main/runtime.js:385:31)
     at requireString (file:///Users/jeffhykin/repos/denix/main/runtime.js:236:62)
     at file:///Users/jeffhykin/repos/denix/main/runtime.js:667:34
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:20:62
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:21:17
     at file:///Users/jeffhykin/repos/denix/main/runtime.js:60:32
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:162:36
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:191:10
     at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:118:24)
     at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:13:20
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:167:3

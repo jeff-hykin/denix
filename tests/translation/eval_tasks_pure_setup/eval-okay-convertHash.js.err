@@ -2,10 +2,10 @@ denix_eval: eval failed: Error: Import path does not exist: /var/folders/_c/ycpr
     at validateImportPath (file:///Users/jeffhykin/repos/denix/tools/import_resolver.js:114:15)
     at loadAndEvaluateSync (file:///Users/jeffhykin/repos/denix/main/import_loader.js:211:5)
     at Object.globalImportState.importFn (file:///Users/jeffhykin/repos/denix/main/runtime.js:2915:32)
-    at Object.import (file:///Users/jeffhykin/repos/denix/main/runtime.js:1712:42)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:30:34
+    at import (file:///Users/jeffhykin/repos/denix/main/runtime.js:1712:42)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:31:7
     at Object.get [as hashesBase16] (file:///Users/jeffhykin/repos/denix/main/runtime.js:137:34)
-    at Object.map2' (file:///Users/jeffhykin/repos/denix/main/runtime.js:53:56)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:328:24
-    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:118:24)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:12:24
+    at file:///Users/jeffhykin/repos/denix/main/runtime.js:53:56
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:430:11

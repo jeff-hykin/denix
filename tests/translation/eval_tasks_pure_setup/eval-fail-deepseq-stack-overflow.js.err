@@ -1,11 +1,6 @@
-denix_eval: eval failed: RangeError: Maximum call stack size exceeded
-    at file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1
-    at file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:1:1
-    at Object.get [as long] (file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1)
-    at file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1
-    at file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:1:1
-    at Object.get [as long] (file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1)
-    at file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1
-    at file:///Users/jeffhykin/repos/denix/main/runtime.js:1:1
+denix_eval: eval failed: Error: unexpected success; expected a controlled stack overflow instead
+    at throw (file:///Users/jeffhykin/repos/denix/main/runtime.js:1774:35)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:46:5
+    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:118:24)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:10:9

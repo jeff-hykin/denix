@@ -1,5 +1,5 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -17,14 +17,17 @@ export default ((_withAttrs) => {
         (nixScope) =>
           createFunc(/*arg:*/ "pat", null, {}, (nixScope) => (
             createFunc(/*arg:*/ "s", null, {}, (nixScope) => (
-              operators.notEqual(nixScope.match(nixScope.pat)(nixScope.s), null)
+              operators.notEqual(
+                apply(apply(nixScope.match, nixScope.pat), nixScope.s),
+                null,
+              )
             ))
           )),
       );
       defGetter(
         nixScope,
         "splitFN",
-        (nixScope) => nixScope.match("((.*)/)?([^/]*)\\.(nix|cc)"),
+        (nixScope) => apply(nixScope.match, "((.*)/)?([^/]*)\\.(nix|cc)"),
       );
       return ((_cond) => {
         if (!_cond) {
@@ -115,51 +118,77 @@ export default ((_withAttrs) => {
                                     return true;
                                   })(
                                     operators.equal(
-                                      nixScope.splitFN("foobar.cc"),
+                                      apply(nixScope.splitFN, "foobar.cc"),
                                       [null, null, "foobar", "cc"],
                                     ),
                                   );
                                 })(
                                   operators.equal(
-                                    nixScope.splitFN("/path/to/foobar.nix"),
+                                    apply(
+                                      nixScope.splitFN,
+                                      "/path/to/foobar.nix",
+                                    ),
                                     ["/path/to/", "/path/to", "foobar", "nix"],
                                   ),
                                 );
                               })(
                                 operators.equal(
-                                  nixScope.match(
-                                    "[[:space:]]+([[:upper:]]+)[[:space:]]+",
-                                  )("  FOO   "),
+                                  apply(
+                                    apply(
+                                      nixScope.match,
+                                      "[[:space:]]+([[:upper:]]+)[[:space:]]+",
+                                    ),
+                                    "  FOO   ",
+                                  ),
                                   ["FOO"],
                                 ),
                               );
                             })(
                               operators.equal(
-                                nixScope.match("(.*)\\.nix")("foobar.nix"),
+                                apply(
+                                  apply(nixScope.match, "(.*)\\.nix"),
+                                  "foobar.nix",
+                                ),
                                 ["foobar"],
                               ),
                             );
                           })(
                             operators.negate(
-                              nixScope.matches(
-                                "[[:space:]]+([[:upper:]]+)[[:space:]]+",
-                              )("  foo   "),
+                              apply(
+                                apply(
+                                  nixScope.matches,
+                                  "[[:space:]]+([[:upper:]]+)[[:space:]]+",
+                                ),
+                                "  foo   ",
+                              ),
                             ),
                           );
                         })(
-                          nixScope.matches(
-                            "[[:space:]]+([^[:space:]]+)[[:space:]]+",
-                          )("  foo   "),
+                          apply(
+                            apply(
+                              nixScope.matches,
+                              "[[:space:]]+([^[:space:]]+)[[:space:]]+",
+                            ),
+                            "  foo   ",
+                          ),
                         );
-                      })(operators.negate(nixScope.matches("fo*")("foobar")));
-                    })(operators.negate(nixScope.matches("fo{1,2}")("fooo")));
-                  })(nixScope.matches("fo{1,2}")("foo"));
-                })(nixScope.matches("fo+")("foo"));
-              })(nixScope.matches("fo*")("foo"));
-            })(nixScope.matches("fo*")("fo"));
-          })(operators.negate(nixScope.matches("fo+")("f")));
-        })(nixScope.matches("fo*")("f"));
-      })(nixScope.matches("foobar")("foobar"));
+                      })(
+                        operators.negate(
+                          apply(apply(nixScope.matches, "fo*"), "foobar"),
+                        ),
+                      );
+                    })(
+                      operators.negate(
+                        apply(apply(nixScope.matches, "fo{1,2}"), "fooo"),
+                      ),
+                    );
+                  })(apply(apply(nixScope.matches, "fo{1,2}"), "foo"));
+                })(apply(apply(nixScope.matches, "fo+"), "foo"));
+              })(apply(apply(nixScope.matches, "fo*"), "foo"));
+            })(apply(apply(nixScope.matches, "fo*"), "fo"));
+          })(operators.negate(apply(apply(nixScope.matches, "fo+"), "f")));
+        })(apply(apply(nixScope.matches, "fo*"), "f"));
+      })(apply(apply(nixScope.matches, "foobar"), "foobar"));
     });
   } finally {
     runtime.scopeStack.pop();

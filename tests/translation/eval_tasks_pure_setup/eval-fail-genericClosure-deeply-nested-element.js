@@ -2,7 +2,7 @@ import {
   createRuntime,
   Path,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -24,13 +24,18 @@ export default /*let*/ createScope((nixScope) => {
     nixScope,
     "finiteVal",
     (nixScope) =>
-      nixScope.builtins["deepSeq"](nixScope.finite)(nixScope.finite),
+      apply(
+        apply(nixScope.builtins["deepSeq"], nixScope.finite),
+        nixScope.finite,
+      ),
   );
-  return nixScope.builtins["seq"](nixScope.finiteVal)(
-    nixScope.builtins["genericClosure"]({
+  return apply(
+    apply(nixScope.builtins["seq"], nixScope.finiteVal),
+    apply(nixScope.builtins["genericClosure"], {
       "startSet": [
         {
-          "infinite": nixScope.import(
+          "infinite": apply(
+            nixScope.import,
             new Path(["../source_code/nix_lang/infinite-nesting.nix"], []),
           ),
           "finite": nixScope.finiteVal,
@@ -43,7 +48,8 @@ export default /*let*/ createScope((nixScope) => {
         (
           nixScope,
         ) => [
-          nixScope.import(
+          apply(
+            nixScope.import,
             new Path(["../source_code/nix_lang/infinite-nesting.nix"], []),
           ),
         ],

@@ -1,5 +1,8 @@
-denix_eval: translation failed: Error: This is a bug with convertToJs(), it means this node was unexpected/unhandled and couldn't be converted: type="let_attrset_expression", "let {\n  x =\n    arg:\n    assert arg == \"y\";\n    123;\n\n  body = x \"x\";\n}"
-    at nixNodeToJs (file:///Users/jeffhykin/repos/denix/translator.js:1268:15)
-    at convertToJs (file:///Users/jeffhykin/repos/denix/translator.js:188:19)
-    at file:///Users/jeffhykin/repos/denix/run/denix_eval:109:24
-    at __drainNextTickAndMacrotasks (ext:core/01_core.js:439:7)
+denix_eval: eval failed: Error: assertion failed: arg == "y"
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:17:19
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:20:11
+    at file:///Users/jeffhykin/repos/denix/main/runtime.js:60:32
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:23:10
+    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:118:24)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:9:24

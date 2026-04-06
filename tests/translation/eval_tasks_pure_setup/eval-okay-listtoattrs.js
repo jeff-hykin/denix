@@ -2,7 +2,7 @@ import {
   createRuntime,
   Path,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -28,18 +28,24 @@ export default //
       defGetter(
         nixScope,
         "list",
-        (nixScope) => [nixScope.asi("a")("A"), nixScope.asi("b")("B")],
+        (
+          nixScope,
+        ) => [
+          apply(apply(nixScope.asi, "a"), "A"),
+          apply(apply(nixScope.asi, "b"), "B"),
+        ],
       );
       defGetter(
         nixScope,
         "a",
-        (nixScope) => nixScope.builtins["listToAttrs"](nixScope.list),
+        (nixScope) => apply(nixScope.builtins["listToAttrs"], nixScope.list),
       );
       defGetter(
         nixScope,
         "b",
         (nixScope) =>
-          nixScope.builtins["listToAttrs"](
+          apply(
+            nixScope.builtins["listToAttrs"],
             operators.listConcat(nixScope.list, nixScope.list),
           ),
       );
@@ -47,25 +53,35 @@ export default //
         nixScope,
         "r",
         (nixScope) =>
-          nixScope.builtins["listToAttrs"]([
-            nixScope.asi("result")([nixScope.a, nixScope.b]),
-            nixScope.asi("throw")(nixScope.throw("this should not be thrown")),
+          apply(nixScope.builtins["listToAttrs"], [
+            apply(apply(nixScope.asi, "result"), [nixScope.a, nixScope.b]),
+            apply(
+              apply(nixScope.asi, "throw"),
+              apply(nixScope.throw, "this should not be thrown"),
+            ),
           ]),
       );
       defGetter(
         nixScope,
         "x",
         (nixScope) =>
-          nixScope.builtins["listToAttrs"]([
-            nixScope.asi("foo")("bar"),
-            nixScope.asi("foo")("bla"),
+          apply(nixScope.builtins["listToAttrs"], [
+            apply(apply(nixScope.asi, "foo"), "bar"),
+            apply(apply(nixScope.asi, "foo"), "bla"),
           ]),
       );
       return operators.add(
-        nixScope.concat(
-          nixScope.map(createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
-            nixScope.x["a"]
-          )))(nixScope.r["result"]),
+        apply(
+          nixScope.concat,
+          apply(
+            apply(
+              nixScope.map,
+              createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+                nixScope.x["a"]
+              )),
+            ),
+            nixScope.r["result"],
+          ),
         ),
         nixScope.x["foo"],
       );
@@ -73,4 +89,4 @@ export default //
   } finally {
     runtime.scopeStack.pop();
   }
-})(nixScope.import(new Path(["../source_code/nix_lang/lib.nix"], [])));
+})(apply(nixScope.import, new Path(["../source_code/nix_lang/lib.nix"], [])));

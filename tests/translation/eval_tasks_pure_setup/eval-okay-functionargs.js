@@ -2,7 +2,7 @@ import {
   createRuntime,
   InterpolatedString,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -139,19 +139,23 @@ export default /*let*/ createScope((nixScope) => {
       createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
         createFunc(/*arg:*/ "origArgs", null, {}, (nixScope) => (
           operators.merge(
-            nixScope.f(nixScope.origArgs),
+            apply(nixScope.f, nixScope.origArgs),
             {
               "override": createFunc(
                 /*arg:*/ "newArgs",
                 null,
                 {},
                 (nixScope) => (
-                  nixScope.makeOverridable(nixScope.f)(
+                  apply(
+                    apply(nixScope.makeOverridable, nixScope.f),
                     operators.merge(
                       nixScope.origArgs,
                       operators.ifThenElse(
-                        nixScope.builtins["isFunction"](nixScope.newArgs),
-                        () => (nixScope.newArgs(nixScope.origArgs)),
+                        apply(
+                          nixScope.builtins["isFunction"],
+                          nixScope.newArgs,
+                        ),
+                        () => (apply(nixScope.newArgs, nixScope.origArgs)),
                         () => (nixScope.newArgs),
                       ),
                     ),
@@ -170,11 +174,16 @@ export default /*let*/ createScope((nixScope) => {
       createFunc(/*arg:*/ "pkgs", null, {}, (nixScope) => (
         createFunc(/*arg:*/ "f", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "args", null, {}, (nixScope) => (
-            nixScope.makeOverridable(nixScope.f)(
+            apply(
+              apply(nixScope.makeOverridable, nixScope.f),
               operators.merge(
-                nixScope.builtins["intersectAttrs"](
-                  nixScope.builtins["functionArgs"](nixScope.f),
-                )(nixScope.pkgs),
+                apply(
+                  apply(
+                    nixScope.builtins["intersectAttrs"],
+                    apply(nixScope.builtins["functionArgs"], nixScope.f),
+                  ),
+                  nixScope.pkgs,
+                ),
                 nixScope.args,
               ),
             )
@@ -203,7 +212,7 @@ export default /*let*/ createScope((nixScope) => {
             defGetter(
               nixScope,
               "callPackage",
-              (nixScope) => nixScope.callPackage_(nixScope.pkgs),
+              (nixScope) => apply(nixScope.callPackage_, nixScope.pkgs),
             );
             defGetter(
               nixScope,
@@ -211,20 +220,36 @@ export default /*let*/ createScope((nixScope) => {
               (nixScope) =>
                 operators.merge(
                   nixScope.pkgsStd,
-                  nixScope.overrides(nixScope.pkgs)(nixScope.pkgsStd),
+                  apply(
+                    apply(nixScope.overrides, nixScope.pkgs),
+                    nixScope.pkgsStd,
+                  ),
                 ),
             );
             defGetter(nixScope, "pkgsStd", (nixScope) => ({
               "pkgs": nixScope.pkgs,
-              "stdenv": nixScope.callPackage(nixScope.stdenvFun)({}),
-              "stdenv2": nixScope.callPackage(nixScope.stdenv2Fun)({}),
-              "fetchurl": nixScope.callPackage(nixScope.fetchurlFun)({}),
-              "aterm": nixScope.callPackage(nixScope.atermFun)({}),
-              "xorg": nixScope.callPackage(nixScope.xorgFun)({}),
-              "mplayer": nixScope.callPackage(nixScope.mplayerFun)(
+              "stdenv": apply(
+                apply(nixScope.callPackage, nixScope.stdenvFun),
+                {},
+              ),
+              "stdenv2": apply(
+                apply(nixScope.callPackage, nixScope.stdenv2Fun),
+                {},
+              ),
+              "fetchurl": apply(
+                apply(nixScope.callPackage, nixScope.fetchurlFun),
+                {},
+              ),
+              "aterm": apply(
+                apply(nixScope.callPackage, nixScope.atermFun),
+                {},
+              ),
+              "xorg": apply(apply(nixScope.callPackage, nixScope.xorgFun), {}),
+              "mplayer": apply(
+                apply(nixScope.callPackage, nixScope.mplayerFun),
                 { "stdenv": nixScope.pkgs["stdenv2"], "enableFoo": false },
               ),
-              "nix": nixScope.callPackage(nixScope.nixFun)({}),
+              "nix": apply(apply(nixScope.callPackage, nixScope.nixFun), {}),
             }));
             return nixScope.pkgs;
           })
@@ -262,47 +287,59 @@ export default /*let*/ createScope((nixScope) => {
       createFunc({}, null, {}, (nixScope) => (
         /*let*/ createScope((nixScope) => {
           defGetter(nixScope, "callPackage", (nixScope) =>
-            nixScope.callPackage_(
+            apply(
+              nixScope.callPackage_,
               operators.merge(nixScope.pkgs, nixScope.pkgs["xorg"]),
             ));
           return ({
-            "libX11": nixScope.callPackage(nixScope.libX11Fun)({}),
-            "libXv": nixScope.callPackage(nixScope.libXvFun)({}),
+            "libX11": apply(
+              apply(nixScope.callPackage, nixScope.libX11Fun),
+              {},
+            ),
+            "libXv": apply(apply(nixScope.callPackage, nixScope.libXvFun), {}),
           });
         })
       )),
   );
   return /*let*/ createScope((nixScope) => {
-    defGetter(nixScope, "pkgs", (nixScope) => nixScope.allPackages({}));
+    defGetter(nixScope, "pkgs", (nixScope) => apply(nixScope.allPackages, {}));
     defGetter(
       nixScope,
       "pkgs2",
       (nixScope) =>
-        nixScope.allPackages(
+        apply(
+          nixScope.allPackages,
           {
             "overrides": createFunc(/*arg:*/ "pkgs", null, {}, (nixScope) => (
               createFunc(/*arg:*/ "pkgsPrev", null, {}, (nixScope) => (
                 {
                   "stdenv": nixScope.pkgs["stdenv2"],
-                  "nix": nixScope.pkgsPrev["nix"]["override"](
+                  "nix": apply(
+                    nixScope.pkgsPrev["nix"]["override"],
                     {
-                      "aterm": nixScope.aterm2Fun(createScope((nixScope) => {
-                        const obj = {};
-                        obj.stdenv = nixScope.pkgs.stdenv;
-                        obj.fetchurl = nixScope.pkgs.fetchurl;
-                        return obj;
-                      })),
+                      "aterm": apply(
+                        nixScope.aterm2Fun,
+                        createScope((nixScope) => {
+                          const obj = {};
+                          obj.stdenv = nixScope.pkgs.stdenv;
+                          obj.fetchurl = nixScope.pkgs.fetchurl;
+                          return obj;
+                        }),
+                      ),
                     },
                   ),
                   "xorg": operators.merge(
                     nixScope.pkgsPrev["xorg"],
                     {
-                      "libX11": nixScope.libX11_2Fun(createScope((nixScope) => {
-                        const obj = {};
-                        obj.stdenv = nixScope.pkgs.stdenv;
-                        obj.fetchurl = nixScope.pkgs.fetchurl;
-                        return obj;
-                      })),
+                      "libX11": apply(
+                        nixScope.libX11_2Fun,
+                        createScope((nixScope) => {
+                          const obj = {};
+                          obj.stdenv = nixScope.pkgs.stdenv;
+                          obj.fetchurl = nixScope.pkgs.fetchurl;
+                          return obj;
+                        }),
+                      ),
                     },
                   ),
                 }

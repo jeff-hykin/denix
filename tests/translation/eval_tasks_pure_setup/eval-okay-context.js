@@ -3,7 +3,7 @@ import {
   InterpolatedString,
   Path,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -12,8 +12,10 @@ const operators = runtime.operators;
 
 export default /*let*/ createScope((nixScope) => {
   nixScope.s = new InterpolatedString(["foo ", " bar"], [
-    () => (nixScope.builtins["substring"](33n)(100n)(
-      nixScope.baseNameOf(
+    () => (apply(
+      apply(apply(nixScope.builtins["substring"], 33n), 100n),
+      apply(
+        nixScope.baseNameOf,
         new InterpolatedString(["", ""], [
           () => (new Path(["./eval-okay-context.nix"], [])),
         ]),
@@ -22,7 +24,7 @@ export default /*let*/ createScope((nixScope) => {
   ]);
   return (operators.ifThenElse(
     operators.notEqual(nixScope.s, "foo eval-okay-context.nix bar"),
-    () => (nixScope.abort("context not discarded")),
-    () => (nixScope.builtins["unsafeDiscardStringContext"](nixScope.s)),
+    () => (apply(nixScope.abort, "context not discarded")),
+    () => (apply(nixScope.builtins["unsafeDiscardStringContext"], nixScope.s)),
   ));
 });

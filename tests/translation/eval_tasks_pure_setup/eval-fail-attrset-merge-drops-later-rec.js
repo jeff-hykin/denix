@@ -1,5 +1,5 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -11,7 +11,20 @@ export default createScope((nixScope) => {
   obj.a = /*rec*/ createScope((nixScope) => {
     nixScope.d = 3n;
     defGetter(nixScope, "c", (nixScope) => operators.add(nixScope.d, 2n));
-    return nixScope;
+    const __result = {};
+    Object.defineProperty(__result, "c", {
+      enumerable: true,
+      get() {
+        return nixScope.c;
+      },
+    });
+    Object.defineProperty(__result, "d", {
+      enumerable: true,
+      get() {
+        return nixScope.d;
+      },
+    });
+    return __result;
   });
   if (obj["a"] === undefined) obj["a"] = {};
   obj["a"]["b"] = 1n;

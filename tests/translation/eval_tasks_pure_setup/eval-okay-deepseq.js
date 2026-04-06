@@ -1,11 +1,21 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
   : new URL(import.meta.url).pathname;
 
-export default nixScope.builtins["deepSeq"](/*let*/ createScope((nixScope) => {
-  defGetter(nixScope, "as", (nixScope) => ({ "x": 123n, "y": nixScope.as }));
-  return nixScope.as;
-}))(456n);
+export default apply(
+  apply(
+    nixScope.builtins["deepSeq"],
+    /*let*/ createScope((nixScope) => {
+      defGetter(
+        nixScope,
+        "as",
+        (nixScope) => ({ "x": 123n, "y": nixScope.as }),
+      );
+      return nixScope.as;
+    }),
+  ),
+  456n,
+);

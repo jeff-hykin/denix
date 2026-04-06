@@ -2,7 +2,7 @@ import {
   createRuntime,
   Path,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -15,9 +15,9 @@ export default ((_withAttrs) => {
   try {
     return /*let*/ createScope((nixScope) => {
       nixScope.x = 12n;
-      defGetter(nixScope, "err", (nixScope) => nixScope.abort("urgh"));
-      return nixScope.sum([
-        nixScope.sum(nixScope.range(1n)(50n)),
+      defGetter(nixScope, "err", (nixScope) => apply(nixScope.abort, "urgh"));
+      return apply(nixScope.sum, [
+        apply(nixScope.sum, apply(apply(nixScope.range, 1n), 50n)),
         operators.add(123n, 456n),
         operators.add(
           operators.add(operators.add(0n, -10n), operators.negative(-11n)),
@@ -29,12 +29,15 @@ export default ((_withAttrs) => {
         operators.multiply(operators.multiply(3n, 4n), 5n),
         operators.divide(operators.divide(56088n, 123n), 2n),
         operators.subtract(
-          operators.add(3n, operators.multiply(4n, nixScope.const(5n)(0n))),
-          operators.divide(6n, nixScope.id(2n)),
+          operators.add(
+            3n,
+            operators.multiply(4n, apply(apply(nixScope.const, 5n), 0n)),
+          ),
+          operators.divide(6n, apply(nixScope.id, 2n)),
         ),
-        nixScope.builtins["bitAnd"](12n)(10n),
-        nixScope.builtins["bitOr"](12n)(10n),
-        nixScope.builtins["bitXor"](12n)(10n),
+        apply(apply(nixScope.builtins["bitAnd"], 12n), 10n),
+        apply(apply(nixScope.builtins["bitOr"], 12n), 10n),
+        apply(apply(nixScope.builtins["bitXor"], 12n), 10n),
         operators.ifThenElse(
           operators.lessThan(3n, 7n),
           () => (1n),
@@ -136,4 +139,4 @@ export default ((_withAttrs) => {
   } finally {
     runtime.scopeStack.pop();
   }
-})(nixScope.import(new Path(["../source_code/nix_lang/lib.nix"], [])));
+})(apply(nixScope.import, new Path(["../source_code/nix_lang/lib.nix"], [])));

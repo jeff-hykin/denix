@@ -1,5 +1,5 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -47,52 +47,107 @@ export default /*let*/ createScope((nixScope) => {
       obj.q = nixScope.alphabet.q;
       obj.u = nixScope.alphabet.u;
       obj.x = nixScope.alphabet.x;
-      obj.aa = nixScope.throw("aa");
+      obj.aa = apply(nixScope.throw, "aa");
       return obj;
     }));
   defGetter(
     nixScope,
     "alphabetFail",
     (nixScope) =>
-      nixScope.builtins["mapAttrs"](nixScope.throw)(nixScope.alphabet),
+      apply(
+        apply(nixScope.builtins["mapAttrs"], nixScope.throw),
+        nixScope.alphabet,
+      ),
   );
   return [
-    nixScope.builtins["intersectAttrs"]({ "a": nixScope.abort("l1") })(
-      { "b": nixScope.abort("r1") },
+    apply(
+      apply(
+        nixScope.builtins["intersectAttrs"],
+        { "a": apply(nixScope.abort, "l1") },
+      ),
+      { "b": apply(nixScope.abort, "r1") },
     ),
-    nixScope.builtins["intersectAttrs"]({ "a": nixScope.abort("l2") })(
+    apply(
+      apply(
+        nixScope.builtins["intersectAttrs"],
+        { "a": apply(nixScope.abort, "l2") },
+      ),
       { "a": 1n },
     ),
-    nixScope.builtins["intersectAttrs"](nixScope.alphabetFail)({ "a": 1n }),
-    nixScope.builtins["intersectAttrs"]({ "a": nixScope.abort("laa") })(
+    apply(
+      apply(nixScope.builtins["intersectAttrs"], nixScope.alphabetFail),
+      { "a": 1n },
+    ),
+    apply(
+      apply(
+        nixScope.builtins["intersectAttrs"],
+        { "a": apply(nixScope.abort, "laa") },
+      ),
       nixScope.alphabet,
     ),
-    nixScope.builtins["intersectAttrs"](nixScope.alphabetFail)({ "m": 1n }),
-    nixScope.builtins["intersectAttrs"]({ "m": nixScope.abort("lam") })(
+    apply(
+      apply(nixScope.builtins["intersectAttrs"], nixScope.alphabetFail),
+      { "m": 1n },
+    ),
+    apply(
+      apply(
+        nixScope.builtins["intersectAttrs"],
+        { "m": apply(nixScope.abort, "lam") },
+      ),
       nixScope.alphabet,
     ),
-    nixScope.builtins["intersectAttrs"](nixScope.alphabetFail)({ "n": 1n }),
-    nixScope.builtins["intersectAttrs"]({ "n": nixScope.abort("lan") })(
+    apply(
+      apply(nixScope.builtins["intersectAttrs"], nixScope.alphabetFail),
+      { "n": 1n },
+    ),
+    apply(
+      apply(
+        nixScope.builtins["intersectAttrs"],
+        { "n": apply(nixScope.abort, "lan") },
+      ),
       nixScope.alphabet,
     ),
-    nixScope.builtins["intersectAttrs"](nixScope.alphabetFail)(
+    apply(
+      apply(nixScope.builtins["intersectAttrs"], nixScope.alphabetFail),
       { "n": 1n, "p": 2n },
     ),
-    nixScope.builtins["intersectAttrs"](
-      { "n": nixScope.abort("lan2"), "p": nixScope.abort("lap") },
-    )(nixScope.alphabet),
-    nixScope.builtins["intersectAttrs"](nixScope.alphabetFail)(
+    apply(
+      apply(
+        nixScope.builtins["intersectAttrs"],
+        {
+          "n": apply(nixScope.abort, "lan2"),
+          "p": apply(nixScope.abort, "lap"),
+        },
+      ),
+      nixScope.alphabet,
+    ),
+    apply(
+      apply(nixScope.builtins["intersectAttrs"], nixScope.alphabetFail),
       { "n": 1n, "p": 2n },
     ),
-    nixScope.builtins["intersectAttrs"](
-      { "n": nixScope.abort("lan2"), "p": nixScope.abort("lap") },
-    )(nixScope.alphabet),
-    nixScope.builtins["intersectAttrs"](nixScope.alphabetFail)(
+    apply(
+      apply(
+        nixScope.builtins["intersectAttrs"],
+        {
+          "n": apply(nixScope.abort, "lan2"),
+          "p": apply(nixScope.abort, "lap"),
+        },
+      ),
+      nixScope.alphabet,
+    ),
+    apply(
+      apply(nixScope.builtins["intersectAttrs"], nixScope.alphabetFail),
       nixScope.alphabet,
     ),
     operators.equal(
-      nixScope.builtins["intersectAttrs"](nixScope.alphabet)(nixScope.foo),
-      nixScope.builtins["intersectAttrs"](nixScope.foo)(nixScope.alphabet),
+      apply(
+        apply(nixScope.builtins["intersectAttrs"], nixScope.alphabet),
+        nixScope.foo,
+      ),
+      apply(
+        apply(nixScope.builtins["intersectAttrs"], nixScope.foo),
+        nixScope.alphabet,
+      ),
     ),
   ];
 });

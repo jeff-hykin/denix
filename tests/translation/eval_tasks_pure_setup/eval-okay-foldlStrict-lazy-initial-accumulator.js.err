@@ -1,3 +1,4 @@
 denix_eval: eval failed: Error: This is never forced
-    at Object.throw (file:///Users/jeffhykin/repos/denix/main/runtime.js:1774:35)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:14:19
+    at throw (file:///Users/jeffhykin/repos/denix/main/runtime.js:1774:35)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:20:5

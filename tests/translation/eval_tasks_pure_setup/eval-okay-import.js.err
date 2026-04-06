@@ -2,8 +2,8 @@ denix_eval: eval failed: Error: Called builtins.typeOf, which only works with va
     at Object.typeOf (file:///Users/jeffhykin/repos/denix/main/runtime.js:385:31)
     at requireAttrSet (file:///Users/jeffhykin/repos/denix/main/runtime.js:230:62)
     at Object.merge (file:///Users/jeffhykin/repos/denix/main/runtime.js:2798:13)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:29:33
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:33:33
     at Object.get [as overrides] (file:///Users/jeffhykin/repos/denix/main/runtime.js:137:34)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:34:41
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:42:43
     at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:118:24)
     at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:12:24

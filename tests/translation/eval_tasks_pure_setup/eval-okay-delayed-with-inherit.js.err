@@ -1,11 +1,11 @@
 denix_eval: eval failed: Error: Called builtins.typeOf, which only works with valid nix values, but instead got type undefined, with a value of: undefined 
     at Object.typeOf (file:///Users/jeffhykin/repos/denix/main/runtime.js:385:31)
     at requireString (file:///Users/jeffhykin/repos/denix/main/runtime.js:236:62)
-    at Object.derivation (file:///Users/jeffhykin/repos/denix/main/runtime.js:2148:36)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:16:25
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:30:7
+    at derivation (file:///Users/jeffhykin/repos/denix/main/runtime.js:2148:36)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:16:16
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:31:7
     at Object.get [as pkgs_] (file:///Users/jeffhykin/repos/denix/main/runtime.js:137:34)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:53:18
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:55:18
     at Object.get [as pkgs] (file:///Users/jeffhykin/repos/denix/main/runtime.js:137:34)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:57:19
-    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:118:24)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:59:19

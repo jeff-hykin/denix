@@ -1,8 +1,12 @@
-denix_eval: eval failed: Error: Called builtins.typeOf, which only works with valid nix values, but instead got type undefined, with a value of: undefined 
-    at Object.typeOf (file:///Users/jeffhykin/repos/denix/main/runtime.js:385:31)
-    at Object.add (file:///Users/jeffhykin/repos/denix/main/runtime.js:2753:36)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:15:33
-    at Object.f (file:///Users/jeffhykin/repos/denix/main/runtime.js:60:32)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:55:20
-    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:118:24)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:9:24
+denix_eval: translation failed: Error: When handling a function, it didn't seem to be a simple function, but also didn't have <formals>. Not sure what happened:
+args@{
+      x,
+      y,
+      z,
+    }:
+    x + args.y + z
+    at nixNodeToJs (file:///Users/jeffhykin/repos/denix/translator.js:1078:23)
+    at nixNodeToJs (file:///Users/jeffhykin/repos/denix/translator.js:1240:91)
+    at convertToJs (file:///Users/jeffhykin/repos/denix/translator.js:190:19)
+    at file:///Users/jeffhykin/repos/denix/run/denix_eval:109:24
+    at __drainNextTickAndMacrotasks (ext:core/01_core.js:439:7)

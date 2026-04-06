@@ -1,5 +1,5 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -7,7 +7,8 @@ runtime.currentFile = import.meta.url.startsWith("file://")
 
 export default //
 //
-nixScope.derivation(
+apply(
+  nixScope.derivation,
   {
     "name": "test",
     "system": "x86_64-linux",
@@ -15,19 +16,30 @@ nixScope.derivation(
     "__structuredAttrs": true,
     "nested": /*let*/ createScope((nixScope) => {
       defGetter(nixScope, "long", (nixScope) =>
-        nixScope.builtins["genList"](
-          createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
-            nixScope.x
-          )),
-        )(100000n));
+        apply(
+          apply(
+            nixScope.builtins["genList"],
+            createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+              nixScope.x
+            )),
+          ),
+          100000n,
+        ));
       defGetter(nixScope, "reverseLinkedList", (nixScope) =>
-        nixScope.builtins["foldl'"](
-          createFunc(/*arg:*/ "tail", null, {}, (nixScope) => (
-            createFunc(/*arg:*/ "head", null, {}, (nixScope) => (
-              { "head": nixScope.head, "tail": nixScope.tail }
-            ))
-          )),
-        )(null)(nixScope.long));
+        apply(
+          apply(
+            apply(
+              nixScope.builtins["foldl'"],
+              createFunc(/*arg:*/ "tail", null, {}, (nixScope) => (
+                createFunc(/*arg:*/ "head", null, {}, (nixScope) => (
+                  { "head": nixScope.head, "tail": nixScope.tail }
+                ))
+              )),
+            ),
+            null,
+          ),
+          nixScope.long,
+        ));
       return nixScope.reverseLinkedList;
     }),
   },

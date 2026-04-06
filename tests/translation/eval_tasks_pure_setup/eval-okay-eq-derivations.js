@@ -1,5 +1,5 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -11,7 +11,8 @@ export default /*let*/ createScope((nixScope) => {
     nixScope,
     "drvA1",
     (nixScope) =>
-      nixScope.derivation(
+      apply(
+        nixScope.derivation,
         { "name": "a", "builder": "/foo", "system": "i686-linux" },
       ),
   );
@@ -19,7 +20,8 @@ export default /*let*/ createScope((nixScope) => {
     nixScope,
     "drvA2",
     (nixScope) =>
-      nixScope.derivation(
+      apply(
+        nixScope.derivation,
         { "name": "a", "builder": "/foo", "system": "i686-linux" },
       ),
   );
@@ -28,7 +30,8 @@ export default /*let*/ createScope((nixScope) => {
     "drvA3",
     (nixScope) =>
       operators.merge(
-        nixScope.derivation(
+        apply(
+          nixScope.derivation,
           { "name": "a", "builder": "/foo", "system": "i686-linux" },
         ),
         { "dummy": 1n },
@@ -38,7 +41,8 @@ export default /*let*/ createScope((nixScope) => {
     nixScope,
     "drvC1",
     (nixScope) =>
-      nixScope.derivation(
+      apply(
+        nixScope.derivation,
         { "name": "c", "builder": "/foo", "system": "i686-linux" },
       ),
   );
@@ -46,7 +50,8 @@ export default /*let*/ createScope((nixScope) => {
     nixScope,
     "drvC2",
     (nixScope) =>
-      nixScope.derivation(
+      apply(
+        nixScope.derivation,
         { "name": "c", "builder": "/bar", "system": "i686-linux" },
       ),
   );

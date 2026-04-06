@@ -1,5 +1,5 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -11,15 +11,18 @@ export default /*let*/ createScope((nixScope) => {
     nixScope,
     "cursed0",
     (nixScope) =>
-      nixScope.builtins["length"](/*let*/ createScope((nixScope) => {
-        nixScope.or = 1n;
-        return [
-          createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
-            nixScope.x
-          )),
-          nixScope.or,
-        ];
-      })),
+      apply(
+        nixScope.builtins["length"],
+        /*let*/ createScope((nixScope) => {
+          nixScope.or = 1n;
+          return [
+            createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+              nixScope.x
+            )),
+            nixScope.or,
+          ];
+        }),
+      ),
   );
   defGetter(
     nixScope,
@@ -27,11 +30,17 @@ export default /*let*/ createScope((nixScope) => {
     (nixScope) =>
       /*let*/ createScope((nixScope) => {
         nixScope.or = 1n;
-        return (createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
-          operators.multiply(nixScope.x, 2n)
-        )))(createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
-          operators.add(nixScope.x, 1n)
-        )))(nixScope.or);
+        return apply(
+          apply(
+            createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+              operators.multiply(nixScope.x, 2n)
+            )),
+            createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+              operators.add(nixScope.x, 1n)
+            )),
+          ),
+          nixScope.or,
+        );
       }),
   );
   defGetter(
@@ -40,13 +49,16 @@ export default /*let*/ createScope((nixScope) => {
     (nixScope) =>
       /*let*/ createScope((nixScope) => {
         nixScope.or = 1n;
-        return operators.selectOrDefault(
-          { "a": 2n },
-          ["a"],
-          createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
-            nixScope.x
-          )),
-        )(nixScope.or);
+        return apply(
+          operators.selectOrDefault(
+            { "a": 2n },
+            ["a"],
+            createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+              nixScope.x
+            )),
+          ),
+          nixScope.or,
+        );
       }),
   );
   defGetter(
@@ -61,7 +73,7 @@ export default /*let*/ createScope((nixScope) => {
             nixScope.x
           ))),
         );
-        return nixScope.map(nixScope.or)([]);
+        return apply(apply(nixScope.map, nixScope.or), []);
       }),
   );
   defGetter(
@@ -77,7 +89,7 @@ export default /*let*/ createScope((nixScope) => {
           ))),
         );
         defGetter(nixScope, "or", (nixScope) => nixScope.f);
-        return nixScope.f(nixScope.f(nixScope.or));
+        return apply(nixScope.f, apply(nixScope.f, nixScope.or));
       }),
   );
   return 0n;

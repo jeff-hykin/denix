@@ -557,7 +557,7 @@ const nixNodeToJs = (node)=>{
         //   (builtins.findFile builtins.nixPath "...").
         const text = node.text || ""
         const inner = text.replace(/^</, "").replace(/>$/, "")
-        return `(nixScope["builtins"]["findFile"](nixScope["builtins"]["nixPath"]()))(${JSON.stringify(inner)})`
+        return `(nixScope.builtins${varAccess("findFile")}(nixScope.builtins${varAccess("nixPath")}()))(${JSON.stringify(inner)})`
     } else if (node.type == "apply_expression") { // function call
         const children = valueBasedChildren(node)
         return `apply(${nixNodeToJs(children[0])}, ${nixNodeToJs(children[1])})`
@@ -1041,7 +1041,7 @@ const nixNodeToJs = (node)=>{
             // </function_expression>
         // simple function
         const children = valueBasedChildren(node)
-        const isSimple = children[0]?.type == "identifier"
+        const isSimple = children[0]?.type == "identifier" && children[1]?.type !== "@"
         if (isSimple) {
             const argName = children[0].text
             const body = children.slice(-1)[0]

@@ -1,5 +1,8 @@
-import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+import {
+  createRuntime,
+  InterpolatedString,
+} from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -13,15 +16,15 @@ export default /*let*/ createScope((nixScope) => {
       createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
         createFunc(/*arg:*/ "y", null, {}, (nixScope) => (
           {
-            "a": nixScope.x(nixScope.y),
-            "b": nixScope.x(nixScope.y),
-            "c": nixScope.x(nixScope.y),
-            "d": nixScope.x(nixScope.y),
-            "e": nixScope.x(nixScope.y),
-            "f": nixScope.x(nixScope.y),
-            "g": nixScope.x(nixScope.y),
-            "h": nixScope.x(nixScope.y),
-            "j": nixScope.x(nixScope.y),
+            "a": apply(nixScope.x, nixScope.y),
+            "b": apply(nixScope.x, nixScope.y),
+            "c": apply(nixScope.x, nixScope.y),
+            "d": apply(nixScope.x, nixScope.y),
+            "e": apply(nixScope.x, nixScope.y),
+            "f": apply(nixScope.x, nixScope.y),
+            "g": apply(nixScope.x, nixScope.y),
+            "h": apply(nixScope.x, nixScope.y),
+            "j": apply(nixScope.x, nixScope.y),
           }
         ))
       )),
@@ -30,20 +33,30 @@ export default /*let*/ createScope((nixScope) => {
     nixScope,
     "has",
     (nixScope) =>
-      nixScope.ha(
-        nixScope.ha(
-          nixScope.ha(
-            nixScope.ha(createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
-              nixScope.x
-            ))),
+      apply(
+        apply(
+          nixScope.ha,
+          apply(
+            nixScope.ha,
+            apply(
+              nixScope.ha,
+              apply(
+                nixScope.ha,
+                createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+                  nixScope.x
+                )),
+              ),
+            ),
           ),
         ),
-      )("ha"),
+        "ha",
+      ),
   );
   defGetter(
     nixScope,
     "pkgs",
-    (nixScope) => nixScope.builtins["deepSeq"](nixScope.has)(nixScope.has),
+    (nixScope) =>
+      apply(apply(nixScope.builtins["deepSeq"], nixScope.has), nixScope.has),
   );
   return (new InterpolatedString(["", ""], [() => (nixScope.pkgs)]));
 });

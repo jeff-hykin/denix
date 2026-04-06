@@ -1,0 +1,12 @@
+denix_eval: translation failed: Error: When handling a function, it didn't seem to be a simple function, but also didn't have <formals>. Not sure what happened:
+args@{
+      x,
+      y,
+      z,
+    }:
+    x
+    at nixNodeToJs (file:///Users/jeffhykin/repos/denix/translator.js:1078:23)
+    at nixNodeToJs (file:///Users/jeffhykin/repos/denix/translator.js:893:95)
+    at convertToJs (file:///Users/jeffhykin/repos/denix/translator.js:190:19)
+    at file:///Users/jeffhykin/repos/denix/run/denix_eval:109:24
+    at __drainNextTickAndMacrotasks (ext:core/01_core.js:439:7)

@@ -1,4 +1,11 @@
-denix_eval: eval failed: TypeError: nixScope.map is not a function
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:18:16
-    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:115:24)
+denix_eval: eval failed: Error: Illegal argument undefined
+    at H2.exports (file:///Users/jeffhykin/repos/denix/tools/md5.js:252:15)
+    at file:///Users/jeffhykin/repos/denix/main/runtime.js:933:28
+    at file:///Users/jeffhykin/repos/denix/main/runtime.js:943:57
+    at Object.get (file:///Users/jeffhykin/repos/denix/tools/lazy_array.js:12:32)
+    at Proxy.flat (<anonymous>)
+    at concatLists (file:///Users/jeffhykin/repos/denix/main/runtime.js:749:63)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:18:5
+    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:118:24)
     at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:11:24

@@ -1,4 +1,5 @@
 denix_eval: eval failed: Error: unreachable
-    at Object.throw (file:///Users/jeffhykin/repos/denix/main/runtime.js:1774:35)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:23:23
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:29:3
+    at throw (file:///Users/jeffhykin/repos/denix/main/runtime.js:1774:35)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:30:11
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:38:3

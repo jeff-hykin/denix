@@ -1,12 +1,18 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
   : new URL(import.meta.url).pathname;
 
-export default ((createFunc({}, null, {}, (nixScope) => (
-  createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
-    { "x": 1n, "y": nixScope.x }
-  ))
-)))({ "x": 2n })(3n))["y"];
+export default (apply(
+  apply(
+    createFunc({}, null, {}, (nixScope) => (
+      createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+        { "x": 1n, "y": nixScope.x }
+      ))
+    )),
+    { "x": 2n },
+  ),
+  3n,
+))["y"];

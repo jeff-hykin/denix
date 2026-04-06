@@ -2,7 +2,7 @@ import {
   createRuntime,
   InterpolatedString,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -185,10 +185,12 @@ export default /*let*/ createScope((nixScope) => {
       operators.add(
         operators.add(
           new InterpolatedString(["foo ", " ", " ", ""], [
-            () => (nixScope.toString(
+            () => (apply(
+              nixScope.toString,
               nixScope.config["services"]["sshd"]["port"],
             )),
-            () => (nixScope.toString(
+            () => (apply(
+              nixScope.toString,
               nixScope.config["services"]["httpd"]["port"],
             )),
             () => (nixScope.config["hostName"]),

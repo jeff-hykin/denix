@@ -2,7 +2,7 @@ import {
   createRuntime,
   Path,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -171,7 +171,8 @@ export default ((_cond) => {
                                                     return "ok";
                                                   })(
                                                     operators.equal(
-                                                      nixScope.baseNameOf(
+                                                      apply(
+                                                        nixScope.baseNameOf,
                                                         new Path(
                                                           ["./foo/bar"],
                                                           [],
@@ -182,7 +183,8 @@ export default ((_cond) => {
                                                   );
                                                 })(
                                                   operators.equal(
-                                                    nixScope.baseNameOf(
+                                                    apply(
+                                                      nixScope.baseNameOf,
                                                       new Path(["./foo"], []),
                                                     ),
                                                     "foo",
@@ -190,77 +192,101 @@ export default ((_cond) => {
                                                 );
                                               })(
                                                 operators.equal(
-                                                  nixScope.baseNameOf("a//"),
+                                                  apply(
+                                                    nixScope.baseNameOf,
+                                                    "a//",
+                                                  ),
                                                   "",
                                                 ),
                                               );
                                             })(
                                               operators.equal(
-                                                nixScope.baseNameOf("a//b"),
+                                                apply(
+                                                  nixScope.baseNameOf,
+                                                  "a//b",
+                                                ),
                                                 "b",
                                               ),
                                             );
                                           })(
                                             operators.equal(
-                                              nixScope.baseNameOf("C:a"),
+                                              apply(nixScope.baseNameOf, "C:a"),
                                               "C:a",
                                             ),
                                           );
                                         })(
                                           operators.equal(
-                                            nixScope.baseNameOf("a\\b"),
+                                            apply(nixScope.baseNameOf, "a\\b"),
                                             "a\\b",
                                           ),
                                         );
                                       })(
                                         operators.equal(
-                                          nixScope.baseNameOf("a/b/c/d."),
+                                          apply(
+                                            nixScope.baseNameOf,
+                                            "a/b/c/d.",
+                                          ),
                                           "d.",
                                         ),
                                       );
                                     })(
                                       operators.equal(
-                                        nixScope.baseNameOf("a/b/c/d"),
+                                        apply(nixScope.baseNameOf, "a/b/c/d"),
                                         "d",
                                       ),
                                     );
                                   })(
                                     operators.equal(
-                                      nixScope.baseNameOf("a/b/c.."),
+                                      apply(nixScope.baseNameOf, "a/b/c.."),
                                       "c..",
                                     ),
                                   );
                                 })(
                                   operators.equal(
-                                    nixScope.baseNameOf("a/b/c."),
+                                    apply(nixScope.baseNameOf, "a/b/c."),
                                     "c.",
                                   ),
                                 );
                               })(
                                 operators.equal(
-                                  nixScope.baseNameOf("a/b/c"),
+                                  apply(nixScope.baseNameOf, "a/b/c"),
                                   "c",
                                 ),
                               );
                             })(
                               operators.equal(
-                                nixScope.baseNameOf("a/b.."),
+                                apply(nixScope.baseNameOf, "a/b.."),
                                 "b..",
                               ),
                             );
                           })(
-                            operators.equal(nixScope.baseNameOf("a/b."), "b."),
+                            operators.equal(
+                              apply(nixScope.baseNameOf, "a/b."),
+                              "b.",
+                            ),
                           );
-                        })(operators.equal(nixScope.baseNameOf("a/b"), "b"));
-                      })(operators.equal(nixScope.baseNameOf("a/.."), ".."));
-                    })(operators.equal(nixScope.baseNameOf("a/."), "."));
-                  })(operators.equal(nixScope.baseNameOf("a/"), "a"));
-                })(operators.equal(nixScope.baseNameOf("a.b.."), "a.b.."));
-              })(operators.equal(nixScope.baseNameOf("a.b."), "a.b."));
-            })(operators.equal(nixScope.baseNameOf("a.b"), "a.b"));
-          })(operators.equal(nixScope.baseNameOf("a.."), "a.."));
-        })(operators.equal(nixScope.baseNameOf("a."), "a."));
-      })(operators.equal(nixScope.baseNameOf("a"), "a"));
-    })(operators.equal(nixScope.baseNameOf(".."), ".."));
-  })(operators.equal(nixScope.baseNameOf("."), "."));
-})(operators.equal(nixScope.baseNameOf(""), ""));
+                        })(
+                          operators.equal(
+                            apply(nixScope.baseNameOf, "a/b"),
+                            "b",
+                          ),
+                        );
+                      })(
+                        operators.equal(
+                          apply(nixScope.baseNameOf, "a/.."),
+                          "..",
+                        ),
+                      );
+                    })(operators.equal(apply(nixScope.baseNameOf, "a/."), "."));
+                  })(operators.equal(apply(nixScope.baseNameOf, "a/"), "a"));
+                })(
+                  operators.equal(apply(nixScope.baseNameOf, "a.b.."), "a.b.."),
+                );
+              })(operators.equal(apply(nixScope.baseNameOf, "a.b."), "a.b."));
+            })(operators.equal(apply(nixScope.baseNameOf, "a.b"), "a.b"));
+          })(operators.equal(apply(nixScope.baseNameOf, "a.."), "a.."));
+        })(operators.equal(apply(nixScope.baseNameOf, "a."), "a."));
+      })(operators.equal(apply(nixScope.baseNameOf, "a"), "a"));
+    })(operators.equal(apply(nixScope.baseNameOf, ".."), ".."));
+  })(operators.equal(apply(nixScope.baseNameOf, "."), "."));
+})(operators.equal(apply(nixScope.baseNameOf, ""), ""));

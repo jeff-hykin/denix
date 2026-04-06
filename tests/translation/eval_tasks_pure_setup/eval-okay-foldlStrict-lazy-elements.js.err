@@ -1,7 +1,8 @@
 denix_eval: eval failed: Error: this shouldn't be evaluated
-    at Object.throw (file:///Users/jeffhykin/repos/denix/main/runtime.js:1774:35)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:21:33
+    at throw (file:///Users/jeffhykin/repos/denix/main/runtime.js:1774:35)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:27:15
     at Object.get [as lst] (file:///Users/jeffhykin/repos/denix/main/runtime.js:137:34)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:23:45
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:30:52
     at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:118:24)
     at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:10:9

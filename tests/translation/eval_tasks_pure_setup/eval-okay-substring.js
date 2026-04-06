@@ -1,5 +1,5 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -26,38 +26,58 @@ export default ((_withAttrs) => {
                             operators.add(
                               operators.add(
                                 operators.add(
-                                  nixScope.substring(1n)(2n)(nixScope.s),
+                                  apply(
+                                    apply(apply(nixScope.substring, 1n), 2n),
+                                    nixScope.s,
+                                  ),
                                   "x",
                                 ),
-                                nixScope.substring(0n)(
-                                  nixScope.stringLength(nixScope.s),
-                                )(nixScope.s),
+                                apply(
+                                  apply(
+                                    apply(nixScope.substring, 0n),
+                                    apply(nixScope.stringLength, nixScope.s),
+                                  ),
+                                  nixScope.s,
+                                ),
                               ),
                               "y",
                             ),
-                            nixScope.substring(3n)(100n)(nixScope.s),
+                            apply(
+                              apply(apply(nixScope.substring, 3n), 100n),
+                              nixScope.s,
+                            ),
                           ),
                           "z",
                         ),
-                        nixScope.substring(2n)(
-                          nixScope.sub(nixScope.stringLength(nixScope.s))(3n),
-                        )(nixScope.s),
+                        apply(
+                          apply(
+                            apply(nixScope.substring, 2n),
+                            apply(
+                              apply(
+                                nixScope.sub,
+                                apply(nixScope.stringLength, nixScope.s),
+                              ),
+                              3n,
+                            ),
+                          ),
+                          nixScope.s,
+                        ),
                       ),
                       "a",
                     ),
-                    nixScope.substring(3n)(0n)(nixScope.s),
+                    apply(apply(apply(nixScope.substring, 3n), 0n), nixScope.s),
                   ),
                   "b",
                 ),
-                nixScope.substring(3n)(1n)(nixScope.s),
+                apply(apply(apply(nixScope.substring, 3n), 1n), nixScope.s),
               ),
               "c",
             ),
-            nixScope.substring(5n)(10n)("perl"),
+            apply(apply(apply(nixScope.substring, 5n), 10n), "perl"),
           ),
           "_",
         ),
-        nixScope.substring(3n)(-1n)("tebbad"),
+        apply(apply(apply(nixScope.substring, 3n), -1n), "tebbad"),
       );
     });
   } finally {

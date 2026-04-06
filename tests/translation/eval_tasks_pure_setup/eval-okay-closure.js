@@ -2,7 +2,7 @@ import {
   createRuntime,
   Path,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -14,7 +14,8 @@ export default /*let*/ createScope((nixScope) => {
     nixScope,
     "closure",
     (nixScope) =>
-      nixScope.builtins["genericClosure"](
+      apply(
+        nixScope.builtins["genericClosure"],
         {
           "startSet": [{ "key": 80n }],
           "operator": createFunc(
@@ -23,12 +24,20 @@ export default /*let*/ createScope((nixScope) => {
             {},
             (nixScope) => (
               operators.ifThenElse(
-                nixScope.builtins["lessThan"](nixScope.key)(0n),
+                apply(apply(nixScope.builtins["lessThan"], nixScope.key), 0n),
                 () => [],
                 () => [
-                  { "key": nixScope.builtins["sub"](nixScope.key)(9n) },
                   {
-                    "key": nixScope.builtins["sub"](nixScope.key)(13n),
+                    "key": apply(
+                      apply(nixScope.builtins["sub"], nixScope.key),
+                      9n,
+                    ),
+                  },
+                  {
+                    "key": apply(
+                      apply(nixScope.builtins["sub"], nixScope.key),
+                      13n,
+                    ),
                     "foo": true,
                   },
                 ],
@@ -42,12 +51,20 @@ export default /*let*/ createScope((nixScope) => {
     nixScope,
     "sort",
     (nixScope) =>
-      (nixScope.import(new Path(["../source_code/nix_lang/lib.nix"], [])))
-        ["sortBy"](createFunc(/*arg:*/ "a", null, {}, (nixScope) => (
+      apply(
+        (apply(
+          nixScope.import,
+          new Path(["../source_code/nix_lang/lib.nix"], []),
+        ))["sortBy"],
+        createFunc(/*arg:*/ "a", null, {}, (nixScope) => (
           createFunc(/*arg:*/ "b", null, {}, (nixScope) => (
-            nixScope.builtins["lessThan"](nixScope.a["key"])(nixScope.b["key"])
+            apply(
+              apply(nixScope.builtins["lessThan"], nixScope.a["key"]),
+              nixScope.b["key"],
+            )
           ))
-        ))),
+        )),
+      ),
   );
-  return nixScope.sort(nixScope.closure);
+  return apply(nixScope.sort, nixScope.closure);
 });

@@ -1,5 +1,5 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter } = createRuntime();
+const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
   ? import.meta.url.slice(7)
@@ -35,13 +35,14 @@ export default //
         createFunc(/*arg:*/ "n", null, {}, (nixScope) => (
           operators.ifThenElse(
             operators.greaterThan(nixScope.n, 0n),
-            () => (nixScope.throwAfterB(nixScope.recurse)(
+            () => (apply(
+              apply(nixScope.throwAfterB, nixScope.recurse),
               operators.subtract(nixScope.n, 1n),
             )),
             () => (operators.ifThenElse(
               nixScope.recurse,
-              () => (nixScope.throwAfterA(false)(10n)),
-              () => (nixScope.throw("Uh oh!")),
+              () => (apply(apply(nixScope.throwAfterA, false), 10n)),
+              () => (apply(nixScope.throw, "Uh oh!")),
             )),
           )
         ))
@@ -55,17 +56,18 @@ export default //
         createFunc(/*arg:*/ "n", null, {}, (nixScope) => (
           operators.ifThenElse(
             operators.greaterThan(nixScope.n, 0n),
-            () => (nixScope.throwAfterA(nixScope.recurse)(
+            () => (apply(
+              apply(nixScope.throwAfterA, nixScope.recurse),
               operators.subtract(nixScope.n, 1n),
             )),
             () => (operators.ifThenElse(
               nixScope.recurse,
-              () => (nixScope.throwAfterB(true)(10n)),
-              () => (nixScope.throw("Uh oh!")),
+              () => (apply(apply(nixScope.throwAfterB, true), 10n)),
+              () => (apply(nixScope.throw, "Uh oh!")),
             )),
           )
         ))
       )),
   );
-  return nixScope.throwAfterA(true)(10n);
+  return apply(apply(nixScope.throwAfterA, true), 10n);
 });

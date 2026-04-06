@@ -1,5 +1,6 @@
 denix_eval: eval failed: Error: Called builtins.typeOf, which only works with valid nix values, but instead got type undefined, with a value of: undefined 
-    at Object.typeOf (file:///Users/jeffhykin/repos/denix/main/runtime.js:370:31)
-    at requireList (file:///Users/jeffhykin/repos/denix/main/runtime.js:227:62)
-    at Object.genericClosure (file:///Users/jeffhykin/repos/denix/main/runtime.js:2658:34)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:8:51
+    at Object.typeOf (file:///Users/jeffhykin/repos/denix/main/runtime.js:385:31)
+    at requireList (file:///Users/jeffhykin/repos/denix/main/runtime.js:242:62)
+    at genericClosure (file:///Users/jeffhykin/repos/denix/main/runtime.js:2688:34)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:8:16
