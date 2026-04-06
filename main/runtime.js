@@ -3016,10 +3016,20 @@ import { resolveIndirectReference } from "./registry.js"
         runtimeWithScope.createFunc = createCreateFunc(runtimeWithScope)
         runtimeWithScope.createScope = createCreateScope(runtimeWithScope)
         runtimeWithScope.defGetter = createDefGetter(runtimeWithScope)
+        // apply: handles __functor attrsets (callable attrsets in Nix)
+        function apply(fn, arg) {
+            if (typeof fn === "function") return fn(arg)
+            if (fn && typeof fn === "object" && "__functor" in fn) {
+                return apply(apply(fn.__functor, fn), arg)
+            }
+            throw new NixError(`error: attempt to call something which is not a function but ${builtins.typeOf(fn)}`)
+        }
+
         return {
             createFunc: runtimeWithScope.createFunc,
             createScope: runtimeWithScope.createScope,
             defGetter: runtimeWithScope.defGetter,
+            apply,
             runtime: runtimeWithScope,
         }
     }

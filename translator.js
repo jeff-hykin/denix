@@ -157,7 +157,7 @@ const buildPreamble = (output, options) => {
     const extraImports = [needsPath && "Path", needsInterpolatedString && "InterpolatedString"].filter(Boolean)
     let pre = ""
     pre += `import { createRuntime${extraImports.length ? ", " + extraImports.join(", ") : ""} } from "${runtimePath}"\n`
-    pre += `const {runtime, createFunc, createScope, defGetter} = createRuntime()\n`
+    pre += `const {runtime, createFunc, createScope, defGetter, apply} = createRuntime()\n`
     // Module-level nixScope, bound to the runtime's current (root) scope.
     // The root scope is seeded with builtins/true/false/null/derivation/
     // import/abort/throw, which is why things like nixScope.builtins and
@@ -560,7 +560,7 @@ const nixNodeToJs = (node)=>{
         return `(nixScope["builtins"]["findFile"](nixScope["builtins"]["nixPath"]()))(${JSON.stringify(inner)})`
     } else if (node.type == "apply_expression") { // function call
         const children = valueBasedChildren(node)
-        return `${nixNodeToJs(children[0])}(${nixNodeToJs(children[1])})`
+        return `apply(${nixNodeToJs(children[0])}, ${nixNodeToJs(children[1])})`
     } else if (node.type == "if_expression") {
         // <if_expression>
         //     <if text="if" />
