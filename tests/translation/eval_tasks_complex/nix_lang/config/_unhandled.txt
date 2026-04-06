@@ -1,0 +1,30 @@
+# Unhandled lines from config.sh
+# All lines in this script use unsupported commands (nix registry, nix-build, nix config show)
+# or complex shell patterns (pipes, variables, conditionals, file existence checks).
+
+[variable][unsupported-cmd] L5-29: XDG_CONFIG_HOME tests using nix registry remove, file existence checks, $TEST_ROOT
+  -- creates isolated home, runs nix registry remove, checks file existence
+
+[pipe][variable][unsupported-cmd] L34-37: nix-build --verbose --version | grep "User config" | cut -d ':' -f2- | xargs
+  -- XDG_CONFIG_DIRS test, pipe chain, uses $TEST_ROOT
+
+[pipe][variable][unsupported-cmd] L39-41: NIX_USER_CONF_FILES test with nix-build --verbose --version | grep | cut
+  -- pipe chain, uses $TEST_ROOT
+
+[pipe][unsupported-cmd] L45-48: nix config show | grep '^substituters =' | cut -d '=' -f 2 | xargs
+  -- loads config from custom location, pipe chain
+
+[pipe][unsupported-cmd] L50-53: nix config show | grep '^allowed-uris =' | cut -d '=' -f 2 | xargs
+  -- include directive test, pipe chain
+
+[pipe][unsupported-cmd] L55-58: nix config show | grep '^experimental-features =' | cut -d '=' -f 2 | xargs
+  -- !include directive test, pipe chain
+
+[pipe][variable][unsupported-cmd] L61-68: NIX_CONFIG env var test with nix config show | grep | cut
+  -- sets NIX_CONFIG, checks cores and experimental-features
+
+[pipe][unsupported-cmd] L71-73: nix config show | grep '^warn-dirty' vs nix config show warn-dirty
+  -- single setting retrieval test
+
+[unsupported-cmd] L76-78: nix config show --min-free 64K/1M/2G min-free
+  -- unit prefix tests for nix config show

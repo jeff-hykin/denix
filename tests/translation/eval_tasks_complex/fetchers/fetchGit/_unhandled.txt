@@ -1,0 +1,36 @@
+Line 34: [pipe] nix-instantiate --eval -E "builtins.readFile ((builtins.fetchGit ...) + \"/hello\") == ..." — uses nix-instantiate
+Line 36: [pipe] expectStderr 0 nix eval -vvvv --impure --raw --expr "..." | grepQuiet "copying ..." — uses pipe with expectStderr/grepQuiet
+Line 39-43: [variable] path0/path0_ comparisons depend on outPath store paths which denix may not produce identically
+Line 45: [pipe] [[ $(tail -n 1 "$path0"/hello) = "hello" ]] — reads from store path via tail
+Line 51-52: [variable] path=$(nix eval ... .outPath) then cat $path/hello — reads from store path
+Line 58-60: [variable] mv repo then fetch cached — tests nix caching behavior, not relevant to denix
+Line 67-68: [unsupported-flag] --refresh flag not supported by denix
+Line 70-71: [variable] fetches rev1 then reads from store path via cat
+Line 77-78: [complex-shell] git pack-refs --all on cache dir — tests nix cache internals
+Line 87: [unsupported-cmd] nix eval --raw --expr "builtins.fetchGit { ... }" — raw fetchGit result (not .outPath), unclear output
+Line 103: [pipe] expectStderr 1 nix eval --expr 'builtins.fetchGit "file:///foo"' | grepQuiet "..." — pipe
+Line 106-107: [variable] path comparison with store outPath
+Line 118-123: [variable] path2 from dirty tree then reads files from store path via cat/test
+Line 130-131: [variable] path3 vs path comparison — depends on prior store paths
+Line 133-134: [variable] path3 vs path comparison
+Line 137-140: [variable] commits then compares path2 vs path4 store paths
+Line 146: [unsupported-cmd] expect 102 — custom exit code check
+Line 148-149: [variable] narHash path comparison with store path
+Line 152: [pipe] expectStderr 102 ... | grepQuiet "error: NAR hash mismatch" — pipe
+Line 155: [pipe] expectStderr 0 ... | grepQuiet "warning: Input .* is unlocked" — pipe
+Line 158-162: [unsupported-flag] --tarball-ttl, redirect to /dev/null
+Line 165: [variable] path update via store outPath
+Line 172-173: [variable] path2 from dirty tree then reads from store via cat
+Line 176-177: [variable] path3 from local path then comparison
+Line 186-190: [variable] path3/path4 comparison with store paths, cat from store
+Line 195-197: [variable] path3/path4 comparison with --tarball-ttl
+Line 201-202: [variable] path3/path5 comparison
+Line 209-210: [variable] path3/path5 comparison after cache nuke
+Line 214-217: [complex-shell] createGitRepo + git fetch + checkout detached HEAD in minimal repo
+Line 220-222: [variable] path7/path8 comparison with store paths
+Line 234-235: [variable] path9 regex match on store path
+Line 249-259: [complex-shell] .gitattributes setup then check store path file existence
+Line 262-264: [complex-shell] rm -rf .git then expect failure — destructive repo modification
+Line 267-270: [complex-shell] initGitRepo (not createGitRepo) then fetch
+Line 274-283: [variable] path with space, uses cd and ./. relative path
+Line 305-311: [complex-shell] empty commit with config, then complex assertion expression

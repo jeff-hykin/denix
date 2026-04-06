@@ -1,0 +1,28 @@
+# Unhandled lines from misc.sh
+
+[pipe][variable] L14: nix-env --version | grep -F "${_NIX_TEST_CLIENT_VERSION:-$version}"
+  -- pipe, uses shell variable
+
+[complex-shell][pipe] L17-18: (PATH=""; ! $nix_env --help 2>&1 ) | grepQuiet -F "The 'man' command..."
+  -- captures nix-env path, clears PATH, pipes through grepQuiet
+
+[pipe][redirect][unsupported-cmd] L21: expect 1 nix-env --foo 2>&1 | grep "no operation"
+  -- nix-env usage errors, redirect + pipe
+
+[pipe][redirect][unsupported-cmd] L22: expect 1 nix-env -q --foo 2>&1 | grep "unknown flag"
+  -- nix-env usage errors, redirect + pipe
+
+[variable][pipe] L25-27: eval_arg_res=$(nix-instantiate --eval -E '...' 2>&1 || true); echo "$eval_arg_res" | grep "at «string»:1:15:"
+  -- captures into variable, checks with grep (partially translated as 0006)
+
+[pipe][redirect] L29-31: echo '...' | nix-instantiate --eval -E - 2>&1 || true; echo ... | grep "at «stdin»:1:15:"
+  -- stdin pipe to nix-instantiate
+
+[variable][pipe] L43-44: out="$(expectStderr 0 nix-instantiate --option foobar baz --expr '{}')"; [[ "$(echo "$out" | grep -c foobar )" = 1 ]]
+  -- captures stderr, counts grep matches
+
+[variable][pipe] L46-47: out="$(expectStderr 0 nix-instantiate '{}' --option foobar baz --expr )"; [[ "$(echo "$out" | grep -c foobar )" = 1 ]]
+  -- captures stderr, counts grep matches
+
+[complex-shell][unsupported-cmd] L49-51: if [[ $(uname) = Linux && $(uname -m) = i686 ]]; then [[ $(nix config show system) = i686-linux ]]; fi
+  -- platform-specific conditional, uses nix config show

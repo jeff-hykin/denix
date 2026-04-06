@@ -1,10 +1,10 @@
 denix_eval: translation failed: Error: Dynamic attribute keys are not supported in rec sets
-    at nixNodeToJs (file:///Users/jeffhykin/repos/denix/translator.js:743:35)
-    at nixNodeToJs (file:///Users/jeffhykin/repos/denix/translator.js:552:22)
-    at file:///Users/jeffhykin/repos/denix/translator.js:903:48
+    at nixNodeToJs (file:///Users/jeffhykin/repos/denix/translator.js:748:35)
+    at nixNodeToJs (file:///Users/jeffhykin/repos/denix/translator.js:557:22)
+    at file:///Users/jeffhykin/repos/denix/translator.js:908:48
     at Array.map (<anonymous>)
-    at nixNodeToJs (file:///Users/jeffhykin/repos/denix/translator.js:902:51)
-    at nixNodeToJs (file:///Users/jeffhykin/repos/denix/translator.js:1170:31)
-    at convertToJs (file:///Users/jeffhykin/repos/denix/translator.js:189:19)
+    at nixNodeToJs (file:///Users/jeffhykin/repos/denix/translator.js:907:51)
+    at nixNodeToJs (file:///Users/jeffhykin/repos/denix/translator.js:1175:31)
+    at convertToJs (file:///Users/jeffhykin/repos/denix/translator.js:188:19)
     at file:///Users/jeffhykin/repos/denix/run/denix_eval:109:24
     at __drainNextTickAndMacrotasks (ext:core/01_core.js:439:7)

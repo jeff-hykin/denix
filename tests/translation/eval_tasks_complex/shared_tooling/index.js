@@ -29,3 +29,17 @@ export {
     resolveFixture,
 } from "./fixtures.js"
 export { withTempStore, withTempTree } from "./temp_store.js"
+export { expectTrace } from "./expect_trace.js"
+export { tryHash, tryHashPath, tryHashConvert } from "./hash_helpers.js"
+export { simpleTest } from "./simple_test.js"
+export { checkExpression } from "./check_expression.js"
+export { bashAssert } from "./bash_assert.js"
+export {
+    varTest,
+    checkFilter,
+    diffAndAccept,
+    reportFailure,
+} from "./minor_helpers.js"
+export { withGitRepo, withHttpServer, withTarball } from "./fetchers.js"
+export { assertBuilt, assertCacheHit, assertBuildFails, readOutput } from "./build_asserts.js"
+export { withSession } from "./repl_session.js"

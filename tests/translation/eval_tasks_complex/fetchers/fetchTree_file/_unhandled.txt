@@ -1,0 +1,23 @@
+# Unhandled lines from fetchTree-file.sh
+# Nearly all lines require features not available in denix translation.
+
+fetchTree-file.sh:5    TODO_NixOS                                                          [unsupported-cmd]
+fetchTree-file.sh:7    clearStore                                                          [unsupported-cmd]
+fetchTree-file.sh:9    cd "$TEST_ROOT"                                                     [variable]
+fetchTree-file.sh:12   echo foo > test_input                                               [redirect]
+fetchTree-file.sh:14   input_hash="$(nix hash path test_input)"                            [unsupported-cmd] nix hash path
+fetchTree-file.sh:16-23  nix eval --impure --file - <<EOF ... EOF                          [complex-shell] heredoc + nix eval --file - + depends on $input_hash
+fetchTree-file.sh:29   rm -fr "$TEST_ROOT/testFlake"                                       [variable]
+fetchTree-file.sh:30   mkdir "$TEST_ROOT/testFlake"                                        [variable]
+fetchTree-file.sh:31   pushd testFlake                                                     [complex-shell]
+fetchTree-file.sh:33-36  mkdir inputs; echo foo > ...; echo flake.nix; tar cfa ...         [complex-shell]
+fetchTree-file.sh:37   cp test_input.tar.gz test_input_no_ext                              [complex-shell]
+fetchTree-file.sh:38   input_tarball_hash="$(nix hash path ...)"                           [unsupported-cmd] nix hash path
+fetchTree-file.sh:39   input_directory_hash="$(nix hash path inputs)"                      [unsupported-cmd] nix hash path
+fetchTree-file.sh:41-64  cat <<EOF > flake.nix ...                                         [complex-shell] heredoc + flake.nix generation
+fetchTree-file.sh:66   nix flake update                                                    [unsupported-cmd] nix flake
+fetchTree-file.sh:67-92  nix eval --file - <<EOF ... EOF                                   [complex-shell] heredoc + depends on $input_tarball_hash, $input_directory_hash
+fetchTree-file.sh:95   nix flake metadata --json ... | jq                                  [unsupported-cmd] nix flake + pipe
+fetchTree-file.sh:97   popd                                                                [complex-shell]
+fetchTree-file.sh:99   [[ -z "${NIX_DAEMON_PACKAGE-}" ]] && return 0                       [variable]
+fetchTree-file.sh:104-118  cat <<EOF > flake.nix ... nix flake update ... nix eval          [complex-shell] heredoc + nix flake + $NIX_DAEMON_PACKAGE

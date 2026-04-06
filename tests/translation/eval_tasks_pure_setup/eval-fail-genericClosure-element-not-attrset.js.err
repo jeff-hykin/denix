@@ -1,4 +1,4 @@
 denix_eval: eval failed: Error: error: value is a string while a set was expected
     at requireAttrSet (file:///Users/jeffhykin/repos/denix/main/runtime.js:215:19)
     at Object.genericClosure (file:///Users/jeffhykin/repos/denix/main/runtime.js:2670:21)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_c6bae17bd0e542/translated.js:7:51
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:8:51

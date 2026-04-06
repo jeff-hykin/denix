@@ -3,8 +3,8 @@ Warning: Failed to format generated JavaScript: [0m[1m[31merror[0m: Expected
   of
   ~~
 
-denix_eval: eval failed: TypeError: The module's source code could not be parsed: Expected ',', got 'of' at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_6922a5ca12c458d/translated.js:8:1
+denix_eval: eval failed: TypeError: The module's source code could not be parsed: Expected ',', got 'of' at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:8:1
 
   of
   ~~
-    at async file:///Users/jeffhykin/repos/denix/run/denix_eval:124:17
+    at async file:///Users/jeffhykin/repos/denix/run/denix_eval:134:17

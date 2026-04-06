@@ -1,4 +1,4 @@
 denix_eval: eval failed: Error: Parse error on line 68, column 51: Array is not closed
     at parse (https://deno.land/std@0.224.0/toml/_parser.ts:905:13)
     at Object.fromTOML (file:///Users/jeffhykin/repos/denix/main/runtime.js:593:32)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_8a6525c62ae6c4ad/translated.js:43:32
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:44:32

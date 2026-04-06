@@ -1,0 +1,25 @@
+# Unhandled lines from tarball.sh
+
+tarball.sh:7     rm -rf "$TEST_HOME"                                                  [variable]
+tarball.sh:9-15  tarroot=$TEST_ROOT/tarball; rm -rf; mkdir; cp; touch                 [variable] [complex-shell] setup depends on $TEST_ROOT, config_nix, etc
+tarball.sh:16    hash=$(nix hash path "$tarroot")                                     [unsupported-cmd] nix hash path
+tarball.sh:23    tar ... | $compressor > "$tarball"                                    [pipe] [complex-shell] tarball creation with pipe
+tarball.sh:25    nix-env -f file://"$tarball" -qa --out-path | grepQuiet dependencies  [unsupported-cmd] nix-env + pipe
+tarball.sh:27    nix-build -o "$TEST_ROOT"/result file://"$tarball"                    [unsupported-cmd] nix-build
+tarball.sh:29    nix-build -o "$TEST_ROOT"/result '<foo>' -I foo=file://"$tarball"     [unsupported-cmd] nix-build
+tarball.sh:31    nix-build -o "$TEST_ROOT"/result -E "import (fetchTarball ...)"       [unsupported-cmd] nix-build
+tarball.sh:33    nix-build ... sha256 = "$hash" ...                                    [unsupported-cmd] nix-build + depends on $hash
+tarball.sh:35    nix-build ... fetchTree "file://$tarball"                              [unsupported-cmd] nix-build
+tarball.sh:36    nix-build ... fetchTree { type = "tarball"; ... }                      [unsupported-cmd] nix-build
+tarball.sh:37    nix-build ... fetchTree { ... narHash = "$hash"; }                     [unsupported-cmd] nix-build + depends on $hash
+tarball.sh:39    nix eval --impure --expr "(fetchTree ...).lastModified"                [variable] depends on $tarball from test_tarball function
+tarball.sh:41-42 nix-instantiate --strict --eval -E ... | grep 'true'                 [variable] [pipe] depends on $tarball, $hash
+tarball.sh:48    nix-instantiate --eval -E '<fnord/config.nix>' -I fnord=... -I fnord= [variable] depends on $_NIX_TEST_BUILD_DIR
+tarball.sh:54-65 nix store prefetch-file ... cmp ... diff                              [unsupported-cmd] nix store prefetch-file + cmp + diff
+tarball.sh:68-70 test_tarball '' cat; test_tarball .xz xz; test_tarball .gz gzip       [complex-shell] function calls with compression
+tarball.sh:76-77 nix flake prefetch --json ... regex match                             [unsupported-cmd] nix flake prefetch
+tarball.sh:78-83 cat "$TEST_ROOT/result/..." = bar                                     [variable] depends on $TEST_ROOT
+tarball.sh:87-91 mkdir; tar cvf; nix flake prefetch; -d checks                         [unsupported-cmd] [variable] nix flake prefetch + $TEST_ROOT
+tarball.sh:96-100  echo; chmod; tar; nix flake prefetch --refresh; cat check           [unsupported-cmd] [variable] nix flake prefetch + $TEST_ROOT
+tarball.sh:103-114 tar rvf; nix flake prefetch --refresh; cat checks                   [unsupported-cmd] [variable] nix flake prefetch + $TEST_ROOT
+tarball.sh:117-118 touch empty; expectStderr ... nix store prefetch-file --unpack ...   [unsupported-cmd] nix store prefetch-file + pipe

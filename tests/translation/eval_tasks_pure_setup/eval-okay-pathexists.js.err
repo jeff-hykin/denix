@@ -1,4 +1,0 @@
-Warning: Failed to format generated JavaScript: 
-denix_eval: eval failed: Error: error: cannot coerce set to a string
-    at Object.toPath (file:///Users/jeffhykin/repos/denix/main/runtime.js:544:27)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_eb835f63bdcfe22c/translated.js:7:3467

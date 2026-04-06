@@ -1,0 +1,28 @@
+# Lines from fetchGitVerification.sh that could not be translated
+
+[complex-shell] line 6: [[ $(type -p ssh-keygen) ]] || skipTest "ssh-keygen not installed"
+  Prerequisite check — partially handled in 0001 with try/catch skip
+
+[unsupported-flag] line 8: enableFeatures "verified-fetches"
+  Feature flag not available in denix
+
+[complex-shell] line 15-22: SSH key generation with ssh-keygen
+  Requires ssh-keygen binary — handled in 0001 but may fail in CI
+
+[complex-shell] line 29: git -c "user.signingkey=..." commit -S
+  Requires SSH signing support in git
+
+[complex-shell] line 34: nix eval with builtins.readFile + fetchGit + publicKey
+  Requires verified-fetches feature and working SSH signing
+
+[complex-shell] line 36-41: Verification on dirty repo should fail
+  Requires signed commits + dirty working tree detection
+
+[complex-shell] line 43-46: Second signed commit with different key + publicKeys array
+  Requires SSH signing and publicKeys array support
+
+[unsupported-cmd] line 49-66: nix build with flake input using publicKeys verification
+  Uses nix build, flake inputs, and SSH key verification
+
+[unsupported-cmd] line 68-83: nix build with wrong publicKey flake input
+  Uses nix build with flake that should fail verification

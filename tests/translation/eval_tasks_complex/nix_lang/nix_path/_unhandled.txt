@@ -1,0 +1,67 @@
+# Unhandled lines from nix_path.sh
+# These depend on $TEST_ROOT which is set by the test harness and cannot be resolved statically.
+
+# Line 35-40: Setup code creating directories and files under $TEST_ROOT
+[variable: TEST_ROOT] unset NIX_PATH
+[variable: TEST_ROOT] mkdir -p "$TEST_ROOT"/{from-nix-path-file,from-NIX_PATH,from-nix-path,from-extra-nix-path,from-I}
+[variable: TEST_ROOT] for i in from-nix-path-file from-NIX_PATH from-nix-path from-extra-nix-path from-I; do touch "$TEST_ROOT"/$i/only-$i.nix; done
+
+# Line 44: finding something not in default paths fails (depends on unset NIX_PATH + test environment)
+[variable: TEST_ROOT] ( ! $(nix-instantiate --find-file test) )
+
+# Line 46: modifying nix.conf
+[variable: TEST_ROOT] echo "nix-path = test=$TEST_ROOT/from-nix-path-file" >> "$test_nix_conf"
+
+# Line 49: Use nix.conf in absence of NIX_PATH
+[variable: TEST_ROOT] [[ $(nix-instantiate --find-file test) = $TEST_ROOT/from-nix-path-file ]]
+
+# Line 52: NIX_PATH overrides nix.conf
+[variable: TEST_ROOT] [[ $(NIX_PATH=test=$TEST_ROOT/from-NIX_PATH nix-instantiate --find-file test) = $TEST_ROOT/from-NIX_PATH ]]
+
+# Line 54: if NIX_PATH does not have desired entry, it fails
+[variable: TEST_ROOT] (! NIX_PATH=test=$TEST_ROOT nix-instantiate --find-file test/only-from-nix-path-file.nix)
+
+# Line 57: -I extends nix.conf
+[variable: TEST_ROOT] [[ $(nix-instantiate -I test="$TEST_ROOT"/from-I --find-file test/only-from-I.nix) = $TEST_ROOT/from-I/only-from-I.nix ]]
+
+# Line 59: -I fallback to nix.conf
+[variable: TEST_ROOT] [[ $(nix-instantiate -I test="$TEST_ROOT"/from-I --find-file test/only-from-nix-path-file.nix) = $TEST_ROOT/from-nix-path-file/only-from-nix-path-file.nix ]]
+
+# Line 62: -I extends NIX_PATH
+[variable: TEST_ROOT] [[ $(NIX_PATH=test=$TEST_ROOT/from-NIX_PATH nix-instantiate -I test="$TEST_ROOT"/from-I --find-file test/only-from-I.nix) = $TEST_ROOT/from-I/only-from-I.nix ]]
+
+# Line 64: -I takes precedence over NIX_PATH
+[variable: TEST_ROOT] [[ $(NIX_PATH=test=$TEST_ROOT/from-NIX_PATH nix-instantiate -I test="$TEST_ROOT"/from-I --find-file test) = $TEST_ROOT/from-I ]]
+
+# Line 66: -I fallback to NIX_PATH
+[variable: TEST_ROOT] [[ $(NIX_PATH=test=$TEST_ROOT/from-NIX_PATH nix-instantiate -I test="$TEST_ROOT"/from-I --find-file test/only-from-NIX_PATH.nix) = $TEST_ROOT/from-NIX_PATH/only-from-NIX_PATH.nix ]]
+
+# Line 69: --extra-nix-path extends NIX_PATH
+[variable: TEST_ROOT] [[ $(NIX_PATH=test=$TEST_ROOT/from-NIX_PATH nix-instantiate --extra-nix-path test="$TEST_ROOT"/from-extra-nix-path --find-file test/only-from-extra-nix-path.nix) = $TEST_ROOT/from-extra-nix-path/only-from-extra-nix-path.nix ]]
+
+# Line 71: --extra-nix-path fallback to NIX_PATH
+[variable: TEST_ROOT] [[ $(NIX_PATH=test=$TEST_ROOT/from-NIX_PATH nix-instantiate --extra-nix-path test="$TEST_ROOT"/from-extra-nix-path --find-file test/only-from-NIX_PATH.nix) = $TEST_ROOT/from-NIX_PATH/only-from-NIX_PATH.nix ]]
+
+# Line 74: --nix-path overrides NIX_PATH
+[variable: TEST_ROOT] [[ $(NIX_PATH=test=$TEST_ROOT/from-NIX_PATH nix-instantiate --nix-path test="$TEST_ROOT"/from-nix-path --find-file test) = $TEST_ROOT/from-nix-path ]]
+
+# Line 76: --nix-path hides NIX_PATH entries
+[variable: TEST_ROOT] (! NIX_PATH=test=$TEST_ROOT/from-NIX_PATH nix-instantiate --nix-path test="$TEST_ROOT"/from-nix-path --find-file test/only-from-NIX_PATH.nix)
+
+# Line 79: --nix-path overrides nix.conf
+[variable: TEST_ROOT] [[ $(nix-instantiate --nix-path test="$TEST_ROOT"/from-nix-path --find-file test) = $TEST_ROOT/from-nix-path ]]
+
+# Line 80: --nix-path hides nix.conf entries
+[variable: TEST_ROOT] (! nix-instantiate --nix-path test="$TEST_ROOT"/from-nix-path --find-file test/only-from-nix-path-file.nix)
+
+# Line 83: --extra-nix-path extends nix.conf
+[variable: TEST_ROOT] [[ $(nix-instantiate --extra-nix-path test="$TEST_ROOT"/from-extra-nix-path --find-file test/only-from-extra-nix-path.nix) = $TEST_ROOT/from-extra-nix-path/only-from-extra-nix-path.nix ]]
+
+# Line 85: --extra-nix-path fallback to nix.conf
+[variable: TEST_ROOT] [[ $(nix-instantiate --extra-nix-path test="$TEST_ROOT"/from-extra-nix-path --find-file test) = $TEST_ROOT/from-nix-path-file ]]
+
+# Line 88: -I extends --nix-path
+[variable: TEST_ROOT] [[ $(nix-instantiate --nix-path test="$TEST_ROOT"/from-nix-path -I test="$TEST_ROOT"/from-I --find-file test/only-from-I.nix) = $TEST_ROOT/from-I/only-from-I.nix ]]
+
+# Line 89: -I fallback to --nix-path
+[variable: TEST_ROOT] [[ $(nix-instantiate --nix-path test="$TEST_ROOT"/from-nix-path -I test="$TEST_ROOT"/from-I --find-file test/only-from-nix-path.nix) = $TEST_ROOT/from-nix-path/only-from-nix-path.nix ]]

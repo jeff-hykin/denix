@@ -1,0 +1,86 @@
+# derivation-json.sh (2 [[ assertions)
+
+derivation-json.sh:11: [[ "$drvPath" = "$drvPath2" ]] [unsupported-cmd] nix derivation add, [variable] $drvPath, $drvPath2
+derivation-json.sh:23: [[ "$drvPath" = "$drvPath3" ]] [unsupported-cmd] nix derivation add, [variable] $drvPath, $drvPath3
+
+# Also skipped non-[[ lines from derivation-json.sh:
+derivation-json.sh:5: drvPath=$(nix-instantiate simple.nix) [unsupported-cmd] nix-instantiate (store instantiation, not --eval)
+derivation-json.sh:7: nix derivation show "$drvPath" | jq ... [unsupported-cmd] [pipe]
+derivation-json.sh:10: drvPath2=$(nix derivation add < ...) [unsupported-cmd] [redirect]
+derivation-json.sh:14: jq -e ... < "$TEST_HOME/simple.json" [unsupported-cmd] [redirect] [variable]
+derivation-json.sh:17: jq ... | expectStderr 1 nix derivation add | grepQuiet ... [unsupported-cmd] [pipe]
+derivation-json.sh:22: drvPath3=$(jq ... | nix derivation add) [unsupported-cmd] [pipe] [redirect]
+
+# structured-attrs.sh (2 [[ assertions)
+
+structured-attrs.sh:14: [[ $(cat "$TEST_ROOT"/result/foo) = bar ]] [unsupported-cmd] nix-build result, [variable] $TEST_ROOT
+structured-attrs.sh:15: [[ $(cat "$TEST_ROOT"/result-dev/foo) = foo ]] [unsupported-cmd] nix-build result, [variable] $TEST_ROOT
+
+# Also skipped non-[[ lines from structured-attrs.sh:
+structured-attrs.sh:12: nix-build structured-attrs.nix -A all -o "$TEST_ROOT"/result [unsupported-cmd] [variable]
+structured-attrs.sh:19-20: nix-shell structured-attrs-shell.nix --run ... [unsupported-cmd] [variable]
+structured-attrs.sh:23: nix develop -f structured-attrs-shell.nix -c bash ... [unsupported-cmd]
+structured-attrs.sh:31: nix develop -f structured-attrs-shell.nix -c bash ... [unsupported-cmd]
+structured-attrs.sh:33: nix print-dev-env ... | grepQuiet ... [unsupported-cmd] [pipe]
+structured-attrs.sh:34: nix print-dev-env ... | grepQuiet ... [unsupported-cmd] [pipe]
+structured-attrs.sh:35: nix print-dev-env ... | grepQuietInverse ... [unsupported-cmd] [pipe]
+structured-attrs.sh:37-41: nix print-dev-env --json ... [unsupported-cmd] [complex-shell]
+structured-attrs.sh:48: expectStderr 0 nix-instantiate --expr ... --eval --strict | grepQuiet ... [pipe]
+structured-attrs.sh:51-52: nix-instantiate --expr ... + nix derivation show ... [unsupported-cmd] [pipe] [variable]
+structured-attrs.sh:56-65: expectStderr 0 nix-build ... | grepQuiet ... [unsupported-cmd] [pipe]
+
+# fixed.sh (1 [[ assertion)
+
+fixed.sh:16: [[ -e $path ]] [unsupported-cmd] nix-store result, [variable] $path
+
+# Also skipped non-[[ lines from fixed.sh:
+fixed.sh:9: path=$(nix-store -q "$(nix-instantiate fixed.nix -A good.0)") [unsupported-cmd]
+fixed.sh:12: nix-build fixed.nix -A bad --no-out-link && fail ... [unsupported-cmd]
+fixed.sh:17-21: nix path-info --json ... | jq ... [unsupported-cmd] [pipe]
+fixed.sh:24: nix-build fixed.nix -A good --no-out-link [unsupported-cmd]
+fixed.sh:28: nix-build fixed.nix -A check --check ... [unsupported-cmd]
+fixed.sh:32: nix-build fixed.nix -A good2 --no-out-link [unsupported-cmd]
+fixed.sh:35: nix-instantiate fixed.nix -A reallyBad && fail ... [unsupported-cmd]
+fixed.sh:39: expectStderr 1 nix-build fixed.nix -A badReferences | grepQuiet ... [unsupported-cmd] [pipe]
+fixed.sh:43: test "$(nix-instantiate fixed.nix -A good.1 | wc -l)" = 1 [unsupported-cmd] [pipe]
+fixed.sh:49: nix-build fixed.nix -A parallelSame --no-out-link -j2 [unsupported-cmd]
+fixed.sh:55: out=$(nix-build fixed.nix -A sameAsAdd --no-out-link) [unsupported-cmd]
+fixed.sh:58-65: nix-store --add/--add-fixed/--print-fixed-path ... [unsupported-cmd] [variable]
+fixed.sh:75: nix-build fixed.nix -A nar-not-recursive --no-out-link [unsupported-cmd]
+
+# impure-derivations.sh (16 [[ assertions)
+
+impure-derivations.sh:21: [[ "$drvPath" = "$drvPath2" ]] [unsupported-cmd] nix derivation add, [variable]
+impure-derivations.sh:30: [[ $(< "$path1"/n) = 0 ]] [unsupported-cmd] nix build result, [variable]
+impure-derivations.sh:31: [[ $(< "$path1_stuff"/bla) = 0 ]] [unsupported-cmd] nix build result, [variable]
+impure-derivations.sh:36: [[ $(< "$path2"/n) = 1 ]] [unsupported-cmd] nix build result, [variable]
+impure-derivations.sh:40: [[ $(< "$path3"/n) = X2 ]] [unsupported-cmd] nix build result, [variable]
+impure-derivations.sh:44: [[ $(< "$path4"/n) = X3 ]] [unsupported-cmd] nix build result, [variable]
+impure-derivations.sh:46: [[ $(< "$path4"/symlink/bla) = 3 ]] [unsupported-cmd] nix build result, [variable]
+impure-derivations.sh:47: [[ $(< "$path4"/self/n) = X3 ]] [unsupported-cmd] nix build result, [variable]
+impure-derivations.sh:53: [[ $(nix derivation show "$drvPath" | jq ...) = true ]] [unsupported-cmd] nix derivation show, [pipe] [variable]
+impure-derivations.sh:54: [[ $(nix derivation show "$drvPath" | jq ...) = true ]] [unsupported-cmd] nix derivation show, [pipe] [variable]
+impure-derivations.sh:58: [[ $(< "$path5") = X ]] [unsupported-cmd] nix build result, [variable]
+impure-derivations.sh:59: [[ $(< "$TEST_ROOT"/counter) = 5 ]] [variable] $TEST_ROOT
+impure-derivations.sh:63: [[ $(< "$path5") = X ]] [unsupported-cmd] nix build result, [variable]
+impure-derivations.sh:64: [[ $(< "$TEST_ROOT"/counter) = 5 ]] [variable] $TEST_ROOT
+impure-derivations.sh:68: [[ $(< "$path6") = X ]] [unsupported-cmd] nix build result, [variable]
+impure-derivations.sh:69: [[ $(< "$TEST_ROOT"/counter) = 5 ]] [variable] $TEST_ROOT
+
+# Also skipped non-[[ lines from impure-derivations.sh:
+impure-derivations.sh:15: printf 0 > "$TEST_ROOT"/counter [variable] [redirect]
+impure-derivations.sh:18: drvPath=$(nix-instantiate ./impure-derivations.nix -A impure) [unsupported-cmd]
+impure-derivations.sh:19: nix derivation show "$drvPath" | jq ... [unsupported-cmd] [pipe] [variable]
+impure-derivations.sh:20: drvPath2=$(nix derivation add < ...) [unsupported-cmd] [redirect] [variable]
+impure-derivations.sh:24: expectStderr 1 nix derivation add ... | grepQuiet ... [unsupported-cmd] [pipe]
+impure-derivations.sh:26-29: nix build --dry-run/--json ... [unsupported-cmd]
+impure-derivations.sh:33: nix path-info --json ... | jq ... [unsupported-cmd] [pipe]
+impure-derivations.sh:35: path2=$(nix build ... | jq ...) [unsupported-cmd] [pipe]
+impure-derivations.sh:39: path3=$(nix build ... | jq ...) [unsupported-cmd] [pipe]
+impure-derivations.sh:43: path4=$(nix build ... | jq ...) [unsupported-cmd] [pipe]
+impure-derivations.sh:50: (! nix build ...) | grep ... [unsupported-cmd] [pipe]
+impure-derivations.sh:52: drvPath=$(nix eval --json ... | jq -r .) [pipe]
+impure-derivations.sh:57: path5=$(nix build ... | jq ...) [unsupported-cmd] [pipe]
+impure-derivations.sh:62: path5=$(nix build ... | jq ...) [unsupported-cmd] [pipe]
+impure-derivations.sh:67: path6=$(nix build ... | jq ...) [unsupported-cmd] [pipe]
+impure-derivations.sh:72-73: nix build ... + cmp ... [unsupported-cmd]

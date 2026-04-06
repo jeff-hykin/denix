@@ -1,0 +1,8 @@
+# Lines from fetchGitShallow.sh that could not be translated
+
+[pipe] line 44: expectStderr 1 nix eval --expr '...' | grepQuiet "..."
+  Uses pipe to check stderr message for unlocked input error
+  (partially translated as 0004 with weaker assertion)
+
+[unsupported-cmd] line 64: git -C ... rev-list --count HEAD >/dev/null
+  Pre-check before the actual nix eval (translated the nix eval part in 0006)

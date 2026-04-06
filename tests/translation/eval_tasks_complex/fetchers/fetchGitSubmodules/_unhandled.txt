@@ -1,0 +1,20 @@
+# Lines from fetchGitSubmodules.sh that could not be translated
+
+[unsupported-cmd] line 88-89: test -e / [[ -e ... ]] on store paths (requires actual nix store)
+  [[ ! -e $pathWithoutSubmodules/sub/content ]]
+  [[ -e $pathWithSubmodules/sub/content ]]
+
+[unsupported-cmd] line 94: find on store path to check no .git dirs
+  test "$(find "$pathWithSubmodules" -name .git)" = ""
+
+[complex-shell] line 124-132: relative submodule URLs test
+  Requires multiple repos with relative paths and diff -r comparison
+
+[complex-shell] line 134-139: clone with upstream relative submodule URLs
+  git clone + nix eval with clone repo
+
+[complex-shell] line 141-191: submodule export-ignore interaction
+  Complex multi-step test involving .gitattributes, export-ignore, submodule config
+
+[complex-shell] line 226-232: worktree-based fetch comparison
+  git submodule update --init --recursive + worktree fetch comparison

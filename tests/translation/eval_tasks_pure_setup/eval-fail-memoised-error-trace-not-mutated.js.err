@@ -1,9 +1,9 @@
 denix_eval: eval failed: Error: nope
     at Object.throw (file:///Users/jeffhykin/repos/denix/main/runtime.js:1756:35)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_46baffdf4d117be3/translated.js:8:56
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:9:56
     at Object.get [as a] (file:///Users/jeffhykin/repos/denix/main/runtime.js:131:28)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_46baffdf4d117be3/translated.js:12:78
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:13:78
     at Object.get [as b] (file:///Users/jeffhykin/repos/denix/main/runtime.js:131:28)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_46baffdf4d117be3/translated.js:24:73
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:25:73
     at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:115:24)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_46baffdf4d117be3/translated.js:7:24
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:8:24

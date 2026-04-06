@@ -1,0 +1,3 @@
+# json.sh — script/tty-related tests are complex shell
+
+json.sh:43-70 [complex-shell] if type script; runScript nix eval ... — uses `script` command to simulate TTY, grep for pretty output

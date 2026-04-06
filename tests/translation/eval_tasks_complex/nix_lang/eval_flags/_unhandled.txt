@@ -1,0 +1,15 @@
+# tests/nix_tests/nix_lang_tests/tests/functional/eval.sh
+# 12 [[ ... ]] lines not recognized
+
+14: [[ $testStdinHeredoc == '{ bar = 4; foo = 4; }' ]]  [parse-failed]
+20: [[ $(nix eval str --raw -f "./eval.nix") == $'foo\nbar' ]]  [unsupported-cmd]
+23: [[ $(nix eval int -f - < "./eval.nix") == 123 ]]  [unsupported-cmd]
+27: [[ $(nix eval --restrict-eval --expr 'import (builtins.toFile "source" "42")') == 42 ]]  [unsupported-cmd]
+32: [[ $(nix-instantiate -A str --raw --eval "./eval.nix") == $'foo\nbar' ]]  [unsupported-cmd]
+35: [[ $(nix-instantiate -A int --eval - < "./eval.nix") == 123 ]]  [unsupported-cmd]
+73: [[ $(nix eval --impure --expr "import $TEST_ROOT/foo/bar") = 123 ]]  [unsupported-cmd]
+76: [[ "$(nix eval --raw --arg-from-file foo "${config_nix}" --expr '{ foo }: { inherit foo; }' foo)" = "$(cat "${config_nix}")" ]]  [parse-failed]
+80: [[ "$(nix eval --raw --arg-from-file foo /proc/version --expr '{ foo }: { inherit foo; }' foo)" = "$(cat /proc/version)" ]]  [unsupported-cmd]
+84: [[ "$(echo bla | nix eval --raw --arg-from-stdin foo --expr '{ foo }: { inherit foo; }' foo)" = bla ]]  [unsupported-cmd]
+88: [[ "$(echo "$out" | grep -c foobar)" = 1 ]]  [unsupported-cmd]
+92: [[ "$(echo "$out" | wc -l)" = 1 ]]  [unsupported-cmd]

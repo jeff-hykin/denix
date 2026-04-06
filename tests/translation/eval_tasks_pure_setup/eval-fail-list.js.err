@@ -1,4 +1,4 @@
 denix_eval: eval failed: Error: error: value is a int while a list was expected
     at requireList (file:///Users/jeffhykin/repos/denix/main/runtime.js:227:19)
     at Object.listConcat (file:///Users/jeffhykin/repos/denix/main/runtime.js:2718:13)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_cc1cd5dc1e2de8b/translated.js:8:26
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:9:26

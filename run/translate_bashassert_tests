@@ -1,0 +1,472 @@
+#!/usr/bin/env -S deno run --allow-all
+// translate_bashassert_tests — Phase-4 translator for nix_lang_tests
+// scripts whose assertions use bash-level `[[ $(cmd) == 'expected' ]]`
+// idioms rather than named helper functions.
+//
+// Usage:
+//     ./run/translate_bashassert_tests [<script-slug> ...]
+//
+// Supported assertion shapes (each recognized line produces one .js):
+//
+//   [[ $(cmd args) == 'expected' ]]
+//   [[ "$(cmd args)" == "expected" ]]
+//   [[ $(cmd args) = 'expected' ]]
+//   [[ $(cmd args) == $'ansi-c quoted' ]]
+//
+// Where `cmd` is one of:
+//   - nix eval ...
+//   - nix-instantiate ...
+//
+// The cmd is rewritten into a denix_eval argument vector. Expression
+// literals on the shell side round-trip unchanged; the expected value
+// becomes an anchored regex literal passed to `expectSuccess`.
+//
+// Unrecognized lines (including `nix build`, `nix-store`, pipes,
+// heredocs, flags that denix cannot honor) are logged to
+// <category>/_unhandled.txt.
+
+const repoRoot = new URL("..", import.meta.url).pathname.replace(/\/$/, "")
+const SOURCE_ROOT = `${repoRoot}/tests/nix_tests/nix_lang_tests/tests/functional`
+const OUT_ROOT = `${repoRoot}/tests/translation/eval_tasks_complex`
+
+// --------------------------------------------------------------
+// script config
+// --------------------------------------------------------------
+const SCRIPTS = {
+    eval: {
+        source: `${SOURCE_ROOT}/eval.sh`,
+        category: "nix_lang/eval_flags",
+        // For `nix eval -f <file>` tests, `<file>` is often `./eval.nix`
+        // which lives next to the .sh; resolve relative paths against
+        // this directory (a fixture tree isn't separately checked in).
+        fixtureBaseDir: SOURCE_ROOT,
+    },
+}
+
+// --------------------------------------------------------------
+// quote-aware splitter (same strategy as translate_shell_tests)
+// --------------------------------------------------------------
+function splitShellArgs(line) {
+    const args = []
+    let i = 0
+    const n = line.length
+    while (i < n && (line[i] === " " || line[i] === "\t")) i++
+    while (i < n) {
+        let current = ""
+        let consumedAny = false
+        while (i < n && line[i] !== " " && line[i] !== "\t") {
+            const c = line[i]
+            if (c === "'") {
+                i++
+                while (i < n && line[i] !== "'") { current += line[i]; i++ }
+                if (i < n) i++
+                consumedAny = true
+            } else if (c === '"') {
+                i++
+                while (i < n && line[i] !== '"') {
+                    if (line[i] === "\\" && i + 1 < n) {
+                        const nxt = line[i + 1]
+                        if (nxt === '"' || nxt === "\\" || nxt === "$" || nxt === "`") {
+                            current += nxt; i += 2; continue
+                        }
+                    }
+                    current += line[i]; i++
+                }
+                if (i < n) i++
+                consumedAny = true
+            } else if (c === "\\" && i + 1 < n) {
+                current += line[i + 1]
+                i += 2
+                consumedAny = true
+            } else {
+                current += c; i++; consumedAny = true
+            }
+        }
+        if (consumedAny) args.push(current)
+        while (i < n && (line[i] === " " || line[i] === "\t")) i++
+    }
+    return args
+}
+
+// --------------------------------------------------------------
+// Extract `$(...)` body given a starting index pointing at `$`.
+// Handles nested parens. Returns { body, end } where end is the index
+// just past the closing `)`.
+// --------------------------------------------------------------
+function extractCommandSubstitution(line, start) {
+    if (line[start] !== "$" || line[start + 1] !== "(") return null
+    let depth = 1
+    let i = start + 2
+    let inSingle = false
+    let inDouble = false
+    while (i < line.length && depth > 0) {
+        const c = line[i]
+        if (!inSingle && !inDouble && c === "(") depth++
+        else if (!inSingle && !inDouble && c === ")") depth--
+        else if (!inDouble && c === "'") inSingle = !inSingle
+        else if (!inSingle && c === '"') inDouble = !inDouble
+        else if (c === "\\" && !inSingle) i++ // skip escaped char
+        if (depth === 0) break
+        i++
+    }
+    if (depth !== 0) return null
+    return { body: line.slice(start + 2, i), end: i + 1 }
+}
+
+// --------------------------------------------------------------
+// Extract a quoted string starting at index i in line. Returns
+// { text, kind, end } where kind ∈ "'", '"', "$'".
+// --------------------------------------------------------------
+function extractQuoted(line, i) {
+    if (line[i] === "$" && line[i + 1] === "'") {
+        // ANSI-C quoting: $'...' — interpret backslash escapes.
+        let out = ""
+        let j = i + 2
+        while (j < line.length && line[j] !== "'") {
+            if (line[j] === "\\" && j + 1 < line.length) {
+                const nxt = line[j + 1]
+                const map = { n: "\n", t: "\t", r: "\r", "\\": "\\", "'": "'", '"': '"', "0": "\0" }
+                if (nxt in map) { out += map[nxt]; j += 2; continue }
+                out += nxt; j += 2; continue
+            }
+            out += line[j]; j++
+        }
+        return { text: out, kind: "$'", end: j + 1 }
+    }
+    if (line[i] === "'") {
+        let j = i + 1
+        while (j < line.length && line[j] !== "'") j++
+        return { text: line.slice(i + 1, j), kind: "'", end: j + 1 }
+    }
+    if (line[i] === '"') {
+        // Double quotes with basic escape handling.
+        let out = ""
+        let j = i + 1
+        while (j < line.length && line[j] !== '"') {
+            if (line[j] === "\\" && j + 1 < line.length) {
+                const nxt = line[j + 1]
+                if (nxt === '"' || nxt === "\\" || nxt === "$" || nxt === "`") {
+                    out += nxt; j += 2; continue
+                }
+            }
+            out += line[j]; j++
+        }
+        return { text: out, kind: '"', end: j + 1 }
+    }
+    return null
+}
+
+// --------------------------------------------------------------
+// Parse a `[[ LHS == RHS ]]` line. Returns { cmdSubBody, expected,
+// op, hasNegation } or null if the line doesn't match.
+// --------------------------------------------------------------
+function parseBashAssertion(line) {
+    const trimmed = line.trim()
+    // Must start with [[ and end with ]]
+    if (!trimmed.startsWith("[[")) return null
+    if (!trimmed.endsWith("]]")) return null
+    const inner = trimmed.slice(2, -2).trim()
+
+    // Find the comparison operator. Prefer `==`, fall back to ` = ` or
+    // ` != `.
+    let opIdx = -1
+    let op = null
+    for (const candidate of [" == ", " = ", " != "]) {
+        const at = inner.indexOf(candidate)
+        if (at !== -1) { opIdx = at; op = candidate.trim(); break }
+    }
+    if (opIdx === -1) return null
+
+    const lhs = inner.slice(0, opIdx).trim()
+    const rhs = inner.slice(opIdx + (op === "!=" ? 4 : op === "==" ? 4 : 3)).trim()
+
+    // LHS is either $(...) or "$(...)"
+    let cmdSub = null
+    if (lhs.startsWith('"$(') && lhs.endsWith(')"')) {
+        const inner2 = lhs.slice(1, -1)
+        const ext = extractCommandSubstitution(inner2, 0)
+        if (!ext || ext.end !== inner2.length) return null
+        cmdSub = ext.body
+    } else if (lhs.startsWith("$(") && lhs.endsWith(")")) {
+        const ext = extractCommandSubstitution(lhs, 0)
+        if (!ext || ext.end !== lhs.length) return null
+        cmdSub = ext.body
+    } else {
+        return null
+    }
+
+    // RHS is a quoted value or a bare token (e.g. a number/word).
+    const q = extractQuoted(rhs, 0)
+    if (q && q.end === rhs.length) {
+        return { cmdSub, expected: q.text, op, rhsKind: q.kind }
+    }
+    // Bare token: accept if it contains no whitespace and no shell
+    // metacharacters that would need interpretation ($, `, etc.).
+    if (rhs.length > 0 && /^[A-Za-z0-9_.:\/+\-]+$/.test(rhs)) {
+        return { cmdSub, expected: rhs, op, rhsKind: "bare" }
+    }
+    return null
+}
+
+// --------------------------------------------------------------
+// Rewrite a `nix eval` / `nix-instantiate` command line into an
+// argument list suitable for `run/denix_eval`. Returns
+// { args, attrPath, file, expr } or null if unsupported.
+// --------------------------------------------------------------
+const DENIX_PASSTHROUGH_FLAGS = new Set([
+    "--eval", "--strict", "--json", "--show-trace", "--no-show-trace",
+    "--read-write-mode", "--eval-only",
+])
+const NIX_FLAGS_WITH_ARG = new Set([
+    "-A", "--attr", "-E", "--expr", "-f", "--file", "-I",
+    "--arg", "--argstr", "--option", "--max-call-depth", "--timeout",
+])
+const UNSUPPORTED_FLAGS = new Set([
+    "--raw", "--restrict-eval", "--pure-eval", "--impure-eval",
+    "--arg-from-file", "--arg-from-stdin", "--build-cores",
+    "--extra-experimental-features", "--experimental-features",
+])
+
+function translateNixInvocation(cmdLine) {
+    const tokens = splitShellArgs(cmdLine)
+    if (tokens.length === 0) return null
+    // Drop leading env-var prefixes (e.g. FOO=bar nix eval ...)
+    let i = 0
+    while (i < tokens.length && /^[A-Za-z_][A-Za-z0-9_]*=/.test(tokens[i])) i++
+    const bin = tokens[i++]
+    let subcmd = null
+    if (bin === "nix") {
+        subcmd = tokens[i++]
+        if (subcmd !== "eval") return null
+    } else if (bin !== "nix-instantiate") {
+        return null
+    }
+
+    const denixArgs = ["--eval", "--json"]
+    let attrPath = null
+    let filePath = null
+    let expr = null
+    // `nix eval <attr> -f <file>` treats the leading positional as an attr
+    // path; `nix-instantiate` uses `-A`.
+    let positionals = []
+
+    while (i < tokens.length) {
+        const t = tokens[i]
+        if (UNSUPPORTED_FLAGS.has(t)) return null
+        if (t === "-" || t === "<" || t === "|") return null
+        if (t === "--" ) { i++; continue }
+        if (t === "--expr" || t === "-E") {
+            expr = tokens[++i]
+            i++; continue
+        }
+        if (t === "-f" || t === "--file") {
+            filePath = tokens[++i]
+            if (filePath === "-") return null
+            i++; continue
+        }
+        if (t === "-A" || t === "--attr") {
+            attrPath = tokens[++i]
+            i++; continue
+        }
+        if (t === "-I") { denixArgs.push("-I", tokens[++i]); i++; continue }
+        if (t === "--arg" || t === "--argstr") {
+            const name = tokens[++i]; const val = tokens[++i]
+            denixArgs.push(t, name, val)
+            i++; continue
+        }
+        if (t === "--option") { i += 3; continue } // skip silently
+        if (t === "--max-call-depth" || t === "--timeout") { i += 2; continue }
+        if (DENIX_PASSTHROUGH_FLAGS.has(t)) { i++; continue }
+        if (t.startsWith("-")) return null // unknown flag
+        positionals.push(t)
+        i++
+    }
+
+    // `nix eval ATTR -f FILE`: the first positional before -f became the
+    // attr path.
+    if (subcmd === "eval") {
+        if (positionals.length > 0 && attrPath == null) {
+            attrPath = positionals.shift()
+        }
+        if (positionals.length > 0) return null
+    } else {
+        // nix-instantiate: the first positional is the .nix file
+        if (positionals.length === 1 && filePath == null) {
+            filePath = positionals[0]
+        } else if (positionals.length > 0) {
+            return null
+        }
+    }
+
+    if (expr != null && filePath != null) return null
+    if (expr == null && filePath == null) return null
+
+    if (expr != null) denixArgs.push("-E", expr)
+    if (filePath != null) denixArgs.push(filePath)
+    if (attrPath != null) denixArgs.push("-A", attrPath)
+    return { denixArgs, attrPath, filePath, expr }
+}
+
+// --------------------------------------------------------------
+// emit helpers
+// --------------------------------------------------------------
+function escapeForRegex(s) {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+}
+
+function jsStringLit(s) {
+    if (!s.includes("`") && !s.includes("${") && !s.includes("\\")) {
+        return "`" + s + "`"
+    }
+    return JSON.stringify(s)
+}
+
+function slugify(s, maxLen = 40) {
+    const cleaned = (s || "")
+        .replace(/[^a-zA-Z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, maxLen)
+    return cleaned || "expr"
+}
+
+function fmtIdx(i) { return String(i).padStart(4, "0") }
+
+// --------------------------------------------------------------
+// emit a single test file
+// --------------------------------------------------------------
+function emitTest({ scriptCfg, parsed, invocation, idx, srcRel, sourceLine }) {
+    // denix_eval output for `nix eval` (without --json --raw) is a nix
+    // repr like `{ foo = "bar"; }`. Bash's `==` is exact string match
+    // after trimming. Use an anchored regex.
+    const expectedRegex = `^${escapeForRegex(parsed.expected)}$`
+    const negated = parsed.op === "!="
+    const helper = negated ? "expectFailure" : "expectSuccess"
+    // When the file path is relative, resolve it against the script's
+    // source directory so the translated test is cwd-independent.
+    const argsArray = invocation.denixArgs.slice()
+    if (invocation.filePath && !invocation.filePath.startsWith("/")) {
+        const absFile = `${scriptCfg.fixtureBaseDir}/${invocation.filePath.replace(/^\.\//, "")}`
+        const fileIdx = argsArray.findIndex((a) => a === invocation.filePath)
+        if (fileIdx !== -1) argsArray[fileIdx] = absFile
+    }
+    const argsLit = "[" + argsArray.map((a) => JSON.stringify(a)).join(", ") + "]"
+    const slug = slugify(invocation.attrPath || invocation.expr || invocation.filePath || "test")
+    const fname = `${fmtIdx(idx)}_bashassert_${slug}.js`
+    const body = [
+        `#!/usr/bin/env -S deno run --allow-all`,
+        `// Auto-generated from ${srcRel}:${sourceLine}`,
+        `// cmd: ${invocation.denixArgs.join(" ").slice(0, 200)}`,
+        `// expected: ${JSON.stringify(parsed.expected).slice(0, 200)}`,
+        ``,
+        `import { runDenix, AssertionError, printFailure } from "../../shared_tooling/index.js"`,
+        ``,
+        `const denixArgs = ${argsLit}`,
+        `const expected = ${JSON.stringify(parsed.expected)}`,
+        `const expectedRegex = ${JSON.stringify(expectedRegex)}`,
+        `const res = await runDenix(denixArgs)`,
+        `const actual = (res.stdout || "").replace(/\\n+$/, "")`,
+        `const matched = new RegExp(expectedRegex).test(actual)`,
+        `const ok = ${negated ? "!matched" : "matched"} && res.code === 0`,
+        `if (!ok) {`,
+        `    const err = new AssertionError("bash-assertion mismatch", { denixRes: res, pattern: expectedRegex })`,
+        `    console.error("FAIL:", ${JSON.stringify(slug.slice(0, 80))})`,
+        `    console.error("  args:   ", denixArgs.join(" "))`,
+        `    console.error("  wanted: ", JSON.stringify(expected))`,
+        `    console.error("  actual: ", JSON.stringify(actual))`,
+        `    console.error("  denix stderr:", (res.stderr || "").trimEnd())`,
+        `    console.error("  denix exit:  ", res.code)`,
+        `    Deno.exit(1)`,
+        `}`,
+        ``,
+    ].join("\n")
+    return { fname, body }
+}
+
+async function exists(p) {
+    try { await Deno.stat(p); return true } catch { return false }
+}
+
+// --------------------------------------------------------------
+// per-script driver
+// --------------------------------------------------------------
+async function translateScript(slug) {
+    const scriptCfg = SCRIPTS[slug]
+    if (!scriptCfg) throw new Error(`unknown script: ${slug}`)
+    const outDir = `${OUT_ROOT}/${scriptCfg.category}`
+    await Deno.mkdir(outDir, { recursive: true })
+
+    // purge prior auto-generated files
+    for await (const entry of Deno.readDir(outDir)) {
+        if (!entry.isFile) continue
+        if (/^\d{4}_bashassert_/.test(entry.name)) {
+            await Deno.remove(`${outDir}/${entry.name}`)
+        }
+        if (entry.name === "_unhandled.txt") {
+            await Deno.remove(`${outDir}/${entry.name}`)
+        }
+    }
+
+    const srcText = await Deno.readTextFile(scriptCfg.source)
+    const srcRel = scriptCfg.source.replace(repoRoot + "/", "")
+    const lines = srcText.split("\n")
+    const unhandled = []
+    let emitCount = 0
+    let idx = 0
+    let recognized = 0
+
+    for (let li = 0; li < lines.length; li++) {
+        const rawLine = lines[li]
+        const trimmed = rawLine.trim()
+        if (trimmed === "") continue
+        if (trimmed.startsWith("#")) continue
+        if (!trimmed.startsWith("[[")) continue
+
+        const parsed = parseBashAssertion(trimmed)
+        if (!parsed) {
+            unhandled.push(`${li + 1}: ${trimmed}  [parse-failed]`)
+            continue
+        }
+        const invocation = translateNixInvocation(parsed.cmdSub)
+        if (!invocation) {
+            unhandled.push(`${li + 1}: ${trimmed}  [unsupported-cmd]`)
+            continue
+        }
+
+        recognized += 1
+        idx += 1
+        const emit = emitTest({ scriptCfg, parsed, invocation, idx, srcRel, sourceLine: li + 1 })
+
+        let finalName = emit.fname
+        let dedup = 1
+        while (await exists(`${outDir}/${finalName}`)) {
+            finalName = emit.fname.replace(/\.js$/, `_${dedup}.js`)
+            dedup += 1
+        }
+        await Deno.writeTextFile(`${outDir}/${finalName}`, emit.body)
+        emitCount += 1
+    }
+
+    if (unhandled.length > 0) {
+        await Deno.writeTextFile(
+            `${outDir}/_unhandled.txt`,
+            `# ${srcRel}\n# ${unhandled.length} [[ ... ]] lines not recognized\n\n` +
+                unhandled.join("\n") + "\n",
+        )
+    }
+
+    console.log(`${slug.padEnd(14)} → ${outDir.replace(repoRoot + "/", "")}`)
+    console.log(`  recognized: ${recognized}  emitted: ${emitCount}  unhandled: ${unhandled.length}`)
+    return { slug, recognized, emitCount, unhandled: unhandled.length }
+}
+
+// --------------------------------------------------------------
+// main
+// --------------------------------------------------------------
+const wanted = Deno.args.length > 0 ? Deno.args : Object.keys(SCRIPTS)
+const summary = []
+for (const s of wanted) summary.push(await translateScript(s))
+console.log("")
+console.log("summary:")
+for (const s of summary) {
+    console.log(`  ${s.slug.padEnd(14)} ${s.emitCount} emitted / ${s.unhandled} unhandled`)
+}

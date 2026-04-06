@@ -1,0 +1,10 @@
+# suggestions.sh — all lines require unsupported features
+
+suggestions.sh:31 [unsupported-cmd] nix build .#fob — uses `nix build` and flake refs
+suggestions.sh:32-33 [unsupported-cmd] [[ "$NIX_BUILD_STDERR_WITH_SUGGESTIONS" =~ "Did you mean one of fo1, fo2, foo or fooo?" ]] — depends on nix build output
+suggestions.sh:36 [unsupported-cmd] nix build .#bar — uses `nix build` and flake refs
+suggestions.sh:37-38 [unsupported-cmd] [[ ! "$NIX_BUILD_STDERR_WITH_NO_CLOSE_SUGGESTION" =~ "Did you mean" ]] — depends on nix build output
+suggestions.sh:40 [unsupported-cmd] nix build --impure --expr '...' — uses `nix build`
+suggestions.sh:41-42 [unsupported-cmd] depends on nix build output
+suggestions.sh:44 [unsupported-cmd] nix build --impure --expr '({ foo }: foo) { foo = 1; fob = 2; }' — uses `nix build`
+suggestions.sh:45-46 [unsupported-cmd] depends on nix build output

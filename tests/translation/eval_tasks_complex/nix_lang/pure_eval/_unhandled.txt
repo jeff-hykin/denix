@@ -1,0 +1,34 @@
+# Unhandled lines from pure-eval.sh
+
+[variable] L9: [[ $(nix eval --impure --expr 'builtins.readFile ./pure-eval.sh') =~ clearStore ]]
+  -- uses =~ regex match and relative path (./pure-eval.sh) resolved by nix relative to CWD
+
+[variable][pipe] L11-15: missingImpureErrorMsg=$(! nix eval --expr 'builtins.readFile ./pure-eval.sh' 2>&1) + echo ... | grepQuiet
+  -- captures stderr into variable, pipes through grepQuiet
+
+[variable] L25: [[ $(nix eval --impure --expr "(import (builtins.fetchurl { url = \"file://$(pwd)/pure-eval.nix\"; })).x") == 123 ]]
+  -- uses $(pwd) shell expansion
+
+[variable] L26: (! nix eval --expr "(import (builtins.fetchurl { url = \"file://$(pwd)/pure-eval.nix\"; })).x")
+  -- uses $(pwd) shell expansion
+
+[variable][unsupported-cmd] L27: nix eval --expr ... sha256 = \"$(nix hash file pure-eval.nix --type sha256)\"
+  -- uses $(pwd) and $(nix hash file ...) subcommand
+
+[variable][redirect] L29-32: rm -rf "$TEST_ROOT"/eval-out; nix eval --store dummy:// --write-to ...; [[ $(cat ...) = foobar ]]
+  -- uses $TEST_ROOT, --write-to, cat
+
+[variable] L34-35: rm -rf "$TEST_ROOT"/eval-out; (! nix eval --store dummy:// --write-to "$TEST_ROOT"/eval-out --expr '{ "." = "bla"; }')
+  -- uses $TEST_ROOT, --write-to
+
+[pipe] L40-41: expectStderr 0 nix eval --expr "/some/absolute/path" | grepQuiet "/some/absolute/path"
+  -- pipe with grepQuiet
+
+[pipe] L43-44: expectStderr 0 nix eval --expr "/some/absolute/path" --impure | grepQuiet "/some/absolute/path"
+  -- pipe with grepQuiet
+
+[pipe][variable] L46-47: expectStderr 0 nix eval --expr "some/relative/path" | grepQuiet "$PWD/some/relative/path"
+  -- pipe with grepQuiet, $PWD variable
+
+[pipe][variable] L49-50: expectStderr 0 nix eval --expr "some/relative/path" --impure | grepQuiet "$PWD/some/relative/path"
+  -- pipe with grepQuiet, $PWD variable

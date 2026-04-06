@@ -3,7 +3,7 @@ Warning: Failed to format generated JavaScript: [0m[1m[31merror[0m: Expressi
   export default //
   ~~~~~~
 
-denix_eval: eval failed: TypeError: The module's source code could not be parsed: Expression expected at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_3fdd432cb58a4689/translated.js:2:15
+denix_eval: eval failed: TypeError: The module's source code could not be parsed: Expression expected at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:2:15
 
   export default //
                 ~

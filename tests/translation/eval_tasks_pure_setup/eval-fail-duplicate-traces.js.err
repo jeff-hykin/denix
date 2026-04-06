@@ -1,11 +1,11 @@
 denix_eval: eval failed: Error: Uh oh!
     at Object.throw (file:///Users/jeffhykin/repos/denix/main/runtime.js:1756:35)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_49915cde523967f2/translated.js:19:32
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:20:32
     at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:2714:43)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_49915cde523967f2/translated.js:16:19
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:17:19
     at Object.throwAfter (file:///Users/jeffhykin/repos/denix/main/runtime.js:60:32)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_49915cde523967f2/translated.js:18:27
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:19:27
     at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:2714:32)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_49915cde523967f2/translated.js:16:19
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:17:19
     at Object.throwAfter (file:///Users/jeffhykin/repos/denix/main/runtime.js:60:32)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_49915cde523967f2/translated.js:18:27
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:19:27

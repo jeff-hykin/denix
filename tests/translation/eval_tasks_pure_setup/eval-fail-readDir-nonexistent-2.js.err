@@ -1,4 +1,4 @@
 denix_eval: eval failed: NotFound: No such file or directory (os error 2): readdir '/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/this/path/really/should/not/exist'
     at Object.readDirSync (ext:deno_fs/30_fs.js:211:10)
     at Object.readDir (file:///Users/jeffhykin/repos/denix/main/runtime.js:1980:42)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_82193c0b8481d160/translated.js:11:47
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:12:47

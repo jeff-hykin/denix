@@ -1,4 +1,4 @@
 denix_eval: eval failed: SyntaxError: Bad escaped character in JSON at position 27 (line 1 column 28)
     at JSON.parse (<anonymous>)
     at Object.jsonParseWithBigInt [as fromJSON] (file:///Users/jeffhykin/repos/denix/tools/json_parse.js:21:17)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_820b4ff4cbe50578/translated.js:9:30
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:10:30

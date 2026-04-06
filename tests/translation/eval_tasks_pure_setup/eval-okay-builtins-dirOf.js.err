@@ -1,2 +1,2 @@
 denix_eval: eval failed: TypeError: nixScope.dirOf is not a function
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_3c9b2b89a646ca58/translated.js:11:27
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:12:27

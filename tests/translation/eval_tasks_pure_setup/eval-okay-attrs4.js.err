@@ -1,6 +1,6 @@
 denix_eval: eval failed: Error: error: value is a null while a set was expected
     at requireAttrSet (file:///Users/jeffhykin/repos/denix/main/runtime.js:215:19)
     at Object.hasAttr (file:///Users/jeffhykin/repos/denix/main/runtime.js:2802:13)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_1de09f4043cb64e4/translated.js:27:15
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:28:15
     at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:115:24)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_1de09f4043cb64e4/translated.js:8:24
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:9:24

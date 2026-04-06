@@ -1,7 +1,6 @@
-denix_eval: eval failed: SyntaxError: Unexpected token 'const'
-    at new Function (<anonymous>)
-    at loadNixFileSync (file:///Users/jeffhykin/repos/denix/main/import_loader.js:158:22)
-    at loadAndEvaluateSync (file:///Users/jeffhykin/repos/denix/main/import_loader.js:204:16)
+denix_eval: eval failed: Error: Import path does not exist: /var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/source_code/nixpkgs_lib/lib/tests/systems.nix
+    at validateImportPath (file:///Users/jeffhykin/repos/denix/tools/import_resolver.js:114:15)
+    at loadAndEvaluateSync (file:///Users/jeffhykin/repos/denix/main/import_loader.js:211:5)
     at Object.globalImportState.importFn (file:///Users/jeffhykin/repos/denix/main/runtime.js:2879:32)
     at Object.import (file:///Users/jeffhykin/repos/denix/main/runtime.js:1694:42)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval_1a73b873b572603e/translated.js:10:31
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:11:31

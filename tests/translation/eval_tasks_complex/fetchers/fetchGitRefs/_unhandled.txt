@@ -1,0 +1,5 @@
+# Lines from fetchGitRefs.sh that could not be translated
+
+[pipe] line 56: expect 1 nix --debug eval ... 2>&1 | grep 'invalid Git branch/tag name'
+  The invalid_ref function pipes stderr through grep for the exact error message.
+  The tests (0002) just check for non-zero exit code instead.

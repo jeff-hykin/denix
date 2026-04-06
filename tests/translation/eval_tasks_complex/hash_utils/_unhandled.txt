@@ -1,0 +1,36 @@
+# Unhandled lines from hash-path.sh and hash-convert.sh
+
+## hash-path.sh
+
+hash-path.sh:58 [variable] NO_TEST_NIX_COMMAND=1 try sha512 "abc" "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f"
+  — depends on NO_TEST_NIX_COMMAND shell variable to skip nix-command path in try()
+
+hash-path.sh:61 [variable] NO_TEST_CLASSIC=1 try sha512 "abc" "sha512-3a81oZNherrMQXNJriBBMRLm+k6JqX6iCp7u5ktV05ohkpkqJ0/BqDa6PCOj/uu9RU1EI2Q86A4qmslPpUyknw=="
+  — depends on NO_TEST_CLASSIC shell variable to skip nix-hash path in try()
+
+hash-path.sh:97-98 [redirect] h=$(nix hash path --mode flat --type sha256 --base32 <(printf "SMASH THE STATE"))
+  — uses process substitution <()
+
+hash-path.sh:101-102 [redirect] h=$(nix hash file --type sha256 --base32 <(printf "SMASH THE STATE"))
+  — uses process substitution <()
+
+hash-path.sh:105-111 [complex-shell] symlinks in ancestry test
+  — creates temp dirs, symlinks, and multiple hash assertions with $TEST_ROOT
+
+hash-path.sh:116-123 [complex-shell] symlink-to-nowhere and symlink-to-bin tests
+  — creates symlinks to non-existent paths and /bin, uses conditional [[ -e /bin ]]
+
+## hash-convert.sh
+
+hash-convert.sh:96-99 [pipe] expectStderr assertions with grepQuiet
+  — expectStderr 1 nix hash convert ... | grepQuiet "pattern"
+  — tests asserting wrong --from format produces errors
+
+hash-convert.sh:102 [pipe] nix hash convert --hash-algo "$1" --from base16 "$(echo "$2" | tr ...)"
+  — uppercase base16 conversion test uses pipe inside process substitution
+
+hash-convert.sh:110 [unsupported-cmd] [[ $(nix hash convert --from sri "sha256-ungWv48Bz+pBQUDeXa4iI7ADYaOWF3qctBD/YfIAFa0") = sha256-ungWv48Bz+pBQUDeXa4iI7ADYaOWF3qctBD/YfIAFa0= ]]
+  — bashAssert with nix hash convert (not nix-instantiate), runNix would fail
+
+hash-convert.sh:111 [unsupported-cmd] [[ $(nix hash convert --from sri "sha512-IEqPxt2oLwoM7XvrjgikFlfBbvRosiioJ5vjMacDwzWW/RXBOxsH+aodO+pXeJygMa2Fx6cd1wNU7GMSOMo0RQ") = sha512-IEqPxt2oLwoM7XvrjgikFlfBbvRosiioJ5vjMacDwzWW/RXBOxsH+aodO+pXeJygMa2Fx6cd1wNU7GMSOMo0RQ== ]]
+  — bashAssert with nix hash convert (not nix-instantiate), runNix would fail

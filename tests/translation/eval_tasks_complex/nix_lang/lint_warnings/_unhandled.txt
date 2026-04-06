@@ -1,0 +1,7 @@
+# short-path-literals.sh:53-54 — uses expectStderr + pipe
+short-path-literals.sh:53-54 [pipe] NIX_CONFIG='warn-short-path-literals = true' expectStderr 1 nix eval --lint-short-path-literals fatal --expr 'test/subdir' | grepQuiet "error:"
+
+# no-url-literals.sh — all lines use pipes (2>&1 |)
+no-url-literals.sh:12 [pipe] nix eval --lint-url-literals fatal --expr '"http://example.com?foo=bar"' 2>&1 | grepQuietInverse "error:"
+no-url-literals.sh:15 [pipe] expect 1 env NIX_CONFIG='lint-url-literals = fatal' nix eval --expr 'http://example.com' 2>&1 | grepQuiet "error: URL literal"
+no-url-literals.sh:18-19 [pipe] nix eval --extra-experimental-features no-url-literals --expr '"test"' 2>&1 | grepQuiet "experimental feature 'no-url-literals' has been stabilized..."
