@@ -81,7 +81,10 @@ import { resolveIndirectReference } from "./registry.js"
                 }
 
                 // compute the default values one after another to match nix behavior
+                // only apply defaults for keys NOT provided in the argument
+                const providedKeys = builtins.isAttrs(arg) ? new Set(Object.keys(arg)) : new Set()
                 for (const [key, value] of Object.entries(defaulters)) {
+                    if (providedKeys.has(key)) continue
                     // FIXME: its actually probably worse than delayed evaluation: they probably compute defaults similar to `rec` where dependencies are found and made into a DAG. Should check this later
                     if (typeof value === 'function') {
                         nixScope[key] = value(nixScope)
@@ -664,7 +667,8 @@ import { resolveIndirectReference } from "./registry.js"
                     }
 
                     // Return capture groups (exclude full match at index 0)
-                    const captureGroups = match.slice(1)
+                    // In Nix, unmatched groups are null, not undefined
+                    const captureGroups = match.slice(1).map(g => g === undefined ? null : g)
                     return captureGroups
                 } catch (error) {
                     throw new NixError(`error: invalid regular expression '${regexStr}'`)
@@ -1768,7 +1772,11 @@ import { resolveIndirectReference } from "./registry.js"
                     return FileSystem.basename(value.toString())
                 }
                 if (builtins.isString(value)) {
-                    return FileSystem.basename(value.toString())
+                    // Nix baseNameOf for strings: strip one trailing '/', then everything after last '/'
+                    let s = value.toString()
+                    if (s.length > 1 && s.endsWith("/")) s = s.slice(0, -1)
+                    const i = s.lastIndexOf("/")
+                    return i < 0 ? s : s.slice(i + 1)
                 }
                 throw new NixError(`error: cannot coerce ${builtins.typeOf(value)} to a string`)
             },
@@ -1777,10 +1785,17 @@ import { resolveIndirectReference } from "./registry.js"
                     value = value.outPath
                 }
                 if (value instanceof Path) {
-                    return FileSystem.dirname(value.toString())
+                    // dirOf on a path returns a path
+                    const dir = FileSystem.dirname(value.toString())
+                    return new Path([dir], [])
                 }
                 if (builtins.isString(value)) {
-                    return FileSystem.dirname(value.toString())
+                    // Nix dirOf for strings: everything before the last '/'
+                    const s = value.toString()
+                    const i = s.lastIndexOf("/")
+                    if (i < 0) return "."
+                    if (i === 0) return "/"
+                    return s.slice(0, i)
                 }
                 throw new NixError(`error: cannot coerce ${builtins.typeOf(value)} to a string`)
             },
@@ -1839,10 +1854,11 @@ import { resolveIndirectReference } from "./registry.js"
             "readFileType": (p)=>{
                 const absolutePath = FileSystem.makeAbsolutePath(p.toString())
                 try {
-                    const stat = Deno.statSync(absolutePath)
+                    // Use lstatSync to detect symlinks without following them
+                    const stat = Deno.lstatSync(absolutePath)
+                    if (stat.isSymlink) return "symlink"
                     if (stat.isFile) return "regular"
                     if (stat.isDirectory) return "directory"
-                    if (stat.isSymlink) return "symlink"
                     return "unknown"
                 } catch (e) {
                     throw new NixError(`error: getting status of '${absolutePath}': ${e.message}`)
