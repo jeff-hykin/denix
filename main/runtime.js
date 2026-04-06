@@ -125,13 +125,25 @@ import { resolveIndirectReference } from "./registry.js"
     function createDefGetter(runtime) {
         return function defGetter(obj, key, fn) {
             // Simplified helper for defining lazy getters in recursive attribute sets
-            // Replaces the verbose Object.defineProperty + get(){return value;} pattern
+            // Computes once on first access, then replaces getter with cached value
+            let cached = undefined
+            let computed = false
             Object.defineProperty(obj, key, {
                 enumerable: true,
+                configurable: true,
                 get() {
-                    // Call the function with the current scope (obj is nixScope in rec attrsets)
-                    // The function body can reference nixScope and other lazy properties
-                    return fn(obj)
+                    if (!computed) {
+                        computed = true
+                        cached = fn(obj)
+                        // Replace getter with plain value for subsequent accesses
+                        Object.defineProperty(obj, key, {
+                            enumerable: true,
+                            configurable: true,
+                            writable: true,
+                            value: cached,
+                        })
+                    }
+                    return cached
                 },
             })
         }

@@ -886,7 +886,17 @@ const nixNodeToJs = (node)=>{
             for (const {name, value, isConstant} of simpleBindings.filter(b => !b.isConstant)) {
                 code += `        defGetter(nixScope, ${JSON.stringify(name)}, (nixScope) => ${nixNodeToJs(value)});\n`
             }
-            code += `        return nixScope;\n`
+            // Return a clean object with only the rec attrset's own bindings (not inherited scope)
+            const allOwnKeys = [
+                ...simpleBindings.map(b => b.name),
+                ...Object.keys(bindingsByBase)
+            ]
+            code += `        const __result = {};\n`
+            for (const key of allOwnKeys) {
+                // Use defineProperty to preserve lazy getters from nixScope
+                code += `        Object.defineProperty(__result, ${JSON.stringify(key)}, { enumerable: true, get() { return nixScope${varAccess(key)}; } });\n`
+            }
+            code += `        return __result;\n`
             code += `})`
 
             return code
