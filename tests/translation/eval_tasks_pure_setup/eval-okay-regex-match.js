@@ -24,7 +24,7 @@ export default ((_withAttrs) => {
       defGetter(
         nixScope,
         "splitFN",
-        (nixScope) => nixScope.match("((.*)/)?([^/]*)"),
+        (nixScope) => nixScope.match("((.*)/)?([^/]*)\\.(nix|cc)"),
       );
       return ((_cond) => {
         if (!_cond) {
@@ -135,7 +135,7 @@ export default ((_withAttrs) => {
                               );
                             })(
                               operators.equal(
-                                nixScope.match("(.*)")("foobar.nix"),
+                                nixScope.match("(.*)\\.nix")("foobar.nix"),
                                 ["foobar"],
                               ),
                             );

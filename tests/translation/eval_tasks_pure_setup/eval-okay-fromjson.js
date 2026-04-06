@@ -21,7 +21,7 @@ export default operators.equal(
         },
         "Animated" : false,
         "IDs": [116, 943, 234, 38793, true  ,false,null, -100],
-        "Escapes": "\\"\\\\\/\\t\\n\\r\\t",
+        "Escapes": "\\"\\\\\\/\\t\\n\\r\\t",
         "Subtitle" : false,
         "Latitude":  37.7668,
         "Longitude": -122.3959
@@ -57,7 +57,7 @@ export default operators.equal(
         null,
         operators.subtract(0n, 100n),
       ],
-      "Escapes": "",
+      "Escapes": '"\\\/\t\n\r\t',
       "Subtitle": false,
       "Latitude": 37.7668,
       "Longitude": -122.3959,

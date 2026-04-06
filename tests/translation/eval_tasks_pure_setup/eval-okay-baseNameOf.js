@@ -208,8 +208,8 @@ export default ((_cond) => {
                                           );
                                         })(
                                           operators.equal(
-                                            nixScope.baseNameOf("a"),
-                                            "a",
+                                            nixScope.baseNameOf("a\\b"),
+                                            "a\\b",
                                           ),
                                         );
                                       })(

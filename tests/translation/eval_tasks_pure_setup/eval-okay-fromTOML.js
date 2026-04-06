@@ -108,7 +108,70 @@ export default [
     arr1 = [ 1, 2, 3 ]
     arr2 = [ "red", "yellow", "green" ]
     arr3 = [ [ 1, 2 ], [3, 4, 5] ]
-    arr4 = [ "all", 'strings', """are the same""", `),
+    arr4 = [ "all", 'strings', """are the same""", '''type''']
+    arr5 = [ [ 1, 2 ], ["a", "b", "c"] ]
+
+    arr7 = [
+      1, 2, 3
+    ]
+
+    arr8 = [
+      1,
+      2, # this is ok
+    ]
+
+    [table-1]
+    key1 = "some string"
+    key2 = 123
+
+
+    [table-2]
+    key1 = "another string"
+    key2 = 456
+
+    [dog."tater.man"]
+    type.name = "pug"
+
+    [a.b.c]
+    [ d.e.f ]
+    [ g .  h  . i ]
+    [ j . "ʞ" . 'l' ]
+    [x.y.z.w]
+
+    name = { first = "Tom", last = "Preston-Werner" }
+    point = { x = 1, y = 2 }
+    animal = { type.name = "pug" }
+
+    [[products]]
+    name = "Hammer"
+    sku = 738594937
+
+    [[products]]
+
+    [[products]]
+    name = "Nail"
+    sku = 284758393
+    color = "gray"
+
+    [[fruit]]
+      name = "apple"
+
+      [fruit.physical]
+        color = "red"
+        shape = "round"
+
+      [[fruit.variety]]
+        name = "red delicious"
+
+      [[fruit.variety]]
+        name = "granny smith"
+
+    [[fruit]]
+      name = "banana"
+
+      [[fruit.variety]]
+        name = "plantain"
+  `),
   nixScope.builtins["fromTOML"](`
     [[package]]
     name = "aho-corasick"

@@ -1,10 +1,10 @@
 denix_eval: eval failed: Error: Called builtins.typeOf, which only works with valid nix values, but instead got type undefined, with a value of: undefined 
-    at Object.typeOf (file:///Users/jeffhykin/repos/denix/main/runtime.js:370:31)
-    at requireString (file:///Users/jeffhykin/repos/denix/main/runtime.js:221:62)
-    at file:///Users/jeffhykin/repos/denix/main/runtime.js:652:34
+    at Object.typeOf (file:///Users/jeffhykin/repos/denix/main/runtime.js:373:31)
+    at requireString (file:///Users/jeffhykin/repos/denix/main/runtime.js:224:62)
+    at file:///Users/jeffhykin/repos/denix/main/runtime.js:655:34
     at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:20:62
     at file:///Users/jeffhykin/repos/denix/main/runtime.js:60:32
     at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:162:36
-    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:115:24)
+    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:118:24)
     at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:13:20
     at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:167:3

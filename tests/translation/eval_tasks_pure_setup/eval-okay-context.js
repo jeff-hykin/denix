@@ -1,5 +1,6 @@
 import {
   createRuntime,
+  InterpolatedString,
   Path,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
 const { runtime, createFunc, createScope, defGetter } = createRuntime();

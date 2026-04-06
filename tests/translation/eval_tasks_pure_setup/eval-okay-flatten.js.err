@@ -1,6 +1,6 @@
-denix_eval: translation failed: Error: This is a bug with convertToJs(), it means this node was unexpected/unhandled and couldn't be converted: type="let_attrset_expression", "let {\n\n  l = [\n    \"1\"\n    \"2\"\n    [\n      \"3\"\n      [ \"4\" ]\n      [\n        \"5\"\n        \"6\"\n      ]\n    ]\n    \"7\"\n  ];\n\n  body = concat (flatten l);\n}"
-    at nixNodeToJs (file:///Users/jeffhykin/repos/denix/translator.js:1268:15)
-    at nixNodeToJs (file:///Users/jeffhykin/repos/denix/translator.js:1212:35)
-    at convertToJs (file:///Users/jeffhykin/repos/denix/translator.js:188:19)
-    at file:///Users/jeffhykin/repos/denix/run/denix_eval:109:24
-    at __drainNextTickAndMacrotasks (ext:core/01_core.js:439:7)
+denix_eval: eval failed: Error: Import path does not exist: /var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/source_code/nix_lang/lib.nix
+    at validateImportPath (file:///Users/jeffhykin/repos/denix/tools/import_resolver.js:114:15)
+    at loadAndEvaluateSync (file:///Users/jeffhykin/repos/denix/main/import_loader.js:211:5)
+    at Object.globalImportState.importFn (file:///Users/jeffhykin/repos/denix/main/runtime.js:2897:32)
+    at Object.import (file:///Users/jeffhykin/repos/denix/main/runtime.js:1700:42)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:22:19

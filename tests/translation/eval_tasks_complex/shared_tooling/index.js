@@ -42,4 +42,5 @@ export {
 } from "./minor_helpers.js"
 export { withGitRepo, withHttpServer, withTarball } from "./fetchers.js"
 export { assertBuilt, assertCacheHit, assertBuildFails, readOutput } from "./build_asserts.js"
+export { runDenixBuild, runNixBuild, compareBuild } from "./run_denix_build.js"
 export { withSession } from "./repl_session.js"

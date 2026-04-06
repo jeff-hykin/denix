@@ -1,4 +1,7 @@
-import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
+import {
+  createRuntime,
+  InterpolatedString,
+} from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
 const { runtime, createFunc, createScope, defGetter } = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
 runtime.currentFile = import.meta.url.startsWith("file://")
@@ -55,7 +58,7 @@ export default /*let*/ createScope((nixScope) => {
       "\n      The \\ is not special here.\n    ' can be followed by any character except another ', e.g. 'x'.\n    Likewise for $, e.g. $$ or $varName.\n    But ' followed by ' is special, as is $ followed by {.\n    If you want them, use anti-quotations: ",
       ", ",
       ".\n  ",
-    ], [() => ("''"), () => ("$")])),
+    ], [() => ("''"), () => ("${")])),
   );
   defGetter(nixScope, "s6", (nixScope) =>
     `  
@@ -90,7 +93,7 @@ export default /*let*/ createScope((nixScope) => {
   );
   defGetter(nixScope, "s10", (nixScope) => `
   `);
-  defGetter(nixScope, "s11", (nixScope) => `''`);
+  defGetter(nixScope, "s11", (nixScope) => ``);
   defGetter(nixScope, "s12", (nixScope) => `   `);
   defGetter(
     nixScope,
@@ -141,7 +144,10 @@ export default /*let*/ createScope((nixScope) => {
     ])),
   );
   defGetter(nixScope, "s14", (nixScope) => `
-    Escaping of ' followed by ': `);
+    Escaping of ' followed by ': ''
+    Escaping of \$ followed by {: \${
+    And finally to interpret \\n etc. as in a string: \n, \r, \t.
+  `);
   defGetter(nixScope, "s15", (nixScope) =>
     /*let*/ createScope((nixScope) => {
       nixScope.x = "bla";
@@ -150,12 +156,12 @@ export default /*let*/ createScope((nixScope) => {
       ]));
     }));
   defGetter(nixScope, "s16", (nixScope) => `
-    cut -d $'\\t' -f 1
+    cut -d \$'\\t' -f 1
   `);
   defGetter(
     nixScope,
     "s17",
-    (nixScope) => operators.add(operators.add(`ending dollar $`, `$`), ""),
+    (nixScope) => operators.add(operators.add(`ending dollar \$`, `\$`), "\n"),
   );
   return operators.add(
     operators.add(

@@ -10,7 +10,7 @@ export default nixScope.builtins["toJSON"]({
   "a": 123n,
   "b": -456n,
   "c": "foo",
-  "d": "foo",
+  "d": 'foo\n"bar"',
   "e": true,
   "f": false,
   "g": [1n, 2n, 3n],

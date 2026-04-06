@@ -1,8 +1,8 @@
 throwing
 denix_eval: eval failed: Error: nope
-    at throw (file:///Users/jeffhykin/repos/denix/main/runtime.js:1756:35)
+    at throw (file:///Users/jeffhykin/repos/denix/main/runtime.js:1762:35)
     at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:14:61
-    at Object.get [as foo] (file:///Users/jeffhykin/repos/denix/main/runtime.js:131:28)
+    at Object.get [as foo] (file:///Users/jeffhykin/repos/denix/main/runtime.js:134:28)
     at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:17:44
-    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:115:24)
+    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:118:24)
     at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:9:9

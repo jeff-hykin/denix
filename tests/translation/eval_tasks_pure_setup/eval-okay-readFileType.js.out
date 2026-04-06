@@ -1,1 +1,1 @@
-{ bar = "regular"; foo = "directory"; ldir = "directory"; linked = "regular"; }
+{ bar = "regular"; foo = "directory"; ldir = "symlink"; linked = "symlink"; }
