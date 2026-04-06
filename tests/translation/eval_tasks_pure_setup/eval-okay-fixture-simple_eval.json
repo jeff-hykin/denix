@@ -1,0 +1,17 @@
+{
+    "nix_file": "eval-okay-fixture-simple.nix",
+    "cwd": "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup",
+    "argv": [
+        "/nix/var/nix/profiles/default/bin/nix-instantiate",
+        "--eval",
+        "--strict",
+        "eval-okay-fixture-simple.nix"
+    ],
+    "env": {
+        "NIX_PATH": "../source_code/nix_lang/dir3:../source_code/nix_lang/dir4",
+        "NIX_REMOTE": "dummy://",
+        "NIX_STORE_DIR": "/nix/store",
+        "HOME": "/fake-home",
+        "LANG": "en_US.UTF-8"
+    }
+}
