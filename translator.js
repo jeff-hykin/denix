@@ -153,8 +153,10 @@ const buildPreamble = (output, options) => {
 
     const runtimePath = options.runtimePath || "./main/runtime.js"
     const needsPath = /\bnew Path\b/.test(output)
+    const needsInterpolatedString = /\bnew InterpolatedString\b/.test(output)
+    const extraImports = [needsPath && "Path", needsInterpolatedString && "InterpolatedString"].filter(Boolean)
     let pre = ""
-    pre += `import { createRuntime${needsPath ? ", Path" : ""} } from "${runtimePath}"\n`
+    pre += `import { createRuntime${extraImports.length ? ", " + extraImports.join(", ") : ""} } from "${runtimePath}"\n`
     pre += `const {runtime, createFunc, createScope, defGetter} = createRuntime()\n`
     // Module-level nixScope, bound to the runtime's current (root) scope.
     // The root scope is seeded with builtins/true/false/null/derivation/
@@ -1175,6 +1177,57 @@ const nixNodeToJs = (node)=>{
         code += `    return ${nixNodeToJs(body).trimStart()};\n`
         code += `})`
 
+        return code
+    } else if (node.type == "let_attrset_expression") {
+        // Old-style Nix let:  let { x = 1; y = 2; body = x + y; }
+        // All bindings except "body" are definitions; "body" is the return value.
+        const children = valueBasedChildren(node)
+        const bindingSet = children.find(each => each.type === "binding_set")
+        const bindingSource = bindingSet ? valueBasedChildren(bindingSet) : children
+        const bindings = bindingSource.filter(each =>
+            each.type === "binding" || each.type === "inherit" || each.type === "inherit_from"
+        )
+
+        let bodyValue = null
+        const simpleBindings = []
+
+        for (const binding of bindings) {
+            if (binding.type === "binding") {
+                const bindingChildren = valueBasedChildren(binding)
+                const attrpath = bindingChildren.find(each => each.type === "attrpath")
+                const value = bindingChildren[bindingChildren.findIndex(each => each.text === "=") + 1]
+                const pathParts = valueBasedChildren(attrpath).filter(each => each.type !== ".")
+
+                if (pathParts.length === 1 && pathParts[0].type === "identifier" && pathParts[0].text === "body") {
+                    bodyValue = value
+                } else if (pathParts.length === 1 && pathParts[0].type === "identifier") {
+                    simpleBindings.push({
+                        name: pathParts[0].text,
+                        value: value,
+                        isConstant: isConstantExpression(value)
+                    })
+                }
+            } else if (binding.type === "inherit") {
+                const identifiers = valueBasedChildren(binding).filter(each => each.type === "identifier")
+                for (const id of identifiers) {
+                    simpleBindings.push({ name: id.text, value: id, isConstant: false })
+                }
+            }
+        }
+
+        if (!bodyValue) {
+            throw Error(`let_attrset_expression missing "body" binding: ${node.text}`)
+        }
+
+        let code = `/*let*/ createScope(nixScope=>{\n`
+        for (const {name, value, isConstant} of simpleBindings.filter(b => b.isConstant)) {
+            code += `        nixScope${varAccess(name)} = ${nixNodeToJs(value)};\n`
+        }
+        for (const {name, value, isConstant} of simpleBindings.filter(b => !b.isConstant)) {
+            code += `        defGetter(nixScope, ${JSON.stringify(name)}, (nixScope) => ${nixNodeToJs(value)});\n`
+        }
+        code += `    return ${nixNodeToJs(bodyValue).trimStart()};\n`
+        code += `})`
         return code
     } else if (node.type == "with_expression") {
         // <with_expression>
