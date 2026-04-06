@@ -21,6 +21,33 @@ const PURE_DIR = `${repoRoot}/tests/translation/eval_tasks_pure_setup`
 const denixEvalPath = `${repoRoot}/run/denix_eval`
 
 const argv = [...Deno.args]
+
+if (argv.includes("--help") || argv.includes("-h")) {
+    console.log(`\
+Usage: ./run/tests [OPTIONS]
+
+Run pure-setup and complex eval tasks, comparing nix-instantiate vs denix_eval.
+
+Options:
+  --silent, -s       Suppress per-task output (only print summaries)
+  --pure-only        Run only pure_setup tasks (skip complex tests)
+  --complex-only     Run only complex tests (skip pure_setup tasks)
+  --positive-only    Run only eval-okay-* tasks (skip eval-fail-*)
+  --timeout <sec>    Per-task timeout in seconds (default: 10)
+  --help, -h         Show this help message
+
+For each eval_tasks_pure_setup/<stem>_eval.json + <stem>.nix, writes:
+  <stem>.nix.out     stdout from real nix-instantiate
+  <stem>.nix.err     stderr from real nix-instantiate
+  <stem>.js.out      stdout from denix_eval
+  <stem>.js.err      stderr from denix_eval
+  <stem>.fail        created on mismatch, removed on match
+
+Complex tests (eval_tasks_complex/) are standalone Deno scripts that
+exit 0 on pass, 1 on fail. Results are written to _results.json.`)
+    Deno.exit(0)
+}
+
 const silent = argv.includes("--silent") || argv.includes("-s")
 const complexOnly = argv.includes("--complex-only")
 const pureOnly = argv.includes("--pure-only")
