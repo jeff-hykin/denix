@@ -24,6 +24,15 @@ const argv = [...Deno.args]
 const silent = argv.includes("--silent") || argv.includes("-s")
 const complexOnly = argv.includes("--complex-only")
 const pureOnly = argv.includes("--pure-only")
+const positiveOnly = argv.includes("--positive-only")
+let timeout = 10_000 // ms
+{
+    const i = argv.indexOf("--timeout")
+    if (i >= 0) {
+        timeout = Number(argv[i + 1]) * 1000
+        argv.splice(i, 2)
+    }
+}
 const log = silent ? () => {} : (...a) => console.log(...a)
 
 // --------------------------------------------------------------
@@ -33,6 +42,7 @@ const tasks = []
 for await (const entry of Deno.readDir(PURE_DIR)) {
     if (entry.isFile && entry.name.endsWith("_eval.json")) {
         const stem = entry.name.replace(/_eval\.json$/, "")
+        if (positiveOnly && !stem.startsWith("eval-okay")) continue
         tasks.push({
             stem,
             jsonPath: `${PURE_DIR}/${entry.name}`,
@@ -50,7 +60,14 @@ log(`discovered ${tasks.length} tasks in ${PURE_DIR}`)
 // --------------------------------------------------------------
 const decoder = new TextDecoder()
 
-async function runNix(setup) {
+// Normalize run-specific temp paths so output is stable across runs.
+// e.g. "denix_eval_ba307d0005eaee1/" → "denix_eval/"
+const TEMP_DIR_RE = /denix_eval(?:_expr)?_[a-f0-9]+\//g
+function sanitizeOutput(text) {
+    return text.replace(TEMP_DIR_RE, "denix_eval/")
+}
+
+async function runNix(setup, signal) {
     const env = { ...setup.env }
     delete env["NIX_EVAL_SHIM_REAL"]
     delete env["NIX_EVAL_SHIM_RECORD_DIR"]
@@ -61,12 +78,13 @@ async function runNix(setup) {
         env,
         clearEnv: true,
         stdout: "piped", stderr: "piped",
+        signal,
     })
     const { stdout, stderr, code } = await proc.output()
     return { stdout: decoder.decode(stdout), stderr: decoder.decode(stderr), code }
 }
 
-async function runDenix(setup, jsPath) {
+async function runDenix(setup, jsPath, signal) {
     // Forward test env + minimally-needed parent-env shims for deno itself.
     const subEnv = { ...setup.env }
     for (const k of ["DENO_DIR", "DENO_INSTALL_ROOT", "XDG_CACHE_HOME"]) {
@@ -89,6 +107,7 @@ async function runDenix(setup, jsPath) {
         env: subEnv,
         clearEnv: true,
         stdout: "piped", stderr: "piped",
+        signal,
     })
     const { stdout, stderr, code } = await proc.output()
     return { stdout: decoder.decode(stdout), stderr: decoder.decode(stderr), code }
@@ -117,16 +136,47 @@ for (let i = 0; i < tasks.length; i++) {
     const jsPath = `${PURE_DIR}/${t.stem}.js`
     try { await Deno.remove(jsPath) } catch {}
 
-    const nixRes   = await runNix(setup)
-    const denixRes = await runDenix(setup, jsPath)
+    const signal = AbortSignal.timeout(timeout)
+    let nixRes, denixRes
+    try {
+        nixRes   = await runNix(setup, signal)
+    } catch (err) {
+        if (err.name === "AbortError" || err.name === "TimeoutError") {
+            errored++
+            log(`[${i+1}/${tasks.length}] TIMEOUT(nix) ${t.stem}`)
+            continue
+        }
+        throw err
+    }
+    try {
+        denixRes = await runDenix(setup, jsPath, signal)
+    } catch (err) {
+        if (err.name === "AbortError" || err.name === "TimeoutError") {
+            errored++
+            log(`[${i+1}/${tasks.length}] TIMEOUT(js) ${t.stem}`)
+            continue
+        }
+        throw err
+    }
 
+    nixRes.stdout   = sanitizeOutput(nixRes.stdout)
+    nixRes.stderr   = sanitizeOutput(nixRes.stderr)
+    denixRes.stdout = sanitizeOutput(denixRes.stdout)
+    denixRes.stderr = sanitizeOutput(denixRes.stderr)
     await Deno.writeTextFile(`${PURE_DIR}/${t.stem}.nix.out`, nixRes.stdout)
     await Deno.writeTextFile(`${PURE_DIR}/${t.stem}.nix.err`, nixRes.stderr)
     await Deno.writeTextFile(`${PURE_DIR}/${t.stem}.js.out`,  denixRes.stdout)
     await Deno.writeTextFile(`${PURE_DIR}/${t.stem}.js.err`,  denixRes.stderr)
 
     const match = nixRes.stdout === denixRes.stdout
-    if (match) matched++; else mismatched++
+    const failPath = `${PURE_DIR}/${t.stem}.fail`
+    if (match) {
+        matched++
+        try { await Deno.remove(failPath) } catch {}
+    } else {
+        mismatched++
+        await Deno.writeTextFile(failPath, `nix exit: ${nixRes.code}\njs exit:  ${denixRes.code}\n`)
+    }
 
     if (!silent) {
         const mark = match ? "✓" : "✗"
