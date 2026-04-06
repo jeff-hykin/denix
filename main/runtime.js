@@ -713,11 +713,13 @@ import { resolveIndirectReference } from "./registry.js"
                 // Convert BigInt to number for slice
                 const startNum = typeof start === 'bigint' ? Number(start) : start
                 const lenNum = typeof len === 'bigint' ? Number(len) : len
+                // In Nix, a negative length means "rest of the string from start"
+                const end = lenNum < 0 ? undefined : startNum + lenNum
                 if (typeof s == 'string') {
-                    return s.slice(startNum, startNum + lenNum)
+                    return s.slice(startNum, end)
                 } else if (s instanceof InterpolatedString) {
                     // be lazy for InterpolatedStrings
-                    return new InterpolatedString([""], [()=>s.toString().slice(startNum, startNum + lenNum)])
+                    return new InterpolatedString([""], [()=>s.toString().slice(startNum, end)])
                 }
             },
         

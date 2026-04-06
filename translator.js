@@ -338,13 +338,37 @@ const nixNodeToJs = (node)=>{
         const usedDoubleQuotes = (children[0].type == "\"")
         const hasInterpolation = children.some(each=>each.type=="interpolation")
         if (!hasInterpolation) {
-            // For empty strings, there's no string_fragment child
-            const stringFragment = children.find(c => c.type === "string_fragment")
-            let text = stringFragment ? stringFragment.text : ""
             if (usedDoubleQuotes) {
-                // guarenteed that double quotes are all escaped here
-                return `"${text.replace(/(\\\\)*\\([bfvux0])/g, "$1$2")}"`
+                // Collect text from all string_fragment and escape_sequence children.
+                // string_fragment = literal chars (may contain real newlines from multi-line source)
+                // escape_sequence = Nix escapes like \n \" \\ \$ etc.
+                let text = ""
+                for (const child of children) {
+                    if (child.type === "string_fragment") {
+                        // Escape chars that are invalid inside a JS double-quoted string:
+                        // literal newlines, carriage returns, backslashes, double quotes
+                        text += child.text
+                            .replace(/\\/g, "\\\\")
+                            .replace(/"/g, '\\"')
+                            .replace(/\n/g, "\\n")
+                            .replace(/\r/g, "\\r")
+                            .replace(/\t/g, "\\t")
+                    } else if (child.type === "escape_sequence") {
+                        // Nix escapes: \n \r \t \\ \" \$ — pass through as-is
+                        // (they map 1:1 to JS escapes, except \$ which JS
+                        //  doesn't need but tolerates as literal $)
+                        const seq = child.text
+                        if (seq === "\\$") {
+                            text += "$"
+                        } else {
+                            text += seq
+                        }
+                    }
+                }
+                return `"${text}"`
             } else {
+                const stringFragment = children.find(c => c.type === "string_fragment")
+                let text = stringFragment ? stringFragment.text : ""
                 // there are no backslash escapes
                 text = text.replace(/\\./g, "\\$&") // \n becomes literally \n (not a newline)
 
