@@ -39,20 +39,24 @@ export default /*let*/ createScope((nixScope) => {
     (nixScope) =>
       createScope((nixScope) => {
         const obj = {};
-        obj[
-          new InterpolatedString(["", ""], [
+        {
+          const __k = new InterpolatedString(["", ""], [
             () => (nixScope.builtins["unsafeDiscardStringContext"](
               nixScope.path,
             )),
-          ])
-        ] = { "path": true };
-        obj[
-          new InterpolatedString(["", ""], [
+          ]);
+          if (__k !== null) obj[__k] = { "path": true };
+        }
+        {
+          const __k = new InterpolatedString(["", ""], [
             () => (nixScope.builtins["unsafeDiscardStringContext"](
               nixScope.drv["drvPath"],
             )),
-          ])
-        ] = { "outputs": ["foo", "out"], "allOutputs": true };
+          ]);
+          if (__k !== null) {
+            obj[__k] = { "outputs": ["foo", "out"], "allOutputs": true };
+          }
+        }
         return obj;
       }),
   );

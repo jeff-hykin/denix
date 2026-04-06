@@ -1,9 +1,9 @@
 denix_eval: translation failed: Error: This is a bug with convertToJs(), it means this node was unexpected/unhandled and couldn't be converted: type="ERROR", "~/${"
-    at nixNodeToJs (file:///Users/jeffhykin/repos/denix/translator.js:1380:15)
-    at file:///Users/jeffhykin/repos/denix/translator.js:969:48
+    at nixNodeToJs (file:///Users/jeffhykin/repos/denix/translator.js:1387:15)
+    at file:///Users/jeffhykin/repos/denix/translator.js:975:48
     at Array.map (<anonymous>)
-    at nixNodeToJs (file:///Users/jeffhykin/repos/denix/translator.js:968:51)
-    at nixNodeToJs (file:///Users/jeffhykin/repos/denix/translator.js:1236:31)
+    at nixNodeToJs (file:///Users/jeffhykin/repos/denix/translator.js:974:51)
+    at nixNodeToJs (file:///Users/jeffhykin/repos/denix/translator.js:1243:31)
     at convertToJs (file:///Users/jeffhykin/repos/denix/translator.js:190:19)
     at file:///Users/jeffhykin/repos/denix/run/denix_eval:109:24
     at __drainNextTickAndMacrotasks (ext:core/01_core.js:439:7)

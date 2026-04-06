@@ -28,8 +28,12 @@ export default ((_withAttrs) => {
         nixScope.map(createFunc(/*arg:*/ "n", null, {}, (nixScope) => (
           createScope((nixScope) => {
             const obj = {};
-            obj[nixScope.builtins["substring"](nixScope.n)(1n)(nixScope.str)] =
-              nixScope.n;
+            {
+              const __k = nixScope.builtins["substring"](nixScope.n)(1n)(
+                nixScope.str,
+              );
+              if (__k !== null) obj[__k] = nixScope.n;
+            }
             return obj;
           })
         )))(nixScope.range(0n)(31n)),

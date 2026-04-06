@@ -11,8 +11,14 @@ runtime.currentFile = import.meta.url.startsWith("file://")
 export default createScope((nixScope) => {
   const obj = {};
   if (obj["a"] === undefined) obj["a"] = {};
-  obj["a"][new InterpolatedString(["", ""], [() => ("b")])] = true;
+  {
+    const __k = new InterpolatedString(["", ""], [() => ("b")]);
+    if (__k !== null) obj["a"][__k] = true;
+  }
   if (obj["a"] === undefined) obj["a"] = {};
-  obj["a"][new InterpolatedString(["", ""], [() => ("c")])] = false;
+  {
+    const __k = new InterpolatedString(["", ""], [() => ("c")]);
+    if (__k !== null) obj["a"][__k] = false;
+  }
   return obj;
 })["a"]["b"];

@@ -1,7 +1,7 @@
 denix_eval: eval failed: Error: Import path does not exist: /var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/eval-okay-hashstring.exp
     at validateImportPath (file:///Users/jeffhykin/repos/denix/tools/import_resolver.js:114:15)
     at loadAndEvaluateSync (file:///Users/jeffhykin/repos/denix/main/import_loader.js:211:5)
-    at Object.globalImportState.importFn (file:///Users/jeffhykin/repos/denix/main/runtime.js:2909:32)
+    at Object.globalImportState.importFn (file:///Users/jeffhykin/repos/denix/main/runtime.js:2915:32)
     at Object.import (file:///Users/jeffhykin/repos/denix/main/runtime.js:1712:42)
     at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:30:34
     at Object.get [as hashesBase16] (file:///Users/jeffhykin/repos/denix/main/runtime.js:137:34)

@@ -9,7 +9,10 @@ const operators = runtime.operators;
 export default operators.equal(
   createScope((nixScope) => {
     const obj = {};
-    obj[null] = true;
+    {
+      const __k = null;
+      if (__k !== null) obj[__k] = true;
+    }
     return obj;
   }),
   {},

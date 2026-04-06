@@ -1,5 +1,5 @@
 denix_eval: translation failed: TypeError: Cannot read properties of undefined (reading 'text')
-    at nixNodeToJs (file:///Users/jeffhykin/repos/denix/translator.js:1226:55)
+    at nixNodeToJs (file:///Users/jeffhykin/repos/denix/translator.js:1233:55)
     at convertToJs (file:///Users/jeffhykin/repos/denix/translator.js:190:19)
     at file:///Users/jeffhykin/repos/denix/run/denix_eval:109:24
     at __drainNextTickAndMacrotasks (ext:core/01_core.js:439:7)
