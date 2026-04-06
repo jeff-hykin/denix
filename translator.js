@@ -546,6 +546,12 @@ const nixNodeToJs = (node)=>{
         strings.push(currentString)
 
         return `(new Path([${strings.map(s => JSON.stringify(s)).join(", ")}], [${getters.join(", ")}]))`
+    } else if (node.type == "hpath_expression") {
+        // ~/foo — home-relative path; resolves to $HOME/foo as a Path
+        const text = node.text || ""
+        // Replace leading ~ with home directory lookup
+        const relPath = text.slice(1) // remove '~', keep the '/foo' part
+        return `(new Path([(typeof Deno !== "undefined" ? Deno.env.get("HOME") : process.env.HOME) + ${JSON.stringify(relPath)}], []))`
     } else if (node.type == "spath_expression") {
         // <...> — nix search-path lookup; desugars to
         //   (builtins.findFile builtins.nixPath "...").
@@ -1015,8 +1021,9 @@ const nixNodeToJs = (node)=>{
                     // Static key
                     code += `    ${indentPrefix}${accessor}[${JSON.stringify(lastKey)}] = ${nixNodeToJs(value)};\n`
                 } else {
-                    // Dynamic key
-                    code += `    ${indentPrefix}${accessor}[${nixNodeToJs(lastPart)}] = ${nixNodeToJs(value)};\n`
+                    // Dynamic key - null keys are silently skipped in Nix
+                    const keyExpr = nixNodeToJs(lastPart)
+                    code += `    ${indentPrefix}{ const __k = ${keyExpr}; if (__k !== null) ${accessor}[__k] = ${nixNodeToJs(value)}; }\n`
                 }
             }
 
