@@ -35,8 +35,33 @@ import { resolveIndirectReference } from "./registry.js"
     const globalImportState = {
         importFn: null,
         scopedImportFn: null,
-        runtime: null, // Store runtime for use by getFlake
     }
+    // auto init runtime
+    let runtime
+    Object.defineProperty(globalImportState, "runtime", {
+        get() {
+            if (!runtime) {
+                runtime = createRuntime()
+            }
+            return runtime
+        },
+        set(run) {
+            runtime = run
+        }
+    })
+    // auto init scopedImportFn
+    let scopedImportFn
+    Object.defineProperty(globalImportState, "scopedImportFn", {
+        get() {
+            if (!runtime) {
+                runtime = createRuntime()
+            }
+            return scopedImportFn
+        },
+        set(run) {
+            scopedImportFn = run
+        }
+    })
 
 //
 // Helper functions
@@ -47,12 +72,24 @@ import { resolveIndirectReference } from "./registry.js"
     // forcing them until demanded.
     const defineLazy = (obj, key, getValue) => {
         let computed = false
+        let computing = false
         let cached
         Object.defineProperty(obj, key, {
             enumerable: true,
             configurable: true,
             get() {
-                if (!computed) { cached = getValue(); computed = true }
+                if (!computed) {
+                    // Blackholing, like real Nix: re-entering a binding while it
+                    // is being computed is infinite recursion, not undefined.
+                    if (computing) { throw new NixError("error: infinite recursion encountered") }
+                    computing = true
+                    try {
+                        cached = getValue()
+                        computed = true
+                    } finally {
+                        computing = false
+                    }
+                }
                 return cached
             },
         })
@@ -177,13 +214,24 @@ import { resolveIndirectReference } from "./registry.js"
             // Computes once on first access, then replaces getter with cached value
             let cached = undefined
             let computed = false
+            let computing = false
             Object.defineProperty(obj, key, {
                 enumerable: true,
                 configurable: true,
                 get() {
                     if (!computed) {
-                        computed = true
-                        cached = fn(obj)
+                        // Blackholing, like real Nix: re-entering while computing
+                        // is infinite recursion (previously this returned the
+                        // stale `cached` = undefined, which surfaced as opaque
+                        // "cannot read properties of undefined" errors).
+                        if (computing) { throw new NixError("error: infinite recursion encountered") }
+                        computing = true
+                        try {
+                            cached = fn(obj)
+                            computed = true
+                        } finally {
+                            computing = false
+                        }
                         // Replace getter with plain value for subsequent accesses
                         Object.defineProperty(obj, key, {
                             enumerable: true,
@@ -898,10 +946,11 @@ import { resolveIndirectReference } from "./registry.js"
             // TODO: there may be edgecases I'm missing for splitVersion
             "splitVersion": (s)=>(   s.length == 0   ?    []    :     s.toString().split(/\.|(?<=\d)(?=\D)|(?<=\D)(?=\d)/g)   ),
             "stringLength": (s)=>{
+                // BigInt: Nix ints are bigint in denix (JS number would be a float)
                 if (typeof s == 'string') {
-                    return s.length
+                    return BigInt(s.length)
                 } else if (s instanceof InterpolatedString) {
-                    return s.toString().length
+                    return BigInt(s.toString().length)
                 }
             },
             "substring": (start)=>(len)=>(s)=>{
@@ -912,16 +961,22 @@ import { resolveIndirectReference } from "./registry.js"
                 const end = lenNum < 0 ? undefined : startNum + lenNum
                 if (typeof s == 'string') {
                     return s.slice(startNum, end)
-                } else if (s instanceof InterpolatedString) {
-                    // be lazy for InterpolatedStrings
+                } else if (s instanceof InterpolatedString || s instanceof NixString) {
+                    // be lazy for InterpolatedStrings; NixString carries string
+                    // context (returning undefined here broke lib.addContextFrom)
                     return new InterpolatedString([""], [()=>s.toString().slice(startNum, end)])
+                } else {
+                    throw new NixError(`error: value is a ${builtins.typeOf(s)} while a string was expected`)
                 }
             },
         
         // 
         // list helpers
         // 
-            "length": (value)=>value.length,
+            // BigInt: Nix ints are bigint in denix; a JS number here would be a
+            // Nix float (breaks e.g. `{ "2" = …; }.${toString (length l)}` in
+            // lib/systems/parse.nix, since toString 2.0 is "2.0").
+            "length": (value)=>BigInt(requireList(value).length),
             "all": (func)=>(list)=>list.length==0||list.every(func), 
             "any": (func)=>(list)=>list.some(func),                  
             "filter": (func)=>(list)=>list.filter(func),             
@@ -1080,9 +1135,23 @@ import { resolveIndirectReference } from "./registry.js"
             },
             "mapAttrs": (f)=>(attrset)=>{
                 requireAttrSet(attrset)
+                // Lazy in values, like real Nix: iterate keys without forcing the
+                // input's value getters, and defer computing each mapped value
+                // until it is demanded. Nixpkgs relies on this for fixed points
+                // like lib.systems.elaborate's
+                //     final = { … } // mapAttrs (n: v: v final.parsed) predicates;
+                // where eager mapping would re-enter `final` mid-computation.
                 const result = {}
-                for (const [name, value] of Object.entries(attrset)) {
-                    result[name] = f(name)(value)
+                for (const name of Object.keys(attrset)) {
+                    defineLazy(result, name, () => {
+                        const mapper = force(f(name))
+                        const arg = mkThunk(() => attrset[name])
+                        if (typeof mapper !== "function") {
+                            throw new NixError(`error: attempt to call something which is not a function but ${builtins.typeOf(mapper)}`)
+                        }
+                        const mapped = (mapper.__nixLambda || lazyArgFns.has(mapper)) ? mapper(arg) : mapper(force(arg))
+                        return force(mapped)
+                    })
                 }
                 return result
             },
@@ -1885,15 +1954,11 @@ import { resolveIndirectReference } from "./registry.js"
             // Note: import and scopedImport delegate to runtime-initialized versions
             // We use a shared state object that gets initialized by createRuntime()
             "import": (path)=>{
-                if (!globalImportState.importFn) {
-                    throw new NixError(`builtins.import called before runtime initialization`)
-                }
+                globalImportState.runtime ||= createRuntime()
                 return globalImportState.importFn(path)
             },
             "scopedImport": (scope)=>(path)=>{
-                if (!globalImportState.scopedImportFn) {
-                    throw new NixError(`builtins.scopedImport called before runtime initialization`)
-                }
+                globalImportState.runtime ||= createRuntime()
                 return globalImportState.scopedImportFn(scope)(path)
             },
             "functionArgs": (f)=>{
@@ -2617,14 +2682,14 @@ import { resolveIndirectReference } from "./registry.js"
                     const n1 = parseInt(p1)
                     const n2 = parseInt(p2)
                     if (!isNaN(n1) && !isNaN(n2)) {
-                        if (n1 < n2) return -1
-                        if (n1 > n2) return 1
+                        if (n1 < n2) return -1n
+                        if (n1 > n2) return 1n
                     } else {
-                        if (p1 < p2) return -1
-                        if (p1 > p2) return 1
+                        if (p1 < p2) return -1n
+                        if (p1 > p2) return 1n
                     }
                 }
-                return 0
+                return 0n
             },
             "getFlake": async (flakeRef) => {
                 // getFlake fetches a flake and returns its output attributes and metadata
@@ -3333,16 +3398,19 @@ import { resolveIndirectReference } from "./registry.js"
             // Select a nested attribute with a default value if it doesn't exist
             // e.g., selectOrDefault({a: {b: 1}}, ["a", "b"], "default") => 1
             // e.g., selectOrDefault({a: {}}, ["a", "b"], "default") => "default"
-            let current = attrset
+            // The translator passes the default as a thunk so `x.y or (throw …)`
+            // only evaluates the default on a miss; force() is a no-op for plain
+            // values from older/eager call sites.
+            let current = force(attrset)
             for (const attr of attrPath) {
                 if (typeof current !== "object" || current === null || Array.isArray(current)) {
-                    return defaultValue
+                    return force(defaultValue)
                 }
                 const attrStr = requireString(attr).toString()
                 if (!current.hasOwnProperty(attrStr)) {
-                    return defaultValue
+                    return force(defaultValue)
                 }
-                current = current[attrStr]
+                current = force(current[attrStr])
             }
             return current
         },

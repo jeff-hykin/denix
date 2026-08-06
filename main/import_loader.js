@@ -110,7 +110,8 @@ async function loadNixFile(content, runtime, filepath) {
         'force',
         'mkThunk',
         `return (${cleanCode}
-)`
+)
+//# sourceURL=denix-nix:${filepath}`
     )
 
     // Execute the generated code with runtime context
@@ -179,7 +180,8 @@ function loadNixFileSync(content, runtime, filepath) {
         'force',
         'mkThunk',
         `return (${cleanCode}
-)`
+)
+//# sourceURL=denix-nix:${filepath}`
     )
 
     // Execute the generated code with runtime context

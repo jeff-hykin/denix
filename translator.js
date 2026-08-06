@@ -445,6 +445,21 @@ const nixNodeToJs = (node)=>{
         // TODO: add more cases of literals getting direct conversion
         } else {
             const operator = children[1].text
+            // Nix && || -> are lazy in their right operand; JS's native && and
+            // || short-circuit identically, so use them directly (also far more
+            // readable than helper calls). A helper-call form would eagerly
+            // evaluate both sides — this broke nixpkgs top-level default.nix:
+            //     if crossSystem0 == null || lib.systems.equals system localSystem
+            // where the right side must not run when crossSystem0 is null.
+            if (operator === "&&") {
+                return `((${nixNodeToJs(children[0])}) && (${nixNodeToJs(children[2])}))`
+            }
+            if (operator === "||") {
+                return `((${nixNodeToJs(children[0])}) || (${nixNodeToJs(children[2])}))`
+            }
+            if (operator === "->") {
+                return `(!(${nixNodeToJs(children[0])}) || (${nixNodeToJs(children[2])}))`
+            }
             const operatorName = ({
                 "+": "add",
                 "-": "subtract",
@@ -456,9 +471,6 @@ const nixNodeToJs = (node)=>{
                 "<=": "lessThanOrEqual",
                 ">": "greaterThan",
                 ">=": "greaterThanOrEqual",
-                "&&": "and",
-                "||": "or",
-                "->": "implication",
                 "//": "merge",
                 "++": "listConcat",
                 "?": "hasAttr",
@@ -767,15 +779,17 @@ const nixNodeToJs = (node)=>{
         // If there's a default value, wrap in nullish coalescing logic
         if (hasDefault) {
             const defaultJs = nixNodeToJs(defaultValue)
-            // Use a helper function to handle the "or" operator
-            // The helper checks if the path exists and returns the value or default
+            // The default MUST be lazy (thunked): `attrs.x or (throw "…")` only
+            // throws when `x` is missing. An eager JS argument would evaluate
+            // the throw before selectOrDefault even runs (this broke nixpkgs
+            // lib/systems/parse.nix mkSkeletonFromList).
             return `operators.selectOrDefault(${base}, [${pathParts.map(p => {
                 if (p.type === "identifier") {
                     return JSON.stringify(p.text)
                 } else if (p.type === "string_expression" || p.type === "interpolation") {
                     return nixNodeToJs(p)
                 }
-            }).join(", ")}], ${defaultJs})`
+            }).join(", ")}], mkThunk(()=>(${defaultJs})))`
         }
 
         return result

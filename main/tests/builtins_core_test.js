@@ -119,15 +119,16 @@ Deno.test("builtins.parseDrvName - no version", () => {
 })
 
 Deno.test("builtins.compareVersions - less than", () => {
-    assertEquals(builtins.compareVersions("1.0")("2.0"), -1)
-    assertEquals(builtins.compareVersions("1.2.3")("1.2.4"), -1)
+    // Nix returns an int, which denix represents as bigint
+    assertEquals(builtins.compareVersions("1.0")("2.0"), -1n)
+    assertEquals(builtins.compareVersions("1.2.3")("1.2.4"), -1n)
 })
 
 Deno.test("builtins.compareVersions - greater than", () => {
-    assertEquals(builtins.compareVersions("2.0")("1.0"), 1)
-    assertEquals(builtins.compareVersions("1.10")("1.9"), 1)
+    assertEquals(builtins.compareVersions("2.0")("1.0"), 1n)
+    assertEquals(builtins.compareVersions("1.10")("1.9"), 1n)
 })
 
 Deno.test("builtins.compareVersions - equal", () => {
-    assertEquals(builtins.compareVersions("1.0")("1.0"), 0)
+    assertEquals(builtins.compareVersions("1.0")("1.0"), 0n)
 })
