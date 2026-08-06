@@ -8,7 +8,7 @@
  * - Integrating with import cache
  */
 
-import { canonicalizePath, getImportType, validateImportPath } from "../tools/import_resolver.js"
+import { canonicalizePath, getImportType, validateImportPath, isUrl } from "../tools/import_resolver.js"
 import { convertToJs, convertToJsSync } from "../translator.js"
 import { createWithScope } from "./runtime.js"
 
@@ -20,15 +20,22 @@ import { createWithScope } from "./runtime.js"
  * @returns {any} - Result of evaluating the file
  */
 export async function loadAndEvaluate(filepath, runtime) {
-    // Validate the path exists
-    filepath = canonicalizePath(filepath)
-    validateImportPath(filepath)
+    let content
+    if (isUrl(filepath)) {
+        const response = await fetch(filepath)
+        if (!response.ok) {
+            throw new Error(`import: HTTP ${response.status} fetching ${filepath}`)
+        }
+        content = await response.text()
+    } else {
+        // Validate the path exists
+        filepath = canonicalizePath(filepath)
+        validateImportPath(filepath)
+        content = await Deno.readTextFile(filepath)
+    }
 
-    // Read file contents
-    const content = await Deno.readTextFile(filepath)
-
-    // Determine file type
-    const fileType = getImportType(filepath)
+    // Determine file type (for URLs, ignore query/hash)
+    const fileType = getImportType(isUrl(filepath) ? new URL(filepath).pathname : filepath)
 
     if (fileType === 'json') {
         return loadJsonFile(content, runtime)
@@ -39,6 +46,28 @@ export async function loadAndEvaluate(filepath, runtime) {
     }
 
     throw new Error(`Unsupported file type for import: ${filepath}`)
+}
+
+// Nix `import` is synchronous, so URL bodies are fetched with a blocking
+// subprocess (fetch() can't be awaited here). Cached per-process; the import
+// cache also dedupes evaluated results by URL.
+const urlTextCache = new Map()
+function fetchUrlTextSync(url) {
+    if (urlTextCache.has(url)) {
+        return urlTextCache.get(url)
+    }
+    const output = new Deno.Command("curl", {
+        args: ["-fsSL", "--retry", "2", url],
+        stdout: "piped",
+        stderr: "piped",
+    }).outputSync()
+    if (!output.success) {
+        const stderr = new TextDecoder().decode(output.stderr).trim()
+        throw new Error(`import: failed to fetch ${url}${stderr ? `: ${stderr}` : ""}`)
+    }
+    const text = new TextDecoder().decode(output.stdout)
+    urlTextCache.set(url, text)
+    return text
 }
 
 /**
@@ -215,15 +244,18 @@ function loadNixFileSync(content, runtime, filepath) {
  * @returns {any} - Result of evaluating the file
  */
 export function loadAndEvaluateSync(filepath, runtime) {
-    // Validate the path exists
-    filepath = canonicalizePath(filepath)
-    validateImportPath(filepath)
+    let content
+    if (isUrl(filepath)) {
+        content = fetchUrlTextSync(filepath)
+    } else {
+        // Validate the path exists
+        filepath = canonicalizePath(filepath)
+        validateImportPath(filepath)
+        content = Deno.readTextFileSync(filepath)
+    }
 
-    // Read file contents synchronously
-    const content = Deno.readTextFileSync(filepath)
-
-    // Determine file type
-    const fileType = getImportType(filepath)
+    // Determine file type (for URLs, ignore query/hash)
+    const fileType = getImportType(isUrl(filepath) ? new URL(filepath).pathname : filepath)
 
     if (fileType === 'json') {
         return loadJsonFile(content, runtime)

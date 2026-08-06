@@ -267,6 +267,10 @@ const resolveSourceRelativePath = (text) => {
     if (!translationSourceDir) { return text }
     if (text.startsWith("/")) { return text }
     if (!(text.startsWith("./") || text.startsWith("../"))) { return text }
+    // URL-imported files: relative path literals resolve to sibling URLs
+    if (/^https?:\/\//.test(translationSourceDir)) {
+        return new URL(text, translationSourceDir + "/").href
+    }
     const parts = (translationSourceDir + "/" + text).split("/")
     const out = []
     for (const p of parts) {

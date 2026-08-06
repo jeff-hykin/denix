@@ -20,7 +20,7 @@ Error.stackTraceLimit = 100000
 
 // import system
 import { ImportCache } from "./import_cache.js"
-import { resolveImportPath } from "../tools/import_resolver.js"
+import { resolveImportPath, isUrl } from "../tools/import_resolver.js"
 import { loadAndEvaluateSync } from "./import_loader.js"
 
 // fetcher system
@@ -3758,6 +3758,9 @@ import { resolveIndirectReference } from "./registry.js"
     
     const resolveImportTarget = (runtime, path)=>{
         const pathStr = path instanceof Path ? path.toString() : requireString(path).toString()
+        if (isUrl(pathStr)) {
+            return pathStr
+        }
         return runtime.currentFile
             ? resolveImportPath(runtime.currentFile, pathStr)
             : FileSystem.makeAbsolutePath(pathStr)

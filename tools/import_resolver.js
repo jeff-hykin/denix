@@ -10,6 +10,11 @@
 
 import { basename, dirname, join, resolve, isAbsolute } from "https://deno.land/std@0.224.0/path/mod.ts"
 
+/** Is this import target a http(s) URL rather than a filesystem path? */
+export function isUrl(path) {
+    return /^https?:\/\//.test(path)
+}
+
 /**
  * Get file info synchronously
  */
@@ -35,6 +40,15 @@ export function resolveImportPath(fromFile, importPath) {
         importPath = importPath.toString()
     }
 
+    // URL imports: an absolute URL stands alone; a relative path inside a
+    // URL-imported file resolves against that file's URL
+    if (isUrl(importPath)) {
+        return importPath
+    }
+    if (isUrl(fromFile)) {
+        return new URL(importPath, fromFile).href
+    }
+
     // Handle absolute paths
     if (isAbsolute(importPath)) {
         return canonicalizePath(importPath)
@@ -56,6 +70,10 @@ export function resolveImportPath(fromFile, importPath) {
  * @returns {string} - Canonical absolute path
  */
 export function canonicalizePath(path) {
+    // URLs can't be stat'd — they must point directly at the file
+    if (isUrl(path)) {
+        return path
+    }
     const info = getFileInfo(path)
 
     // If path exists as-is and is a file, return it
