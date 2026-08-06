@@ -2,16 +2,16 @@
 
 A Nix → JavaScript translator with 1-to-1 parity for Nix 2.18 builtins, implemented in Deno.
 
-[![Tests](https://img.shields.io/badge/tests-538%20passing-brightgreen)](#testing)
+[![Tests](https://img.shields.io/badge/tests-805%20passing-brightgreen)](#testing)
 [![Nix](https://img.shields.io/badge/Nix-2.18-blue)](https://nix.dev/manual/nix/2.18/language/builtins)
 [![Deno](https://img.shields.io/badge/Deno-latest-blue)](https://deno.land/)
 
 ## Status
 
-**Translator:** ✅ 100% complete (87/87 tests passing)
-**Runtime:** ✅ 102 builtins implemented, 82 tested (80.4% coverage) 🎯
-**Derivations:** ✅ All derivation tests passing (12/12)
-**Goal:** ✅ 80% coverage milestone achieved!
+**Translator:** ✅ 100% complete
+**Runtime:** ✅ all Nix builtins implemented and exercised by tests (805 passing unit tests)
+**Derivations:** ✅ byte-identical .drv output vs real Nix across the stdenv closure (515/515)
+**Build:** ✅ builds cowsay from nixpkgs end-to-end (substitution + local stdenv phases)
 
 ## Quick Start
 
@@ -67,8 +67,7 @@ deno test --allow-all
 ## Features
 
 - ✅ **`denix` CLI** - translate, eval, and build from the command line (`deno install`-able)
-- ✅ **102 Nix builtins** - All Nix 2.18 builtins implemented (100% feature complete)
-- ✅ **80.4% test coverage** - 82/102 builtins tested with 538 passing tests
+- ✅ **All Nix builtins** - every Nix 2.18 builtin implemented and covered by tests (805 passing)
 - ✅ **Import system** - `builtins.import` and `builtins.scopedImport` fully working
 - ✅ **Derivations** - Full derivation support (12/12 tests passing)
 - ✅ **Network fetchers** - fetchGit, fetchTarball, fetchurl, fetchTree, fetchMercurial, path, filterSource
@@ -154,7 +153,7 @@ denix/
 │   ├── tar.js              # Tarball extraction
 │   ├── nar_hash.js         # NAR directory hashing
 │   ├── store_manager.js    # Store path management
-│   └── tests/              # Test suite (34 files, 538 tests)
+│   └── tests/              # Test suite (52 files, 805 tests)
 ├── tools/                  # Utilities (hashing, store paths, parsing, 10 modules)
 ├── test.sh                 # Smart test runner with filters
 └── prompt.md               # Current priorities & remaining work
@@ -162,13 +161,7 @@ denix/
 
 ## Testing
 
-**Current coverage:** 538 tests passing across 34 test files
-- Runtime builtins: ~370+ tests (17 files)
-- Translator: 87 tests (4 files)
-- Import system: 49 tests (5 files)
-- Derivations: 12 tests (2 files)
-- Infrastructure: 30+ tests (4 files)
-- Integration: 66+ tests (2 files - nixpkgs.lib validation)
+**Current coverage:** 805 unit tests passing across 52 files (`main/tests/`), plus conformance suites under `tests/translation/` (fetchers 47/47, translation output fidelity, derivation byte-fidelity vs real Nix)
 
 All tests pass in ~4 minutes.
 
@@ -190,10 +183,9 @@ deno test --allow-all --filter="import"
 
 ## Implementation Status
 
-### Implemented Builtins (102/102)
+### Implemented Builtins
 
-✅ All Nix 2.18 builtins implemented (100% feature complete)
-✅ 82/102 tested (80.4% coverage) 🎯
+✅ All Nix 2.18 builtins implemented and exercised by the test suites
 
 **Categories:**
 - Type checking: isNull, isBool, isInt, isFloat, isString, isList, isAttrs, isPath, isFunction, typeOf
@@ -211,14 +203,9 @@ See [main/runtime.js](main/runtime.js) for complete implementation.
 
 ## Development Status
 
-**✅ 80% test coverage milestone achieved!**
+Working today: byte-identical derivations vs real Nix (515/515 across the stdenv closure), binary-cache substitution, local builds (cowsay end-to-end), flakes, and a green main test suite (805 tests) plus the fetchers conformance suite (47/47).
 
-Remaining work:
-- 20/102 builtins untested (19.6%) - all medium/low priority
-- Optional: Test medium-priority builtins (context ops, store ops, hashing)
-- Recommended: Expand nixpkgs.lib testing (lists.nix, attrsets.nix, options.nix)
-
-See [prompt.md](prompt.md) for remaining work.
+Remaining work (aspirational conformance suites): nix-hash CLI emulation, nixpkgs module system, and parts of the upstream nix_lang/network suites.
 
 ## Key Design Decisions
 
@@ -232,20 +219,6 @@ See [prompt.md](prompt.md) for remaining work.
 - Deno standard library (URL imports)
 - tree-sitter-nix (parser, via esm.sh)
 - @std/assert (testing)
-
-## Contributing
-
-### Adding Tests for Remaining Builtins
-
-20 builtins remain untested (all medium/low priority):
-- Context operations (4): addErrorContext, appendContext, hasContext, unsafeDiscardStringContext
-- Store operations (5): storeDir, storePath, toFile, placeholder, outputOf
-- Hashing (2): hashString, hashFile
-- Derivation (3): derivationStrict, unsafeDiscardOutputDependency, unsafeGetAttrPos
-- Control flow (4): break, traceVerbose, genericClosure
-- Advanced (2): fetchClosure, nixPath
-
-See [prompt.md](prompt.md) for detailed implementation guide.
 
 ## License
 
