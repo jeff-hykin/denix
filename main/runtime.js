@@ -14,6 +14,10 @@ import { serializeDerivation, computeDrvPath, computeOutputPath, encodeBase32, m
 // core stuff
 import { NixError, NotImplemented } from "./errors.js"
 
+// Deep lazy-evaluation call chains need long traces to be debuggable; the
+// default of 10 frames hides the actual origin of most errors.
+Error.stackTraceLimit = 100
+
 // import system
 import { ImportCache } from "./import_cache.js"
 import { resolveImportPath } from "../tools/import_resolver.js"
@@ -1094,19 +1098,32 @@ import { resolveIndirectReference } from "./registry.js"
             },
             "zipAttrsWith": (f)=>(list)=>{
                 requireList(list)
-                const collected = {}
+                // Lazy like real Nix: gather keys WITHOUT forcing any values
+                // (Object.entries would run every getter — this forced every
+                // module's config values during lib/modules.nix mergeModules,
+                // causing bogus infinite recursion), and only collect + merge a
+                // key's values when that key is actually demanded.
+                const keys = new Set()
                 for (const attrset of list) {
                     requireAttrSet(attrset)
-                    for (const [key, value] of Object.entries(attrset)) {
-                        if (!collected[key]) {
-                            collected[key] = []
-                        }
-                        collected[key].push(value)
-                    }
+                    for (const key of Object.keys(attrset)) { keys.add(key) }
                 }
                 const result = {}
-                for (const [key, values] of Object.entries(collected)) {
-                    result[key] = f(key)(values)
+                for (const key of keys) {
+                    defineLazy(result, key, () => {
+                        const values = []
+                        for (const attrset of list) {
+                            if (Object.prototype.hasOwnProperty.call(attrset, key)) {
+                                values.push(attrset[key])
+                            }
+                        }
+                        const merger = force(f(key))
+                        if (typeof merger !== "function") {
+                            throw new NixError(`error: attempt to call something which is not a function but ${builtins.typeOf(merger)}`)
+                        }
+                        const merged = (merger.__nixLambda || lazyArgFns.has(merger)) ? merger(mkThunk(() => values)) : merger(values)
+                        return force(merged)
+                    })
                 }
                 return result
             },
@@ -3374,8 +3391,12 @@ import { resolveIndirectReference } from "./registry.js"
         or: (value, other)=>value||other,
         implication: (value, other)=>!value||other,
         hasAttr: (attrset, attr)=>{
-            requireAttrSet(attrset)
+            // The `?` operator returns false for non-attrsets (unlike
+            // builtins.hasAttr, which errors) — e.g. `1 ? a` is false in Nix,
+            // and nixpkgs lib.isFunction does `f ? __functor` on arbitrary values.
+            attrset = force(attrset)
             requireString(attr)
+            if (!builtins.isAttrs(attrset)) { return false }
             return attrset.hasOwnProperty(attr.toString())
         },
         hasAttrPath: (attrset, ...attrPath)=>{
