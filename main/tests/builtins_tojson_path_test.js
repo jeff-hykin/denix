@@ -1,14 +1,12 @@
 // Test builtins.toJSON with Path objects
 import { assertEquals, assertStringIncludes } from "jsr:@std/assert@1"
-import { createRuntime } from "../runtime.js"
+import { createRuntime, builtins, Path } from "../runtime.js"
 
-const runtimeObj = createRuntime()
-const builtins = runtimeObj.scopeStack[0].builtins
-const Path = runtimeObj.runtime.Path
+createRuntime()
 
 Deno.test("toJSON - store path (from fetchTarball)", async () => {
     // Create a mock store path
-    const storePath = new Path("~/.cache/denix/store/abc123-example/file.txt")
+    const storePath = new Path(["~/.cache/denix/store/abc123-example/file.txt"], [])
 
     const result = await builtins.toJSON(storePath)
 
@@ -19,7 +17,7 @@ Deno.test("toJSON - store path (from fetchTarball)", async () => {
 })
 
 Deno.test("toJSON - complex attrset with store path", async () => {
-    const storePath = new Path("~/.cache/denix/store/xyz789-pkg/bin/tool")
+    const storePath = new Path(["~/.cache/denix/store/xyz789-pkg/bin/tool"], [])
 
     const attrset = {
         name: "test",
@@ -44,7 +42,7 @@ Deno.test("toJSON - local filesystem path copies to store", async () => {
     await Deno.writeTextFile(testFile, "Test content for toJSON")
 
     try {
-        const localPath = new Path(testFile)
+        const localPath = new Path([testFile], [])
 
         const result = await builtins.toJSON(localPath)
 

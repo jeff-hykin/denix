@@ -227,15 +227,20 @@ Deno.test("genericClosure - handles cycles (self-referential)", () => {
     if (result[0].key !== "x") throw new Error(`Expected key="x", got "${result[0].key}"`)
 })
 
-Deno.test("genericClosure - key coercion to string", () => {
-    const result = builtins.genericClosure({
-        startSet: [{ key: 1 }, { key: "1" }],
-        operator: (item) => []
-    })
-
-    if (!Array.isArray(result)) throw new Error("Expected array")
-    // Keys 1 and "1" should be treated as the same (both coerced to "1")
-    if (result.length !== 1) throw new Error(`Expected 1 item (key dedup), got ${result.length}`)
+Deno.test("genericClosure - mixed-type keys are incomparable (matches Nix)", () => {
+    // Real Nix throws "cannot compare a string with an integer" when keys of
+    // different types meet (verified against `nix eval`). It does NOT coerce
+    // int 1 and string "1" to the same key.
+    let threw = false
+    try {
+        builtins.genericClosure({
+            startSet: [{ key: 1n }, { key: "1" }],
+            operator: (item) => [],
+        })
+    } catch (_e) {
+        threw = true
+    }
+    if (!threw) throw new Error("Expected genericClosure to throw on mixed int/string keys")
 })
 
 Deno.test("genericClosure - error if item missing key", () => {

@@ -59,6 +59,13 @@ export async function extractTarball(tarballPath, destDir) {
         const untarStream = stream.pipeThrough(new UntarStream());
 
         for await (const entry of untarStream) {
+            // Skip macOS AppleDouble metadata (._foo) — never wanted, and they
+            // add spurious top-level entries that defeat directory stripping.
+            const base = entry.path.replace(/\/+$/, "").split("/").pop();
+            if (base && base.startsWith("._")) {
+                if (entry.readable) { await entry.readable.cancel(); }
+                continue;
+            }
             const fullPath = `${destDir}/${entry.path}`;
             const typeflag = entry.header?.typeflag;
 

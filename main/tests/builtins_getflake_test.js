@@ -1,9 +1,8 @@
 import { assertEquals, assertExists, assert } from "jsr:@std/assert";
-import { createRuntime } from "../runtime.js";
+import { createRuntime, builtins } from "../runtime.js";
 
-// Initialize runtime once before tests
-const runtimeContext = createRuntime();
-const builtins = runtimeContext.runtime.builtins;
+// Initialize the runtime once so globalImportState (used by getFlake) is wired.
+createRuntime();
 
 Deno.test("getFlake - load local flake with path reference", async () => {
     // Use path: prefix for explicit path reference
@@ -67,7 +66,7 @@ Deno.test("getFlake - load flake with relative path", async () => {
     }
 });
 
-Deno.test("getFlake - flake with inputs", async () => {
+Deno.test("getFlake - flake with inputs (recursively resolved)", async () => {
     const flakePath = new URL("./fixtures/test-flake-with-inputs", import.meta.url).pathname;
     const result = await builtins.getFlake(`path:${flakePath}`);
 
@@ -75,24 +74,19 @@ Deno.test("getFlake - flake with inputs", async () => {
     assertEquals(result._type, "flake");
     assertEquals(result.description, "A test flake with inputs");
 
-    // Verify inputs exist
-    assertExists(result.inputs);
+    // The `dep` input is recursively resolved to a real flake (a local sibling
+    // via a relative path input), NOT a stub.
     assertExists(result.inputs.self);
-    assertExists(result.inputs.nixpkgs);
+    assertExists(result.inputs.dep);
+    assertEquals(result.inputs.dep._type, "flake");
 
-    // Verify nixpkgs input is a stub (we don't recursively fetch in this implementation)
-    assertEquals(result.inputs.nixpkgs._type, "flake-input-stub");
-    assertEquals(result.inputs.nixpkgs.url, "github:nixos/nixpkgs/nixos-unstable");
-
-    // Verify outputs can reference self and inputs
-    assertExists(result.outputs);
+    // Outputs can reference self and the resolved input's outputs (values + fns).
     const greetingStr = result.outputs.greeting.toString();
     assertEquals(greetingStr.includes("test flake with inputs"), true);
-    assertEquals(result.outputs.nixpkgsReference, "flake-input-stub");
+    assertEquals(result.outputs.depAnswer, 42n);
+    assertEquals(result.outputs.depDoubled, 42n);
 
-    // Verify input count
-    // inputs should have: self, nixpkgs = 2
-    // Note: builtins.length returns Number, not BigInt
+    // inputs: self, dep = 2
     assertEquals(result.outputs.inputCount, 2);
 });
 

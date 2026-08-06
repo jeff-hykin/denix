@@ -98,48 +98,126 @@ if (!nixFile && inlineExpr == null) {
 }
 
 // --------------------------------------------------------------
-// resolve nix file
+// flake mode detection
+//
+//   denix_build /path/to/flake              -> packages.<system>.default
+//   denix_build /path/to/flake#some.attr    -> outputs.some.attr
+//
+// Flake outputs are produced by builtins.getFlake, which is async. Async
+// builtins can't be chained inside a translated `-E` expression (Nix eval is
+// synchronous, so `(getFlake "x").outputs` reads a member off a Promise).
+// Handling flakes natively here lets us `await` getFlake in JS and then walk
+// the attribute path.
 // --------------------------------------------------------------
-let nixFileAbs
-let inlineTmpDir = null
-if (nixFile) {
+let flakeRef = null
+let flakeAttrPath = null
+if (nixFile != null) {
+    if (nixFile.includes("#")) {
+        const idx = nixFile.indexOf("#")
+        flakeRef = nixFile.slice(0, idx)
+        flakeAttrPath = nixFile.slice(idx + 1)
+        nixFile = null
+    } else {
+        // A directory containing a flake.nix is a flake reference.
+        try {
+            const st = await Deno.stat(nixFile)
+            if (st.isDirectory) {
+                await Deno.stat(`${nixFile}/flake.nix`)
+                flakeRef = nixFile
+                nixFile = null
+            }
+        } catch { /* not a flake dir — fall through to plain .nix handling */ }
+    }
+}
+
+// --------------------------------------------------------------
+// flake mode: resolve the target derivation via getFlake (async)
+// --------------------------------------------------------------
+let value
+let flakeMode = false
+let tmpDir = null
+if (flakeRef != null) {
+    flakeMode = true
+    const { createRuntime, builtins } = await import("../main/runtime.js")
+    // createRuntime() wires up globalImportState.runtime, which getFlake needs.
+    createRuntime()
+
+    const flakeRefAbs = flakeRef.startsWith("/") || flakeRef.includes(":")
+        ? flakeRef
+        : await Deno.realPath(flakeRef)
+
+    let flake
     try {
-        nixFileAbs = await Deno.realPath(nixFile)
+        flake = await builtins.getFlake(flakeRefAbs)
     } catch (err) {
-        console.error(`denix_build: cannot resolve ${JSON.stringify(nixFile)}: ${err.message}`)
+        console.error(`denix_build: getFlake failed: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}`)
         Deno.exit(1)
     }
-} else {
-    inlineTmpDir = await Deno.makeTempDir({ prefix: "denix_build_expr_" })
-    nixFileAbs = `${inlineTmpDir}/expr.nix`
-    await Deno.writeTextFile(nixFileAbs, inlineExpr)
+
+    const system = typeof builtins.currentSystem === "function"
+        ? builtins.currentSystem()
+        : String(builtins.currentSystem)
+
+    // Default attribute path mirrors `nix build`: packages.<system>.default
+    const parts = flakeAttrPath
+        ? flakeAttrPath.split(".")
+        : ["packages", system, "default"]
+
+    value = flake.outputs
+    for (const part of parts) {
+        if (value == null) break
+        value = value[part]
+        if (value && typeof value.then === "function") value = await value
+    }
+    // honor any additional -A on top of the flake attr path
+    for (const part of attrPath) {
+        if (value == null) break
+        value = value[part]
+        if (value && typeof value.then === "function") value = await value
+    }
 }
 
 // --------------------------------------------------------------
-// translate & evaluate
+// resolve nix file + translate & evaluate (non-flake path)
 // --------------------------------------------------------------
-let translated
-try {
-    const source = await Deno.readTextFile(nixFileAbs)
-    const runtimeAbs = new URL("../main/runtime.js", import.meta.url).href
-    translated = await convertToJs(source, { runtimePath: runtimeAbs, sourceFile: nixFileAbs })
-} catch (err) {
-    console.error(`denix_build: translation failed: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}`)
-    Deno.exit(1)
-}
+let nixFileAbs = null
+let inlineTmpDir = null
+if (!flakeMode) {
+    if (nixFile) {
+        try {
+            nixFileAbs = await Deno.realPath(nixFile)
+        } catch (err) {
+            console.error(`denix_build: cannot resolve ${JSON.stringify(nixFile)}: ${err.message}`)
+            Deno.exit(1)
+        }
+    } else {
+        inlineTmpDir = await Deno.makeTempDir({ prefix: "denix_build_expr_" })
+        nixFileAbs = `${inlineTmpDir}/expr.nix`
+        await Deno.writeTextFile(nixFileAbs, inlineExpr)
+    }
 
-const tmpDir = await Deno.makeTempDir({ prefix: "denix_build_" })
-const tmpJs = `${tmpDir}/translated.js`
-await Deno.writeTextFile(tmpJs, translated)
+    let translated
+    try {
+        const source = await Deno.readTextFile(nixFileAbs)
+        const runtimeAbs = new URL("../main/runtime.js", import.meta.url).href
+        translated = await convertToJs(source, { runtimePath: runtimeAbs, sourceFile: nixFileAbs })
+    } catch (err) {
+        console.error(`denix_build: translation failed: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}`)
+        Deno.exit(1)
+    }
 
-let value
-try {
-    const mod = await import("file://" + tmpJs)
-    value = mod.default
-    if (value && typeof value.then === "function") value = await value
-} catch (err) {
-    console.error(`denix_build: eval failed: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}`)
-    cleanup(); Deno.exit(1)
+    tmpDir = await Deno.makeTempDir({ prefix: "denix_build_" })
+    const tmpJs = `${tmpDir}/translated.js`
+    await Deno.writeTextFile(tmpJs, translated)
+
+    try {
+        const mod = await import("file://" + tmpJs)
+        value = mod.default
+        if (value && typeof value.then === "function") value = await value
+    } catch (err) {
+        console.error(`denix_build: eval failed: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}`)
+        cleanup(); Deno.exit(1)
+    }
 }
 
 // --------------------------------------------------------------

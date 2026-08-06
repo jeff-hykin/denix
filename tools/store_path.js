@@ -35,6 +35,98 @@ export function encodeBase32(bytes) {
 }
 
 /**
+ * Decode a Nix base-32 string back into bytes (inverse of encodeBase32).
+ */
+export function decodeBase32(str) {
+    const len = Math.floor((str.length * 5) / 8)
+    const bytes = new Uint8Array(len)
+    for (let n = 0; n < str.length; n++) {
+        const c = str[str.length - 1 - n]
+        const digit = NIX_BASE32_ALPHABET.indexOf(c)
+        if (digit < 0) throw new Error(`invalid Nix base-32 character: ${c}`)
+        const b = n * 5
+        const i = Math.floor(b / 8)
+        const j = b % 8
+        bytes[i] |= (digit << j) & 0xff
+        if (i + 1 < len) bytes[i + 1] |= (digit >> (8 - j)) & 0xff
+    }
+    return bytes
+}
+
+const bytesToHex = (bytes) =>
+    [...bytes].map((b) => b.toString(16).padStart(2, "0")).join("")
+
+/**
+ * Normalize a Nix hash string into { algo, hex }. Accepts:
+ *   - SRI:        "sha256-<base64>"
+ *   - prefixed:   "sha256:<base16|base32|base64>"
+ *   - bare:       "<base16|base32|base64>" (algo from algoHint)
+ * The encoding of a bare/prefixed body is inferred from its length for the
+ * given algorithm (sha256: 64 hex / 52 base32 / 44 base64).
+ */
+export function normalizeHashToHex(hashStr, algoHint) {
+    let algo = algoHint
+    let body = hashStr
+
+    if (hashStr.includes("-")) {
+        const i = hashStr.indexOf("-")
+        algo = hashStr.slice(0, i)
+        body = hashStr.slice(i + 1)
+        return { algo, hex: bytesToHex(Uint8Array.from(atob(body), (c) => c.charCodeAt(0))) }
+    }
+    if (hashStr.includes(":")) {
+        const i = hashStr.indexOf(":")
+        algo = hashStr.slice(0, i)
+        body = hashStr.slice(i + 1)
+    }
+
+    const expectedBytes = { md5: 16, sha1: 20, sha256: 32, sha512: 64 }[algo]
+    const hexLen = expectedBytes * 2
+    const base32Len = Math.ceil((expectedBytes * 8) / 5)
+
+    if (/^[0-9a-fA-F]+$/.test(body) && body.length === hexLen) {
+        return { algo, hex: body.toLowerCase() }
+    }
+    if (body.length === base32Len) {
+        return { algo, hex: bytesToHex(decodeBase32(body)) }
+    }
+    // Fall back to base64 (with or without padding).
+    return { algo, hex: bytesToHex(Uint8Array.from(atob(body), (c) => c.charCodeAt(0))) }
+}
+
+/**
+ * Compute the output path of a fixed-output derivation.
+ * Mirrors Nix's makeFixedOutputPath:
+ *   - recursive (NAR) + sha256 → the "source" content-addressing method
+ *   - everything else          → "output:out" over sha256("fixed:out:…")
+ * @param {string} name
+ * @param {{algo:string, hex:string, recursive:boolean}} info
+ */
+export function makeFixedOutputPath(name, info, storeDir = "/nix/store", references = []) {
+    const { algo, hex, recursive } = info
+    if (algo === "sha256" && recursive) {
+        const type = "source" + [...references].sort().map((r) => `:${r}`).join("")
+        const fingerprint = `${type}:sha256:${hex}:${storeDir}:${name}`
+        return computeStorePath(type, fingerprint, name, storeDir)
+    }
+    // Non-recursive (flat) or non-sha256: references must be empty.
+    const prefix = recursive ? "r:" : ""
+    const innerDigest = sha256Hex(`fixed:out:${prefix}${algo}:${hex}:`)
+    const fingerprint = `output:out:sha256:${innerDigest}:${storeDir}:${name}`
+    return computeStorePath("output", fingerprint, name, storeDir)
+}
+
+/**
+ * The hashDerivationModulo value of a fixed-output derivation (hex), used as the
+ * inputDrvs key when this derivation is depended upon.
+ */
+export function fixedOutputModuloHash(info, outPath) {
+    const { algo, hex, recursive } = info
+    const prefix = recursive ? "r:" : ""
+    return sha256Hex(`fixed:out:${prefix}${algo}:${hex}:${outPath}`)
+}
+
+/**
  * Convert hex string to bytes
  */
 function hexToBytes(hex) {
@@ -136,14 +228,18 @@ export function computeOutputPath(drvSerialized, outputName, name, storeDir = "/
  * Uses the "text" content-addressing method
  * Based on: https://github.com/NixOS/nix/blob/master/src/libstore/store-api.cc
  */
-export function computeDrvPath(drvSerialized, name, storeDir = "/nix/store") {
+export function computeDrvPath(drvSerialized, name, storeDir = "/nix/store", references = []) {
     // Step 1: Hash the .drv content
     const contentHash = sha256Hex(drvSerialized)
 
-    // Step 2: Build fingerprint for text method
-    // Format: "text:sha256:<content-hash>:<store-dir>:<name>"
+    // Step 2: Build fingerprint for text method.
+    // Nix's makeTextPath embeds the referenced store paths (the .drv's input
+    // derivations and input sources), sorted, into the type tag:
+    //   "text:<ref1>:<ref2>:…:sha256:<content-hash>:<store-dir>:<name>"
+    // With no references this collapses to "text:sha256:…".
     const drvName = name + ".drv"
-    const fingerprint = `text:sha256:${contentHash}:${storeDir}:${drvName}`
+    const refStr = [...references].sort().map((r) => `:${r}`).join("")
+    const fingerprint = `text${refStr}:sha256:${contentHash}:${storeDir}:${drvName}`
 
     // Step 3: Hash the fingerprint
     const fingerprintHash = sha256Hex(fingerprint)

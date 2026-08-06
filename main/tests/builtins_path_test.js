@@ -1,9 +1,8 @@
 // Test builtins.path
 import { assertEquals, assertRejects, assert, assertStringIncludes } from "jsr:@std/assert"
-import { createRuntime } from "../runtime.js"
+import { createRuntime, builtins } from "../runtime.js"
 
-const runtime = createRuntime()
-const builtins = runtime.scopeStack[0].builtins
+createRuntime()
 
 Deno.test("builtins.path - copy single file", async () => {
     // Create a test file

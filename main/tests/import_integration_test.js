@@ -3,7 +3,7 @@
  */
 
 import { assertEquals, assertThrows } from "https://deno.land/std@0.224.0/assert/mod.ts"
-import { createRuntime } from "../runtime.js"
+import { createRuntime, builtins } from "../runtime.js"
 import { resolve as pathResolve } from "https://deno.land/std@0.224.0/path/mod.ts"
 
 // Create test directory structure
@@ -78,7 +78,7 @@ Deno.test({
                 const runtime = createRuntime()
                 runtime.runtime.currentFile = `${testDir}/main.nix`
 
-                const result = runtime.runtime.builtins.import(`${testDir}/simple.nix`)
+                const result = builtins.import(`${testDir}/simple.nix`)
                 assertEquals(result, 42n)
             })
 
@@ -86,7 +86,7 @@ Deno.test({
                 const runtime = createRuntime()
                 runtime.runtime.currentFile = `${testDir}/main.nix`
 
-                const result = runtime.runtime.builtins.import(`${testDir}/string.nix`)
+                const result = builtins.import(`${testDir}/string.nix`)
                 assertEquals(result, "hello")
             })
 
@@ -94,7 +94,7 @@ Deno.test({
                 const runtime = createRuntime()
                 runtime.runtime.currentFile = `${testDir}/main.nix`
 
-                const result = runtime.runtime.builtins.import(`${testDir}/attrset.nix`)
+                const result = builtins.import(`${testDir}/attrset.nix`)
                 assertEquals(result.a, 1n)
                 assertEquals(result.b, 2n)
             })
@@ -103,7 +103,7 @@ Deno.test({
                 const runtime = createRuntime()
                 runtime.runtime.currentFile = `${testDir}/main.nix`
 
-                const inc = runtime.runtime.builtins.import(`${testDir}/function.nix`)
+                const inc = builtins.import(`${testDir}/function.nix`)
                 const result = inc(5n)
                 assertEquals(result, 6n)
             })
@@ -112,7 +112,7 @@ Deno.test({
                 const runtime = createRuntime()
                 runtime.runtime.currentFile = `${testDir}/main.nix`
 
-                const result = runtime.runtime.builtins.import(`${testDir}/data.json`)
+                const result = builtins.import(`${testDir}/data.json`)
                 assertEquals(result.x, 10n)
                 assertEquals(result.y, 20n)
             })
@@ -121,7 +121,7 @@ Deno.test({
                 const runtime = createRuntime()
                 runtime.runtime.currentFile = `${testDir}/main.nix`
 
-                const result = runtime.runtime.builtins.import(`${testDir}/with_builtins.nix`)
+                const result = builtins.import(`${testDir}/with_builtins.nix`)
                 assertEquals(result, 15n)
             })
 
@@ -130,17 +130,17 @@ Deno.test({
                 runtime.runtime.currentFile = `${testDir}/main.nix`
 
                 // First import
-                const result1 = runtime.runtime.builtins.import(`${testDir}/simple.nix`)
+                const result1 = builtins.import(`${testDir}/simple.nix`)
 
                 // Second import (should be cached)
-                const result2 = runtime.runtime.builtins.import(`${testDir}/simple.nix`)
+                const result2 = builtins.import(`${testDir}/simple.nix`)
 
                 // Should be the same value
                 assertEquals(result1, result2)
                 assertEquals(result1, 42n)
 
                 // Verify cache was used
-                assertEquals(runtime.importCache.has(`${testDir}/simple.nix`), true)
+                assertEquals(runtime.runtime.importCache.has(`${testDir}/simple.nix`), true)
             })
 
             await t.step("import nonexistent file throws error", () => {
@@ -148,7 +148,7 @@ Deno.test({
                 runtime.runtime.currentFile = `${testDir}/main.nix`
 
                 assertThrows(
-                    () => runtime.runtime.builtins.import(`${testDir}/nonexistent.nix`),
+                    () => builtins.import(`${testDir}/nonexistent.nix`),
                     Error,
                     "does not exist"
                 )

@@ -5,85 +5,63 @@
  */
 
 import { convertToJsSync } from "../../translator.js"
-import { createRuntime as createFullRuntime } from "../runtime.js"
+import {
+    createRuntime as createFullRuntime,
+    operators,
+    builtins,
+    InterpolatedString,
+    Path,
+} from "../runtime.js"
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts"
 
-// Helper to evaluate the translated JavaScript code
+// Helper to evaluate the translated JavaScript code.
+//
+// The translator emits a full ES module: a preamble (imports + createRuntime()
+// destructuring + nixScope binding) followed by `export default <expr>`. Rather
+// than regex-strip the preamble (brittle — it drifts whenever the preamble
+// changes), we extract the trailing expression and evaluate it against the REAL
+// runtime, binding exactly the identifiers the preamble would have bound.
 const evalTranslated = (nixCode) => {
-    let jsCode = convertToJsSync(nixCode)
+    const jsCode = convertToJsSync(nixCode)
+    const { createFunc, createScope, defGetter, apply, set, force, mkThunk, runtime } = createFullRuntime()
 
-    // Get createFunc, createScope, and defGetter from real runtime
-    const { createFunc, createScope, defGetter } = createFullRuntime()
+    const marker = "export default "
+    const idx = jsCode.lastIndexOf(marker)
+    const expr = (idx >= 0 ? jsCode.slice(idx + marker.length) : jsCode).trim()
 
-    // Create a simple runtime for testing
-    const runtime = {
-        scopeStack: [{}],
-    }
-    const operators = {
-        ifThenElse: (condition, thenFn, elseFn) => {
-            // Nix requires strict boolean values in if conditions
-            if (typeof condition !== "boolean") {
-                throw new Error(`error: expected a Boolean but found ${typeof condition}: ${condition}`)
-            }
-            return condition ? thenFn() : elseFn()
-        },
-        add: (a, b) => {
-            if (typeof a === 'bigint' && typeof b === 'bigint') {
-                return a + b
-            }
-            if (typeof a === 'number' && typeof b === 'number') {
-                return a + b
-            }
-            if (typeof a === 'string' || typeof b === 'string') {
-                return String(a) + String(b)
-            }
-            throw new Error(`Cannot add ${typeof a} and ${typeof b}`)
-        },
-        multiply: (a, b) => {
-            if (typeof a === 'bigint' && typeof b === 'bigint') {
-                return a * b
-            }
-            return a * b
-        },
-        equal: (a, b) => {
-            // Deep equality for objects/arrays
-            return JSON.stringify(a) === JSON.stringify(b)
-        },
-        hasAttr: (obj, attr) => {
-            return obj && Object.prototype.hasOwnProperty.call(obj, attr)
-        },
-        hasAttrPath: (obj, ...attrPath) => {
-            let current = obj
-            for (const attr of attrPath) {
-                if (typeof current !== "object" || current === null || Array.isArray(current)) {
-                    return false
-                }
-                if (!Object.prototype.hasOwnProperty.call(current, attr)) {
-                    return false
-                }
-                current = current[attr]
-            }
-            return true
-        },
-    }
+    const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1]
 
-    // Strip import and export statements (for simple expressions that don't need runtime)
-    jsCode = jsCode.replace(/import \{ createRuntime \}[^\n]*\n/g, '')
-    jsCode = jsCode.replace(/const \{[^}]*\} = createRuntime\(\)[^\n]*\n/g, '')  // Match any destructuring from createRuntime()
-    jsCode = jsCode.replace(/const operators = runtime\.operators[^\n]*\n/g, '')
-    jsCode = jsCode.replace(/const builtins = runtime\.builtins[^\n]*\n/g, '')
-    jsCode = jsCode.replace(/^export\s+default\s+/m, '')
-    jsCode = jsCode.trim()
-
-    // Wrap in function to provide runtime context
-    const wrappedCode = `
-        return (function() {
-            return ${jsCode}
-        })()
-    `
-
-    const fn = new Function('runtime', 'operators', 'createFunc', 'createScope', 'defGetter', wrappedCode)
-    return fn(runtime, operators, createFunc, createScope, defGetter)
+    const fn = new Function(
+        "runtime",
+        "operators",
+        "builtins",
+        "createFunc",
+        "createScope",
+        "defGetter",
+        "apply",
+        "set",
+        "force",
+        "mkThunk",
+        "nixScope",
+        "Path",
+        "InterpolatedString",
+        `return (${expr})`,
+    )
+    return fn(
+        runtime,
+        operators,
+        builtins,
+        createFunc,
+        createScope,
+        defGetter,
+        apply,
+        set,
+        force,
+        mkThunk,
+        nixScope,
+        Path,
+        InterpolatedString,
+    )
 }
 
 console.log("Testing Nix to JavaScript translator\n")

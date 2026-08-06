@@ -4,14 +4,23 @@
  */
 
 import { loadAndEvaluateSync } from "../import_loader.js"
-import { builtins, operators, InterpolatedString, Path } from "../runtime.js"
+import { createRuntime, builtins, operators, InterpolatedString, Path } from "../runtime.js"
 
-// Setup minimal runtime
+// A runtime object shaped the way loadAndEvaluateSync expects: besides
+// builtins/operators/types it needs the scope helpers (createFunc/createScope/
+// defGetter/apply/set) for files that define functions or use scope.
+const _rt = createRuntime()
 const runtime = {
     builtins,
     operators,
     InterpolatedString,
     Path,
+    createFunc: _rt.createFunc,
+    createScope: _rt.createScope,
+    defGetter: _rt.defGetter,
+    apply: _rt.apply,
+    set: _rt.set,
+    scopeStack: _rt.runtime.scopeStack,
     nixRepr: (value) => {
         if (typeof value === 'string') {
             return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`

@@ -34,7 +34,7 @@ export async function loadAndEvaluate(filepath, runtime) {
     }
 
     if (fileType === 'nix') {
-        return loadNixFile(content, runtime)
+        return loadNixFile(content, runtime, filepath)
     }
 
     throw new Error(`Unsupported file type for import: ${filepath}`)
@@ -58,9 +58,9 @@ function loadJsonFile(content, runtime) {
  * @param {object} runtime - Runtime object
  * @returns {any} - Result of evaluating the Nix expression
  */
-async function loadNixFile(content, runtime) {
+async function loadNixFile(content, runtime, filepath) {
     // Translate Nix to JavaScript
-    let jsCode = await convertToJs(content)
+    let jsCode = await convertToJs(content, { sourceFile: filepath })
 
     // Strip import, export, and runtime creation (we already have runtime available)
     jsCode = jsCode
@@ -105,7 +105,12 @@ async function loadNixFile(content, runtime) {
         'createFunc',
         'createScope',
         'defGetter',
-        `return ${cleanCode}`
+        'apply',
+        'set',
+        'force',
+        'mkThunk',
+        `return (${cleanCode}
+)`
     )
 
     // Execute the generated code with runtime context
@@ -119,8 +124,11 @@ async function loadNixFile(content, runtime) {
         runtime.createFunc,
         runtime.createScope,
         runtime.defGetter,
+        runtime.apply,
+        runtime.set,
+        runtime.force,
+        runtime.mkThunk,
     )
-
     return result
 }
 
@@ -131,21 +139,19 @@ async function loadNixFile(content, runtime) {
  * @param {object} runtime - Runtime object
  * @returns {any} - Result of evaluating the Nix expression
  */
-function loadNixFileSync(content, runtime) {
-    // Translate Nix to JavaScript (without formatting)
-    let jsCode = convertToJsSync(content)
-
-    // Strip import, export, and runtime creation (we already have runtime available)
-    jsCode = jsCode
-        .replace(/^import\s+.*$/gm, '')  // Remove import lines
-        .replace(/^const\s*\{[^}]*\}\s*=\s*createRuntime\(\).*$/gm, '')  // Remove destructured createRuntime()
-        .replace(/^const\s+runtime\s+=\s+createRuntime\(\).*$/gm, '')  // Remove runtime creation
-        .replace(/^const\s+operators\s+=\s+.*$/gm, '')  // Remove operators extraction
-        .replace(/^const\s+builtins\s+=\s+.*$/gm, '')  // Remove builtins extraction
-        .replace(/^const\s+nixScope\s+=\s+.*$/gm, '')  // Remove nixScope binding
-        .replace(/^runtime\.currentFile\s*=\s*.*$/gm, '')  // Remove currentFile assignment
-        .replace(/^export\s+default\s+/m, '')  // Remove export default
-        .trim()
+function loadNixFileSync(content, runtime, filepath) {
+    // Translate Nix to JavaScript (without formatting). The translator emits a
+    // full module: a preamble that wires up the runtime, then
+    // `export default <expr>`. We already have the runtime here, so we discard
+    // the preamble and evaluate just the trailing expression — taking
+    // everything after the final `export default ` verbatim. (The old approach
+    // regex-stripped individual preamble lines and dropped comment lines, which
+    // mangled multi-line expressions in larger files like nixpkgs lib.)
+    // Pass sourceFile so relative path literals resolve against this file's dir.
+    const jsCode = convertToJsSync(content, { sourceFile: filepath })
+    const marker = "export default "
+    const markerIdx = jsCode.lastIndexOf(marker)
+    const cleanCode = (markerIdx >= 0 ? jsCode.slice(markerIdx + marker.length) : jsCode).trim()
 
     // Create nixScope with builtins available
     const nixScope = {
@@ -158,16 +164,6 @@ function loadNixFileSync(content, runtime) {
         scopeStack: [nixScope],
     }
 
-    // Create isolated evaluation scope
-    // The generated code is a complete expression, just execute it directly
-    // Note: Filter out comment-only lines that break return statements
-    const lines = jsCode.split('\n')
-    const codeLines = lines.filter(line => {
-        const trimmed = line.trim()
-        return trimmed.length > 0 && !trimmed.startsWith('//')
-    })
-    const cleanCode = codeLines.join('\n')
-
     const evalFunc = new Function(
         'runtime',
         'operators',
@@ -178,7 +174,12 @@ function loadNixFileSync(content, runtime) {
         'createFunc',
         'createScope',
         'defGetter',
-        `return ${cleanCode}`
+        'apply',
+        'set',
+        'force',
+        'mkThunk',
+        `return (${cleanCode}
+)`
     )
 
     // Execute the generated code with runtime context
@@ -192,8 +193,11 @@ function loadNixFileSync(content, runtime) {
         runtime.createFunc,
         runtime.createScope,
         runtime.defGetter,
+        runtime.apply,
+        runtime.set,
+        runtime.force,
+        runtime.mkThunk,
     )
-
     return result
 }
 
@@ -221,7 +225,7 @@ export function loadAndEvaluateSync(filepath, runtime) {
     }
 
     if (fileType === 'nix') {
-        return loadNixFileSync(content, runtime)
+        return loadNixFileSync(content, runtime, filepath)
     }
 
     throw new Error(`Unsupported file type for import: ${filepath}`)

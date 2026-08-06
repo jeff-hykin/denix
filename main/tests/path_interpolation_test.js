@@ -3,47 +3,38 @@
  * Tests for path interpolation in the Nix to JavaScript translator
  */
 
-import { convertToJs } from "../../translator.js"
+import { convertToJsSync } from "../../translator.js"
+import {
+    createRuntime as createFullRuntime,
+    operators,
+    builtins,
+    InterpolatedString,
+    Path,
+} from "../runtime.js"
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts"
 
-// Helper to evaluate the translated JavaScript code
+// Evaluate translated Nix against the REAL runtime: extract the trailing
+// `export default <expr>` and bind exactly the identifiers the module preamble
+// would have. (See translator_test.js for the rationale.)
 const evalTranslated = (nixCode) => {
-    let jsCode = convertToJs(nixCode)
+    const jsCode = convertToJsSync(nixCode)
+    const { createFunc, createScope, defGetter, apply, set, force, mkThunk, runtime } = createFullRuntime()
 
-    // Create a minimal Path class for testing
-    class Path {
-        constructor(strings, getters) {
-            this.strings = strings
-            this.getters = getters
-        }
-        toString() {
-            const chunks = []
-            for (let i = 0; i < this.strings.length; i++) {
-                if (this.strings[i]) {
-                    chunks.push(this.strings[i])
-                }
-                if (i < this.getters.length && this.getters[i]) {
-                    const value = this.getters[i]()
-                    chunks.push(String(value))
-                }
-            }
-            return chunks.join("")
-        }
-    }
+    const marker = "export default "
+    const idx = jsCode.lastIndexOf(marker)
+    const expr = (idx >= 0 ? jsCode.slice(idx + marker.length) : jsCode).trim()
 
-    const runtime = {
-        scopeStack: [{}],
-    }
+    const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1]
 
-    // Remove imports if present
-    jsCode = jsCode.replace(/import \{ createRuntime \}.*\n/, '')
-    jsCode = jsCode.replace(/const runtime = createRuntime\(\)\n/, '')
-
-    // The generated code is already an IIFE, so just return it
-    const wrappedCode = `return ${jsCode}`
-
-    const fn = new Function('runtime', 'Path', wrappedCode)
-    return fn(runtime, Path)
+    const fn = new Function(
+        "runtime", "operators", "builtins", "createFunc", "createScope",
+        "defGetter", "apply", "set", "force", "mkThunk", "nixScope", "Path", "InterpolatedString",
+        `return (${expr})`,
+    )
+    return fn(
+        runtime, operators, builtins, createFunc, createScope,
+        defGetter, apply, set, force, mkThunk, nixScope, Path, InterpolatedString,
+    )
 }
 
 console.log("Testing Path Interpolation\n")

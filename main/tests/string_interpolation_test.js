@@ -3,47 +3,38 @@
  * Tests for string interpolation in the Nix to JavaScript translator
  */
 
-import { convertToJs } from "../../translator.js"
+import { convertToJsSync } from "../../translator.js"
+import {
+    createRuntime as createFullRuntime,
+    operators,
+    builtins,
+    InterpolatedString,
+    Path,
+} from "../runtime.js"
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts"
 
-// Helper to evaluate the translated JavaScript code
+// Evaluate translated Nix against the REAL runtime: extract the trailing
+// `export default <expr>` and bind exactly the identifiers the module preamble
+// would have. (See translator_test.js for the rationale.)
 const evalTranslated = (nixCode) => {
-    let jsCode = convertToJs(nixCode)
+    const jsCode = convertToJsSync(nixCode)
+    const { createFunc, createScope, defGetter, apply, set, force, mkThunk, runtime } = createFullRuntime()
 
-    // Create a minimal runtime for testing
-    class InterpolatedString {
-        constructor(strings, getters) {
-            this.strings = strings
-            this.getters = getters
-        }
-        toString() {
-            const chunks = []
-            for (let i = 0; i < this.strings.length; i++) {
-                if (this.strings[i]) {
-                    chunks.push(this.strings[i])
-                }
-                if (i < this.getters.length && this.getters[i]) {
-                    const value = this.getters[i]()
-                    chunks.push(String(value))
-                }
-            }
-            return chunks.join("")
-        }
-    }
+    const marker = "export default "
+    const idx = jsCode.lastIndexOf(marker)
+    const expr = (idx >= 0 ? jsCode.slice(idx + marker.length) : jsCode).trim()
 
-    const runtime = {
-        scopeStack: [{}],
-    }
+    const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1]
 
-    // Remove imports if present
-    jsCode = jsCode.replace(/import \{ createRuntime \}.*\n/, '')
-    jsCode = jsCode.replace(/const runtime = createRuntime\(\)\n/, '')
-
-    // The generated code is already an IIFE, so just return it
-    const wrappedCode = `return ${jsCode}`
-
-    const fn = new Function('runtime', 'InterpolatedString', wrappedCode)
-    return fn(runtime, InterpolatedString)
+    const fn = new Function(
+        "runtime", "operators", "builtins", "createFunc", "createScope",
+        "defGetter", "apply", "set", "force", "mkThunk", "nixScope", "Path", "InterpolatedString",
+        `return (${expr})`,
+    )
+    return fn(
+        runtime, operators, builtins, createFunc, createScope,
+        defGetter, apply, set, force, mkThunk, nixScope, Path, InterpolatedString,
+    )
 }
 
 console.log("Testing String Interpolation\n")
@@ -73,14 +64,16 @@ Deno.test("Multiple interpolations in one string", () => {
     assertEquals(result.toString(), "prefix foo middle bar suffix")
 })
 
-// Test 3: Interpolation with expressions
+// Test 3: Interpolation with expressions.
+// Nix does NOT coerce a bare integer in interpolation ("${x}" throws); it must
+// be converted explicitly with toString.
 Deno.test("Interpolation with integer expression", () => {
     const nixCode = `
         let
             x = 10;
             y = 20;
         in
-            "sum is \${x}"
+            "sum is \${toString x}"
     `
     const result = evalTranslated(nixCode)
     assertEquals(result.toString(), "sum is 10")

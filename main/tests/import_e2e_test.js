@@ -4,8 +4,8 @@
  */
 
 import { assertEquals, assertThrows } from "https://deno.land/std@0.224.0/assert/mod.ts"
-import { convertToJs } from "../../translator.js"
-import { createRuntime } from "../runtime.js"
+import { convertToJsSync } from "../../translator.js"
+import { createRuntime, builtins, operators, InterpolatedString, Path } from "../runtime.js"
 import { resolve as pathResolve } from "https://deno.land/std@0.224.0/path/mod.ts"
 
 // Create test directory structure
@@ -100,52 +100,30 @@ async function cleanup() {
     }
 }
 
-// Helper to evaluate Nix file
-function evaluateNixFile(filepath, runtime) {
+// Helper to evaluate a Nix file against the REAL runtime. `rt` is a
+// createRuntime() result; its inner `.runtime` carries the scope stack and the
+// currentFile context used to resolve relative imports.
+function evaluateNixFile(filepath, rt) {
     const content = Deno.readTextFileSync(filepath)
-    let jsCode = convertToJs(content)
+    const jsCode = convertToJsSync(content)
 
-    // Remove import statements (runtime is already available)
-    if (jsCode.includes('import { createRuntime }')) {
-        jsCode = jsCode.replace(/import \{ createRuntime \}.*\n/, '')
-        jsCode = jsCode.replace(/const runtime = createRuntime\(\)\n/, '')
-    }
+    const marker = "export default "
+    const idx = jsCode.lastIndexOf(marker)
+    const expr = (idx >= 0 ? jsCode.slice(idx + marker.length) : jsCode).trim()
 
-    // Set current file for relative imports
-    runtime.runtime.currentFile = filepath
+    // Set current file for relative imports.
+    rt.runtime.currentFile = filepath
+    const inner = rt.runtime
+    const nixScope = inner.scopeStack[inner.scopeStack.length - 1]
 
-    // Create evaluation scope
-    const nixScope = {
-        builtins: runtime.runtime.builtins,
-        ...runtime.runtime.builtins
-    }
-
-    // Filter out comment-only lines
-    const lines = jsCode.split('\n')
-    const codeLines = lines.filter(line => {
-        const trimmed = line.trim()
-        return trimmed.length > 0 && !trimmed.startsWith('//')
-    })
-    const cleanCode = codeLines.join('\n')
-
-    // Evaluate
-    const evalFunc = new Function(
-        'runtime',
-        'operators',
-        'builtins',
-        'nixScope',
-        'InterpolatedString',
-        'Path',
-        `return ${cleanCode}`
+    const fn = new Function(
+        "runtime", "operators", "builtins", "createFunc", "createScope",
+        "defGetter", "apply", "set", "nixScope", "Path", "InterpolatedString",
+        `return (${expr})`,
     )
-
-    return evalFunc(
-        { scopeStack: [nixScope] },
-        runtime.runtime.operators,
-        runtime.runtime.builtins,
-        nixScope,
-        runtime.runtime.InterpolatedString,
-        runtime.runtime.Path
+    return fn(
+        inner, operators, builtins, rt.createFunc, rt.createScope,
+        rt.defGetter, rt.apply, rt.set, nixScope, Path, InterpolatedString,
     )
 }
 
@@ -195,7 +173,7 @@ Deno.test({
 
                 // Verify constants.nix is in cache
                 const cachedPath = `${testDir}/constants.nix`
-                assertEquals(runtime.importCache.has(cachedPath), true)
+                assertEquals(runtime.runtime.importCache.has(cachedPath), true)
 
                 // Evaluate another file that also imports constants.nix
                 // Should use cached version

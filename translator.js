@@ -157,17 +157,23 @@ const buildPreamble = (output, options) => {
     const extraImports = [needsPath && "Path", needsInterpolatedString && "InterpolatedString"].filter(Boolean)
     let pre = ""
     pre += `import { createRuntime${extraImports.length ? ", " + extraImports.join(", ") : ""} } from "${runtimePath}"\n`
-    pre += `const {runtime, createFunc, createScope, defGetter, apply} = createRuntime()\n`
+    pre += `const {runtime, createFunc, createScope, defGetter, apply, set, force, mkThunk} = createRuntime()\n`
     // Module-level nixScope, bound to the runtime's current (root) scope.
     // The root scope is seeded with builtins/true/false/null/derivation/
     // import/abort/throw, which is why things like nixScope.builtins and
     // nixScope.true resolve at the top level.
     pre += `const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1]\n`
-    // Tell the runtime what file this translated module came from, so
-    // relative `import ./foo` paths inside the nix source resolve correctly
-    // regardless of the Deno process cwd. Derived from import.meta.url at
-    // load time rather than baking in an absolute path at translation time.
-    pre += `runtime.currentFile = import.meta.url.startsWith("file://") ? import.meta.url.slice(7) : new URL(import.meta.url).pathname\n`
+    // Tell the runtime what file this translated module came from, so relative
+    // `import ./foo` paths inside the nix source resolve correctly. When the
+    // caller knows the original source file (e.g. denix_eval/denix_build write
+    // the translated JS to a temp dir, so import.meta.url would point there,
+    // not at the .nix), bake that path in. Otherwise fall back to the module's
+    // own location.
+    if (options.sourceFile) {
+        pre += `runtime.currentFile = ${JSON.stringify(options.sourceFile)}\n`
+    } else {
+        pre += `runtime.currentFile = import.meta.url.startsWith("file://") ? import.meta.url.slice(7) : new URL(import.meta.url).pathname\n`
+    }
     if (output.includes("operators.")) {
         pre += `const operators = runtime.operators\n`
     }
@@ -183,6 +189,9 @@ const buildPreamble = (output, options) => {
 //
 //
 export const convertToJs = async (code, options = {}) => {
+    translationSourceDir = options.sourceFile
+        ? options.sourceFile.replace(/\/[^/]*$/, "")
+        : null
     const tree = parse(code)
     const rootNode = tree.rootNode
     let output = ""
@@ -226,6 +235,9 @@ export const convertToJs = async (code, options = {}) => {
 
 // Synchronous version without formatting (for compatibility)
 export const convertToJsSync = (code, options = {}) => {
+    translationSourceDir = options.sourceFile
+        ? options.sourceFile.replace(/\/[^/]*$/, "")
+        : null
     const tree = parse(code)
     const rootNode = tree.rootNode
     let output = ""
@@ -239,6 +251,134 @@ export const convertToJsSync = (code, options = {}) => {
     result += `\nexport default ${output.trim()}`
 
     return result
+}
+
+// Directory of the source .nix file currently being translated, if known.
+// Used to resolve relative path literals (./x, ../x) to absolute paths at
+// translation time — which is how Nix treats them (relative to the containing
+// file), and is essential under lazy evaluation where the import may fire long
+// after the runtime's "current file" has moved on.
+let translationSourceDir = null
+
+// Resolve a (possibly relative) Nix path literal against the source directory.
+// Absolute paths and `~`/`<...>` forms are left untouched, as is everything
+// when the source directory is unknown (so relative paths stay relative).
+const resolveSourceRelativePath = (text) => {
+    if (!translationSourceDir) { return text }
+    if (text.startsWith("/")) { return text }
+    if (!(text.startsWith("./") || text.startsWith("../"))) { return text }
+    const parts = (translationSourceDir + "/" + text).split("/")
+    const out = []
+    for (const p of parts) {
+        if (p === "" || p === ".") { continue }
+        if (p === "..") { out.pop() } else { out.push(p) }
+    }
+    return "/" + out.join("/")
+}
+
+// Decode a single indented-string ('' … '') escape sequence into the literal
+// characters it represents. Mirrors Nix's rules:
+//   ''$  -> $        '''  -> ''        ''\n -> newline   ''\t -> tab
+//   ''\r -> CR       ''\\<newline> -> newline            ''\X -> X (literal)
+const decodeIndentEscape = (seq)=>{
+    if (seq === "''$") { return "$" }
+    if (seq === "'''") { return "''" }
+    if (seq.startsWith("''\\")) {
+        const rest = seq.slice(3)
+        if (rest === "n") { return "\n" }
+        if (rest === "r") { return "\r" }
+        if (rest === "t") { return "\t" }
+        if (rest === "\n" || rest === "") { return "\n" } // ''\<newline> = newline
+        return rest // ''\X = literal X
+    }
+    return seq
+}
+
+// Apply Nix's indented-string ('' … '') dedent algorithm in place over an
+// ordered list of parts: {kind:"str"|"lit"|"interp", ...}. "str" parts hold
+// raw source text whose leading whitespace is stripped; "lit"/"interp" parts
+// are content that ends indentation counting for their line. After stripping
+// the common indentation, the single leading newline (the one right after the
+// opening '') is removed. See Nix's parser.y stripIndentation.
+const stripIndentedStringParts = (parts)=>{
+    const INF = Number.MAX_SAFE_INTEGER
+
+    // Pass 1: find the minimum indentation across all non-blank lines.
+    let minIndent = INF
+    let curIndent = 0
+    let atStartOfLine = true
+    for (const p of parts) {
+        if (p.kind !== "str") {
+            // Interpolation / escaped literal counts as line content.
+            if (atStartOfLine) {
+                if (minIndent > curIndent) { minIndent = curIndent }
+                atStartOfLine = false
+            }
+            continue
+        }
+        for (const c of p.value) {
+            if (atStartOfLine) {
+                if (c === " " || c === "\t") {
+                    curIndent++
+                } else if (c === "\n") {
+                    curIndent = 0 // blank line: ignore for minIndent
+                } else {
+                    atStartOfLine = false
+                    if (minIndent > curIndent) { minIndent = curIndent }
+                }
+            } else if (c === "\n") {
+                atStartOfLine = true
+                curIndent = 0
+            }
+        }
+    }
+    if (minIndent === INF) { minIndent = 0 }
+
+    // Pass 2: strip up to minIndent leading whitespace chars from each line.
+    atStartOfLine = true
+    let dropped = 0
+    for (const p of parts) {
+        if (p.kind !== "str") {
+            atStartOfLine = false
+            continue
+        }
+        let out = ""
+        for (const c of p.value) {
+            if (atStartOfLine) {
+                if ((c === " " || c === "\t") && dropped < minIndent) {
+                    dropped++
+                } else if (c === "\n") {
+                    dropped = 0
+                    out += c
+                } else {
+                    atStartOfLine = false
+                    dropped = 0
+                    out += c
+                }
+            } else {
+                out += c
+                if (c === "\n") {
+                    atStartOfLine = true
+                    dropped = 0
+                }
+            }
+        }
+        p.value = out
+    }
+
+    // Remove the single leading newline (empty first line right after '').
+    for (const p of parts) {
+        if (p.kind === "str") {
+            if (p.value.startsWith("\n")) { p.value = p.value.slice(1) }
+            break
+        }
+        if (p.kind === "lit") {
+            if (p.value.startsWith("\n")) { p.value = p.value.slice(1) }
+            break
+        }
+        // interpolation first -> nothing to strip
+        break
+    }
 }
 
 const nixNodeToJs = (node)=>{
@@ -444,83 +584,61 @@ const nixNodeToJs = (node)=>{
         //     <'' text="''" />
         // </indented_string_expression>
         const children = valueBasedChildren(node)
-        const hasInterpolation = children.some(each=>each.type=="interpolation")
 
-        if (!hasInterpolation) {
-            // Collect text from all string_fragment and escape_sequence children.
-            let text = ""
-            for (const child of children) {
-                if (child.type === "string_fragment") {
-                    let frag = child.text
-                    frag = frag.replace(/\\/g, "\\\\") // preserve literal backslashes
-                    frag = frag.replace(/`/g, "\\`")
-                    frag = frag.replace(/\$/g, "\\$")  // escape $ for JS template literal
-                    text += frag
-                } else if (child.type === "escape_sequence") {
-                    const seq = child.text
-                    if (seq === "''\\\n" || seq === "''\\") {
-                        // ''\<newline> = literal newline
-                        text += "\\n"
-                    } else if (seq === "''$") {
-                        text += "\\$"
-                    } else if (seq === "'''") {
-                        text += "''"
-                    } else if (seq === "''\\n") {
-                        text += "\\n"
-                    } else if (seq === "''\\r") {
-                        text += "\\r"
-                    } else if (seq === "''\\t") {
-                        text += "\\t"
-                    } else {
-                        // Unknown escape — pass through
-                        text += seq
-                    }
-                }
-            }
-            return `\`${text}\``
-        }
-
-        // Handle interpolated indented strings
-        const strings = []
-        const getters = []
-
-        let currentString = ""
-
+        // Build an ordered list of parts, preserving the exact source so that
+        // Nix's indentation-stripping algorithm can run over it. Each part is:
+        //   {kind:"str",  value}  — literal source text of a string_fragment
+        //   {kind:"lit",  value}  — already-decoded escape (''$, ''\n, ''' …)
+        //   {kind:"interp", expr} — a ${ } interpolation (JS expression source)
+        // "str" parts carry leading whitespace that is subject to dedent;
+        // "lit"/"interp" parts are content and stop indentation counting.
+        const parts = []
         for (const child of children) {
-            if (child.type == "\"" || child.type == "''") {
-                // Skip quotes
+            if (child.type === "\"" || child.type === "''") {
                 continue
-            } else if (child.type == "string_fragment") {
-                let text = child.text
-                // Handle indented string escapes
-                text = text.replace(/(''')*''\$/g, "$1$")              // ''$ => $
-                text = text.replace(/(''')*''\\\\([nrt"'])/g, "$1$2")  // ''\n => actual newline in JS
-                text = text.replace(/(''')*''\\\\([^nrt"'])/g, "$1$2") // ''\b => b
-                text = text.replace(/'''/g, "''")                      // ''' => ''
-                text = text.replace(/`/g, "\\`")                       // escape backticks for JS template literals
-                currentString += text
-            } else if (child.type == "interpolation") {
-                // Push the accumulated string and start a new one
-                strings.push(currentString)
-                currentString = ""
-
+            } else if (child.type === "string_fragment") {
+                parts.push({ kind: "str", value: child.text })
+            } else if (child.type === "escape_sequence") {
+                parts.push({ kind: "lit", value: decodeIndentEscape(child.text) })
+            } else if (child.type === "interpolation") {
                 const interpChildren = valueBasedChildren(child)
                 const expr = interpChildren[1]
-                getters.push(`()=>(${nixNodeToJs(expr)})`)
+                parts.push({ kind: "interp", expr: nixNodeToJs(expr) })
             }
         }
 
-        // Push the final string segment
-        strings.push(currentString)
+        stripIndentedStringParts(parts)
 
+        // Assemble into InterpolatedString segments. Consecutive str/lit parts
+        // collapse into one string segment; each interp splits a segment.
+        const hasInterpolation = parts.some(p => p.kind === "interp")
+        const strings = []
+        const getters = []
+        let current = ""
+        for (const p of parts) {
+            if (p.kind === "interp") {
+                strings.push(current)
+                current = ""
+                getters.push(`()=>(${p.expr})`)
+            } else {
+                current += p.value
+            }
+        }
+        strings.push(current)
+
+        if (!hasInterpolation) {
+            return JSON.stringify(strings[0])
+        }
         return `(new InterpolatedString([${strings.map(s => JSON.stringify(s)).join(", ")}], [${getters.join(", ")}]))`
     } else if (node.type == "path_expression") {
         const children = valueBasedChildren(node)
         const hasInterpolation = children.some(each=>each.type=="interpolation")
 
         if (!hasInterpolation) {
-            // Simple path without interpolation
-            return `(new Path([${JSON.stringify(node.text)}], []))`
+            // Simple path without interpolation. Relative paths are resolved
+            // against the source file's directory (Nix semantics), so the import
+            // target is stable regardless of when a lazy thunk later fires.
+            return `(new Path([${JSON.stringify(resolveSourceRelativePath(node.text))}], []))`
         }
 
         // Handle interpolated paths like ./${dir}/file
@@ -559,8 +677,12 @@ const nixNodeToJs = (node)=>{
         const inner = text.replace(/^</, "").replace(/>$/, "")
         return `(nixScope.builtins${varAccess("findFile")}(nixScope.builtins${varAccess("nixPath")}()))(${JSON.stringify(inner)})`
     } else if (node.type == "apply_expression") { // function call
+        // Pass the argument LAZILY as a thunk — Nix evaluates function arguments
+        // only when the callee demands them. `apply` forces it for builtins but
+        // hands the thunk straight to Nix lambdas, which is what makes lazy
+        // fixed points (lib.makeExtensible's `rattrs self`) terminate.
         const children = valueBasedChildren(node)
-        return `apply(${nixNodeToJs(children[0])}, ${nixNodeToJs(children[1])})`
+        return `apply(${nixNodeToJs(children[0])}, mkThunk(()=>(${nixNodeToJs(children[1])})))`
     } else if (node.type == "if_expression") {
         // <if_expression>
         //     <if text="if" />
@@ -778,7 +900,7 @@ const nixNodeToJs = (node)=>{
             // - Bindings need access to parent scope AND sibling bindings
             // - But the returned object should only contain the rec attrset's own bindings
             // Solution: Use Object.create() so parent scope is in prototype, not own properties
-            let code = `/*rec*/createScope(nixScope=>{\n`
+            let code = `/*rec*/createScope(nixScope, (nixScope)=>{\n`
 
             // Process bindings similar to let
             const bindingsByBase = {}
@@ -858,20 +980,20 @@ const nixNodeToJs = (node)=>{
                 code += `    nixScope${varAccess(baseName)} = {};\n`
             }
 
-            // Add simple constant bindings
-            for (const {name, value, isConstant} of simpleBindings.filter(b => b.isConstant)) {
+            // All `rec` bindings are LAZY (defGetter) — see the `let` path for
+            // why eager binding breaks self-referential fixed points.
+            for (const {name, value} of simpleBindings) {
                 if (value.type === "select") {
-                    // Special case for inherit_from
-                    code += `    nixScope${varAccess(name)} = ${nixNodeToJs(value.source)}[${JSON.stringify(value.attr)}];\n`
+                    code += `    defGetter(nixScope, ${JSON.stringify(name)}, ()=>(${nixNodeToJs(value.source)}[${JSON.stringify(value.attr)}]));\n`
                 } else {
-                    code += `    nixScope${varAccess(name)} = ${nixNodeToJs(value)};\n`
+                    code += `    defGetter(nixScope, ${JSON.stringify(name)}, (nixScope) => (${nixNodeToJs(value)}));\n`
                 }
             }
 
-            // Add nested bindings
+            // Add nested bindings (accessor must be rooted at `nixScope`).
             for (const [baseName, nestedBindings] of Object.entries(bindingsByBase)) {
                 for (const {path, value} of nestedBindings) {
-                    let accessor = varAccess(baseName)
+                    let accessor = `nixScope${varAccess(baseName)}`
                     for (let i = 0; i < path.length - 1; i++) {
                         const key = extractKeyString(path[i])
                         if (key === null) {
@@ -885,12 +1007,6 @@ const nixNodeToJs = (node)=>{
                     }
                     code += `    ${accessor}[${JSON.stringify(lastKey)}] = ${nixNodeToJs(value)};\n`
                 }
-            }
-
-            // For rec, we need to push the scope so lazy bindings can reference other attributes
-            // Add lazy bindings using defGetter helper
-            for (const {name, value, isConstant} of simpleBindings.filter(b => !b.isConstant)) {
-                code += `        defGetter(nixScope, ${JSON.stringify(name)}, (nixScope) => ${nixNodeToJs(value)});\n`
             }
             // Return a clean object with only the rec attrset's own bindings (not inherited scope)
             const allOwnKeys = [
@@ -966,65 +1082,36 @@ const nixNodeToJs = (node)=>{
                 }
             }
 
-            // Check if any binding uses inherit_from (needs scope context)
-            const hasInheritFrom = simpleBindings.some(b => b.value.type === "select")
-
-            // If we only have simple bindings and no inherit_from, use object literal syntax
-            if (nestedBindings.length === 0 && !hasInheritFrom) {
-                const properties = simpleBindings.map(({key, value}) =>
-                    `${JSON.stringify(key)}: ${nixNodeToJs(value)}`
-                )
-                return `({${properties.join(", ")}})`
-            }
-
-            // Otherwise, build object imperatively
-            // If we have inherit_from, we need scope context
-            let code = `createScope(nixScope=>{\n`
+            // Build the attrset with LAZY values: every value is a memoized
+            // getter (defGetter) so it is only evaluated when demanded, matching
+            // Nix. This is required for fixed points such as
+            // lib.makeExtensible's `self = rattrs self // …`, where the returned
+            // attrset's fields must stay unforced while `self` is being defined.
+            // A new scope (createScope) is pushed so values resolve against the
+            // enclosing scope; non-rec attrsets do not see their own keys.
+            let code = `createScope(nixScope, (nixScope)=>{\n`
             code += `    const obj = {};\n`
 
-            // Add simple bindings
+            // Add simple bindings (lazy)
             for (const {key, value} of simpleBindings) {
                 if (value.type === "select") {
-                    // Special case for inherit_from
-                    const indentPrefix = hasInheritFrom ? "    " : ""
-                    
-                    code += `    ${indentPrefix}obj${varAccess(key)} = ${nixNodeToJs(value.source)}${varAccess(value.attr)}\n`
+                    // inherit (src) key;  ->  key = src.key  (lazy)
+                    code += `    defGetter(obj, ${JSON.stringify(key)}, ()=>(${nixNodeToJs(value.source)}${varAccess(value.attr)}));\n`
                 } else {
-                    const indentPrefix = hasInheritFrom ? "    " : ""
-                    code += `    ${indentPrefix}obj${varAccess(key)} = ${nixNodeToJs(value)};\n`
+                    code += `    defGetter(obj, ${JSON.stringify(key)}, ()=>(${nixNodeToJs(value)}));\n`
                 }
             }
 
-            // Add nested bindings - need to create intermediate objects
+            // Add nested bindings via the runtime `set` helper, which creates
+            // intermediate attrsets and drops bindings with a null (dynamic)
+            // attr name — e.g. `{ a.b.c = v; }` -> set(obj, ["a","b","c"], thunk).
+            // The leaf value is passed as a thunk so it stays lazy too.
             for (const {pathParts, value} of nestedBindings) {
-                const indentPrefix = hasInheritFrom ? "    " : ""
-                // Build the accessor chain, creating intermediate objects as needed
-                let accessor = 'obj'
-                for (let i = 0; i < pathParts.length - 1; i++) {
-                    const part = pathParts[i]
+                const pathElems = pathParts.map(part => {
                     const key = extractKeyString(part)
-                    if (key !== null) {
-                        // Static key
-                        accessor += `[${JSON.stringify(key)}]`
-                    } else {
-                        // Dynamic key - needs runtime evaluation
-                        accessor += `[${nixNodeToJs(part)}]`
-                    }
-                    // Ensure intermediate object exists
-                    code += `    ${indentPrefix}if (${accessor} === undefined) ${accessor} = {};\n`
-                }
-
-                // Set the final value
-                const lastPart = pathParts[pathParts.length - 1]
-                const lastKey = extractKeyString(lastPart)
-                if (lastKey !== null) {
-                    // Static key
-                    code += `    ${indentPrefix}${accessor}[${JSON.stringify(lastKey)}] = ${nixNodeToJs(value)};\n`
-                } else {
-                    // Dynamic key - null keys are silently skipped in Nix
-                    const keyExpr = nixNodeToJs(lastPart)
-                    code += `    ${indentPrefix}{ const __k = ${keyExpr}; if (__k !== null) ${accessor}[__k] = ${nixNodeToJs(value)}; }\n`
-                }
+                    return key !== null ? JSON.stringify(key) : `(${nixNodeToJs(part)})`
+                })
+                code += `    set(obj, [${pathElems.join(", ")}], ()=>(${nixNodeToJs(value)}));\n`
             }
 
             code += `    return obj;\n`
@@ -1048,7 +1135,7 @@ const nixNodeToJs = (node)=>{
             // Solution: When a function is created, capture the current scope. When it's called,
             // use the captured scope as the parent (via prototype chain), not runtime.scopeStack.
             // Using Object.create() ensures getters from parent scopes are accessible.
-            return `createFunc(/*arg:*/ ${JSON.stringify(argName)}, null, {}, (nixScope)=>(
+            return `createFunc(/*arg:*/ ${JSON.stringify(argName)}, null, {}, nixScope, (nixScope)=>(
                 ${nixNodeToJs(body).replace(/\n/g,"\n    ")}
             ))`
         // more complicated function:
@@ -1074,11 +1161,14 @@ const nixNodeToJs = (node)=>{
             //     <: text=":" />
             //     <integer_expression text="10" />
             // </function_expression>
-            if (children[0].type != "formals") {
+            // Nix allows the @-binding on either side: `{a,b}@args:` and
+            // `args@{a,b}:`. Find the formals node wherever it is.
+            const formalsNode = children.find(each => each.type == "formals")
+            if (!formalsNode) {
                 throw Error(`When handling a function, it didn't seem to be a simple function, but also didn't have <formals>. Not sure what happened:\n${node.text}`)
             }
             let argNames = []
-            const formals = children[0].children.filter(each=>each.type=="formal")
+            const formals = formalsNode.children.filter(each=>each.type=="formal")
             // A formal with a default has more than just the identifier
             const formalsWithDefaults = formals.filter(each=>{
                 const formalChildren = valueBasedChildren(each)
@@ -1098,14 +1188,17 @@ const nixNodeToJs = (node)=>{
                 return `${JSON.stringify(argName)}: (nixScope)=>(${defaultValue}),`
             }).join("")
 
-            // Handle @ syntax: { a, b }@args: body
+            // Handle @ syntax on either side: `{a,b}@args:` or `args@{a,b}:`.
             let allArgsName = null
             const atIndex = children.findIndex(each=>each.type=="@")
             if (atIndex >= 0) {
-                // The identifier after @ is the name for the full argument set
-                const allArgsNameNode = children[atIndex + 1]
-                if (allArgsNameNode?.type === "identifier") {
-                    allArgsName = allArgsNameNode.text
+                // The identifier adjacent to @ names the full argument set.
+                const after = children[atIndex + 1]
+                const before = children[atIndex - 1]
+                if (after?.type === "identifier") {
+                    allArgsName = after.text
+                } else if (before?.type === "identifier") {
+                    allArgsName = before.text
                 }
             }
             
@@ -1114,7 +1207,7 @@ const nixNodeToJs = (node)=>{
 
             // The body is the last child (after the ":")
             const body = children.slice(-1)[0]
-            return `createFunc({${defaulters}}, ${JSON.stringify(allArgsName)}, {}, (nixScope)=>(
+            return `createFunc({${defaulters}}, ${JSON.stringify(allArgsName)}, {}, nixScope, (nixScope)=>(
                 ${nixNodeToJs(body).replace(/\n/g,"\n    ")}
             ))`
         }
@@ -1206,20 +1299,24 @@ const nixNodeToJs = (node)=>{
         }
 
         // Generate JavaScript code
-        let code = `/*let*/ createScope(nixScope=>{\n`
+        let code = `/*let*/ createScope(nixScope, (nixScope)=>{\n`
 
         // Create base objects for nested bindings
         for (const [baseName, _] of Object.entries(bindingsByBase)) {
             code += `        nixScope${varAccess(baseName)} = {};\n`
         }
 
-        // Add simple constant bindings
-        for (const {name, value, isConstant} of simpleBindings.filter(b => b.isConstant)) {
+        // All `let` bindings are LAZY (defGetter): Nix only evaluates a binding
+        // when it is demanded. Eager assignment would force inherit-from sources
+        // (e.g. `inherit (lib.trivial) …`) immediately, which re-enters
+        // in-progress fixed points (self-referential lib modules) and yields
+        // undefined.
+        for (const {name, value} of simpleBindings) {
             if (value.type === "select") {
-                // Special case for inherit_from: value is { type: "select", source: expr, attr: name }
-                code += `        nixScope${varAccess(name)} = ${nixNodeToJs(value.source)}[${JSON.stringify(value.attr)}];\n`
+                // inherit (src) name;  ->  name = src.name  (lazy)
+                code += `        defGetter(nixScope, ${JSON.stringify(name)}, ()=>(${nixNodeToJs(value.source)}[${JSON.stringify(value.attr)}]));\n`
             } else {
-                code += `        nixScope${varAccess(name)} = ${nixNodeToJs(value)};\n`
+                code += `        defGetter(nixScope, ${JSON.stringify(name)}, (nixScope) => (${nixNodeToJs(value)}));\n`
             }
         }
 
@@ -1233,11 +1330,6 @@ const nixNodeToJs = (node)=>{
                 const lastKey = path[path.length - 1].text
                 code += `        ${accessor}[${JSON.stringify(lastKey)}] = ${nixNodeToJs(value)};\n`
             }
-        }
-
-        // Add lazy bindings (those that reference other variables) using defGetter helper
-        for (const {name, value, isConstant} of simpleBindings.filter(b => !b.isConstant)) {
-            code += `        defGetter(nixScope, ${JSON.stringify(name)}, (nixScope) => ${nixNodeToJs(value)});\n`
         }
 
         code += `    return ${nixNodeToJs(body).trimStart()};\n`
@@ -1285,7 +1377,7 @@ const nixNodeToJs = (node)=>{
             throw Error(`let_attrset_expression missing "body" binding: ${node.text}`)
         }
 
-        let code = `/*let*/ createScope(nixScope=>{\n`
+        let code = `/*let*/ createScope(nixScope, (nixScope)=>{\n`
         for (const {name, value, isConstant} of simpleBindings.filter(b => b.isConstant)) {
             code += `        nixScope${varAccess(name)} = ${nixNodeToJs(value)};\n`
         }

@@ -26,6 +26,10 @@ async function createTestTarball(tempDir, hasTopLevelDir = true) {
     const tarPath = `${tempDir}/test.tar.gz`;
     const command = new Deno.Command("tar", {
         args: ["-czf", tarPath, "-C", contentDir, "."],
+        // COPYFILE_DISABLE stops macOS bsdtar from injecting AppleDouble
+        // (._*) metadata files, which would otherwise add spurious top-level
+        // entries and defeat single-directory stripping.
+        env: { COPYFILE_DISABLE: "1" },
         stdout: "piped",
         stderr: "piped",
     });
