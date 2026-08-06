@@ -1,7 +1,17 @@
 import { assertEquals, assertRejects, assert, assertExists } from "jsr:@std/assert";
 import { builtins } from "../runtime.js";
 
-Deno.test("fetchMercurial - string URL argument (basic clone)", async () => {
+// Skip clone-based tests when the hg binary is not installed
+const hgAvailable = (() => {
+    try {
+        return new Deno.Command("hg", { args: ["--version"], stdout: "null", stderr: "null" }).outputSync().success
+    } catch {
+        return false
+    }
+})()
+const requiresHg = { ignore: !hgAvailable }
+
+Deno.test("fetchMercurial - string URL argument (basic clone)", requiresHg, async () => {
     try {
         // Use a small, stable public Mercurial repository
         // Using the hello world example from Mercurial's official site
@@ -31,7 +41,7 @@ Deno.test("fetchMercurial - string URL argument (basic clone)", async () => {
     }
 });
 
-Deno.test("fetchMercurial - object argument with URL and name", async () => {
+Deno.test("fetchMercurial - object argument with URL and name", requiresHg, async () => {
 
     try {
         const result = await builtins.fetchMercurial({
@@ -52,7 +62,7 @@ Deno.test("fetchMercurial - object argument with URL and name", async () => {
     }
 });
 
-Deno.test("fetchMercurial - specific revision", async () => {
+Deno.test("fetchMercurial - specific revision", requiresHg, async () => {
 
     try {
         // Use a known commit from the hello repo
@@ -77,7 +87,7 @@ Deno.test("fetchMercurial - specific revision", async () => {
     }
 });
 
-Deno.test("fetchMercurial - caching works", async () => {
+Deno.test("fetchMercurial - caching works", requiresHg, async () => {
 
     try {
         // First fetch
@@ -99,7 +109,7 @@ Deno.test("fetchMercurial - caching works", async () => {
     }
 });
 
-Deno.test("fetchMercurial - invalid URL throws error", async () => {
+Deno.test("fetchMercurial - invalid URL throws error", requiresHg, async () => {
 
     try {
         await builtins.fetchMercurial("https://invalid.example.com/nonexistent");
@@ -110,7 +120,7 @@ Deno.test("fetchMercurial - invalid URL throws error", async () => {
     }
 });
 
-Deno.test("fetchMercurial - metadata types are correct", async () => {
+Deno.test("fetchMercurial - metadata types are correct", requiresHg, async () => {
 
     try {
         const result = await builtins.fetchMercurial("https://www.mercurial-scm.org/repo/hello");
@@ -138,7 +148,7 @@ Deno.test("fetchMercurial - metadata types are correct", async () => {
     }
 });
 
-Deno.test("fetchMercurial - ref parameter with branch name", async () => {
+Deno.test("fetchMercurial - ref parameter with branch name", requiresHg, async () => {
 
     try {
         // Clone with specific branch reference

@@ -1,8 +1,11 @@
 // Test builtins.path
 import { assertEquals, assertRejects, assert, assertStringIncludes } from "jsr:@std/assert"
-import { createRuntime, builtins } from "../runtime.js"
+import { builtins } from "../runtime.js"
+import { STORE_DIR } from "../store_manager.js"
 
-createRuntime()
+// Returned paths are /nix/store/... (drv fidelity); content materializes in the
+// denix local store under the same basename
+const localized = (storePath) => `${STORE_DIR}/${storePath.toString().split("/").pop()}`
 
 Deno.test("builtins.path - copy single file", async () => {
     // Create a test file
@@ -22,12 +25,12 @@ Deno.test("builtins.path - copy single file", async () => {
         assertStringIncludes(storePath, "store")
 
         // File should exist in store
-        const storeInfo = await Deno.stat(storePath)
+        const storeInfo = await Deno.stat(localized(storePath))
         assert(storeInfo.isFile || storeInfo.isDirectory)
 
         // If it's a directory, check for the file inside
         if (storeInfo.isDirectory) {
-            const fileInStore = `${storePath}/test.txt`
+            const fileInStore = `${localized(storePath)}/test.txt`
             const fileContent = await Deno.readTextFile(fileInStore)
             assertEquals(fileContent, "Hello, World!")
         }
@@ -58,14 +61,14 @@ Deno.test("builtins.path - copy directory recursively", async () => {
         assertStringIncludes(storePath, "myproject")
 
         // Directory should exist in store
-        const storeInfo = await Deno.stat(storePath)
+        const storeInfo = await Deno.stat(localized(storePath))
         assert(storeInfo.isDirectory)
 
         // Files should exist
-        const file1 = await Deno.readTextFile(`${storePath}/file1.txt`)
+        const file1 = await Deno.readTextFile(`${localized(storePath)}/file1.txt`)
         assertEquals(file1, "Content 1")
 
-        const file2 = await Deno.readTextFile(`${storePath}/subdir/file2.txt`)
+        const file2 = await Deno.readTextFile(`${localized(storePath)}/subdir/file2.txt`)
         assertEquals(file2, "Content 2")
     } finally {
         // Clean up
@@ -95,7 +98,7 @@ Deno.test("builtins.path - with filter function", async () => {
 
         // .txt files should exist
         const files = []
-        for await (const entry of Deno.readDir(storePath)) {
+        for await (const entry of Deno.readDir(localized(storePath))) {
             files.push(entry.name)
         }
 
@@ -137,10 +140,9 @@ Deno.test("builtins.path - validates sha256", async () => {
     await Deno.writeTextFile(testFile, content)
 
     try {
-        // Compute the expected hash directly from the file
-        const { sha256Hex } = await import("../../tools/hashing.js")
-        const fileBytes = await Deno.readFile(testFile)
-        const expectedHash = sha256Hex(fileBytes)
+        // builtins.path hashes in NAR format (like real Nix), not flat bytes
+        const { hashPathSync } = await import("../nar_hash.js")
+        const expectedHash = hashPathSync(testFile).replace(/^sha256:/, "")
 
         // Now try with the correct hash
         const result = await builtins.path({
@@ -192,10 +194,10 @@ Deno.test("builtins.path - preserves executable bit", async () => {
         const storePath = result.toString()
 
         // Find the file in store (might be stored as directory containing file)
-        let scriptPath = storePath
-        const storeInfo = await Deno.stat(storePath)
+        let scriptPath = localized(storePath)
+        const storeInfo = await Deno.stat(scriptPath)
         if (storeInfo.isDirectory) {
-            scriptPath = `${storePath}/script.sh`
+            scriptPath = `${scriptPath}/script.sh`
         }
 
         // Check if executable bit is preserved

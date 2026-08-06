@@ -87,7 +87,7 @@ Deno.test("getFlake - flake with inputs (recursively resolved)", async () => {
     assertEquals(result.outputs.depDoubled, 42n);
 
     // inputs: self, dep = 2
-    assertEquals(result.outputs.inputCount, 2);
+    assertEquals(result.outputs.inputCount, 2n);
 });
 
 Deno.test("getFlake - missing flake.nix throws error", async () => {
@@ -208,12 +208,18 @@ Deno.test("getFlake - parseFlakeRef integration", async () => {
 Deno.test("getFlake - outputs function receives correct inputs", async () => {
     const tempDir = await Deno.makeTempDir();
     try {
-        // Create flake that inspects its inputs
+        // Create flake that inspects its inputs (dep is a real local flake
+        // since inputs are recursively resolved, not stubbed)
+        await Deno.mkdir(`${tempDir}/dep`);
+        await Deno.writeTextFile(
+            `${tempDir}/dep/flake.nix`,
+            `{ description = "dep"; outputs = { self }: { answer = 42; }; }`
+        );
         await Deno.writeTextFile(
             `${tempDir}/flake.nix`,
             `{
               description = "Input inspector";
-              inputs = { test = { url = "github:test/repo"; }; };
+              inputs = { test = { url = "path:./dep"; }; };
               outputs = inputs: {
                 # Return information about received inputs
                 hasInputs = builtins.isAttrs inputs;

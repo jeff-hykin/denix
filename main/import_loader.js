@@ -10,6 +10,7 @@
 
 import { canonicalizePath, getImportType, validateImportPath } from "../tools/import_resolver.js"
 import { convertToJs, convertToJsSync } from "../translator.js"
+import { createWithScope } from "./runtime.js"
 
 /**
  * Load and evaluate a file
@@ -83,6 +84,7 @@ async function loadNixFile(content, runtime, filepath) {
     // Create a minimal runtime for evaluation
     const evalRuntime = {
         scopeStack: [nixScope],
+        withScope: createWithScope,
     }
 
     // Create isolated evaluation scope
@@ -163,6 +165,7 @@ function loadNixFileSync(content, runtime, filepath) {
     // Create a minimal runtime for evaluation
     const evalRuntime = {
         scopeStack: [nixScope],
+        withScope: createWithScope,
     }
 
     const evalFunc = new Function(

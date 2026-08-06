@@ -1,9 +1,6 @@
 // Test builtins.fetchurl
 import { assertEquals, assertRejects, assert, assertStringIncludes } from "jsr:@std/assert"
-import { createRuntime } from "../runtime.js"
-
-const runtime = createRuntime()
-const builtins = runtime.scopeStack[0].builtins
+import { builtins } from "../runtime.js"
 
 Deno.test("fetchurl - string URL argument", async () => {
     try {
@@ -100,7 +97,10 @@ Deno.test("fetchurl - with correct SHA256", async () => {
         const tempFile = await Deno.makeTempFile()
         try {
             const response = await fetch(url)
-            if (!response.ok) throw new Error(`HTTP ${response.status}`)
+            if (!response.ok) {
+                await response.body?.cancel()
+                throw new Error(`HTTP ${response.status}`)
+            }
             const bytes = new Uint8Array(await response.arrayBuffer())
 
             // Import hashing function

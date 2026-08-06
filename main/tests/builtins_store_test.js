@@ -11,18 +11,18 @@ import { builtins } from "../runtime.js"
 // "/nix/store"
 
 Deno.test("storeDir - returns store directory path", () => {
-    const result = builtins.storeDir()
+    const result = builtins.storeDir
     assertEquals(result, "/nix/store")
 })
 
 Deno.test("storeDir - result is a string", () => {
-    const result = builtins.storeDir()
+    const result = builtins.storeDir
     assertEquals(typeof result, "string")
 })
 
 Deno.test("storeDir - consistent across calls", () => {
-    const first = builtins.storeDir()
-    const second = builtins.storeDir()
+    const first = builtins.storeDir
+    const second = builtins.storeDir
     assertEquals(first, second)
 })
 

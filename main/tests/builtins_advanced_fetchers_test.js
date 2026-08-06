@@ -1,10 +1,6 @@
 import { assertEquals, assertExists, assert, assertRejects } from "jsr:@std/assert";
-import { createRuntime } from "../runtime.js";
+import { builtins } from "../runtime.js";
 import { NotImplemented } from "../errors.js";
-
-// Initialize runtime once before tests
-const runtimeContext = createRuntime();
-const builtins = runtimeContext.runtime.builtins;
 
 //
 // fetchClosure Tests
@@ -325,44 +321,60 @@ Deno.test("getFlake - outputs can be complex nested structures", async () => {
     }
 });
 
-Deno.test("getFlake - inputs field creates stubs for dependencies", async () => {
+// Write a small dependency flake at <dir>/dep for input-resolution tests
+const writeDepFlake = async (dir) => {
+    await Deno.mkdir(`${dir}/dep`);
+    await Deno.writeTextFile(
+        `${dir}/dep/flake.nix`,
+        `{
+          description = "dep";
+          outputs = { self }: { answer = 42; };
+        }`
+    );
+};
+
+Deno.test("getFlake - inputs are resolved recursively as flakes", async () => {
     const tempDir = await Deno.makeTempDir();
     try {
+        await writeDepFlake(tempDir);
         await Deno.writeTextFile(
             `${tempDir}/flake.nix`,
             `{
               inputs = {
-                nixpkgs = { url = "github:nixos/nixpkgs/nixos-unstable"; };
+                dep = { url = "path:./dep"; };
               };
               outputs = inputs: {
-                nixpkgsType = inputs.nixpkgs._type;
+                depType = inputs.dep._type;
+                depAnswer = inputs.dep.answer;
               };
             }`
         );
 
         const result = await builtins.getFlake(tempDir);
-        assertExists(result.inputs.nixpkgs);
-        assertEquals(result.inputs.nixpkgs._type, "flake-input-stub");
-        assertEquals(result.outputs.nixpkgsType, "flake-input-stub");
+        assertExists(result.inputs.dep);
+        assertEquals(result.inputs.dep._type, "flake");
+        assertEquals(result.outputs.depType, "flake");
+        assertEquals(result.outputs.depAnswer, 42n);
     } finally {
         await Deno.remove(tempDir, { recursive: true });
     }
 });
 
-Deno.test("getFlake - input stubs include URL", async () => {
+Deno.test("getFlake - unresolvable input error names the input and ref", async () => {
     const tempDir = await Deno.makeTempDir();
     try {
         await Deno.writeTextFile(
             `${tempDir}/flake.nix`,
             `{
-              inputs.test = { url = "github:test/repo"; };
-              outputs = inputs: { testUrl = inputs.test.url; };
+              inputs.test = { url = "path:./does-not-exist"; };
+              outputs = inputs: { value = 1; };
             }`
         );
 
-        const result = await builtins.getFlake(tempDir);
-        assertEquals(result.inputs.test.url, "github:test/repo");
-        assertEquals(result.outputs.testUrl, "github:test/repo");
+        await builtins.getFlake(tempDir);
+        throw new Error("Should have thrown an error");
+    } catch (error) {
+        assertEquals(error.message.includes("failed to resolve input 'test'"), true);
     } finally {
         await Deno.remove(tempDir, { recursive: true });
     }
@@ -371,10 +383,11 @@ Deno.test("getFlake - input stubs include URL", async () => {
 Deno.test("getFlake - supports string input URLs (simplified syntax)", async () => {
     const tempDir = await Deno.makeTempDir();
     try {
+        await writeDepFlake(tempDir);
         await Deno.writeTextFile(
             `${tempDir}/flake.nix`,
             `{
-              inputs.simple = "github:owner/repo";
+              inputs.simple = "path:./dep";
               outputs = inputs: {
                 hasSimple = if inputs ? simple then "yes" else "no";
               };
@@ -488,33 +501,41 @@ Deno.test("getFlake - supports absolute path without prefix", async () => {
 Deno.test("getFlake - flake.lock file is read if present", async () => {
     const tempDir = await Deno.makeTempDir();
     try {
+        await writeDepFlake(tempDir);
+        // flake.nix points at a github ref that does NOT exist; the lock file
+        // pins the input to a local path, so resolution must go through the
+        // lock (no network) for this to succeed
         await Deno.writeTextFile(
             `${tempDir}/flake.nix`,
             `{
               inputs.test = "github:test/repo";
-              outputs = inputs: { value = 1; };
+              outputs = inputs: {
+                value = 1;
+                answer = inputs.test.answer;
+              };
             }`
         );
 
-        // Create a flake.lock file
         await Deno.writeTextFile(
             `${tempDir}/flake.lock`,
             JSON.stringify({
                 version: 7,
+                root: "root",
                 nodes: {
+                    root: { inputs: { test: "test" } },
                     test: {
                         locked: {
-                            rev: "abc123",
-                            type: "github",
+                            type: "path",
+                            path: `${tempDir}/dep`,
                         },
                     },
                 },
             })
         );
 
-        // getFlake should read the lock file without error
         const result = await builtins.getFlake(tempDir);
         assertEquals(result.outputs.value, 1n);
+        assertEquals(result.outputs.answer, 42n);
     } finally {
         await Deno.remove(tempDir, { recursive: true });
     }
@@ -523,10 +544,11 @@ Deno.test("getFlake - flake.lock file is read if present", async () => {
 Deno.test("getFlake - works without flake.lock file", async () => {
     const tempDir = await Deno.makeTempDir();
     try {
+        await writeDepFlake(tempDir);
         await Deno.writeTextFile(
             `${tempDir}/flake.nix`,
             `{
-              inputs.test = "github:test/repo";
+              inputs.test = "path:./dep";
               outputs = inputs: { value = 1; };
             }`
         );

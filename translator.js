@@ -556,15 +556,14 @@ const nixNodeToJs = (node)=>{
                 // Skip quotes
                 continue
             } else if (child.type == "string_fragment") {
-                let text = child.text
-                if (usedDoubleQuotes) {
-                    // Handle escape sequences in double-quoted strings
-                    text = text.replace(/\\/g, "\\\\").replace(/"/g, '\\"')
-                } else {
-                    // Handle indented string escapes (this shouldn't happen for string_expression, but keeping for consistency)
-                    text = text.replace(/`/g, "\\`")
-                }
-                currentString += text
+                // Fragments are literal text (escapes are separate
+                // escape_sequence nodes); JSON.stringify below re-escapes.
+                currentString += child.text
+            } else if (child.type == "escape_sequence") {
+                // \n \r \t decode; any other \c is the char itself
+                // (\\ => \, \" => ", \$ => $).
+                const c = child.text[1]
+                currentString += c === "n" ? "\n" : c === "r" ? "\r" : c === "t" ? "\t" : c
             } else if (child.type == "interpolation") {
                 // Push the accumulated string and start a new one
                 strings.push(currentString)
@@ -687,7 +686,7 @@ const nixNodeToJs = (node)=>{
         //   (builtins.findFile builtins.nixPath "...").
         const text = node.text || ""
         const inner = text.replace(/^</, "").replace(/>$/, "")
-        return `(nixScope.builtins${varAccess("findFile")}(nixScope.builtins${varAccess("nixPath")}()))(${JSON.stringify(inner)})`
+        return `(nixScope.builtins${varAccess("findFile")}(nixScope.builtins${varAccess("nixPath")}))(${JSON.stringify(inner)})`
     } else if (node.type == "apply_expression") { // function call
         // Pass the argument LAZILY as a thunk — Nix evaluates function arguments
         // only when the callee demands them. `apply` forces it for builtins but
@@ -961,18 +960,18 @@ const nixNodeToJs = (node)=>{
                             simpleBindings.push({
                                 name: id.text,
                                 value: id,
-                                isConstant: false
+                                isConstant: false,
+                                // `inherit x;` in a rec set binds the ENCLOSING
+                                // scope's x, never the rec set's own — a scope
+                                // binding `x = nixScope.x` would blackhole.
+                                isPlainInherit: true
                             })
                         }
                     }
                 } else if (binding.type === "inherit_from") {
                     // inherit (expr) x y z; means x = expr.x; y = expr.y; etc.
                     const bindingChildren = valueBasedChildren(binding)
-                    const sourceExpr = bindingChildren.find(each =>
-                        each.type === "variable_expression" ||
-                        each.type === "select_expression" ||
-                        each.type === "apply_expression"
-                    )
+                    const sourceExpr = bindingChildren.find(each => each.type !== "inherited_attrs" && each.type.endsWith("_expression"))
                     const inheritedAttrs = bindingChildren.find(each => each.type === "inherited_attrs")
 
                     if (inheritedAttrs && sourceExpr) {
@@ -996,7 +995,13 @@ const nixNodeToJs = (node)=>{
 
             // All `rec` bindings are LAZY (defGetter) — see the `let` path for
             // why eager binding breaks self-referential fixed points.
-            for (const {name, value} of simpleBindings) {
+            for (const {name, value, isPlainInherit} of simpleBindings) {
+                if (isPlainInherit) {
+                    // No scope binding: the prototype chain (createScope) already
+                    // resolves `name` to the enclosing scope, which is exactly
+                    // what `inherit name;` means in a rec set.
+                    continue
+                }
                 if (value.type === "select") {
                     code += `    defGetter(nixScope, ${JSON.stringify(name)}, ()=>(${nixNodeToJs(value.source)}[${JSON.stringify(value.attr)}]));\n`
                 } else {
@@ -1019,7 +1024,10 @@ const nixNodeToJs = (node)=>{
                     if (lastKey === null) {
                         throw new NixError(`Dynamic attribute keys are not supported in rec sets`)
                     }
-                    code += `    ${accessor}[${JSON.stringify(lastKey)}] = ${nixNodeToJs(value)};\n`
+                    // Lazy: eager assignment would evaluate the value during
+                    // construction, breaking self-referential fixed points
+                    // (e.g. lib/types.nix `nestedTypes.elemType = elemType`).
+                    code += `    defGetter(${accessor}, ${JSON.stringify(lastKey)}, ()=>(${nixNodeToJs(value)}));\n`
                 }
             }
             // Return a clean object with only the rec attrset's own bindings (not inherited scope)
@@ -1030,7 +1038,7 @@ const nixNodeToJs = (node)=>{
             code += `        const __result = {};\n`
             for (const key of allOwnKeys) {
                 // Use defineProperty to preserve lazy getters from nixScope
-                code += `        Object.defineProperty(__result, ${JSON.stringify(key)}, { enumerable: true, get() { return nixScope${varAccess(key)}; } });\n`
+                code += `        Object.defineProperty(__result, ${JSON.stringify(key)}, { enumerable: true, configurable: true, get() { return nixScope${varAccess(key)}; } });\n`
             }
             code += `        return __result;\n`
             code += `})`
@@ -1076,11 +1084,7 @@ const nixNodeToJs = (node)=>{
                 } else if (binding.type === "inherit_from") {
                     // inherit (expr) x y z; means x = expr.x; y = expr.y; etc.
                     const bindingChildren = valueBasedChildren(binding)
-                    const sourceExpr = bindingChildren.find(each =>
-                        each.type === "variable_expression" ||
-                        each.type === "select_expression" ||
-                        each.type === "apply_expression"
-                    )
+                    const sourceExpr = bindingChildren.find(each => each.type !== "inherited_attrs" && each.type.endsWith("_expression"))
                     const inheritedAttrs = bindingChildren.find(each => each.type === "inherited_attrs")
 
                     if (inheritedAttrs && sourceExpr) {
@@ -1182,13 +1186,23 @@ const nixNodeToJs = (node)=>{
                 throw Error(`When handling a function, it didn't seem to be a simple function, but also didn't have <formals>. Not sure what happened:\n${node.text}`)
             }
             let argNames = []
-            const formals = formalsNode.children.filter(each=>each.type=="formal")
+            // Note: a trailing comma parses as a `formal` node with a missing
+            // identifier (empty text) — skip those.
+            const formals = formalsNode.children.filter(each=>each.type=="formal" && valueBasedChildren(each)[0]?.text)
             // A formal with a default has more than just the identifier
             const formalsWithDefaults = formals.filter(each=>{
                 const formalChildren = valueBasedChildren(each)
                 argNames.push(formalChildren[0].text)
                 return formalChildren.length > 1 // Has default if more than just identifier
             })
+            // builtins.functionArgs needs every formal name (true = has default),
+            // and callPackage relies on it to know which args to inject.
+            const hasEllipsis = formalsNode.children.some(each=>each.type=="ellipses")
+            const argsMeta = formals.map(each=>{
+                const formalChildren = valueBasedChildren(each)
+                return `${JSON.stringify(formalChildren[0].text)}: ${formalChildren.length > 1}`
+            }).join(", ")
+            const metadata = `{args: {${argsMeta}}${hasEllipsis ? ", ellipsis: true" : ""}}`
 
             const defaulters = formalsWithDefaults.map(each=>{
                 const formalChildren = valueBasedChildren(each)
@@ -1221,7 +1235,7 @@ const nixNodeToJs = (node)=>{
 
             // The body is the last child (after the ":")
             const body = children.slice(-1)[0]
-            return `createFunc({${defaulters}}, ${JSON.stringify(allArgsName)}, {}, nixScope, (nixScope)=>(
+            return `createFunc({${defaulters}}, ${JSON.stringify(allArgsName)}, ${metadata}, nixScope, (nixScope)=>(
                 ${nixNodeToJs(body).replace(/\n/g,"\n    ")}
             ))`
         }
@@ -1279,23 +1293,21 @@ const nixNodeToJs = (node)=>{
                     })
                 }
             } else if (binding.type === "inherit") {
-                // inherit x y z; means x = x; y = y; z = z;
+                // inherit x y z; binds the ENCLOSING scope's x/y/z (a scope
+                // binding `x = nixScope.x` would blackhole).
                 const identifiers = valueBasedChildren(binding).filter(each => each.type === "identifier")
                 for (const id of identifiers) {
                     simpleBindings.push({
                         name: id.text,
                         value: id,
-                        isConstant: false
+                        isConstant: false,
+                        isPlainInherit: true
                     })
                 }
             } else if (binding.type === "inherit_from") {
                 // inherit (expr) x y z; means x = expr.x; y = expr.y; etc.
                 const bindingChildren = valueBasedChildren(binding)
-                const sourceExpr = bindingChildren.find(each =>
-                    each.type === "variable_expression" ||
-                    each.type === "select_expression" ||
-                    each.type === "apply_expression"
-                )
+                const sourceExpr = bindingChildren.find(each => each.type !== "inherited_attrs" && each.type.endsWith("_expression"))
                 const inheritedAttrs = bindingChildren.find(each => each.type === "inherited_attrs")
 
                 if (inheritedAttrs && sourceExpr) {
@@ -1325,7 +1337,12 @@ const nixNodeToJs = (node)=>{
         // (e.g. `inherit (lib.trivial) …`) immediately, which re-enters
         // in-progress fixed points (self-referential lib modules) and yields
         // undefined.
-        for (const {name, value} of simpleBindings) {
+        for (const {name, value, isPlainInherit} of simpleBindings) {
+            if (isPlainInherit) {
+                // `inherit name;` — the prototype chain (createScope) already
+                // resolves `name` to the enclosing scope; no own binding needed.
+                continue
+            }
             if (value.type === "select") {
                 // inherit (src) name;  ->  name = src.name  (lazy)
                 code += `        defGetter(nixScope, ${JSON.stringify(name)}, ()=>(${nixNodeToJs(value.source)}[${JSON.stringify(value.attr)}]));\n`
@@ -1342,7 +1359,8 @@ const nixNodeToJs = (node)=>{
                     accessor += `[${JSON.stringify(path[i].text)}]`
                 }
                 const lastKey = path[path.length - 1].text
-                code += `        ${accessor}[${JSON.stringify(lastKey)}] = ${nixNodeToJs(value)};\n`
+                // Lazy for the same fixed-point reasons as simpleBindings above.
+                code += `        defGetter(${accessor}, ${JSON.stringify(lastKey)}, ()=>(${nixNodeToJs(value)}));\n`
             }
         }
 
@@ -1382,7 +1400,7 @@ const nixNodeToJs = (node)=>{
             } else if (binding.type === "inherit") {
                 const identifiers = valueBasedChildren(binding).filter(each => each.type === "identifier")
                 for (const id of identifiers) {
-                    simpleBindings.push({ name: id.text, value: id, isConstant: false })
+                    simpleBindings.push({ name: id.text, value: id, isConstant: false, isPlainInherit: true })
                 }
             }
         }
@@ -1392,10 +1410,12 @@ const nixNodeToJs = (node)=>{
         }
 
         let code = `/*let*/ createScope(nixScope, (nixScope)=>{\n`
-        for (const {name, value, isConstant} of simpleBindings.filter(b => b.isConstant)) {
+        for (const {name, value} of simpleBindings.filter(b => b.isConstant)) {
             code += `        nixScope${varAccess(name)} = ${nixNodeToJs(value)};\n`
         }
-        for (const {name, value, isConstant} of simpleBindings.filter(b => !b.isConstant)) {
+        for (const {name, value} of simpleBindings.filter(b => !b.isConstant && !b.isPlainInherit)) {
+            // Plain `inherit name;` bindings are skipped: the prototype chain
+            // already resolves them to the enclosing scope.
             code += `        defGetter(nixScope, ${JSON.stringify(name)}, (nixScope) => ${nixNodeToJs(value)});\n`
         }
         code += `    return ${nixNodeToJs(bodyValue).trimStart()};\n`
@@ -1428,17 +1448,18 @@ const nixNodeToJs = (node)=>{
             throw Error(`with_expression missing attrset or body: ${node.text}`)
         }
 
-        // Generate code that merges the attrset into the scope
-        // Evaluate the attrset expression with the current scope, then create new scope
-        let code = `((_withAttrs)=>{\n`
-        code += `    const nixScope = {...runtime.scopeStack.slice(-1)[0], ..._withAttrs};\n`
+        // Lazy `with`: the attrset thunk is only forced when an identifier
+        // actually falls through to it (runtime.withScope handles precedence:
+        // lexical > inner with > outer with). Eager evaluation/spreading would
+        // re-enter in-progress fixed points like all-packages.nix `with self;`.
+        let code = `((nixScope)=>{\n`
         code += `    runtime.scopeStack.push(nixScope);\n`
         code += `    try {\n`
         code += `        return ${nixNodeToJs(bodyExpr).trimStart()};\n`
         code += `    } finally {\n`
         code += `        runtime.scopeStack.pop();\n`
         code += `    }\n`
-        code += `})(${nixNodeToJs(attrsetExpr)})`
+        code += `})(runtime.withScope(nixScope, ()=>(${nixNodeToJs(attrsetExpr)})))`
 
         return code
     } else if (node.type == "assert_expression") {

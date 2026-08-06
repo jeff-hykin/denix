@@ -3,7 +3,7 @@
  * Manages the Denix store directory and caching
  */
 
-import { computeStorePath } from "../tools/store_path.js";
+import { makeFixedOutputPath, normalizeHashToHex } from "../tools/store_path.js";
 
 // Store directory in user's home directory (no root permissions needed)
 const HOME = Deno.env.get("HOME") || Deno.env.get("USERPROFILE") || "/tmp";
@@ -20,29 +20,23 @@ export async function ensureStoreDirectory() {
     await Deno.mkdir(LOCK_DIR, { recursive: true });
 }
 
+export function ensureStoreDirectorySync() {
+    Deno.mkdirSync(STORE_DIR, { recursive: true });
+    Deno.mkdirSync(LOCK_DIR, { recursive: true });
+}
+
 /**
- * Compute store path for a fixed-output derivation (like fetchTarball)
- * @param {string} narHash - NAR hash with or without "sha256:" prefix
+ * Store path for a fetched source (fetchurl/fetchTarball/fetchGit/…).
+ * The fingerprint uses /nix/store so the basename matches what real Nix
+ * would compute; the returned path lives in the local denix store.
+ * @param {string} hash - sha256 hash (hex/base32/SRI, "sha256:" prefix ok);
+ *   NAR hash when recursive, flat file hash otherwise
  * @param {string} name - Name for the store path
- * @returns {string} - Full store path
  */
-export function computeFetchStorePath(narHash, name) {
-    // Remove prefix if present
-    const hashValue = narHash.replace(/^sha256[:-]/, '');
-
-    // Use tools/store_path.js to compute the store path
-    // For fixed-output derivations, the hash input is:
-    // "fixed:out:sha256:<hash>:<store-dir>:<name>"
-    const hashInput = `fixed:out:sha256:${hashValue}:${STORE_DIR}:${name}`;
-
-    const storePath = computeStorePath(
-        "source", // type parameter (not actually used for our case)
-        hashInput,
-        name,
-        STORE_DIR
-    );
-
-    return storePath;
+export function computeFetchStorePath(hash, name, { recursive = true } = {}) {
+    const { hex } = normalizeHashToHex(hash, "sha256")
+    const nixPath = makeFixedOutputPath(String(name), { algo: "sha256", hex, recursive })
+    return `${STORE_DIR}/${nixPath.split("/").pop()}`
 }
 
 /**
@@ -68,6 +62,19 @@ export async function atomicMove(srcPath, destPath) {
 
     // Atomic rename
     await Deno.rename(srcPath, destPath);
+}
+
+export function atomicMoveSync(srcPath, destPath) {
+    const parentDir = destPath.substring(0, destPath.lastIndexOf('/'));
+    if (parentDir) {
+        Deno.mkdirSync(parentDir, { recursive: true });
+    }
+    try {
+        Deno.removeSync(destPath, { recursive: true });
+    } catch {
+        // Doesn't exist, that's fine
+    }
+    Deno.renameSync(srcPath, destPath);
 }
 
 /**

@@ -61,9 +61,14 @@ Deno.test("derivationStrict - handles multiple outputs", () => {
     })
 
     assertEquals(drv.outputs, ["out", "dev", "doc"])
-    assertEquals(typeof drv.out, "string")
-    assertEquals(typeof drv.dev, "string")
-    assertEquals(typeof drv.doc, "string")
+    // Each output is a derivation value (like Nix's pkg.dev) that coerces to
+    // its store path
+    assertEquals(drv.out.outputName, "out")
+    assertEquals(drv.dev.outputName, "dev")
+    assertEquals(drv.doc.outputName, "doc")
+    assertEquals(typeof `${drv.out}`, "string")
+    assertEquals(typeof `${drv.dev}`, "string")
+    assertEquals(typeof `${drv.doc}`, "string")
     assertEquals(drv.all.length, 3)
 })
 

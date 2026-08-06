@@ -1,9 +1,11 @@
 // Test builtins.filterSource
 import { assertEquals, assert, assertStringIncludes } from "jsr:@std/assert"
-import { createRuntime } from "../runtime.js"
+import { builtins } from "../runtime.js"
+import { STORE_DIR } from "../store_manager.js"
 
-const runtime = createRuntime()
-const builtins = runtime.scopeStack[0].builtins
+// filterSource returns a /nix/store path (for drv fidelity); the content is
+// materialized in the local denix store under the same basename
+const localized = (storePath) => `${STORE_DIR}/${storePath.toString().split("/").pop()}`
 
 Deno.test("filterSource - filters out specific files", async () => {
     // Create a test directory with multiple files
@@ -28,7 +30,7 @@ Deno.test("filterSource - filters out specific files", async () => {
 
         // Check which files made it through
         const files = []
-        for await (const entry of Deno.readDir(storePath)) {
+        for await (const entry of Deno.readDir(localized(storePath))) {
             files.push(entry.name)
         }
 
@@ -85,7 +87,7 @@ Deno.test("filterSource - curried function application", async () => {
         assert(result.constructor.name === "Path")
 
         const files = []
-        for await (const entry of Deno.readDir(result.toString())) {
+        for await (const entry of Deno.readDir(localized(result))) {
             files.push(entry.name)
         }
 
@@ -110,7 +112,7 @@ Deno.test("filterSource - keeps all files when filter returns true", async () =>
         const result = await builtins.filterSource(filterFn)(tempDir)
 
         const files = []
-        for await (const entry of Deno.readDir(result.toString())) {
+        for await (const entry of Deno.readDir(localized(result))) {
             files.push(entry.name)
         }
 
@@ -136,11 +138,11 @@ Deno.test("filterSource - removes all files when filter returns false", async ()
 
         // Directory should exist but might be empty
         const storePath = result.toString()
-        const storeInfo = await Deno.stat(storePath)
+        const storeInfo = await Deno.stat(localized(storePath))
         assert(storeInfo.isDirectory)
 
         const files = []
-        for await (const entry of Deno.readDir(storePath)) {
+        for await (const entry of Deno.readDir(localized(storePath))) {
             files.push(entry.name)
         }
 

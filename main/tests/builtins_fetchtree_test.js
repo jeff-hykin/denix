@@ -3,6 +3,15 @@ import { builtins } from "../runtime.js";
 
 // Test suite for builtins.fetchTree
 
+// Skip mercurial delegation test when the hg binary is not installed
+const hgAvailable = (() => {
+    try {
+        return new Deno.Command("hg", { args: ["--version"], stdout: "null", stderr: "null" }).outputSync().success
+    } catch {
+        return false
+    }
+})()
+
 Deno.test("fetchTree - git type with URL", async () => {
     const result = await builtins.fetchTree({
         type: "git",
@@ -65,11 +74,11 @@ Deno.test("fetchTree - github: URL string syntax", async () => {
 });
 
 Deno.test("fetchTree - gitlab shorthand with attribute set", async () => {
+    // Small stable example repo (gitlab-org/gitlab-foss is multi-GB)
     const result = await builtins.fetchTree({
         type: "gitlab",
-        owner: "gitlab-org",
-        repo: "gitlab-foss",
-        ref: "master",
+        owner: "gitlab-examples",
+        repo: "nodejs",
         shallow: true,
     });
 
@@ -78,7 +87,7 @@ Deno.test("fetchTree - gitlab shorthand with attribute set", async () => {
 });
 
 Deno.test("fetchTree - gitlab: URL string syntax", async () => {
-    const result = await builtins.fetchTree("gitlab:gitlab-org/gitlab-foss");
+    const result = await builtins.fetchTree("gitlab:gitlab-examples/nodejs");
 
     assertExists(result.toString()); // outPath
     assertEquals(result.rev.length, 40); // Full commit hash
@@ -147,7 +156,7 @@ Deno.test("fetchTree - unsupported type throws error", async () => {
     );
 });
 
-Deno.test("fetchTree - mercurial type delegates to fetchMercurial", async () => {
+Deno.test("fetchTree - mercurial type delegates to fetchMercurial", { ignore: !hgAvailable }, async () => {
     try {
         // Test fetchTree with type='mercurial'
         const result = await builtins.fetchTree({
@@ -194,9 +203,12 @@ Deno.test("fetchTree - path type with local directory", async () => {
         assertExists(result.toString());
         assertEquals(result.toString().includes("test-path-source"), true);
 
-        // Verify the file was copied to the store
-        const storePath = result.toString();
-        const testFile = await Deno.readTextFile(`${storePath}/test.txt`);
+        // Verify the file was copied to the local store (the returned path is
+        // /nix/store/... for drv fidelity; content lives under the same
+        // basename in the denix store)
+        const { STORE_DIR } = await import("../store_manager.js");
+        const localPath = `${STORE_DIR}/${result.toString().split("/").pop()}`;
+        const testFile = await Deno.readTextFile(`${localPath}/test.txt`);
         assertEquals(testFile, "Hello from fetchTree path type!");
     } finally {
         // Clean up temp directory

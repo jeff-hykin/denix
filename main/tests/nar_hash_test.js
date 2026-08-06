@@ -1,5 +1,5 @@
 import { assertEquals } from "jsr:@std/assert";
-import { hashDirectory, hashFile, serializeNAR } from "../nar_hash.js";
+import { hashDirectory, hashPathSync as hashFile, serializeNARSync as serializeNAR } from "../nar_hash.js";
 import { sha256Hex } from "../../tools/hashing.js";
 
 Deno.test("NAR - hashFile simple text file", async () => {

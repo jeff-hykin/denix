@@ -5,8 +5,8 @@ import { createRuntime, builtins, Path } from "../runtime.js"
 createRuntime()
 
 Deno.test("toJSON - store path (from fetchTarball)", async () => {
-    // Create a mock store path
-    const storePath = new Path(["~/.cache/denix/store/abc123-example/file.txt"], [])
+    // Store paths pass through toJSON without being re-copied
+    const storePath = new Path(["/nix/store/abc123-example/file.txt"], [])
 
     const result = await builtins.toJSON(storePath)
 
@@ -17,7 +17,7 @@ Deno.test("toJSON - store path (from fetchTarball)", async () => {
 })
 
 Deno.test("toJSON - complex attrset with store path", async () => {
-    const storePath = new Path(["~/.cache/denix/store/xyz789-pkg/bin/tool"], [])
+    const storePath = new Path(["/nix/store/xyz789-pkg/bin/tool"], [])
 
     const attrset = {
         name: "test",

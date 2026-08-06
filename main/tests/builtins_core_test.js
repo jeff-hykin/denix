@@ -108,9 +108,11 @@ Deno.test("builtins.parseDrvName - basic case", () => {
     assertEquals(result, { name: "nix", version: "0.12pre12876" })
 })
 
-Deno.test("builtins.parseDrvName - simple version", () => {
+Deno.test("builtins.parseDrvName - dash followed by letter is part of the name", () => {
+    // Real Nix: the version starts at the first dash NOT followed by a letter,
+    // so "hello-world" has no version component
     const result = builtins.parseDrvName("hello-world")
-    assertEquals(result, { name: "hello", version: "world" })
+    assertEquals(result, { name: "hello-world", version: "" })
 })
 
 Deno.test("builtins.parseDrvName - no version", () => {

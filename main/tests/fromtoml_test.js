@@ -1,8 +1,5 @@
 import { assertEquals } from "https://deno.land/std@0.208.0/assert/mod.ts"
-import { createRuntime } from "../runtime.js"
-
-const runtime = createRuntime()
-const { builtins } = runtime.rootScope
+import { builtins } from "../runtime.js"
 
 // Helper to compare with BigInt support
 function assertEqualsWithBigInt(actual, expected) {

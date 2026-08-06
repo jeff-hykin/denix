@@ -16,7 +16,7 @@ import { NixError, NotImplemented } from "./errors.js"
 
 // Deep lazy-evaluation call chains need long traces to be debuggable; the
 // default of 10 frames hides the actual origin of most errors.
-Error.stackTraceLimit = 100
+Error.stackTraceLimit = 100000
 
 // import system
 import { ImportCache } from "./import_cache.js"
@@ -26,46 +26,23 @@ import { loadAndEvaluateSync } from "./import_loader.js"
 // fetcher system
 import { downloadWithRetry, extractNameFromUrl } from "./fetcher.js"
 import { extractTarball } from "./tar.js"
-import { hashDirectory } from "./nar_hash.js"
-import { ensureStoreDirectory, computeFetchStorePath, getCachedPath, setCachedPath, atomicMove, exists } from "./store_manager.js"
+import { hashDirectory, hashDirectorySync, hashPathSync, narHashToSRI } from "./nar_hash.js"
+import { ensureStoreDirectory, ensureStoreDirectorySync, computeFetchStorePath, getCachedPath, setCachedPath, atomicMove, atomicMoveSync, exists, STORE_DIR } from "./store_manager.js"
 
 // registry system
 import { resolveIndirectReference } from "./registry.js"
 
 //
-// Import state (shared across runtime instances)
+// Shared runtime (auto-created on first use)
 //
-    // Global state for import functions (gets set by createRuntime)
-    const globalImportState = {
-        importFn: null,
-        scopedImportFn: null,
+    // createRuntime() registers the runtime it creates here; builtins that need
+    // runtime context (import, scopedImport, getFlake) create one on demand so
+    // `import { builtins } from "./runtime.js"` works with no setup.
+    let currentRuntime = null
+    const requireRuntime = ()=>{
+        if (!currentRuntime) { createRuntime() }
+        return currentRuntime
     }
-    // auto init runtime
-    let runtime
-    Object.defineProperty(globalImportState, "runtime", {
-        get() {
-            if (!runtime) {
-                runtime = createRuntime()
-            }
-            return runtime
-        },
-        set(run) {
-            runtime = run
-        }
-    })
-    // auto init scopedImportFn
-    let scopedImportFn
-    Object.defineProperty(globalImportState, "scopedImportFn", {
-        get() {
-            if (!runtime) {
-                runtime = createRuntime()
-            }
-            return scopedImportFn
-        },
-        set(run) {
-            scopedImportFn = run
-        }
-    })
 
 //
 // Helper functions
@@ -141,8 +118,11 @@ import { resolveIndirectReference } from "./registry.js"
                     }
 
                     // The `@args` binding captures the entire argument attrset.
+                    // defineProperty (not assignment): a getter-only binding of
+                    // the same name on the lexical scope chain would make plain
+                    // assignment throw instead of shadowing.
                     if (typeof allArgsName === 'string') {
-                        nixScope[allArgsName] = argSet
+                        Object.defineProperty(nixScope, allArgsName, { value: argSet, writable: true, enumerable: true, configurable: true })
                     }
 
                     // Defaults for params not supplied; computed lazily and able
@@ -153,7 +133,7 @@ import { resolveIndirectReference } from "./registry.js"
                         if (typeof value === 'function') {
                             defineLazy(nixScope, key, () => value(nixScope))
                         } else {
-                            nixScope[key] = value
+                            Object.defineProperty(nixScope, key, { value, writable: true, enumerable: true, configurable: true })
                         }
                     }
 
@@ -168,6 +148,9 @@ import { resolveIndirectReference } from "./registry.js"
             // Mark as a denix-created Nix lambda so `apply` knows to pass the
             // argument lazily (builtins, by contrast, receive forced values).
             lambda.__nixLambda = true
+            if (metadata && metadata.args) {
+                lambda.__functionArgs = metadata.args
+            }
             return lambda
         }
     }
@@ -290,13 +273,47 @@ import { resolveIndirectReference } from "./registry.js"
                     }
                     if (getter) {
                         let value = getter()
-                        // A derivation coerces to its default output path.
+                        // A derivation coerces to its default output path. The
+                        // object is kept in `deps` so derivations that use this
+                        // string AFTER it's flattened (getters deleted) still
+                        // record it in inputDrvs.
                         if (value && typeof value === "object" && value.type === "derivation") {
+                            ;(this.deps ||= []).push(value)
                             value = value.outPath
                         }
-                        // Nested paths / interpolated strings coerce via toString.
-                        if (value instanceof Interpolater) {
-                            value = value.toString()
+                        // A path interpolated into a STRING is copied to the
+                        // store (real Nix semantics); the resulting store path
+                        // is recorded as context so dependent derivations pick
+                        // it up as an inputSrc. Paths nested in a path
+                        // expression just splice their text.
+                        if (value instanceof Path && this instanceof InterpolatedString) {
+                            if (value.context instanceof Map) {
+                                this.context ||= new Map()
+                                for (const [k, e] of value.context) { this.context.set(k, e) }
+                                value = value.toString()
+                            } else {
+                                const storePath = copyPathToStore(value.toString())
+                                this.context ||= new Map()
+                                this.context.set(storePath, { outputs: new Set(), path: true, allOutputs: false })
+                                value = storePath
+                            }
+                        } else if (value instanceof Interpolater) {
+                            const nested = value
+                            value = nested.toString()
+                            // Bubble up any context/deps the nested string collected
+                            if (nested.context instanceof Map) {
+                                this.context ||= new Map()
+                                for (const [k, e] of nested.context) { this.context.set(k, e) }
+                            }
+                            if (nested.deps) {
+                                ;(this.deps ||= []).push(...nested.deps)
+                            }
+                        } else if (value instanceof NixString) {
+                            // Keep context from context-carrying strings (toFile, …)
+                            if (value.context instanceof Map) {
+                                this.context ||= new Map()
+                                for (const [k, e] of value.context) { this.context.set(k, e) }
+                            }
                         } else if (value && typeof value === "object" && value.outPath) {
                             value = value.outPath
                         }
@@ -323,6 +340,60 @@ import { resolveIndirectReference } from "./registry.js"
     export class Path extends Interpolater {
     }
 
+    // Real Nix copies a path into the store whenever it's coerced to a string
+    // (string interpolation, derivation attrs, toJSON): the file/dir is
+    // NAR-hashed and gets a content-addressed "source" store path. We compute
+    // the same /nix/store path (so drvs match real Nix byte-for-byte) but
+    // materialize the copy under the denix cache store for builders to read.
+    const sourcePathCache = new Map() // fs path -> store path
+    export const sourcePathOrigins = new Map() // store path -> fs path
+    export const copyPathToStore = (fsPath) => {
+        fsPath = FileSystem.makeAbsolutePath(fsPath.toString())
+        // Already a (virtual) store path, nothing to copy
+        if (fsPath.startsWith("/nix/store/")) { return fsPath }
+        const cached = sourcePathCache.get(fsPath)
+        if (cached) { return cached }
+        const storeRoot = Deno.env.get("DENIX_STORE_ROOT") ||
+            ((Deno.env.get("HOME") || "") + "/.cache/denix/store")
+        // The root of a store entry we already materialized (e.g. a fetched
+        // tarball) keeps its identity instead of being re-copied.
+        if (FileSystem.parentPath(fsPath) === storeRoot) {
+            return `/nix/store/${FileSystem.basename(fsPath)}`
+        }
+        const name = FileSystem.basename(fsPath)
+        const hex = hashPathSync(fsPath).replace(/^sha256:/, "")
+        const storePath = makeFixedOutputPath(name, { algo: "sha256", hex, recursive: true })
+        sourcePathCache.set(fsPath, storePath)
+        sourcePathOrigins.set(storePath, fsPath)
+        return storePath
+    }
+
+    // String-context plumbing: deps (derivation objects) and context (source
+    // store paths) must survive every string-producing operation — `+`,
+    // toString, concatStringsSep, replaceStrings — so derivations built from
+    // the results record their inputDrvs/inputSrcs like real Nix.
+    export const depsOf = (v)=>(v instanceof Interpolater && v.deps) ? v.deps : []
+    export const contextOf = (v)=>(v && v.context instanceof Map) ? v.context : null
+    export const flatString = (str, deps, context)=>{
+        if (!deps.length && !context) { return str }
+        const s = new InterpolatedString([], [])
+        s.cached = str
+        if (deps.length) { s.deps = deps }
+        if (context) { s.context = context }
+        return s
+    }
+    export const mergedContext = (...values)=>{
+        let merged = null
+        for (const v of values) {
+            const c = contextOf(v)
+            if (c) {
+                merged ||= new Map()
+                for (const [k, e] of c) { merged.set(k, e) }
+            }
+        }
+        return merged
+    }
+
     // A string that carries Nix "context" — the store paths / derivation outputs
     // it references. Produced by builtins.toFile / builtins.path (source paths)
     // and anywhere a context must outlive flattening to a plain string. It
@@ -330,14 +401,14 @@ import { resolveIndirectReference } from "./registry.js"
     // Symbol.toPrimitive), and the string layer (isString/typeOf/requireString)
     // treats it as a string, so it stays transparent. `context` is a Map of
     // storePath -> { outputs:Set, path:bool, allOutputs:bool }.
-    export class NixString {
+    // Extending String gives it every string method (startsWith, replace, …)
+    // for free, so it stays transparent wherever a plain string is expected.
+    export class NixString extends String {
         constructor(value, context) {
-            this.value = value
+            super(value)
             this.context = context || new Map()
         }
-        toString() { return this.value }
-        valueOf() { return this.value }
-        [Symbol.toPrimitive]() { return this.value }
+        get value() { return this.toString() }
     }
 
     // A deferred (lazy) computation. Nix is a lazy language: function arguments,
@@ -354,6 +425,26 @@ import { resolveIndirectReference } from "./registry.js"
         }
     }
     export const mkThunk = (fn) => new Thunk(fn)
+    // apply: function application that handles __functor attrsets (callable
+    // attrsets in Nix)
+    export function apply(fn, arg) {
+        // The callee itself may be a thunk (e.g. a lazily-bound variable).
+        fn = force(fn)
+        if (typeof fn === "function") {
+            // A denix-created Nix lambda accepts the argument lazily (as a
+            // thunk) — this is what makes Nix's lazy argument passing work,
+            // e.g. the `rattrs self` fixed point in lib.makeExtensible.
+            // A few builtins (tryEval, …) also want the unforced thunk so
+            // they can control evaluation. Everything else (builtins /
+            // curried JS helpers) wants a real value.
+            if (fn.__nixLambda || lazyArgFns.has(fn)) return fn(arg)
+            return fn(force(arg))
+        }
+        if (fn && typeof fn === "object" && "__functor" in fn) {
+            return apply(apply(fn.__functor, fn), arg)
+        }
+        throw new NixError(`error: attempt to call something which is not a function but ${builtins.typeOf(fn)}`)
+    }
     // Builtins that must receive their argument UNFORCED (as a Thunk) so they
     // can control evaluation themselves — e.g. builtins.tryEval needs to force
     // inside a try/catch. `apply` checks this set and skips forcing for them.
@@ -377,6 +468,43 @@ import { resolveIndirectReference } from "./registry.js"
             value = value.value
         }
         return value
+    }
+
+    // `with attrs; body` scope. Nix's `with` must be LAZY: the attrset is only
+    // evaluated when an identifier actually falls through to it (evaluating it
+    // eagerly re-enters in-progress fixed points, e.g. all-packages.nix's
+    // `with self;` where self is the pkgs fixed point being computed).
+    // Precedence must match Nix: lexical bindings (at any depth) win over any
+    // `with`, and an inner `with` wins over an outer one. `withProbe` lets an
+    // inner scope ask the prototype chain "is this bound lexically?" — while
+    // set, with-layers hide their attrs so only real bindings answer.
+    let withProbe = false
+    export function createWithScope(parentScope, getAttrs) {
+        let cached, computed = false
+        const attrs = ()=>{
+            if (!computed) { computed = true; cached = force(getAttrs()) }
+            return cached
+        }
+        const base = Object.create(parentScope)
+        return new Proxy(base, {
+            get(target, key, receiver) {
+                if (typeof key !== "string") { return Reflect.get(target, key, receiver) }
+                withProbe = true
+                let boundLexically
+                try { boundLexically = key in target } finally { withProbe = false }
+                if (boundLexically) { return Reflect.get(target, key, receiver) }
+                const a = attrs()
+                if (a != null && key in a) { return a[key] }
+                // Fall through to outer with-layers on the chain.
+                return Reflect.get(target, key, receiver)
+            },
+            has(target, key) {
+                if (withProbe) { return Reflect.has(target, key) }
+                if (Reflect.has(target, key)) { return true }
+                const a = attrs()
+                return a != null && typeof key === "string" && key in a
+            },
+        })
     }
 
 //
@@ -555,8 +683,9 @@ import { resolveIndirectReference } from "./registry.js"
 
         let jsPattern = posixPattern
         for (const [className, jsClass] of Object.entries(posixClasses)) {
-            // Replace [[:xxx:]] with the JavaScript equivalent
-            jsPattern = jsPattern.replace(new RegExp(`\\[\\[:${className}:\\]\\]`, 'g'), `[${jsClass}]`)
+            // Replace the inner [:xxx:] token so classes work both standalone ("[[:alnum:]]")
+            // and embedded in a larger bracket expression ("[[:alnum:],._-]")
+            jsPattern = jsPattern.replace(new RegExp(`\\[:${className}:\\]`, 'g'), jsClass)
         }
 
         return jsPattern
@@ -686,14 +815,36 @@ import { resolveIndirectReference } from "./registry.js"
                         if (value == null) {
                             return ""
                         } else if (value instanceof InterpolatedString) {
-                            // TODO: its unclear if there's a case when this should return value instead of value.toString()
-                            return value.toString()
+                            // Flatten but keep the string's context/deps alive
+                            return flatString(value.toString(), depsOf(value), mergedContext(value))
+                        } else if (value instanceof NixString) {
+                            return value
                         } else if (value instanceof Array) {
-                            return value.flat(Infinity).map(each=>builtins.toString(each)).join(" ")
+                            const parts = value.flat(Infinity).map(each=>builtins.toString(force(each)))
+                            return flatString(
+                                parts.map(p=>p.toString()).join(" "),
+                                parts.flatMap(depsOf),
+                                mergedContext(...parts),
+                            )
                         } else if (Object.getPrototypeOf({}) == Object.getPrototypeOf(value)) {
+                            // Sets coerce like real Nix: __toString first, then outPath
+                            const toStr = force(value.__toString)
+                            if (typeof toStr === "function") {
+                                return builtins.toString(apply(toStr, value))
+                            }
+                            if (value.outPath !== undefined) {
+                                const s = builtins.toString(force(value.outPath))
+                                if (value.type === "derivation") {
+                                    // toString drv carries the drv as context
+                                    return flatString(s.toString(), [value, ...depsOf(s)], mergedContext(s))
+                                }
+                                return s
+                            }
                             throw new NixError(`error: cannot coerce a set to a string`)
                         } else if (value instanceof Path) {
-                            return FileSystem.makeAbsolutePath(value.toString())
+                            // No store copy (real Nix toString), but a store-path
+                            // Path (from builtins.path) keeps its context
+                            return flatString(FileSystem.makeAbsolutePath(value.toString()), depsOf(value), mergedContext(value))
                         } else {
                             throw Error(`Called builtins.toJSON, which only works with valid nix values, but instead got type ${typeof value}, with a value of: ${safeToString(value)} `)
                         }
@@ -702,7 +853,7 @@ import { resolveIndirectReference } from "./registry.js"
                         throw Error(`Called builtins.toJSON, which only works with valid nix values, but instead got type ${typeof value}, with a value of: ${safeToString(value)} `)
                 }
             },
-            "toJSON": async (value)=>{
+            "toJSON": (value)=>{
                 switch (typeof value) {
                     case "boolean":
                     case "string":
@@ -728,10 +879,10 @@ import { resolveIndirectReference } from "./registry.js"
                     case "object":
                         if (value == null) {
                             return "null"
-                        } else if (value instanceof InterpolatedString) {
-                            return value.toString()
+                        } else if (value instanceof InterpolatedString || value instanceof NixString) {
+                            return JSON.stringify(value.toString())
                         } else if (value instanceof Array) {
-                            const items = await Promise.all(value.map(builtins.toJSON))
+                            const items = value.map((each)=>builtins.toJSON(force(each)))
                             return `[${items.join(",")}]`
                         } else if (value.type === "derivation") {
                             // CRITICAL: Check derivation BEFORE plain object check
@@ -748,25 +899,13 @@ import { resolveIndirectReference } from "./registry.js"
                             const keys = Object.getOwnPropertyNames(value).sort()
                             const entries = []
                             for (const each of keys) {
-                                const jsonValue = await builtins.toJSON(value[each])
+                                const jsonValue = builtins.toJSON(force(value[each]))
                                 entries.push(`${JSON.stringify(each)}:${jsonValue}`)
                             }
                             return `{${entries.join(",")}}`
                         } else if (value instanceof Path) {
-                            const pathString = value.toString()
-
-                            // If the path is already in the store (e.g., from fetchTarball), use it directly
-                            if (pathString.includes('/store/') || pathString.includes('/.cache/denix/store/')) {
-                                return JSON.stringify(pathString)
-                            }
-
-                            // For local paths, copy to store using builtins.path
-                            const storeResult = await builtins.path({
-                                path: pathString,
-                                recursive: true
-                            })
-
-                            return JSON.stringify(storeResult.toString())
+                            // Paths serialize as their store-copied path (real Nix)
+                            return JSON.stringify(copyPathToStore(value.toString()))
                         } else {
                             throw Error(`Called builtins.toJSON, which only works with valid nix values, but instead got type ${typeof value}, with a value of: ${safeToString(value)} `)
                         }
@@ -862,13 +1001,22 @@ import { resolveIndirectReference } from "./registry.js"
             "concatStringsSep": (separator)=>(list)=>{
                 requireString(separator)
                 requireList(list)
-                // .toString is to handle interpolated strings
-                return list.map(
+                const parts = list.map(
                     each => {
+                        each = force(each)
+                        // Sets coerce like real Nix (__toString, then outPath)
+                        if (each != null && Object.getPrototypeOf({}) == Object.getPrototypeOf(each)) {
+                            return builtins.toString(each)
+                        }
                         requireString(each)
-                        return each.toString()
+                        return each
                     }
-                ).join(separator.toString())
+                )
+                return flatString(
+                    parts.map(p=>p.toString()).join(separator.toString()),
+                    [...depsOf(separator), ...parts.flatMap(depsOf)],
+                    mergedContext(separator, ...parts),
+                )
             },
             // (builtins.replaceStrings ["oo" "a"] ["a" "i"] "foobar") == "fabir"
             "replaceStrings": (from)=>(to)=>(str)=>{
@@ -882,12 +1030,23 @@ import { resolveIndirectReference } from "./registry.js"
                     from.map(each=>escapeRegexMatch(each.toString())).join("|"),
                     "g"
                 )
-                return str.replace(
+                // Real Nix adds the context of replacement strings that were used
+                const usedReplacements = []
+                const result = str.toString().replace(
                     pattern,
-                    // TODO: note there is slightly different behavior here 
+                    // TODO: note there is slightly different behavior here
                     // if the replacement is not a string, this converts it to a string (for some things)
                     // nix lazily throws an error if the replacement is not a string
-                    stringMatch=>to[from.indexOf(stringMatch)].toString()
+                    stringMatch=>{
+                        const replacement = force(to[from.indexOf(stringMatch)])
+                        usedReplacements.push(replacement)
+                        return replacement.toString()
+                    }
+                )
+                return flatString(
+                    result,
+                    [...depsOf(str), ...usedReplacements.flatMap(depsOf)],
+                    mergedContext(str, ...usedReplacements),
                 )
             },
             "match": (regex)=>(str)=>{
@@ -985,7 +1144,7 @@ import { resolveIndirectReference } from "./registry.js"
             "any": (func)=>(list)=>list.some(func),                  
             "filter": (func)=>(list)=>list.filter(func),             
             "concatLists": (lists)=>requireList(lists)&&lists.flat(1),
-            "elem": (value)=>(list)=>requireList(list)&&list.includes(value),
+            "elem": (value)=>(list)=>requireList(list)&&list.some((each)=>operators.equal(each, value)),
             "elemAt": (list)=>(index)=>{
                 requireList(list)
                 if (index>=list.length) {
@@ -1132,8 +1291,12 @@ import { resolveIndirectReference } from "./registry.js"
                 requireAttrSet(e2)
                 const result = {}
                 for (const key of Object.keys(e1)) {
-                    if (e2.hasOwnProperty(key)) {
-                        result[key] = e2[key]
+                    // Lazy in values, like real Nix: copy descriptors (getters)
+                    // instead of reading values. callPackage's
+                    // `intersectAttrs fargs pkgs` must not force every package.
+                    const desc = Object.getOwnPropertyDescriptor(e2, key)
+                    if (desc) {
+                        Object.defineProperty(result, key, desc)
                     }
                 }
                 return result
@@ -1145,7 +1308,9 @@ import { resolveIndirectReference } from "./registry.js"
                     requireAttrSet(item)
                     const name = requireString(item.name).toString()
                     if (!result.hasOwnProperty(name)) {
-                        result[name] = item.value
+                        // Lazy in values, like real Nix: only the list and each
+                        // element's `name` are forced here.
+                        defineLazy(result, name, ()=>item.value)
                     }
                 }
                 return result
@@ -1182,7 +1347,8 @@ import { resolveIndirectReference } from "./registry.js"
                 const result = {}
                 for (const key of Object.keys(set)) {
                     if (!list.includes(key)) {
-                        result[key] = set[key]
+                        // Lazy in values, like real Nix (copy getters, don't read)
+                        Object.defineProperty(result, key, Object.getOwnPropertyDescriptor(set, key))
                     }
                 }
                 return result
@@ -1255,18 +1421,14 @@ import { resolveIndirectReference } from "./registry.js"
                 const fileBytes = await Deno.readFile(tempFile);
                 const fileHash = "sha256:" + sha256Hex(fileBytes);
 
-                // Compute store path
-                const storePath = computeFetchStorePath(fileHash, name);
-
-                // Create store directory and move file into it
-                await Deno.mkdir(storePath, { recursive: true });
-                const finalPath = `${storePath}/${name}`;
-                await atomicMove(tempFile, finalPath);
+                // builtins.fetchurl produces a FLAT file store path (real Nix
+                // stores the downloaded file itself, not a wrapping directory)
+                const storePath = computeFetchStorePath(fileHash, name, { recursive: false });
+                await atomicMove(tempFile, storePath);
 
                 // Cache the result
                 await setCachedPath(cacheKey, storePath);
 
-                // Return Path object pointing to the directory (Nix convention)
                 return new Path(storePath);
             },
             "fetchTarball": async (args) => {
@@ -1295,13 +1457,8 @@ import { resolveIndirectReference } from "./registry.js"
                 const tempTar = `${await Deno.makeTempDir()}/download.tar.gz`;
                 await downloadWithRetry(url, tempTar);
 
-                // Validate SHA256 if provided (before extraction)
-                if (sha256) {
-                    const { validateSha256 } = await import("./fetcher.js");
-                    await validateSha256(tempTar, sha256);
-                }
-
-                // Extract tarball
+                // Extract tarball (sha256 is validated against the NAR hash of
+                // the extracted tree below, like real Nix — not the raw tarball)
                 const tempExtract = `${await Deno.makeTempDir()}/extracted`;
                 await extractTarball(tempTar, tempExtract);
 
@@ -1500,7 +1657,7 @@ import { resolveIndirectReference } from "./registry.js"
                     result.shortRev = shortRev;
                     result.revCount = revCount;
                     result.lastModified = lastModified;
-                    result.narHash = narHash;
+                    result.narHash = narHashToSRI(narHash);
                     result.submodules = submodules;
                     return result;
                 } catch (error) {
@@ -1658,7 +1815,7 @@ import { resolveIndirectReference } from "./registry.js"
                     result.shortRev = shortRev;
                     result.revCount = revCount;
                     result.lastModified = lastModified;
-                    result.narHash = narHash;
+                    result.narHash = narHashToSRI(narHash);
                     result.branch = ref;
                     return result;
                 } catch (error) {
@@ -1968,16 +2125,8 @@ import { resolveIndirectReference } from "./registry.js"
             },
 
         // misc
-            // Note: import and scopedImport delegate to runtime-initialized versions
-            // We use a shared state object that gets initialized by createRuntime()
-            "import": (path)=>{
-                globalImportState.runtime ||= createRuntime()
-                return globalImportState.importFn(path)
-            },
-            "scopedImport": (scope)=>(path)=>{
-                globalImportState.runtime ||= createRuntime()
-                return globalImportState.scopedImportFn(scope)(path)
-            },
+            "import": (path)=>importFile(requireRuntime(), path),
+            "scopedImport": (scope)=>(path)=>scopedImportFile(requireRuntime(), scope, path),
             "functionArgs": (f)=>{
                 if (!builtins.isFunction(f)) {
                     throw new NixError(`error: 'functionArgs' requires a function, got ${builtins.typeOf(f)}`)
@@ -2152,7 +2301,7 @@ import { resolveIndirectReference } from "./registry.js"
                     throw new NixError(`error: getting status of '${absolutePath}': ${e.message}`)
                 }
             },
-            "path": async (args) => {
+            "path": (args) => {
                 // Parse arguments
                 requireAttrSet(args);
                 const sourcePath = requireString(args["path"]).toString();
@@ -2168,7 +2317,7 @@ import { resolveIndirectReference } from "./registry.js"
                     : null;
 
                 // Ensure store directory exists
-                await ensureStoreDirectory();
+                ensureStoreDirectorySync();
 
                 // Resolve to absolute path
                 const absPath = FileSystem.makeAbsolutePath(sourcePath);
@@ -2180,7 +2329,7 @@ import { resolveIndirectReference } from "./registry.js"
                 }
 
                 // Create temp directory for copying
-                const tempDir = await Deno.makeTempDir();
+                const tempDir = Deno.makeTempDirSync();
                 const tempPath = `${tempDir}/${name}`;
 
                 try {
@@ -2193,8 +2342,8 @@ import { resolveIndirectReference } from "./registry.js"
                     };
 
                     // Recursive copy function with filtering
-                    const copyFiltered = async (src, dest) => {
-                        const stat = await Deno.stat(src);
+                    const copyFiltered = (src, dest) => {
+                        const stat = Deno.statSync(src);
                         const type = getFileType(stat);
 
                         // Apply filter if provided
@@ -2208,19 +2357,19 @@ import { resolveIndirectReference } from "./registry.js"
 
                         if (stat.isFile) {
                             // Copy file
-                            await Deno.copyFile(src, dest);
+                            Deno.copyFileSync(src, dest);
                             // Preserve executable bit
                             if (stat.mode && (stat.mode & 0o111)) {
-                                await Deno.chmod(dest, stat.mode);
+                                Deno.chmodSync(dest, stat.mode);
                             }
                         } else if (stat.isDirectory) {
                             // Create directory
-                            await Deno.mkdir(dest, { recursive: true });
+                            Deno.mkdirSync(dest, { recursive: true });
 
                             // If recursive, copy contents
                             if (recursive) {
-                                for await (const entry of Deno.readDir(src)) {
-                                    await copyFiltered(
+                                for (const entry of Deno.readDirSync(src)) {
+                                    copyFiltered(
                                         `${src}/${entry.name}`,
                                         `${dest}/${entry.name}`
                                     );
@@ -2228,27 +2377,17 @@ import { resolveIndirectReference } from "./registry.js"
                             }
                         } else if (stat.isSymlink) {
                             // Copy symlink
-                            const target = await Deno.readLink(src);
-                            await Deno.symlink(target, dest);
+                            const target = Deno.readLinkSync(src);
+                            Deno.symlinkSync(target, dest);
                         }
                     };
 
                     // Copy source to temp location
-                    await copyFiltered(absPath, tempPath);
+                    copyFiltered(absPath, tempPath);
 
-                    // Hash the copied directory/file with NAR
-                    let narHash;
-                    if (recursive && (await Deno.stat(tempPath)).isDirectory) {
-                        // Use NAR hash for directories
-                        narHash = await hashDirectory(tempPath);
-                    } else if ((await Deno.stat(tempPath)).isFile) {
-                        // For single files, use direct file hash
-                        const fileBytes = await Deno.readFile(tempPath);
-                        narHash = "sha256:" + sha256Hex(fileBytes);
-                    } else {
-                        // For directories when recursive=false, still use NAR
-                        narHash = await hashDirectory(tempPath);
-                    }
+                    // NAR-hash the (possibly filtered) copy — files, dirs and
+                    // symlinks all use NAR for source store paths (real Nix)
+                    const narHash = hashPathSync(tempPath);
 
                     // Validate sha256 if provided
                     if (expectedSha256) {
@@ -2263,11 +2402,13 @@ import { resolveIndirectReference } from "./registry.js"
                         }
                     }
 
-                    // Compute store path
-                    const storePath = computeFetchStorePath(narHash, name);
-
-                    // Move to store (atomic operation)
-                    await atomicMove(tempPath, storePath);
+                    // Store path uses /nix/store (matches real Nix drvs); the
+                    // copy is materialized in the denix cache store
+                    const hex = narHash.replace(/^sha256:/, '');
+                    const storePath = makeFixedOutputPath(name, { algo: "sha256", hex, recursive: true });
+                    const materializedPath = `${STORE_DIR}/${storePath.split("/").pop()}`;
+                    atomicMoveSync(tempPath, materializedPath);
+                    sourcePathOrigins.set(storePath, materializedPath);
 
                     // Return a Path carrying source context, so a dependent
                     // derivation records this path in inputSrcs.
@@ -2279,7 +2420,7 @@ import { resolveIndirectReference } from "./registry.js"
                 } catch (error) {
                     // Clean up temp directory on error
                     try {
-                        await Deno.remove(tempDir, { recursive: true });
+                        Deno.removeSync(tempDir, { recursive: true });
                     } catch {}
                     throw error;
                 }
@@ -2334,14 +2475,27 @@ import { resolveIndirectReference } from "./registry.js"
                     }
                 }
 
+                // Real Nix implicitly appends `nix=<corepkgs>` to the search
+                // path (e.g. `<nix/fetchurl.nix>` used by stdenv bootstrap).
+                // We bundle those files in main/corepkgs/.
+                if (lookupStr === "nix" || lookupStr.startsWith("nix/")) {
+                    const suffix = lookupStr.slice(3).replace(/^\//, "")
+                    const corepkgsDir = new URL("./corepkgs", import.meta.url).pathname
+                    const fullPath = suffix ? FileSystem.join(corepkgsDir, suffix) : corepkgsDir
+                    if (FileSystem.sync.info(fullPath).exists) {
+                        return new Path([""], [()=>FileSystem.makeAbsolutePath(fullPath)])
+                    }
+                }
+
                 throw new NixError(`error: file '${lookupStr}' was not found in the Nix search path`)
             },
         
         // nix-y derivation-y stuff
-            "nixPath": ()=>{
-                // Returns NIX_PATH as a list of attrsets
+            // Constants in real Nix (not functions)
+            get "nixPath"() {
+                // NIX_PATH as a list of attrsets
                 const nixPath = Deno.env.get("NIX_PATH") || ""
-                if (!nixPath) return []
+                if (!nixPath) { return [] }
 
                 return nixPath.split(":").map(entry => {
                     if (!entry.includes("=")) {
@@ -2353,7 +2507,7 @@ import { resolveIndirectReference } from "./registry.js"
                     return { prefix, path }
                 })
             },
-            "storeDir": ()=>"/nix/store",
+            "storeDir": "/nix/store",
             "storePath": (path)=>{
                 const pathStr = requireString(path).toString()
                 const storeDir = "/nix/store"
@@ -2374,283 +2528,381 @@ import { resolveIndirectReference } from "./registry.js"
             },
             "derivation": (attrs)=>{
                 // https://nix.dev/manual/nix/2.18/language/derivations.html
-
-                // Validate required attributes
-                if (!attrs.name) throw new NixError("derivation requires 'name' attribute")
-                if (!attrs.system) throw new NixError("derivation requires 'system' attribute")
-                if (!attrs.builder) throw new NixError("derivation requires 'builder' attribute")
-
-                const name = requireString(attrs.name).toString()
-                const system = requireString(attrs.system).toString()
-
-                // Collect the derivation objects this derivation depends on, so
-                // the builder can realize them first. Dependencies appear either
-                // directly (attr/list values that are derivations) or embedded in
-                // interpolated strings like "${dep}/bin/foo" (captured in the
-                // Interpolater's getters). We scan before env coercion so the
-                // getters are still present.
-                // Collect dependency references as {drv, outputName} so that a
-                // reference to a NON-default output (e.g. `pkg.dev`) records that
-                // specific output. `pkg.dev` is itself a derivation-output object
-                // tagged with outputName="dev" (see the output-objects section
-                // below); the base derivation defaults to its first output.
-                const inputDrvObjects = [] // entries: { drv, outputName }
-                const inputSrcsSet = new Set() // source store paths (from NixString path-context)
-                {
-                    const seenRef = new Set() // key: drvPath + "!" + outputName
-                    const collectDeps = (v, depth) => {
-                        if (v == null || depth > 40) return
-                        // A context-carrying value (NixString, or a Path from
-                        // builtins.path) contributes source paths → inputSrcs.
-                        if (v && v.context instanceof Map) {
-                            for (const [k, e] of v.context) {
-                                if (e.path) { inputSrcsSet.add(k) }
-                            }
-                            return
-                        }
-                        if (typeof v !== "object") return
-                        if (v.type === "derivation") {
-                            const outName = v.outputName || (v.outputs && v.outputs[0]) || "out"
-                            const key = v.drvPath + "!" + outName
-                            if (!seenRef.has(key)) {
-                                seenRef.add(key)
-                                inputDrvObjects.push({ drv: v, outputName: outName })
-                            }
-                            return // don't descend into a derivation's own internals
-                        }
-                        if (Array.isArray(v)) {
-                            for (const e of v) collectDeps(e, depth + 1)
-                            return
-                        }
-                        if (v instanceof Interpolater) {
-                            if (v.getters) {
-                                for (const g of v.getters) {
-                                    if (g) { try { collectDeps(g(), depth + 1) } catch { /* lazy errors surface elsewhere */ } }
-                                }
-                            }
-                            return
-                        }
-                        for (const e of Object.values(v)) collectDeps(e, depth + 1)
-                    }
-                    for (const v of Object.values(attrs)) collectDeps(v, 0)
-                }
-                // inputSrcs sorted (Nix requirement).
-                const inputSrcs = [...inputSrcsSet].sort()
-
-                // Builder can be a string or derivation
-                let builder
-                if (typeof attrs.builder === "string") {
-                    builder = attrs.builder
-                } else if (attrs.builder?.type === "derivation") {
-                    builder = attrs.builder.outPath
-                } else {
-                    builder = requireString(attrs.builder).toString()
-                }
-
-                // Args default to empty list
-                const builderArgs = attrs.args ? requireList(attrs.args).map(a => requireString(a).toString()) : []
+                //
+                // Laziness mirrors real Nix (corepkgs derivation.nix): only
+                // `outputs` is forced when the result attrset is built. The
+                // heavy work — coercing every env attr, collecting deps,
+                // hashing, computing outPath/drvPath — is `derivationStrict`,
+                // which real Nix runs lazily the first time outPath/drvPath is
+                // read. Doing it eagerly caused infinite recursion in nixpkgs'
+                // stdenv bootstrap: merely checking `pkg.passthru.…` must not
+                // force the whole env.
 
                 // Outputs default to ["out"]
                 const outputNames = attrs.outputs ? requireList(attrs.outputs).map(o => requireString(o).toString()) : ["out"]
 
-                // Reserved attributes that don't become env vars
-                const reserved = new Set(["name", "system", "builder", "args", "outputs"])
+                let strictCache = null
+                let strictComputing = false
+                const strict = () => {
+                    if (strictCache) { return strictCache }
+                    // Blackholing, like real Nix
+                    if (strictComputing) { throw new NixError("error: infinite recursion encountered") }
+                    strictComputing = true
+                    try {
+                        strictCache = computeStrict()
+                        return strictCache
+                    } finally {
+                        strictComputing = false
+                    }
+                }
+                const computeStrict = () => {
+                    // Validate required attributes
+                    if (!attrs.name) { throw new NixError("derivation requires 'name' attribute") }
+                    if (!attrs.system) { throw new NixError("derivation requires 'system' attribute") }
+                    if (!attrs.builder) { throw new NixError("derivation requires 'builder' attribute") }
 
-                // Build environment variables from all attributes
-                const env = {}
-                for (const [key, value] of Object.entries(attrs)) {
-                    if (reserved.has(key)) continue
+                    const name = requireString(attrs.name).toString()
+                    const system = requireString(attrs.system).toString()
 
-                    // Convert value to environment variable string
-                    if (value === null) {
-                        env[key] = ""
-                    } else if (value === true) {
-                        env[key] = "1"
-                    } else if (value === false) {
-                        env[key] = ""
-                    } else if (typeof value === "string") {
-                        env[key] = value
-                    } else if (typeof value === "number" || typeof value === "bigint") {
-                        env[key] = String(value)
-                    } else if (Array.isArray(value)) {
-                        env[key] = value.map(v => requireString(v).toString()).join(" ")
-                    } else if (value?.type === "derivation") {
-                        env[key] = value.outPath
-                    } else if (value?.constructor?.name === "Path") {
-                        // TODO: copy path to store
-                        env[key] = value.toString()
+                    // Collect the derivation objects this derivation depends on, so
+                    // the builder can realize them first. Dependencies appear either
+                    // directly (attr/list values that are derivations) or embedded in
+                    // interpolated strings like "${dep}/bin/foo" (captured in the
+                    // Interpolater's getters). We scan before env coercion so the
+                    // getters are still present.
+                    // Collect dependency references as {drv, outputName} so that a
+                    // reference to a NON-default output (e.g. `pkg.dev`) records that
+                    // specific output. `pkg.dev` is itself a derivation-output object
+                    // tagged with outputName="dev" (see the output-objects section
+                    // below); the base derivation defaults to its first output.
+                    const inputDrvObjects = [] // entries: { drv, outputName }
+                    const inputSrcsSet = new Set() // source store paths (from NixString path-context)
+                    {
+                        const seenRef = new Set() // key: drvPath + "!" + outputName
+                        const collectDeps = (v, depth) => {
+                            if (v == null || depth > 40) return
+                            // A context-carrying value (NixString, an already
+                            // flattened InterpolatedString, or a Path from
+                            // builtins.path) contributes source paths → inputSrcs.
+                            if (v && v.context instanceof Map) {
+                                for (const [k, e] of v.context) {
+                                    if (e.path) { inputSrcsSet.add(k) }
+                                }
+                                if (!(v instanceof Interpolater)) { return }
+                            }
+                            if (typeof v !== "object") return
+                            if (v.type === "derivation") {
+                                const outName = v.outputName || (v.outputs && v.outputs[0]) || "out"
+                                const key = v.drvPath + "!" + outName
+                                if (!seenRef.has(key)) {
+                                    seenRef.add(key)
+                                    inputDrvObjects.push({ drv: v, outputName: outName })
+                                }
+                                return // don't descend into a derivation's own internals
+                            }
+                            if (Array.isArray(v)) {
+                                for (const e of v) collectDeps(e, depth + 1)
+                                return
+                            }
+                            if (v instanceof Path) {
+                                // A path used in a derivation is copied to the
+                                // store and becomes an inputSrc (real Nix).
+                                if (!(v.context instanceof Map)) {
+                                    inputSrcsSet.add(copyPathToStore(v.toString()))
+                                }
+                                return
+                            }
+                            if (v instanceof Interpolater) {
+                                if (v.deps) {
+                                    for (const d of v.deps) { collectDeps(d, depth + 1) }
+                                }
+                                if (v.getters) {
+                                    for (const g of v.getters) {
+                                        if (g) { try { collectDeps(g(), depth + 1) } catch { /* lazy errors surface elsewhere */ } }
+                                    }
+                                }
+                                return
+                            }
+                            for (const e of Object.values(v)) collectDeps(e, depth + 1)
+                        }
+                        for (const v of Object.values(attrs)) collectDeps(v, 0)
+                    }
+                    // inputSrcs sorted (Nix requirement).
+                    const inputSrcs = [...inputSrcsSet].sort()
+
+                    // Builder can be a string or derivation
+                    let builder
+                    if (typeof attrs.builder === "string") {
+                        builder = attrs.builder
+                    } else if (attrs.builder?.type === "derivation") {
+                        builder = attrs.builder.outPath
                     } else {
-                        env[key] = requireString(value).toString()
+                        builder = requireString(attrs.builder).toString()
                     }
-                }
 
-                // Add required env vars
-                env.name = name
-                env.builder = builder
-                env.system = system
-
-                // CRITICAL: Nix adds "outputs" env var with space-separated output names
-                // This is required for multi-output derivations
-                if (outputNames.length > 1 || (outputNames.length === 1 && outputNames[0] !== "out")) {
-                    env.outputs = outputNames.join(" ")
-                }
-
-                // CRITICAL: For non-fixed-output derivations, Nix uses EMPTY STRINGS
-                // during hash computation (both in outputs array AND env vars)
-                // Placeholders are only used at runtime during execution, not during hash computation
-                for (const outputName of outputNames) {
-                    env[outputName] = ""
-                }
-
-                const storeDir = "/nix/store"
-
-                // ---- input derivations (hashDerivationModulo) --------------
-                // Nix computes output paths from `hashDerivationModulo`, where
-                // every input derivation's drvPath is replaced by that input's
-                // own modulo hash. Crucially there are TWO modulo hashes per
-                // derivation (verified against real Nix):
-                //   • masked   (output paths blanked) — gives a derivation its
-                //               OWN output paths.
-                //   • unmasked (real output paths)    — the value used as the
-                //               key when this derivation is an INPUT to another.
-                // Both are computed with input keys set to the inputs' UNMASKED
-                // modulo hashes. The final .drv instead lists real drvPaths.
-                //
-                // Group references by input derivation, collecting the SET of
-                // referenced output names per input (sorted) — this is what Nix
-                // records in the .drv and is required for byte-exact multi-output
-                // drvPaths. `dep.dev` and `dep.out` of the same drv collapse to
-                // one entry with outputs ["dev","out"].
-                const groupInputDrvs = (keyOf) => {
-                    const byKey = new Map() // key -> Set(outputNames)
-                    for (const { drv, outputName } of inputDrvObjects) {
-                        const key = keyOf(drv)
-                        if (!byKey.has(key)) { byKey.set(key, new Set()) }
-                        byKey.get(key).add(outputName)
+                    // Coerce a value to the string form Nix uses for builder args
+                    // and env vars: derivations/attrsets coerce via outPath or
+                    // __toString, paths/strings via toString.
+                    const coerceForDrv = (v)=>{
+                        // Mirrors Nix's coerceToString with coerceMore=true (the
+                        // rules for derivation env/args values).
+                        v = force(v)
+                        if (v === null) { return "" }
+                        if (v === true) { return "1" }
+                        if (v === false) { return "" }
+                        if (typeof v === "bigint") { return String(v) }
+                        if (typeof v === "number") { return builtins.toString(v) }
+                        if (v instanceof Array) {
+                            return v.map(coerceForDrv).join(" ")
+                        }
+                        if (v?.type === "derivation" || (v && typeof v === "object" && !(v instanceof Interpolater) && v.outPath !== undefined)) {
+                            return force(v.outPath).toString()
+                        }
+                        if (v && typeof v === "object" && !(v instanceof Interpolater) && typeof v.__toString === "function") {
+                            return requireString(apply(v.__toString, v)).toString()
+                        }
+                        if (v instanceof Path) {
+                            if (v.context instanceof Map) { return v.toString() }
+                            return copyPathToStore(v.toString())
+                        }
+                        return requireString(v).toString()
                     }
-                    return [...byKey.entries()]
-                        .map(([key, outs]) => [key, [...outs].sort()])
-                        .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))
-                }
-                const moduloInputDrvs = groupInputDrvs((d) => d.moduloHashUnmasked)
-                const finalInputDrvs = groupInputDrvs((d) => d.drvPath)
 
-                // Outputs sorted alphabetically (Nix requirement).
-                const sortedOutputNames = [...outputNames].sort()
+                    // Args default to empty list
+                    const builderArgs = attrs.args ? requireList(attrs.args).map(coerceForDrv) : []
 
-                const outputPaths = {}
-                let moduloHashUnmasked
-                let finalStructure
-                let fixedOutputInfo = null
+                    // Special attrs (verified against real nix):
+                    //   __ignoreNulls     — never serialized; true drops null attrs
+                    //   __structuredAttrs — true switches env to a single __json
+                    //                       entry (JSON of all attrs except args and
+                    //                       __structuredAttrs itself); false stays a
+                    //                       normal env var ("")
+                    const structuredAttrs = force(attrs.__structuredAttrs) === true
+                    const ignoreNulls = force(attrs.__ignoreNulls) === true
 
-                const isFixedOutput = attrs.outputHash != null
-                if (isFixedOutput) {
-                    // ---- fixed-output derivation ---------------------------
-                    // Content-addressed: the output path comes from the declared
-                    // hash (not the build steps), and the .drv outputs tuple
-                    // carries the hash algo + value. The build is verified
-                    // against this hash. outputHash/Algo/Mode stay as env vars.
-                    const rawHash = requireString(attrs.outputHash).toString()
-                    const modeStr = attrs.outputHashMode
-                        ? requireString(attrs.outputHashMode).toString()
-                        : "flat"
-                    const recursive = modeStr === "recursive" || modeStr === "nar"
-                    const algoHint = attrs.outputHashAlgo
-                        ? requireString(attrs.outputHashAlgo).toString()
-                        : null
-                    const { algo, hex } = normalizeHashToHex(rawHash, algoHint)
-                    fixedOutputInfo = { algo, hex, recursive }
+                    const env = {}
+                    if (structuredAttrs) {
+                        const jsonAttrs = {}
+                        for (const [key, value] of Object.entries(attrs)) {
+                            if (key === "__structuredAttrs" || key === "__ignoreNulls" || key === "args") { continue }
+                            const v = force(value)
+                            if (ignoreNulls && v === null) { continue }
+                            jsonAttrs[key] = v
+                        }
+                        env.__json = builtins.toJSON(jsonAttrs)
+                    } else {
+                        // Reserved attributes that don't become env vars
+                        const reserved = new Set(["name", "system", "builder", "args", "outputs", "__ignoreNulls"])
 
-                    const outPath = makeFixedOutputPath(name, fixedOutputInfo, storeDir)
-                    outputPaths["out"] = outPath
-                    env["out"] = outPath
-                    moduloHashUnmasked = fixedOutputModuloHash(fixedOutputInfo, outPath)
+                        // Build environment variables from all attributes
+                        for (const [key, rawValue] of Object.entries(attrs)) {
+                            if (reserved.has(key)) { continue }
+                            const value = force(rawValue)
 
-                    const hashAlgoField = (recursive ? "r:" : "") + algo
-                    finalStructure = {
-                        outputs: [["out", outPath, hashAlgoField, hex]],
-                        inputDrvs: finalInputDrvs,
-                        inputSrcs: inputSrcs,
-                        system: system,
-                        builder: builder,
-                        args: builderArgs,
-                        env: env,
+                            // Convert value to environment variable string
+                            if (value === null) {
+                                if (ignoreNulls) { continue }
+                                env[key] = ""
+                            } else if (value === true) {
+                                env[key] = "1"
+                            } else if (value === false) {
+                                env[key] = ""
+                            } else if (typeof value === "string") {
+                                env[key] = value
+                            } else if (typeof value === "number" || typeof value === "bigint") {
+                                env[key] = String(value)
+                            } else if (Array.isArray(value)) {
+                                env[key] = value.map(coerceForDrv).join(" ")
+                            } else if (value?.type === "derivation") {
+                                env[key] = value.outPath
+                            } else {
+                                env[key] = coerceForDrv(value)
+                            }
+                        }
+
+                        // Add required env vars
+                        env.name = name
+                        env.builder = builder
+                        env.system = system
+
+                        // The outputs env var exists iff an `outputs` attr was
+                        // passed (every attr becomes an env var in real Nix)
+                        if (attrs.outputs !== undefined) {
+                            env.outputs = outputNames.join(" ")
+                        }
                     }
-                } else {
-                    // ---- input-addressed derivation ------------------------
-                    // Masked modulo serialization → this derivation's output paths.
-                    const maskedStructure = {
-                        outputs: sortedOutputNames.map(o => [o, "", "", ""]),
-                        inputDrvs: moduloInputDrvs,
-                        inputSrcs: inputSrcs,
-                        system: system,
-                        builder: builder,
-                        args: builderArgs,
-                        env: { ...env }, // env output vars already blanked above
-                    }
-                    const maskedSerialized = serializeDerivation(maskedStructure)
 
+                    // CRITICAL: For non-fixed-output derivations, Nix uses EMPTY STRINGS
+                    // during hash computation (both in outputs array AND env vars)
+                    // Placeholders are only used at runtime during execution, not during hash computation
                     for (const outputName of outputNames) {
-                        // Non-default outputs use the path name `${name}-${output}`
-                        // (Nix's outputPathName), which also feeds the hash.
-                        const outName = outputName === "out" ? name : `${name}-${outputName}`
-                        const outputPath = computeOutputPath(maskedSerialized, outputName, outName, storeDir)
-                        outputPaths[outputName] = outputPath
-                        env[outputName] = outputPath
+                        env[outputName] = ""
                     }
 
-                    // Unmasked modulo serialization (real output paths) → the modulo
-                    // hash other derivations use when they depend on THIS one.
-                    const unmaskedStructure = {
-                        outputs: sortedOutputNames.map(o => [o, outputPaths[o], "", ""]),
-                        inputDrvs: moduloInputDrvs,
-                        inputSrcs: inputSrcs,
+                    const storeDir = "/nix/store"
+
+                    // ---- input derivations (hashDerivationModulo) --------------
+                    // Nix computes output paths from `hashDerivationModulo`, where
+                    // every input derivation's drvPath is replaced by that input's
+                    // own modulo hash. Crucially there are TWO modulo hashes per
+                    // derivation (verified against real Nix):
+                    //   • masked   (output paths blanked) — gives a derivation its
+                    //               OWN output paths.
+                    //   • unmasked (real output paths)    — the value used as the
+                    //               key when this derivation is an INPUT to another.
+                    // Both are computed with input keys set to the inputs' UNMASKED
+                    // modulo hashes. The final .drv instead lists real drvPaths.
+                    //
+                    // Group references by input derivation, collecting the SET of
+                    // referenced output names per input (sorted) — this is what Nix
+                    // records in the .drv and is required for byte-exact multi-output
+                    // drvPaths. `dep.dev` and `dep.out` of the same drv collapse to
+                    // one entry with outputs ["dev","out"].
+                    const groupInputDrvs = (keyOf) => {
+                        const byKey = new Map() // key -> Set(outputNames)
+                        for (const { drv, outputName } of inputDrvObjects) {
+                            const key = keyOf(drv)
+                            if (!byKey.has(key)) { byKey.set(key, new Set()) }
+                            byKey.get(key).add(outputName)
+                        }
+                        return [...byKey.entries()]
+                            .map(([key, outs]) => [key, [...outs].sort()])
+                            .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))
+                    }
+                    const moduloInputDrvs = groupInputDrvs((d) => d.moduloHashUnmasked)
+                    const finalInputDrvs = groupInputDrvs((d) => d.drvPath)
+
+                    // Outputs sorted alphabetically (Nix requirement).
+                    const sortedOutputNames = [...outputNames].sort()
+
+                    const outputPaths = {}
+                    let moduloHashUnmasked
+                    let finalStructure
+                    let fixedOutputInfo = null
+
+                    const isFixedOutput = attrs.outputHash != null
+                    if (isFixedOutput) {
+                        // ---- fixed-output derivation ---------------------------
+                        // Content-addressed: the output path comes from the declared
+                        // hash (not the build steps), and the .drv outputs tuple
+                        // carries the hash algo + value. The build is verified
+                        // against this hash. outputHash/Algo/Mode stay as env vars.
+                        const rawHash = requireString(attrs.outputHash).toString()
+                        const modeStr = attrs.outputHashMode
+                            ? requireString(attrs.outputHashMode).toString()
+                            : "flat"
+                        const recursive = modeStr === "recursive" || modeStr === "nar"
+                        const algoHint = attrs.outputHashAlgo
+                            ? requireString(attrs.outputHashAlgo).toString()
+                            : null
+                        const { algo, hex } = normalizeHashToHex(rawHash, algoHint)
+                        fixedOutputInfo = { algo, hex, recursive }
+
+                        const outPath = makeFixedOutputPath(name, fixedOutputInfo, storeDir)
+                        outputPaths["out"] = outPath
+                        env["out"] = outPath
+                        moduloHashUnmasked = fixedOutputModuloHash(fixedOutputInfo, outPath)
+
+                        const hashAlgoField = (recursive ? "r:" : "") + algo
+                        finalStructure = {
+                            outputs: [["out", outPath, hashAlgoField, hex]],
+                            inputDrvs: finalInputDrvs,
+                            inputSrcs: inputSrcs,
+                            system: system,
+                            builder: builder,
+                            args: builderArgs,
+                            env: env,
+                        }
+                    } else {
+                        // ---- input-addressed derivation ------------------------
+                        // Masked modulo serialization → this derivation's output paths.
+                        const maskedStructure = {
+                            outputs: sortedOutputNames.map(o => [o, "", "", ""]),
+                            inputDrvs: moduloInputDrvs,
+                            inputSrcs: inputSrcs,
+                            system: system,
+                            builder: builder,
+                            args: builderArgs,
+                            env: { ...env }, // env output vars already blanked above
+                        }
+                        const maskedSerialized = serializeDerivation(maskedStructure)
+
+                        for (const outputName of outputNames) {
+                            // Non-default outputs use the path name `${name}-${output}`
+                            // (Nix's outputPathName), which also feeds the hash.
+                            const outName = outputName === "out" ? name : `${name}-${outputName}`
+                            const outputPath = computeOutputPath(maskedSerialized, outputName, outName, storeDir)
+                            outputPaths[outputName] = outputPath
+                            env[outputName] = outputPath
+                        }
+
+                        // Unmasked modulo serialization (real output paths) → the modulo
+                        // hash other derivations use when they depend on THIS one.
+                        const unmaskedStructure = {
+                            outputs: sortedOutputNames.map(o => [o, outputPaths[o], "", ""]),
+                            inputDrvs: moduloInputDrvs,
+                            inputSrcs: inputSrcs,
+                            system: system,
+                            builder: builder,
+                            args: builderArgs,
+                            env: env,
+                        }
+                        moduloHashUnmasked = sha256Hex(serializeDerivation(unmaskedStructure))
+
+                        // Final .drv structure: real output paths + real input drvPaths.
+                        finalStructure = {
+                            outputs: sortedOutputNames.map(o => [o, outputPaths[o], "", ""]),
+                            inputDrvs: finalInputDrvs,
+                            inputSrcs: inputSrcs,
+                            system: system,
+                            builder: builder,
+                            args: builderArgs,
+                            env: env,
+                        }
+                    }
+
+                    // drvPath via the text method, whose fingerprint references every
+                    // input derivation's drvPath (deduped) and input sources.
+                    const drvSerializedFinal = serializeDerivation(finalStructure)
+                    const drvReferences = [
+                        ...new Set(inputDrvObjects.map((d) => d.drv.drvPath)),
+                        ...inputSrcs,
+                    ]
+                    const drvPath = computeDrvPath(drvSerializedFinal, name, storeDir, drvReferences)
+
+                    // Debug aid: DENIX_DUMP_DRV=<dir> writes every serialized
+                    // .drv so it can be diffed against real Nix's store copy.
+                    const dumpDir = globalThis.Deno?.env.get("DENIX_DUMP_DRV")
+                    if (dumpDir) {
+                        Deno.mkdirSync(dumpDir, { recursive: true })
+                        Deno.writeTextFileSync(`${dumpDir}/${drvPath.split("/").pop()}`, drvSerializedFinal)
+                    }
+
+                    return {
+                        name: name,
                         system: system,
                         builder: builder,
                         args: builderArgs,
+                        outputPaths: outputPaths,
+                        drvPath: drvPath,
+                        all: outputNames.map(o => outputPaths[o]),
+                        // The references this derivation depends on ({drv, outputName})
+                        // — for the builder to realize first. denix-internal.
+                        inputDrvObjects: inputDrvObjects,
+                        // Unmasked hashDerivationModulo (hex), the key dependents use.
+                        moduloHashUnmasked: moduloHashUnmasked,
+                        // Fixed-output {algo,hex,recursive} for the builder to verify.
+                        fixedOutputInfo: fixedOutputInfo,
+                        // Exact serialized env + input sources, for the builder.
                         env: env,
-                    }
-                    moduloHashUnmasked = sha256Hex(serializeDerivation(unmaskedStructure))
-
-                    // Final .drv structure: real output paths + real input drvPaths.
-                    finalStructure = {
-                        outputs: sortedOutputNames.map(o => [o, outputPaths[o], "", ""]),
-                        inputDrvs: finalInputDrvs,
                         inputSrcs: inputSrcs,
-                        system: system,
-                        builder: builder,
-                        args: builderArgs,
-                        env: env,
                     }
                 }
 
-                // drvPath via the text method, whose fingerprint references every
-                // input derivation's drvPath (deduped) and input sources.
-                const drvSerializedFinal = serializeDerivation(finalStructure)
-                const drvReferences = [
-                    ...new Set(inputDrvObjects.map((d) => d.drv.drvPath)),
-                    ...inputSrcs,
-                ]
-                const drvPath = computeDrvPath(drvSerializedFinal, name, storeDir, drvReferences)
-
-                // Metadata shared by the base derivation and each output-object.
-                const sharedMeta = {
-                    type: "derivation",
-                    name: name,
-                    system: system,
-                    builder: builder,
-                    args: builderArgs,
-                    outputs: outputNames,
-                    drvPath: drvPath,
-                    all: outputNames.map(o => outputPaths[o]),
-                    drvAttrs: { ...attrs },
-                    // The references this derivation depends on ({drv, outputName})
-                    // — for the builder to realize first. denix-internal.
-                    inputDrvObjects: inputDrvObjects,
-                    // Unmasked hashDerivationModulo (hex), the key dependents use.
-                    moduloHashUnmasked: moduloHashUnmasked,
-                    // Fixed-output {algo,hex,recursive} for the builder to verify.
-                    fixedOutputInfo: fixedOutputInfo,
+                // drvAttrs = the raw input attrs (descriptor copy → laziness kept).
+                const drvAttrs = {}
+                for (const k of Object.keys(attrs)) {
+                    Object.defineProperty(drvAttrs, k, Object.getOwnPropertyDescriptor(attrs, k))
                 }
 
                 // Each output is its OWN derivation value, tagged with outputName
@@ -2659,7 +2911,31 @@ import { resolveIndirectReference } from "./registry.js"
                 // Referencing it therefore records the "dev" output in inputDrvs.
                 const outputObjs = {}
                 for (const o of outputNames) {
-                    const obj = { ...sharedMeta, outputName: o, outPath: outputPaths[o] }
+                    // Real Nix: the result is `drvAttrs // outputs // { outPath,
+                    // drvPath, type, outputName, … }` (see corepkgs
+                    // derivation.nix), so every INPUT attr is readable on the
+                    // result — e.g. stdenv's `shell` via `stdenv.shell`. Copy
+                    // descriptors to keep laziness; anything that needs
+                    // derivationStrict is a lazy getter on `strict()`.
+                    const obj = {}
+                    for (const k of Object.keys(attrs)) {
+                        Object.defineProperty(obj, k, Object.getOwnPropertyDescriptor(attrs, k))
+                    }
+                    for (const [k, v] of Object.entries({ type: "derivation", outputs: outputNames, outputName: o, drvAttrs: drvAttrs })) {
+                        Object.defineProperty(obj, k, { value: v, writable: true, enumerable: true, configurable: true })
+                    }
+                    defineLazy(obj, "name", () => requireString(attrs.name).toString())
+                    defineLazy(obj, "system", () => requireString(attrs.system).toString())
+                    defineLazy(obj, "outPath", () => strict().outputPaths[o])
+                    defineLazy(obj, "drvPath", () => strict().drvPath)
+                    defineLazy(obj, "builder", () => strict().builder)
+                    defineLazy(obj, "args", () => strict().args)
+                    defineLazy(obj, "all", () => strict().all)
+                    defineLazy(obj, "inputDrvObjects", () => strict().inputDrvObjects)
+                    defineLazy(obj, "moduloHashUnmasked", () => strict().moduloHashUnmasked)
+                    defineLazy(obj, "fixedOutputInfo", () => strict().fixedOutputInfo)
+                    defineLazy(obj, "drvEnv", () => strict().env)
+                    defineLazy(obj, "inputSrcs", () => strict().inputSrcs)
                     obj.toString = () => obj.outPath
                     obj[Symbol.toPrimitive] = () => obj.outPath
                     outputObjs[o] = obj
@@ -2668,7 +2944,7 @@ import { resolveIndirectReference } from "./registry.js"
                 // (so `pkg.dev.out`, `pkg.out.dev` resolve, matching Nix).
                 for (const o of outputNames) {
                     for (const o2 of outputNames) {
-                        outputObjs[o][o2] = outputObjs[o2]
+                        Object.defineProperty(outputObjs[o], o2, { value: outputObjs[o2], writable: true, enumerable: true, configurable: true })
                     }
                 }
 
@@ -2676,13 +2952,15 @@ import { resolveIndirectReference } from "./registry.js"
                 return outputObjs[outputNames[0]]
             },
             "derivationStrict": (attrs)=>{
-                // derivationStrict is identical to derivation in modern Nix
-                // The "strict" version was historical - both now strictly evaluate all attributes before building
-                return builtins.derivation(attrs)
+                const result = builtins.derivation(attrs)
+                // Unlike `derivation`, this primop hashes immediately.
+                void result.drvPath
+                return result
             },
             "parseDrvName": (s)=>{
                 const str = requireString(s).toString()
-                const match = str.match(/^(.*?)-([^-]*(?:-[^a-zA-Z].*)?)$/)
+                // Version starts at the FIRST dash not followed by a letter
+                const match = str.match(/^(.*?)-([^a-zA-Z].*)$/)
                 if (match) {
                     return { name: match[1], version: match[2] }
                 } else {
@@ -2692,19 +2970,25 @@ import { resolveIndirectReference } from "./registry.js"
             "compareVersions": (s1)=>(s2)=>{
                 const v1 = builtins.splitVersion(requireString(s1))
                 const v2 = builtins.splitVersion(requireString(s2))
+                // Real Nix component rules: "pre" < everything, and any
+                // non-numeric component < any numeric one (so "2.3a" < "2.3.1"
+                // and "boot" < "21")
+                const isNum = (s)=>/^[0-9]+$/.test(s)
                 const maxLen = Math.max(v1.length, v2.length)
                 for (let i = 0; i < maxLen; i++) {
-                    const p1 = v1[i] || ""
-                    const p2 = v2[i] || ""
-                    const n1 = parseInt(p1)
-                    const n2 = parseInt(p2)
-                    if (!isNaN(n1) && !isNaN(n2)) {
-                        if (n1 < n2) return -1n
-                        if (n1 > n2) return 1n
-                    } else {
-                        if (p1 < p2) return -1n
-                        if (p1 > p2) return 1n
+                    const p1 = (v1[i] || "").toString()
+                    const p2 = (v2[i] || "").toString()
+                    if (p1 === p2) { continue }
+                    if (p1 === "pre") { return -1n }
+                    if (p2 === "pre") { return 1n }
+                    const n1 = isNum(p1)
+                    const n2 = isNum(p2)
+                    if (n1 && n2) {
+                        return BigInt(p1) < BigInt(p2) ? -1n : 1n
                     }
+                    if (n2) { return -1n }
+                    if (n1) { return 1n }
+                    return p1 < p2 ? -1n : 1n
                 }
                 return 0n
             },
@@ -2737,7 +3021,7 @@ import { resolveIndirectReference } from "./registry.js"
                         sourceInfo = {
                             type: "path",
                             path: sourcePath,
-                            narHash: await hashDirectory(sourcePath),
+                            narHash: narHashToSRI(await hashDirectory(sourcePath)),
                         };
                         break;
 
@@ -2877,11 +3161,7 @@ import { resolveIndirectReference } from "./registry.js"
                 // - inputs (attribute set of flake references)
                 // - outputs (function taking inputs as arguments)
 
-                if (!globalImportState.runtime) {
-                    throw new Error(`builtins.getFlake called before runtime initialization`);
-                }
-
-                const flakeExpr = await loadAndEvaluateSync(flakePath, globalImportState.runtime);
+                const flakeExpr = await loadAndEvaluateSync(flakePath, requireRuntime());
 
                 // Validate flake structure
                 if (!builtins.isAttrs(flakeExpr)) {
@@ -3299,6 +3579,24 @@ import { resolveIndirectReference } from "./registry.js"
             return value.concat(other)
         },
         add: (value, other)=>{
+            // Nix's `+` coerces attrsets that have outPath (derivations) or
+            // __toString to strings, e.g. `"PATH=" + coreutils`.
+            const coerceSet = (v)=>{
+                if (v && typeof v === "object" && !(v instanceof Interpolater) && !(v instanceof Array)) {
+                    if (v.type === "derivation") {
+                        return flatString(force(v.outPath).toString(), [v], null)
+                    }
+                    if (v.outPath !== undefined) {
+                        return force(v.outPath)
+                    }
+                    if (typeof v.__toString === "function") {
+                        return requireString(apply(v.__toString, v))
+                    }
+                }
+                return v
+            }
+            value = coerceSet(value)
+            other = coerceSet(other)
             const vType = builtins.typeOf(value)
             const oType = builtins.typeOf(other)
 
@@ -3309,13 +3607,21 @@ import { resolveIndirectReference } from "./registry.js"
                     return toFloat(value) + toFloat(other)
                 }
             } else if (vType === "string" && oType === "string") {
-                return value.toString() + other.toString()
+                return flatString(
+                    value.toString() + other.toString(),
+                    [...depsOf(value), ...depsOf(other)],
+                    mergedContext(value, other),
+                )
             } else if (vType === "path" && oType === "path") {
                 return new Path([""], [()=>value.toString() + other.toString()])
             } else if (vType === "path" && oType === "string") {
                 return new Path([""], [()=>value.toString() + other.toString()])
             } else if (vType === "string" && oType === "path") {
-                return value.toString() + other.toString()
+                // A path appended to a string is copied to the store (real Nix)
+                const storePath = (other.context instanceof Map) ? other.toString() : copyPathToStore(other.toString())
+                const context = mergedContext(value, null) || new Map()
+                context.set(storePath, { outputs: new Set(), path: true, allOutputs: false })
+                return flatString(value.toString() + storePath, depsOf(value), context)
             } else {
                 throw new NixError(`error: cannot add ${vType} to ${oType}`)
             }
@@ -3358,6 +3664,19 @@ import { resolveIndirectReference } from "./registry.js"
             // Functions are never equal when compared directly in Nix
             if (typeof value === "function" || typeof other === "function") return false
             if (value === other) return true
+            // Nix strings come in several wrappers (InterpolatedString,
+            // context-carrying NixString) — `==` compares their text.
+            // Paths stay distinct: `/foo == "/foo"` is false in Nix.
+            const isStr = (v)=>typeof v === "string" || v instanceof InterpolatedString || v instanceof NixString
+            if (isStr(value) && isStr(other)) {
+                return value.toString() === other.toString()
+            }
+            // Nix special-cases derivations: two attrsets with type == "derivation"
+            // compare by outPath alone (lambdas inside would otherwise make them
+            // unequal).
+            if (value?.type === "derivation" && other?.type === "derivation") {
+                return force(value.outPath).toString() === force(other.outPath).toString()
+            }
             if (typeof value !== typeof other) return false
             if (value instanceof Array && other instanceof Array) {
                 if (value.length !== other.length) return false
@@ -3437,6 +3756,53 @@ import { resolveIndirectReference } from "./registry.js"
         },
     }
     
+    const resolveImportTarget = (runtime, path)=>{
+        const pathStr = path instanceof Path ? path.toString() : requireString(path).toString()
+        return runtime.currentFile
+            ? resolveImportPath(runtime.currentFile, pathStr)
+            : FileSystem.makeAbsolutePath(pathStr)
+    }
+
+    const importFile = (runtime, path)=>{
+        const absPath = resolveImportTarget(runtime, path)
+        const { importCache } = runtime
+        if (importCache.has(absPath)) {
+            return importCache.get(absPath)
+        }
+        // Track import stack for circular detection
+        importCache.pushStack(absPath)
+        const prevFile = runtime.currentFile
+        try {
+            runtime.currentFile = absPath
+            const result = loadAndEvaluateSync(absPath, runtime)
+            importCache.set(absPath, result)
+            return result
+        } finally {
+            runtime.currentFile = prevFile
+            importCache.popStack()
+        }
+    }
+
+    // Like import, but evaluated with a custom scope overriding builtins.
+    // Not cached (Nix behavior): each call evaluates fresh with the new scope.
+    const scopedImportFile = (runtime, scope, path)=>{
+        requireAttrSet(scope)
+        const absPath = resolveImportTarget(runtime, path)
+        runtime.importCache.pushStack(absPath)
+        const prevFile = runtime.currentFile
+        try {
+            runtime.currentFile = absPath
+            const scopedRuntime = {
+                ...runtime,
+                builtins: { ...runtime.builtins, ...scope },
+            }
+            return loadAndEvaluateSync(absPath, scopedRuntime)
+        } finally {
+            runtime.currentFile = prevFile
+            runtime.importCache.popStack()
+        }
+    }
+
     export const createRuntime = ()=>{
         // Create import cache for this runtime instance
         const importCache = new ImportCache()
@@ -3448,90 +3814,8 @@ import { resolveIndirectReference } from "./registry.js"
             InterpolatedString,
             Path,
             importCache,
+            withScope: createWithScope,
             currentFile: null, // Track current file for relative imports
-        }
-
-        // Initialize import functions with runtime context
-        globalImportState.importFn = (path) => {
-            // Convert Path object to string if needed
-            const pathStr = path instanceof Path ? path.toString() : requireString(path).toString()
-
-            // Resolve path relative to current file
-            const absPath = runtime.currentFile
-                ? resolveImportPath(runtime.currentFile, pathStr)
-                : FileSystem.makeAbsolutePath(pathStr)
-
-            // Check cache first
-            if (importCache.has(absPath)) {
-                return importCache.get(absPath)
-            }
-
-            // Track import stack for circular detection
-            importCache.pushStack(absPath)
-
-            try {
-                // Save current file context
-                const prevFile = runtime.currentFile
-                runtime.currentFile = absPath
-
-                // Load and evaluate the file
-                const result = loadAndEvaluateSync(absPath, runtime)
-
-                // Cache result
-                importCache.set(absPath, result)
-
-                // Restore previous file context
-                runtime.currentFile = prevFile
-
-                return result
-            } finally {
-                importCache.popStack()
-            }
-        }
-
-        globalImportState.scopedImportFn = (scope) => (path) => {
-            // scopedImport is like import but with a custom scope
-            // This allows overriding builtins and other values
-            requireAttrSet(scope)
-
-            // Convert Path object to string if needed
-            const pathStr = path instanceof Path ? path.toString() : requireString(path).toString()
-
-            // Resolve path relative to current file
-            const absPath = runtime.currentFile
-                ? resolveImportPath(runtime.currentFile, pathStr)
-                : FileSystem.makeAbsolutePath(pathStr)
-
-            // Note: scopedImport does NOT use cache (Nix behavior)
-            // Each call evaluates fresh with the new scope
-
-            // Track import stack for circular detection
-            importCache.pushStack(absPath)
-
-            try {
-                // Save current file context
-                const prevFile = runtime.currentFile
-                runtime.currentFile = absPath
-
-                // Create a modified runtime with custom scope
-                const scopedRuntime = {
-                    ...runtime,
-                    builtins: {
-                        ...runtime.builtins,
-                        ...scope, // Override with custom scope
-                    },
-                }
-
-                // Load and evaluate the file with scoped runtime
-                const result = loadAndEvaluateSync(absPath, scopedRuntime)
-
-                // Restore previous file context
-                runtime.currentFile = prevFile
-
-                return result
-            } finally {
-                importCache.popStack()
-            }
         }
 
         const rootScope = {
@@ -3560,8 +3844,8 @@ import { resolveIndirectReference } from "./registry.js"
             toString: builtins.toString,
         }
 
-        // Store runtime globally for use by getFlake
-        globalImportState.runtime = runtime
+        // Register as the shared runtime used by import/scopedImport/getFlake
+        currentRuntime = runtime
 
         const runtimeWithScope = {
             scopeStack: [rootScope],
@@ -3569,17 +3853,17 @@ import { resolveIndirectReference } from "./registry.js"
             runtime, // Expose runtime for use by import system
             importCache,
             operators,
+            withScope: createWithScope,
             // Mirror currentFile onto the inner runtime (which is what
-            // globalImportState.importFn checks) so that generated code which
-            // does `runtime.currentFile = "..."` on the outer handle just
-            // works.
+            // importFile checks) so that generated code which does
+            // `runtime.currentFile = "..."` on the outer handle just works.
             get currentFile() { return runtime.currentFile },
             set currentFile(v) { runtime.currentFile = v },
         }
         runtimeWithScope.createFunc = createCreateFunc(runtimeWithScope)
         runtimeWithScope.createScope = createCreateScope(runtimeWithScope)
         runtimeWithScope.defGetter = createDefGetter(runtimeWithScope)
-        // The inner `runtime` object (and `globalImportState.runtime`) is what
+        // The inner `runtime` object (the shared currentRuntime) is what
         // loadAndEvaluateSync receives from both `import` and `getFlake`. It
         // needs createFunc/createScope/defGetter so that imported/flake files
         // containing lambdas (e.g. a flake's `outputs = { ... }: ...`) can be
@@ -3591,26 +3875,6 @@ import { resolveIndirectReference } from "./registry.js"
         runtime.set = setAttrPath
         runtime.force = force
         runtime.mkThunk = mkThunk
-        // apply: handles __functor attrsets (callable attrsets in Nix)
-        function apply(fn, arg) {
-            // The callee itself may be a thunk (e.g. a lazily-bound variable).
-            fn = force(fn)
-            if (typeof fn === "function") {
-                // A denix-created Nix lambda accepts the argument lazily (as a
-                // thunk) — this is what makes Nix's lazy argument passing work,
-                // e.g. the `rattrs self` fixed point in lib.makeExtensible.
-                // A few builtins (tryEval, …) also want the unforced thunk so
-                // they can control evaluation. Everything else (builtins /
-                // curried JS helpers) wants a real value.
-                if (fn.__nixLambda || lazyArgFns.has(fn)) return fn(arg)
-                return fn(force(arg))
-            }
-            if (fn && typeof fn === "object" && "__functor" in fn) {
-                return apply(apply(fn.__functor, fn), arg)
-            }
-            throw new NixError(`error: attempt to call something which is not a function but ${builtins.typeOf(fn)}`)
-        }
-
         // Expose apply on the inner runtime too, so loadNixFileSync (used by
         // `import` and `getFlake`) can inject it when evaluating files whose
         // generated code calls apply() for function application / __functor.

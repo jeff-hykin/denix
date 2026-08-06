@@ -138,9 +138,7 @@ let flakeMode = false
 let tmpDir = null
 if (flakeRef != null) {
     flakeMode = true
-    const { createRuntime, builtins } = await import("../main/runtime.js")
-    // createRuntime() wires up globalImportState.runtime, which getFlake needs.
-    createRuntime()
+    const { builtins } = await import("../main/runtime.js")
 
     const flakeRefAbs = flakeRef.startsWith("/") || flakeRef.includes(":")
         ? flakeRef

@@ -118,12 +118,14 @@ function evaluateNixFile(filepath, rt) {
 
     const fn = new Function(
         "runtime", "operators", "builtins", "createFunc", "createScope",
-        "defGetter", "apply", "set", "nixScope", "Path", "InterpolatedString",
+        "defGetter", "apply", "set", "mkThunk", "force", "nixScope", "Path",
+        "InterpolatedString",
         `return (${expr})`,
     )
     return fn(
         inner, operators, builtins, rt.createFunc, rt.createScope,
-        rt.defGetter, rt.apply, rt.set, nixScope, Path, InterpolatedString,
+        rt.defGetter, rt.apply, rt.set, rt.mkThunk, rt.force, nixScope, Path,
+        InterpolatedString,
     )
 }
 

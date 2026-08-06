@@ -1,135 +1,86 @@
-import { assertEquals, assertRejects, assert } from "jsr:@std/assert";
-import { createRuntime } from "../runtime.js";
+import { assertEquals, assertRejects, assert, assertStringIncludes } from "jsr:@std/assert"
+import { builtins } from "../runtime.js"
+import { hashPathSync } from "../nar_hash.js"
 
-// Helper to create a test tarball URL
-async function createTestTarballUrl() {
-    const tempDir = await Deno.makeTempDir();
-
-    // Create a simple directory structure
-    await Deno.mkdir(`${tempDir}/content/myproject`, { recursive: true });
-    await Deno.writeTextFile(`${tempDir}/content/myproject/README.md`, "# Test Project\n\nHello, World!");
-    await Deno.writeTextFile(`${tempDir}/content/myproject/file.txt`, "Test content");
-
-    // Create tarball
-    const tarPath = `${tempDir}/test.tar.gz`;
-    const command = new Deno.Command("tar", {
+// Serve a real tarball from a local HTTP server so tests are deterministic and
+// offline-safe (previously these fetched httpbin random bytes, which can never
+// be a valid gzip — the failures were masked by over-broad network catches)
+const tarballBytes = await (async () => {
+    const tempDir = await Deno.makeTempDir()
+    await Deno.mkdir(`${tempDir}/content/myproject`, { recursive: true })
+    await Deno.writeTextFile(`${tempDir}/content/myproject/README.md`, "# Test Project\n\nHello, World!")
+    await Deno.writeTextFile(`${tempDir}/content/myproject/file.txt`, "Test content")
+    const tarPath = `${tempDir}/test.tar.gz`
+    const { code } = await new Deno.Command("tar", {
         args: ["-czf", tarPath, "-C", `${tempDir}/content`, "myproject"],
-        stdout: "piped",
-        stderr: "piped",
-    });
-
-    const { code } = await command.output();
+    }).output()
     if (code !== 0) {
-        throw new Error("Failed to create test tarball");
+        throw new Error("Failed to create test tarball")
     }
+    const bytes = await Deno.readFile(tarPath)
+    await Deno.remove(tempDir, { recursive: true })
+    return bytes
+})()
 
-    // Serve it via a local HTTP server for testing
-    // For now, we'll just return the file path and use file:// URL
-    return `file://${tarPath}`;
-}
+const server = Deno.serve({ port: 0, onListen: () => {} }, () => {
+    return new Response(tarballBytes, { headers: { "content-type": "application/gzip" } })
+})
+const baseUrl = `http://localhost:${server.addr.port}`
+globalThis.addEventListener("unload", () => server.shutdown())
 
 Deno.test("fetchTarball - string URL argument", async () => {
-    // Skip if no internet connection
-    const runtime = createRuntime();
+    const result = await builtins.fetchTarball(`${baseUrl}/pkg-string.tar.gz`)
 
-    try {
-        // Use a small, stable public tarball
-        const result = await runtime.builtins.fetchTarball("https://httpbin.org/bytes/1024");
-
-        // Should return a Path object
-        assert(result.constructor.name === "Path" || typeof result === "string");
-    } catch (error) {
-        // Network issues are acceptable
-        if (!error.message.includes("fetch") && !error.message.includes("network")) {
-            throw error;
-        }
-    }
-});
+    assert(result.constructor.name === "Path" || typeof result === "string")
+    const info = await Deno.stat(result.toString())
+    assert(info.isDirectory)
+})
 
 Deno.test("fetchTarball - object argument with URL", async () => {
-    const runtime = createRuntime();
+    const result = await builtins.fetchTarball({
+        url: `${baseUrl}/pkg-object.tar.gz`,
+        name: "test-package",
+    })
 
-    try {
-        const result = await runtime.builtins.fetchTarball({
-            url: "https://httpbin.org/bytes/512",
-            name: "test-package",
-        });
-
-        // Should return a Path object
-        assert(result.constructor.name === "Path" || typeof result === "string");
-    } catch (error) {
-        // Network issues are acceptable
-        if (!error.message.includes("fetch") && !error.message.includes("network")) {
-            throw error;
-        }
-    }
-});
+    assert(result.constructor.name === "Path" || typeof result === "string")
+    assertStringIncludes(result.toString(), "test-package")
+})
 
 Deno.test("fetchTarball - caching works", async () => {
-    const runtime = createRuntime();
+    const url = `${baseUrl}/pkg-cached.tar.gz`
 
-    try {
-        const url = "https://httpbin.org/bytes/256";
+    const result1 = await builtins.fetchTarball(url)
+    const result2 = await builtins.fetchTarball(url)
 
-        // First call
-        const result1 = await runtime.builtins.fetchTarball(url);
+    assertEquals(result1.toString(), result2.toString())
+})
 
-        // Second call should be instant (cached)
-        const start = Date.now();
-        const result2 = await runtime.builtins.fetchTarball(url);
-        const elapsed = Date.now() - start;
+Deno.test("fetchTarball - rejects wrong sha256 with hash mismatch", async () => {
+    await assertRejects(
+        async () => await builtins.fetchTarball({
+            url: `${baseUrl}/pkg-badhash.tar.gz`,
+            sha256: "0000000000000000000000000000000000000000000000000000000000000000",
+        }),
+        Error,
+        "Hash mismatch"
+    )
+})
 
-        // Should be very fast (< 100ms) if cached
-        // assert(elapsed < 100, `Expected cached call to be fast, took ${elapsed}ms`);
+Deno.test("fetchTarball - accepts correct sha256 (NAR hash of unpacked tree)", async () => {
+    const plain = await builtins.fetchTarball(`${baseUrl}/pkg-goodhash.tar.gz`)
+    const narHex = hashPathSync(plain.toString()).replace(/^sha256:/, "")
 
-        // Results should be the same path
-        assertEquals(result1.toString(), result2.toString());
-    } catch (error) {
-        // Network issues are acceptable
-        if (!error.message.includes("fetch") && !error.message.includes("network")) {
-            throw error;
-        }
-    }
-});
+    const result = await builtins.fetchTarball({
+        url: `${baseUrl}/pkg-goodhash.tar.gz`,
+        sha256: narHex,
+    })
 
-Deno.test("fetchTarball - validates SHA256 mismatch", async () => {
-    const runtime = createRuntime();
-
-    try {
-        await assertRejects(
-            async () => await runtime.builtins.fetchTarball({
-                url: "https://httpbin.org/bytes/128",
-                sha256: "0000000000000000000000000000000000000000000000000000000000000000",
-            }),
-            Error,
-            "Hash mismatch"
-        );
-    } catch (error) {
-        // Network issues are acceptable
-        if (!error.message.includes("fetch") && !error.message.includes("network")) {
-            throw error;
-        }
-    }
-});
-
-Deno.test("fetchTarball - invalid URL throws error", async () => {
-    // This test actually downloads, so we'll skip it for now
-    // The functionality is tested by the fetcher tests
-});
+    assertEquals(result.toString(), plain.toString())
+})
 
 Deno.test("fetchTarball - extracts name from URL", async () => {
-    const runtime = createRuntime();
+    const result = await builtins.fetchTarball(`${baseUrl}/repo/archive/v1.0.0.tar.gz`)
 
-    try {
-        const result = await runtime.builtins.fetchTarball("https://github.com/example/repo/archive/v1.0.0.tar.gz");
-
-        const path = result.toString();
-        // Should contain the extracted name
-        assert(path.includes("v1.0.0") || path.includes("1.0.0"));
-    } catch (error) {
-        // Network issues are acceptable
-        if (!error.message.includes("fetch") && !error.message.includes("network")) {
-            throw error;
-        }
-    }
-});
+    const path = result.toString()
+    assert(path.includes("v1.0.0") || path.includes("1.0.0"))
+})

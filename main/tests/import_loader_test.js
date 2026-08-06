@@ -20,6 +20,8 @@ const runtime = {
     defGetter: _rt.defGetter,
     apply: _rt.apply,
     set: _rt.set,
+    mkThunk: _rt.mkThunk,
+    force: _rt.force,
     scopeStack: _rt.runtime.scopeStack,
     nixRepr: (value) => {
         if (typeof value === 'string') {

@@ -5,7 +5,7 @@ Deno.test("builtins.nixPath - empty NIX_PATH returns empty array", () => {
     const originalNixPath = Deno.env.get("NIX_PATH")
     try {
         Deno.env.delete("NIX_PATH")
-        const result = builtins.nixPath()
+        const result = builtins.nixPath
         assertEquals(result, [])
     } finally {
         if (originalNixPath !== undefined) {
@@ -18,7 +18,7 @@ Deno.test("builtins.nixPath - single prefix=path entry", () => {
     const originalNixPath = Deno.env.get("NIX_PATH")
     try {
         Deno.env.set("NIX_PATH", "nixpkgs=/path/to/nixpkgs")
-        const result = builtins.nixPath()
+        const result = builtins.nixPath
         assertEquals(result, [
             { prefix: "nixpkgs", path: "/path/to/nixpkgs" }
         ])
@@ -35,7 +35,7 @@ Deno.test("builtins.nixPath - single path-only entry (no prefix)", () => {
     const originalNixPath = Deno.env.get("NIX_PATH")
     try {
         Deno.env.set("NIX_PATH", "/plain/path")
-        const result = builtins.nixPath()
+        const result = builtins.nixPath
         assertEquals(result, [
             { prefix: "", path: "/plain/path" }
         ])
@@ -52,7 +52,7 @@ Deno.test("builtins.nixPath - multiple mixed entries", () => {
     const originalNixPath = Deno.env.get("NIX_PATH")
     try {
         Deno.env.set("NIX_PATH", "nixpkgs=/nix/pkgs:home-manager=/nix/hm:/plain/path")
-        const result = builtins.nixPath()
+        const result = builtins.nixPath
         assertEquals(result, [
             { prefix: "nixpkgs", path: "/nix/pkgs" },
             { prefix: "home-manager", path: "/nix/hm" },
@@ -71,7 +71,7 @@ Deno.test("builtins.nixPath - multiple entries with same prefix", () => {
     const originalNixPath = Deno.env.get("NIX_PATH")
     try {
         Deno.env.set("NIX_PATH", "nixpkgs=/path1:nixpkgs=/path2")
-        const result = builtins.nixPath()
+        const result = builtins.nixPath
         assertEquals(result, [
             { prefix: "nixpkgs", path: "/path1" },
             { prefix: "nixpkgs", path: "/path2" }
@@ -89,7 +89,7 @@ Deno.test("builtins.nixPath - relative paths", () => {
     const originalNixPath = Deno.env.get("NIX_PATH")
     try {
         Deno.env.set("NIX_PATH", "home=~/config:./local")
-        const result = builtins.nixPath()
+        const result = builtins.nixPath
         assertEquals(result, [
             { prefix: "home", path: "~/config" },
             { prefix: "", path: "./local" }
@@ -108,7 +108,7 @@ Deno.test("builtins.nixPath - paths with = character in path", () => {
     try {
         // Only the first = is treated as separator
         Deno.env.set("NIX_PATH", "prefix=/path/with=equals")
-        const result = builtins.nixPath()
+        const result = builtins.nixPath
         assertEquals(result, [
             { prefix: "prefix", path: "/path/with=equals" }
         ])
@@ -125,7 +125,7 @@ Deno.test("builtins.nixPath - empty string in NIX_PATH", () => {
     const originalNixPath = Deno.env.get("NIX_PATH")
     try {
         Deno.env.set("NIX_PATH", "")
-        const result = builtins.nixPath()
+        const result = builtins.nixPath
         // Empty string should result in empty array
         assertEquals(result, [])
     } finally {
@@ -142,7 +142,7 @@ Deno.test("builtins.nixPath - whitespace handling", () => {
     try {
         // Nix preserves whitespace in paths
         Deno.env.set("NIX_PATH", "prefix=/path with spaces:  /path/with/leading/space")
-        const result = builtins.nixPath()
+        const result = builtins.nixPath
         assertEquals(result, [
             { prefix: "prefix", path: "/path with spaces" },
             { prefix: "", path: "  /path/with/leading/space" }
@@ -162,7 +162,7 @@ Deno.test("builtins.nixPath - integration with findFile", () => {
         // Set up a known NIX_PATH
         Deno.env.set("NIX_PATH", "test=/tmp/test-nixpath")
 
-        const nixPath = builtins.nixPath()
+        const nixPath = builtins.nixPath
         assertEquals(nixPath.length, 1)
         assertEquals(nixPath[0].prefix, "test")
         assertEquals(nixPath[0].path, "/tmp/test-nixpath")
