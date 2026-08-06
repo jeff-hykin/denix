@@ -35,11 +35,11 @@ denix translate default.nix                   # print translated JS to stdout
 denix translate -E '{ a = 1; b = a + 1; }'    # translate an inline expression
 denix translate default.nix -o default.js     # write JS to a file
 
-# Evaluate Nix and print the result
+# Evaluate Nix and print the result (pure by default, like `nix eval`)
 denix eval -E '1 + 2'                         # 3
 denix eval default.nix -A version             # select an attribute path
-denix eval -E '{ a = [ 1 2 ]; }' --json       # JSON output (--xml works too)
-denix eval shell.nix --arg 'pkgs=import <nixpkgs> {}'
+denix eval -E '{ a = [ 1 2 ]; }' --json       # JSON output (--xml and --raw work too)
+denix eval shell.nix --impure --arg 'pkgs=import <nixpkgs> {}'
 
 # Build derivations (writes to ~/.cache/denix/store, symlinks ./result)
 denix build default.nix
@@ -51,17 +51,12 @@ denix build default.nix --dry-run             # print the .drv path only
 ## Running the Test Suite
 
 ```bash
-# Run all tests
-./test.sh
+# Unit tests
+deno test --allow-all main/tests/
+./test.sh types        # or by category: types, lists, translator, derivation, ...
 
-# Run specific test categories
-./test.sh types        # Type checking tests
-./test.sh lists        # List operation tests
-./test.sh translator   # Translator tests
-./test.sh derivation   # Derivation tests
-
-# Or use deno directly
-deno test --allow-all
+# Conformance suites (compare against a real nix-instantiate install)
+./run/tests            # pure_setup + complex eval tasks (see --help for filters)
 ```
 
 ## Features
@@ -69,7 +64,7 @@ deno test --allow-all
 - ✅ **`denix` CLI** - translate, eval, and build from the command line (`deno install`-able)
 - ✅ **All Nix builtins** - every Nix 2.18 builtin implemented and covered by tests (805 passing)
 - ✅ **Import system** - `builtins.import` and `builtins.scopedImport` fully working
-- ✅ **Derivations** - Full derivation support (12/12 tests passing)
+- ✅ **Derivations** - .drv output byte-identical to real Nix (verified across the stdenv closure)
 - ✅ **Network fetchers** - fetchGit, fetchTarball, fetchurl, fetchTree, fetchMercurial, path, filterSource
 - ✅ **Pure Deno** - Zero npm/jsr dependencies, only URL imports
 
@@ -141,44 +136,52 @@ const jsCode = convertToJsSync(nixCode)  // readable JS that maps 1-to-1 to the 
 
 ```
 denix/
-├── denix                   # CLI entry point (translate / eval / build)
-├── translator.js           # Nix → JS translator
+├── denix                   # CLI launcher (translate / eval / build)
+├── translator.js           # Nix → JS translator (tree-sitter-nix based)
 ├── main/
 │   ├── cli/denix.js        # CLI implementation (cliffy)
-│   ├── runtime.js          # 102 Nix builtins + operators (2,750+ lines)
+│   ├── runtime.js          # All Nix builtins + operators + eval settings
 │   ├── builder.js          # Derivation builder (local build + cache substitution)
-│   ├── import_cache.js     # Import caching & circular detection
+│   ├── substituter.js      # Binary-cache substitution (cache.nixos.org)
 │   ├── import_loader.js    # Nix file loading & evaluation
+│   ├── import_cache.js     # Import caching & circular detection
+│   ├── registry.js         # Flake registry resolution
 │   ├── fetcher.js          # HTTP downloads with retry logic
 │   ├── tar.js              # Tarball extraction
-│   ├── nar_hash.js         # NAR directory hashing
-│   ├── store_manager.js    # Store path management
-│   └── tests/              # Test suite (52 files, 805 tests)
-├── tools/                  # Utilities (hashing, store paths, parsing, 10 modules)
-├── test.sh                 # Smart test runner with filters
-└── prompt.md               # Current priorities & remaining work
+│   ├── nar_hash.js         # NAR hashing (byte-identical to `nix hash path`)
+│   ├── store_manager.js    # Store path management (~/.cache/denix/store)
+│   ├── errors.js           # Nix error types
+│   ├── internal_repl.js    # REPL helper
+│   ├── corepkgs/           # Embedded corepkgs (fetchurl.nix)
+│   └── tests/              # Unit test suite (52 files, 805 tests)
+├── tests/translation/      # Conformance suites (denix vs real nix-instantiate)
+│   ├── eval_tasks_pure_setup/  # Upstream Nix eval tests (eval-okay-*/eval-fail-*)
+│   └── eval_tasks_complex/     # Scripted end-to-end tests (fetchers, flakes, ...)
+├── run/
+│   └── tests               # Conformance suite runner (see --help)
+├── tools/                  # Utilities (hashing, store paths, parsing)
+├── examples/               # Example flakes used by tests and docs
+├── docs/                   # Design notes
+└── test.sh                 # Unit test runner shortcuts
 ```
 
 ## Testing
 
-**Current coverage:** 805 unit tests passing across 52 files (`main/tests/`), plus conformance suites under `tests/translation/` (fetchers 47/47, translation output fidelity, derivation byte-fidelity vs real Nix)
+**Current coverage:** 805 unit tests passing across 52 files (`main/tests/`, ~8 min — several hit the network), plus conformance suites under `tests/translation/` (fetchers 47/47, upstream Nix eval tests, derivation byte-fidelity vs real Nix)
 
-All tests pass in ~4 minutes.
-
-**Smart test runner:**
+**Unit tests:**
 ```bash
-./test.sh              # Run all tests
-./test.sh math         # Run math & bitwise tests
-./test.sh lists        # Run list operation tests
-./test.sh translator   # Run translator tests
-./test.sh derivation   # Run derivation tests
-./test.sh integration  # Run nixpkgs.lib integration tests
+./test.sh              # all unit tests
+./test.sh math         # by category (math, lists, translator, derivation, integration, ...)
+./test.sh fetchGit     # by pattern
+deno test --allow-all --filter="import" main/tests/
 ```
 
-**Test by pattern:**
+**Conformance suites** (need a real `nix-instantiate` on PATH for comparison):
 ```bash
-./test.sh fetchGit     # Run tests matching "fetchGit"
-deno test --allow-all --filter="import"
+./run/tests                 # everything
+./run/tests --pure-only     # upstream eval-okay/eval-fail tasks only
+./run/tests --complex-only  # scripted end-to-end tests only
 ```
 
 ## Implementation Status
