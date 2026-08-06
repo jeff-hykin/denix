@@ -1,6 +1,6 @@
 #!/usr/bin/env -S deno run --allow-all
 // tests — run every pure-setup eval task through nix-instantiate and
-// denix_eval, writing each pair's output next to the corresponding .nix
+// `denix eval`, writing each pair's output next to the corresponding .nix
 // file.
 //
 // Usage:
@@ -10,15 +10,15 @@
 // writes the following into eval_tasks_pure_setup/ :
 //     <stem>.nix.out    (stdout from real nix-instantiate)
 //     <stem>.nix.err    (stderr from real nix-instantiate)
-//     <stem>.js.out     (stdout from ./run/denix_eval)
-//     <stem>.js.err     (stderr from ./run/denix_eval)
+//     <stem>.js.out     (stdout from `denix eval`)
+//     <stem>.js.err     (stderr from `denix eval`)
 //
 // Exits 0 regardless of per-task match/mismatch — this script is a
 // report, not a gate.
 
 const repoRoot = new URL("..", import.meta.url).pathname.replace(/\/$/, "")
 const PURE_DIR = `${repoRoot}/tests/translation/eval_tasks_pure_setup`
-const denixEvalPath = `${repoRoot}/run/denix_eval`
+const denixCliPath = `${repoRoot}/main/cli/denix.js`
 
 const argv = [...Deno.args]
 
@@ -26,7 +26,7 @@ if (argv.includes("--help") || argv.includes("-h")) {
     console.log(`\
 Usage: ./run/tests [OPTIONS]
 
-Run pure-setup and complex eval tasks, comparing nix-instantiate vs denix_eval.
+Run pure-setup and complex eval tasks, comparing nix-instantiate vs \`denix eval\`.
 
 Options:
   --silent, -s       Suppress per-task output (only print summaries)
@@ -39,8 +39,8 @@ Options:
 For each eval_tasks_pure_setup/<stem>_eval.json + <stem>.nix, writes:
   <stem>.nix.out     stdout from real nix-instantiate
   <stem>.nix.err     stderr from real nix-instantiate
-  <stem>.js.out      stdout from denix_eval
-  <stem>.js.err      stderr from denix_eval
+  <stem>.js.out      stdout from \`denix eval\`
+  <stem>.js.err      stderr from \`denix eval\`
   <stem>.fail        created on mismatch, removed on match
 
 Complex tests (eval_tasks_complex/) are standalone Deno scripts that
@@ -89,7 +89,7 @@ const decoder = new TextDecoder()
 
 // Normalize run-specific temp paths so output is stable across runs.
 // e.g. "denix_eval_ba307d0005eaee1/" → "denix_eval/"
-const TEMP_DIR_RE = /denix_eval(?:_expr)?_[a-f0-9]+\//g
+const TEMP_DIR_RE = /denix_(?:eval|expr)(?:_expr)?_[a-f0-9]+\//g
 function sanitizeOutput(text) {
     return text.replace(TEMP_DIR_RE, "denix_eval/")
 }
@@ -127,7 +127,7 @@ async function runDenix(setup, jsPath, signal) {
         if (ph) subEnv["DENO_DIR"] = `${ph}/.cache/deno`
     }
     const proc = new Deno.Command(Deno.execPath(), {
-        args: ["run", "--allow-all", "--quiet", denixEvalPath,
+        args: ["run", "--allow-all", "--quiet", denixCliPath, "eval",
                "--emit-translated", jsPath,
                ...setup.argv.slice(1)],
         cwd: setup.cwd,

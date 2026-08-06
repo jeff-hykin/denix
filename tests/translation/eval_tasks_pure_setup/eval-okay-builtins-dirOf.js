@@ -2,38 +2,122 @@ import {
   createRuntime,
   Path,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-builtins-dirOf.nix";
 
-export default ({
-  "stringEmpty": apply(nixScope.dirOf, ""),
-  "stringNoSep": apply(nixScope.dirOf, "filename"),
-  "stringSingleDir": apply(nixScope.dirOf, "a/b"),
-  "stringMultipleSeps": apply(nixScope.dirOf, "a///b"),
-  "stringRoot": apply(nixScope.dirOf, "/"),
-  "stringRootSlash": apply(nixScope.dirOf, "//"),
-  "stringRootSlashSlash": apply(nixScope.dirOf, "///"),
-  "stringRootA": apply(nixScope.dirOf, "/a"),
-  "stringWithDot": apply(nixScope.dirOf, "a/b/c/./d"),
-  "stringWithDotSep2": apply(nixScope.dirOf, "a/b/c/.//d"),
-  "stringWithDotDot": apply(nixScope.dirOf, "a/b/c/../d"),
-  "stringWithDotDotSep2": apply(nixScope.dirOf, "a/b/c/..//d"),
-  "stringWithDotAndDotDot": apply(nixScope.dirOf, "a/b/c/.././d"),
-  "stringWithDotAndDotDotSep2": apply(nixScope.dirOf, "a/b/c/.././/d"),
-  "pathRoot": apply(nixScope.dirOf, new Path(["/."], [])),
-  "pathDoesntExistRoot": apply(
-    nixScope.dirOf,
-    new Path(["/totallydoesntexistreally"], []),
-  ),
-  "pathDoesntExistNested1": apply(
-    nixScope.dirOf,
-    new Path(["/totallydoesntexistreally/subdir1"], []),
-  ),
-  "pathDoesntExistNested2": apply(
-    nixScope.dirOf,
-    new Path(["/totallydoesntexistreally/subdir1/subdir2"], []),
-  ),
+export default createScope(nixScope, (nixScope) => {
+  const obj = {};
+  defGetter(
+    obj,
+    "stringEmpty",
+    () => (apply(nixScope.dirOf, mkThunk(() => ("")))),
+  );
+  defGetter(
+    obj,
+    "stringNoSep",
+    () => (apply(nixScope.dirOf, mkThunk(() => ("filename")))),
+  );
+  defGetter(
+    obj,
+    "stringSingleDir",
+    () => (apply(nixScope.dirOf, mkThunk(() => ("a/b")))),
+  );
+  defGetter(
+    obj,
+    "stringMultipleSeps",
+    () => (apply(nixScope.dirOf, mkThunk(() => ("a///b")))),
+  );
+  defGetter(
+    obj,
+    "stringRoot",
+    () => (apply(nixScope.dirOf, mkThunk(() => ("/")))),
+  );
+  defGetter(
+    obj,
+    "stringRootSlash",
+    () => (apply(nixScope.dirOf, mkThunk(() => ("//")))),
+  );
+  defGetter(
+    obj,
+    "stringRootSlashSlash",
+    () => (apply(nixScope.dirOf, mkThunk(() => ("///")))),
+  );
+  defGetter(
+    obj,
+    "stringRootA",
+    () => (apply(nixScope.dirOf, mkThunk(() => ("/a")))),
+  );
+  defGetter(
+    obj,
+    "stringWithDot",
+    () => (apply(nixScope.dirOf, mkThunk(() => ("a/b/c/./d")))),
+  );
+  defGetter(
+    obj,
+    "stringWithDotSep2",
+    () => (apply(nixScope.dirOf, mkThunk(() => ("a/b/c/.//d")))),
+  );
+  defGetter(
+    obj,
+    "stringWithDotDot",
+    () => (apply(nixScope.dirOf, mkThunk(() => ("a/b/c/../d")))),
+  );
+  defGetter(
+    obj,
+    "stringWithDotDotSep2",
+    () => (apply(nixScope.dirOf, mkThunk(() => ("a/b/c/..//d")))),
+  );
+  defGetter(
+    obj,
+    "stringWithDotAndDotDot",
+    () => (apply(nixScope.dirOf, mkThunk(() => ("a/b/c/.././d")))),
+  );
+  defGetter(
+    obj,
+    "stringWithDotAndDotDotSep2",
+    () => (apply(nixScope.dirOf, mkThunk(() => ("a/b/c/.././/d")))),
+  );
+  defGetter(
+    obj,
+    "pathRoot",
+    () => (apply(nixScope.dirOf, mkThunk(() => (new Path(["/."], []))))),
+  );
+  defGetter(
+    obj,
+    "pathDoesntExistRoot",
+    () => (apply(
+      nixScope.dirOf,
+      mkThunk(() => (new Path(["/totallydoesntexistreally"], []))),
+    )),
+  );
+  defGetter(
+    obj,
+    "pathDoesntExistNested1",
+    () => (apply(
+      nixScope.dirOf,
+      mkThunk(() => (new Path(["/totallydoesntexistreally/subdir1"], []))),
+    )),
+  );
+  defGetter(
+    obj,
+    "pathDoesntExistNested2",
+    () => (apply(
+      nixScope.dirOf,
+      mkThunk(
+        () => (new Path(["/totallydoesntexistreally/subdir1/subdir2"], []))
+      ),
+    )),
+  );
+  return obj;
 });

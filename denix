@@ -1,0 +1,3 @@
+#!/usr/bin/env -S deno run --allow-all
+import { main } from "./main/cli/denix.js"
+await main(Deno.args)

@@ -1,45 +1,56 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-with.nix";
 const operators = runtime.operators;
 
-export default /*let*/ createScope((nixScope) => {
+export default /*let*/ createScope(nixScope, (nixScope) => {
   nixScope.a = "xyzzy";
-  nixScope.as = { "a": "foo", "b": "bar" };
-  nixScope.bs = { "a": "bar" };
+  nixScope.as = createScope(nixScope, (nixScope) => {
+    const obj = {};
+    defGetter(obj, "a", () => ("foo"));
+    defGetter(obj, "b", () => ("bar"));
+    return obj;
+  });
+  nixScope.bs = createScope(nixScope, (nixScope) => {
+    const obj = {};
+    defGetter(obj, "a", () => ("bar"));
+    return obj;
+  });
   defGetter(nixScope, "x", (nixScope) =>
-    ((_withAttrs) => {
-      const nixScope = { ...runtime.scopeStack.slice(-1)[0], ..._withAttrs };
+    ((nixScope) => {
       runtime.scopeStack.push(nixScope);
       try {
         return operators.add(nixScope.a, nixScope.b);
       } finally {
         runtime.scopeStack.pop();
       }
-    })(nixScope.as));
+    })(runtime.withScope(nixScope, () => (nixScope.as))));
   defGetter(nixScope, "y", (nixScope) =>
-    ((_withAttrs) => {
-      const nixScope = { ...runtime.scopeStack.slice(-1)[0], ..._withAttrs };
+    ((nixScope) => {
       runtime.scopeStack.push(nixScope);
       try {
-        return ((_withAttrs) => {
-          const nixScope = {
-            ...runtime.scopeStack.slice(-1)[0],
-            ..._withAttrs,
-          };
+        return ((nixScope) => {
           runtime.scopeStack.push(nixScope);
           try {
             return operators.add(nixScope.a, nixScope.b);
           } finally {
             runtime.scopeStack.pop();
           }
-        })(nixScope.bs);
+        })(runtime.withScope(nixScope, () => (nixScope.bs)));
       } finally {
         runtime.scopeStack.pop();
       }
-    })(nixScope.as));
+    })(runtime.withScope(nixScope, () => (nixScope.as))));
   return operators.add(nixScope.x, nixScope.y);
 });

@@ -1,4 +1,4 @@
-import { assertEquals, assertExists, assertRejects } from "jsr:@std/assert";
+import { assert, assertEquals, assertExists, assertRejects } from "jsr:@std/assert";
 import { builtins } from "../runtime.js";
 
 // Test suite for builtins.fetchTree
@@ -22,7 +22,7 @@ Deno.test("fetchTree - git type with URL", async () => {
     assertExists(result.toString()); // outPath
     assertEquals(result.rev.length, 40); // Full commit hash
     assertEquals(result.shortRev.length, 7); // Short hash
-    assertEquals(typeof result.revCount, "bigint");
+    assertEquals(result.revCount, undefined); // shallow fetches omit revCount (like Nix)
     assertEquals(typeof result.lastModified, "bigint");
     assertExists(result.narHash);
 });
@@ -62,7 +62,7 @@ Deno.test("fetchTree - github shorthand with attribute set", async () => {
     assertExists(result.toString()); // outPath
     assertEquals(result.rev.length, 40); // Full commit hash
     assertExists(result.shortRev);
-    assertEquals(typeof result.revCount, "bigint");
+    assertEquals(result.revCount, undefined); // shallow fetches omit revCount (like Nix)
 });
 
 Deno.test("fetchTree - github: URL string syntax", async () => {
@@ -340,7 +340,7 @@ Deno.test("fetchTree - metadata types are correct", async () => {
 
     assertEquals(typeof result.rev, "string");
     assertEquals(typeof result.shortRev, "string");
-    assertEquals(typeof result.revCount, "bigint");
+    assertEquals(result.revCount, undefined); // shallow fetches omit revCount (like Nix)
     assertEquals(typeof result.lastModified, "bigint");
     assertEquals(typeof result.narHash, "string");
     // narHash uses base64 format: "sha256-..." not "sha256:..."

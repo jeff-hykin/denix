@@ -1,7 +1,0 @@
-denix_eval: eval failed: TypeError: Cannot read properties of undefined (reading 'x')
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:15:39
-    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:118:24)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:14:21
-    at file:///Users/jeffhykin/repos/denix/main/runtime.js:99:28
-    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:8:17

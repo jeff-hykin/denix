@@ -1,0 +1,9 @@
+denix: eval failed: Error: error: infinite recursion encountered
+    at Object.get [as x] (file:///Users/jeffhykin/repos/denix/main/runtime.js:239:48)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:18:51
+    at Object.get [as y] (file:///Users/jeffhykin/repos/denix/main/runtime.js:242:38)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:17:51
+    at Object.get [as x] (file:///Users/jeffhykin/repos/denix/main/runtime.js:242:38)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:19:19
+    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:196:24)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:16:24

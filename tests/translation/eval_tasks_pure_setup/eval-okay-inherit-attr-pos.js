@@ -1,24 +1,49 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-inherit-attr-pos.nix";
 
-export default /*let*/ createScope((nixScope) => {
-  nixScope.d = 0n;
-  nixScope.x = 1n;
-  nixScope.y = { "d": nixScope.d, "x": nixScope.x };
-  nixScope.z = createScope((nixScope) => {
+export default /*let*/ createScope(nixScope, (nixScope) => {
+  defGetter(nixScope, "d", (nixScope) => (0n));
+  defGetter(nixScope, "x", (nixScope) => (1n));
+  defGetter(nixScope, "y", (nixScope) => (createScope(nixScope, (nixScope) => {
     const obj = {};
-    obj.d = nixScope.y.d;
-    obj.x = nixScope.y.x;
+    defGetter(obj, "d", () => (nixScope.d));
+    defGetter(obj, "x", () => (nixScope.x));
     return obj;
-  });
+  })));
+  defGetter(nixScope, "z", (nixScope) => (createScope(nixScope, (nixScope) => {
+    const obj = {};
+    defGetter(obj, "d", () => (nixScope.y.d));
+    defGetter(obj, "x", () => (nixScope.y.x));
+    return obj;
+  })));
   return [
-    apply(apply(nixScope.builtins["unsafeGetAttrPos"], "d"), nixScope.y),
-    apply(apply(nixScope.builtins["unsafeGetAttrPos"], "x"), nixScope.y),
-    apply(apply(nixScope.builtins["unsafeGetAttrPos"], "d"), nixScope.z),
-    apply(apply(nixScope.builtins["unsafeGetAttrPos"], "x"), nixScope.z),
+    apply(
+      apply(nixScope.builtins["unsafeGetAttrPos"], mkThunk(() => ("d"))),
+      mkThunk(() => (nixScope.y)),
+    ),
+    apply(
+      apply(nixScope.builtins["unsafeGetAttrPos"], mkThunk(() => ("x"))),
+      mkThunk(() => (nixScope.y)),
+    ),
+    apply(
+      apply(nixScope.builtins["unsafeGetAttrPos"], mkThunk(() => ("d"))),
+      mkThunk(() => (nixScope.z)),
+    ),
+    apply(
+      apply(nixScope.builtins["unsafeGetAttrPos"], mkThunk(() => ("x"))),
+      mkThunk(() => (nixScope.z)),
+    ),
   ];
 });

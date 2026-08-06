@@ -1,11 +1,19 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-fromJSON-overflowing.nix";
 
 export default apply(
   nixScope.builtins["fromJSON"],
-  `{"attr": 18446744073709551615}`,
+  mkThunk(() => ('{"attr": 18446744073709551615}')),
 );

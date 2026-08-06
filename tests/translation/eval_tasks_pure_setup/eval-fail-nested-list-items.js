@@ -1,9 +1,17 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-nested-list-items.nix";
 const operators = runtime.operators;
 
 export default //
@@ -17,8 +25,15 @@ export default //
 //
 operators.add(
   "",
-  /*let*/ createScope((nixScope) => {
-    nixScope.v = [[1n, 2n, 3n, 4n, 5n, 6n, 7n, 8n], [1n, 2n, 3n, 4n]];
-    return apply(apply(nixScope.builtins["deepSeq"], nixScope.v), nixScope.v);
+  /*let*/ createScope(nixScope, (nixScope) => {
+    defGetter(
+      nixScope,
+      "v",
+      (nixScope) => [[1n, 2n, 3n, 4n, 5n, 6n, 7n, 8n], [1n, 2n, 3n, 4n]],
+    );
+    return apply(
+      apply(nixScope.builtins["deepSeq"], mkThunk(() => (nixScope.v))),
+      mkThunk(() => (nixScope.v)),
+    );
   }),
 );

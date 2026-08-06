@@ -1,28 +1,51 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-hashstring.nix";
 
-export default /*let*/ createScope((nixScope) => {
-  nixScope.strings = ["", "text 1", "text 2"];
+export default /*let*/ createScope(nixScope, (nixScope) => {
+  defGetter(nixScope, "strings", (nixScope) => ["", "text 1", "text 2"]);
   return apply(
     nixScope.builtins["concatLists"],
-    apply(
-      apply(
-        nixScope.map,
-        createFunc(/*arg:*/ "hash", null, {}, (nixScope) => (
-          apply(
-            apply(
-              nixScope.map,
-              apply(nixScope.builtins["hashString"], nixScope.hash),
-            ),
-            nixScope.strings,
-          )
-        )),
-      ),
-      ["md5", "sha1", "sha256", "sha512"],
+    mkThunk(
+      () => (apply(
+        apply(
+          nixScope.map,
+          mkThunk(
+            () => (createFunc(
+              /*arg:*/ "hash",
+              null,
+              {},
+              nixScope,
+              (nixScope) => (
+                apply(
+                  apply(
+                    nixScope.map,
+                    mkThunk(
+                      () => (apply(
+                        nixScope.builtins["hashString"],
+                        mkThunk(() => (nixScope.hash)),
+                      ))
+                    ),
+                  ),
+                  mkThunk(() => (nixScope.strings)),
+                )
+              ),
+            ))
+          ),
+        ),
+        mkThunk(() => ["md5", "sha1", "sha256", "sha512"]),
+      ))
     ),
   );
 });

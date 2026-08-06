@@ -1,4 +1,15 @@
-denix_eval: print failed: Error: error: cannot coerce path to a string
-    at InterpolatedString.toString (file:///Users/jeffhykin/repos/denix/main/runtime.js:197:35)
-    at nixRepr (file:///Users/jeffhykin/repos/denix/main/runtime.js:255:71)
-    at file:///Users/jeffhykin/repos/denix/run/denix_eval:184:48
+[0m[1m[31merror[0m: Uncaught (in promise) NotFound: No such file or directory (os error 2): lstat '/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/fnord'
+    const stat = Deno.lstatSync(path)
+[0m[31m                      ^[0m
+    at [0m[1m[3mObject.lstatSync[0m ([0m[36mext:deno_fs/30_fs.js[0m:[0m[33m405[0m:[0m[33m3[0m)
+    at [0m[1m[3mpushNodeParts[0m ([0m[36mfile:///Users/jeffhykin/repos/denix/main/nar_hash.js[0m:[0m[33m55[0m:[0m[33m23[0m)
+    at [0m[1m[3mserializeNARSync[0m ([0m[36mfile:///Users/jeffhykin/repos/denix/main/nar_hash.js[0m:[0m[33m19[0m:[0m[33m5[0m)
+    at [0m[1m[3mhashPathSync[0m ([0m[36mfile:///Users/jeffhykin/repos/denix/main/nar_hash.js[0m:[0m[33m25[0m:[0m[33m32[0m)
+    at [0m[1m[3mcopyPathToStore[0m ([0m[36mfile:///Users/jeffhykin/repos/denix/main/runtime.js[0m:[0m[33m389[0m:[0m[33m21[0m)
+    at [0m[1m[3mInterpolatedString.toString[0m ([0m[36mfile:///Users/jeffhykin/repos/denix/main/runtime.js[0m:[0m[33m320[0m:[0m[33m51[0m)
+    at [0m[1m[3mnixRepr[0m ([0m[36mfile:///Users/jeffhykin/repos/denix/main/runtime.js[0m:[0m[33m644[0m:[0m[33m71[0m)
+    at [0m[1m[3ml.actionHandler[0m ([0m[36mfile:///Users/jeffhykin/repos/denix/main/cli/denix.js[0m:[0m[33m202[0m:[0m[33m15[0m)
+    at async [0m[1m[3ml.execute[0m ([0m[36mhttps://esm.sh/@jsr/cliffy__command@1.0.0-rc.7/denonext/command.mjs[0m:[0m[33m17[0m:[0m[33m8419[0m)
+    at async [0m[1m[3ml.parseCommand[0m ([0m[36mhttps://esm.sh/@jsr/cliffy__command@1.0.0-rc.7/denonext/command.mjs[0m:[0m[33m17[0m:[0m[33m6135[0m)
+    at async [0m[1m[3mmain[0m ([0m[36mfile:///Users/jeffhykin/repos/denix/main/cli/denix.js[0m:[0m[33m341[0m:[0m[33m5[0m)
+    at async [0m[36mfile:///Users/jeffhykin/repos/denix/main/cli/denix.js[0m:[0m[33m356[0m:[0m[33m5[0m

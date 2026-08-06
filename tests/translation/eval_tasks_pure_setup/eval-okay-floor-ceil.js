@@ -2,48 +2,69 @@ import {
   createRuntime,
   Path,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-floor-ceil.nix";
 
-export default ((_withAttrs) => {
-  const nixScope = { ...runtime.scopeStack.slice(-1)[0], ..._withAttrs };
+export default ((nixScope) => {
   runtime.scopeStack.push(nixScope);
   try {
-    return /*let*/ createScope((nixScope) => {
+    return /*let*/ createScope(nixScope, (nixScope) => {
       defGetter(
         nixScope,
         "n1",
-        (nixScope) => apply(nixScope.builtins["floor"], 23.5),
+        (
+          nixScope,
+        ) => (apply(nixScope.builtins["floor"], mkThunk(() => (23.5)))),
       );
       defGetter(
         nixScope,
         "n2",
-        (nixScope) => apply(nixScope.builtins["ceil"], 23.5),
+        (nixScope) => (apply(nixScope.builtins["ceil"], mkThunk(() => (23.5)))),
       );
       defGetter(
         nixScope,
         "n3",
-        (nixScope) => apply(nixScope.builtins["floor"], 23n),
+        (nixScope) => (apply(nixScope.builtins["floor"], mkThunk(() => (23n)))),
       );
       defGetter(
         nixScope,
         "n4",
-        (nixScope) => apply(nixScope.builtins["ceil"], 23n),
+        (nixScope) => (apply(nixScope.builtins["ceil"], mkThunk(() => (23n)))),
       );
       return apply(
-        apply(nixScope.builtins["concatStringsSep"], ";"),
-        apply(apply(nixScope.map, nixScope.toString), [
-          nixScope.n1,
-          nixScope.n2,
-          nixScope.n3,
-          nixScope.n4,
-        ]),
+        apply(nixScope.builtins["concatStringsSep"], mkThunk(() => (";"))),
+        mkThunk(
+          () => (apply(
+            apply(nixScope.map, mkThunk(() => (nixScope.toString))),
+            mkThunk(() => [nixScope.n1, nixScope.n2, nixScope.n3, nixScope.n4]),
+          ))
+        ),
       );
     });
   } finally {
     runtime.scopeStack.pop();
   }
-})(apply(nixScope.import, new Path(["../source_code/nix_lang/lib.nix"], [])));
+})(
+  runtime.withScope(
+    nixScope,
+    () => (apply(
+      nixScope.import,
+      mkThunk(
+        () => (new Path([
+          "/Users/jeffhykin/repos/denix/tests/translation/source_code/nix_lang/lib.nix",
+        ], []))
+      ),
+    )),
+  ),
+);

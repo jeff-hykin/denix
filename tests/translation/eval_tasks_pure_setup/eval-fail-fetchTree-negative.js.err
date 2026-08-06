@@ -1,9 +1,13 @@
 Download attempt 1 failed, retrying in 1000ms...
 Download attempt 2 failed, retrying in 2000ms...
 Download attempt 3 failed, retrying in 4000ms...
-denix_eval: eval failed: Error: Failed to download file://eval-fail-fetchTree-negative.nix after 4 attempts: Could not convert URL to file path.
-  URL: file://eval-fail-fetchtree-negative.nix/
+denix: eval failed: Error: Failed to download file://eval-fail-fetchTree-negative.nix after 4 attempts: NetworkError when attempting to fetch resource
     at downloadWithRetry (file:///Users/jeffhykin/repos/denix/main/fetcher.js:75:11)
-    at async Object.fetchurl (file:///Users/jeffhykin/repos/denix/main/runtime.js:971:17)
-    at async fetchTree (file:///Users/jeffhykin/repos/denix/main/runtime.js:1531:32)
-    at async file:///Users/jeffhykin/repos/denix/run/denix_eval:136:60
+    at eventLoopTick (ext:core/01_core.js:218:9)
+    at async Object.fetchurl (file:///Users/jeffhykin/repos/denix/main/runtime.js:1436:17)
+    at async evaluateFile (file:///Users/jeffhykin/repos/denix/main/cli/denix.js:81:21)
+    at async l.actionHandler (file:///Users/jeffhykin/repos/denix/main/cli/denix.js:195:21)
+    at async l.execute (https://esm.sh/@jsr/cliffy__command@1.0.0-rc.7/denonext/command.mjs:17:8419)
+    at async l.parseCommand (https://esm.sh/@jsr/cliffy__command@1.0.0-rc.7/denonext/command.mjs:17:6135)
+    at async main (file:///Users/jeffhykin/repos/denix/main/cli/denix.js:341:5)
+    at async file:///Users/jeffhykin/repos/denix/main/cli/denix.js:356:5

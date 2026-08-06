@@ -2,21 +2,43 @@ import {
   createRuntime,
   Path,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-flatten.nix";
 
-export default ((_withAttrs) => {
-  const nixScope = { ...runtime.scopeStack.slice(-1)[0], ..._withAttrs };
+export default ((nixScope) => {
   runtime.scopeStack.push(nixScope);
   try {
-    return /*let*/ createScope((nixScope) => {
+    return /*let*/ createScope(nixScope, (nixScope) => {
       nixScope.l = ["1", "2", ["3", ["4"], ["5", "6"]], "7"];
-      return apply(nixScope.concat, apply(nixScope.flatten, nixScope.l));
+      return apply(
+        nixScope.concat,
+        mkThunk(() => (apply(nixScope.flatten, mkThunk(() => (nixScope.l))))),
+      );
     });
   } finally {
     runtime.scopeStack.pop();
   }
-})(apply(nixScope.import, new Path(["../source_code/nix_lang/lib.nix"], [])));
+})(
+  runtime.withScope(
+    nixScope,
+    () => (apply(
+      nixScope.import,
+      mkThunk(
+        () => (new Path([
+          "/Users/jeffhykin/repos/denix/tests/translation/source_code/nix_lang/lib.nix",
+        ], []))
+      ),
+    )),
+  ),
+);

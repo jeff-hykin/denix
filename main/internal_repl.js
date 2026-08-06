@@ -55,40 +55,27 @@ export async function createInternalRepl(opts = {}) {
         async eval(exprString) {
             // Dynamic import to avoid circular deps at module load time
             const { convertToJsSync } = await import("../translator.js")
-            let jsCode = convertToJsSync(exprString)
+            // The translator emits a full module: a preamble wiring up the
+            // runtime, then `export default <expr>`. We already have the
+            // runtime, so evaluate just the trailing expression (same
+            // approach as loadNixFileSync in import_loader.js).
+            const jsCode = convertToJsSync(exprString)
+            const marker = "export default "
+            const markerIdx = jsCode.lastIndexOf(marker)
+            const cleanCode = (markerIdx >= 0 ? jsCode.slice(markerIdx + marker.length) : jsCode).trim()
 
-            // Strip boilerplate that convertToJsSync adds
-            jsCode = jsCode
-                .replace(/^import\s+.*$/gm, "")
-                .replace(/^const\s*\{[^}]*\}\s*=\s*createRuntime\(\).*$/gm, "")
-                .replace(/^const\s+runtime\s+=\s+createRuntime\(\).*$/gm, "")
-                .replace(/^const\s+operators\s+=\s+.*$/gm, "")
-                .replace(/^const\s+builtins\s+=\s+.*$/gm, "")
-                .replace(/^const\s+nixScope\s+=\s+.*$/gm, "")
-                .replace(/^runtime\.currentFile\s*=\s*.*$/gm, "")
-                .replace(/^export\s+default\s+/m, "")
-                .trim()
-
-            // Remove empty lines and comments
-            const lines = jsCode
-                .split("\n")
-                .filter(l => {
-                    const t = l.trim()
-                    return t.length > 0 && !t.startsWith("//")
-                })
-                .join("\n")
-
-            // Evaluate with the runtime in scope.
-            // The translated JS code expects: runtime, builtins, operators,
-            // nixScope, createFunc, createScope, defGetter
             const fn = new Function(
-                "runtime", "builtins", "operators", "nixScope",
+                "runtime", "operators", "builtins", "nixScope",
+                "InterpolatedString", "Path",
                 "createFunc", "createScope", "defGetter",
-                `return (${lines})`
+                "apply", "set", "force", "mkThunk",
+                `return (${cleanCode}\n)`
             )
             return fn(
-                runtimeWithScope, builtins, operators, nixScope,
+                runtimeWithScope, operators, builtins, nixScope,
+                innerRuntime.InterpolatedString, innerRuntime.Path,
                 rtResult.createFunc, rtResult.createScope, rtResult.defGetter,
+                rtResult.apply, rtResult.set, rtResult.force, rtResult.mkThunk,
             )
         },
 

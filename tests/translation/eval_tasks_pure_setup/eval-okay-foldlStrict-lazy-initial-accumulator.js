@@ -1,9 +1,17 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-foldlStrict-lazy-initial-accumulator.nix";
 
 export default //
 //
@@ -11,13 +19,17 @@ apply(
   apply(
     apply(
       nixScope.builtins["foldl'"],
-      createFunc(/*arg:*/ "_", null, {}, (nixScope) => (
-        createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
-          nixScope.x
-        ))
-      )),
+      mkThunk(
+        () => (createFunc(/*arg:*/ "_", null, {}, nixScope, (nixScope) => (
+          createFunc(/*arg:*/ "x", null, {}, nixScope, (nixScope) => (
+            nixScope.x
+          ))
+        )))
+      ),
     ),
-    apply(nixScope.throw, "This is never forced"),
+    mkThunk(
+      () => (apply(nixScope.throw, mkThunk(() => ("This is never forced"))))
+    ),
   ),
-  ["but the results of applying op are", 42n],
+  mkThunk(() => ["but the results of applying op are", 42n]),
 );

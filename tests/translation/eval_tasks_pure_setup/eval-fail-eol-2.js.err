@@ -3,8 +3,13 @@ Warning: Failed to format generated JavaScript: [0m[1m[31merror[0m: Expressi
   export default //
   ~~~~~~
 
-denix_eval: eval failed: TypeError: The module's source code could not be parsed: Expression expected at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:2:15
+denix: eval failed: TypeError: The module's source code could not be parsed: Expression expected at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:2:15
 
   export default //
                 ~
-    at async file:///Users/jeffhykin/repos/denix/run/denix_eval:134:17
+    at async evaluateFile (file:///Users/jeffhykin/repos/denix/main/cli/denix.js:78:21)
+    at async l.actionHandler (file:///Users/jeffhykin/repos/denix/main/cli/denix.js:195:21)
+    at async l.execute (https://esm.sh/@jsr/cliffy__command@1.0.0-rc.7/denonext/command.mjs:17:8419)
+    at async l.parseCommand (https://esm.sh/@jsr/cliffy__command@1.0.0-rc.7/denonext/command.mjs:17:6135)
+    at async main (file:///Users/jeffhykin/repos/denix/main/cli/denix.js:341:5)
+    at async file:///Users/jeffhykin/repos/denix/main/cli/denix.js:356:5

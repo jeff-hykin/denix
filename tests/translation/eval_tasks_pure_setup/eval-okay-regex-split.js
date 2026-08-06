@@ -1,13 +1,20 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-regex-split.nix";
 const operators = runtime.operators;
 
-export default ((_withAttrs) => {
-  const nixScope = { ...runtime.scopeStack.slice(-1)[0], ..._withAttrs };
+export default ((nixScope) => {
   runtime.scopeStack.push(nixScope);
   try {
     return ((_cond) => {
@@ -190,9 +197,13 @@ export default ((_withAttrs) => {
                                                         apply(
                                                           apply(
                                                             nixScope.split,
-                                                            "([[:upper:]]+)",
+                                                            mkThunk(
+                                                              () => ("([[:upper:]]+)")
+                                                            ),
                                                           ),
-                                                          "  FOO   ",
+                                                          mkThunk(
+                                                            () => ("  FOO   ")
+                                                          ),
                                                         ),
                                                         ["  ", ["FOO"], "   "],
                                                       ),
@@ -202,9 +213,11 @@ export default ((_withAttrs) => {
                                                       apply(
                                                         apply(
                                                           nixScope.split,
-                                                          "(a)|(c)",
+                                                          mkThunk(
+                                                            () => ("(a)|(c)")
+                                                          ),
                                                         ),
-                                                        "abc",
+                                                        mkThunk(() => ("abc")),
                                                       ),
                                                       ["", ["a", null], "b", [
                                                         null,
@@ -217,9 +230,11 @@ export default ((_withAttrs) => {
                                                     apply(
                                                       apply(
                                                         nixScope.split,
-                                                        "([ac])",
+                                                        mkThunk(
+                                                          () => ("([ac])")
+                                                        ),
                                                       ),
-                                                      "abc",
+                                                      mkThunk(() => ("abc")),
                                                     ),
                                                     ["", ["a"], "b", ["c"], ""],
                                                   ),
@@ -229,9 +244,9 @@ export default ((_withAttrs) => {
                                                   apply(
                                                     apply(
                                                       nixScope.split,
-                                                      "(a)b",
+                                                      mkThunk(() => ("(a)b")),
                                                     ),
-                                                    "abc",
+                                                    mkThunk(() => ("abc")),
                                                   ),
                                                   ["", ["a"], "c"],
                                                 ),
@@ -241,12 +256,13 @@ export default ((_withAttrs) => {
                                                 apply(
                                                   apply(
                                                     nixScope.split,
-                                                    "[[:space:]]+|([',.!?])",
+                                                    mkThunk(
+                                                      () => ("[[:space:]]+|([',.!?])")
+                                                    ),
                                                   ),
-                                                  `
-    Nix Rocks!
-    That's why I use it.
-  `,
+                                                  mkThunk(
+                                                    () => ("Nix Rocks!\nThat's why I use it.\n")
+                                                  ),
                                                 ),
                                                 [
                                                   "Nix",
@@ -276,8 +292,11 @@ export default ((_withAttrs) => {
                                           })(
                                             operators.equal(
                                               apply(
-                                                apply(nixScope.split, "(b)"),
-                                                "foobarbaz",
+                                                apply(
+                                                  nixScope.split,
+                                                  mkThunk(() => ("(b)")),
+                                                ),
+                                                mkThunk(() => ("foobarbaz")),
                                               ),
                                               ["foo", ["b"], "ar", ["b"], "az"],
                                             ),
@@ -285,8 +304,11 @@ export default ((_withAttrs) => {
                                         })(
                                           operators.equal(
                                             apply(
-                                              apply(nixScope.split, "(o+)"),
-                                              "oooofoooo",
+                                              apply(
+                                                nixScope.split,
+                                                mkThunk(() => ("(o+)")),
+                                              ),
+                                              mkThunk(() => ("oooofoooo")),
                                             ),
                                             ["", ["oooo"], "f", ["oooo"], ""],
                                           ),
@@ -294,8 +316,11 @@ export default ((_withAttrs) => {
                                       })(
                                         operators.equal(
                                           apply(
-                                            apply(nixScope.split, "(fo*)"),
-                                            "foobar",
+                                            apply(
+                                              nixScope.split,
+                                              mkThunk(() => ("(fo*)")),
+                                            ),
+                                            mkThunk(() => ("foobar")),
                                           ),
                                           ["", ["foo"], "bar"],
                                         ),
@@ -303,8 +328,11 @@ export default ((_withAttrs) => {
                                     })(
                                       operators.equal(
                                         apply(
-                                          apply(nixScope.split, "(fo{1,2})"),
-                                          "fooo",
+                                          apply(
+                                            nixScope.split,
+                                            mkThunk(() => ("(fo{1,2})")),
+                                          ),
+                                          mkThunk(() => ("fooo")),
                                         ),
                                         ["", ["foo"], "o"],
                                       ),
@@ -312,8 +340,11 @@ export default ((_withAttrs) => {
                                   })(
                                     operators.equal(
                                       apply(
-                                        apply(nixScope.split, "(fo{1,2})"),
-                                        "foo",
+                                        apply(
+                                          nixScope.split,
+                                          mkThunk(() => ("(fo{1,2})")),
+                                        ),
+                                        mkThunk(() => ("foo")),
                                       ),
                                       ["", ["foo"], ""],
                                     ),
@@ -321,8 +352,11 @@ export default ((_withAttrs) => {
                                 })(
                                   operators.equal(
                                     apply(
-                                      apply(nixScope.split, "(fo+)"),
-                                      "foo",
+                                      apply(
+                                        nixScope.split,
+                                        mkThunk(() => ("(fo+)")),
+                                      ),
+                                      mkThunk(() => ("foo")),
                                     ),
                                     ["", ["foo"], ""],
                                   ),
@@ -330,87 +364,136 @@ export default ((_withAttrs) => {
                               })(
                                 operators.equal(
                                   apply(
-                                    apply(nixScope.split, "(f)(o*)"),
-                                    "foo",
+                                    apply(
+                                      nixScope.split,
+                                      mkThunk(() => ("(f)(o*)")),
+                                    ),
+                                    mkThunk(() => ("foo")),
                                   ),
                                   ["", ["f", "oo"], ""],
                                 ),
                               );
                             })(
                               operators.equal(
-                                apply(apply(nixScope.split, "(f)(o*)"), "f"),
+                                apply(
+                                  apply(
+                                    nixScope.split,
+                                    mkThunk(() => ("(f)(o*)")),
+                                  ),
+                                  mkThunk(() => ("f")),
+                                ),
                                 ["", ["f", ""], ""],
                               ),
                             );
                           })(
                             operators.equal(
-                              apply(apply(nixScope.split, "(fo*)"), "fo"),
+                              apply(
+                                apply(nixScope.split, mkThunk(() => ("(fo*)"))),
+                                mkThunk(() => ("fo")),
+                              ),
                               ["", ["fo"], ""],
                             ),
                           );
                         })(
                           operators.equal(
-                            apply(apply(nixScope.split, "(fo+)"), "f"),
+                            apply(
+                              apply(nixScope.split, mkThunk(() => ("(fo+)"))),
+                              mkThunk(() => ("f")),
+                            ),
                             ["f"],
                           ),
                         );
                       })(
                         operators.equal(
-                          apply(apply(nixScope.split, "(fo*)"), "f"),
+                          apply(
+                            apply(nixScope.split, mkThunk(() => ("(fo*)"))),
+                            mkThunk(() => ("f")),
+                          ),
                           ["", ["f"], ""],
                         ),
                       );
                     })(
                       operators.equal(
-                        apply(apply(nixScope.split, "fo*"), "foobar"),
+                        apply(
+                          apply(nixScope.split, mkThunk(() => ("fo*"))),
+                          mkThunk(() => ("foobar")),
+                        ),
                         ["", [], "bar"],
                       ),
                     );
                   })(
                     operators.equal(
-                      apply(apply(nixScope.split, "fo{1,2}"), "fooo"),
+                      apply(
+                        apply(nixScope.split, mkThunk(() => ("fo{1,2}"))),
+                        mkThunk(() => ("fooo")),
+                      ),
                       ["", [], "o"],
                     ),
                   );
                 })(
                   operators.equal(
-                    apply(apply(nixScope.split, "fo{1,2}"), "foo"),
+                    apply(
+                      apply(nixScope.split, mkThunk(() => ("fo{1,2}"))),
+                      mkThunk(() => ("foo")),
+                    ),
                     ["", [], ""],
                   ),
                 );
               })(
-                operators.equal(apply(apply(nixScope.split, "fo+"), "foo"), [
-                  "",
-                  [],
-                  "",
-                ]),
+                operators.equal(
+                  apply(
+                    apply(nixScope.split, mkThunk(() => ("fo+"))),
+                    mkThunk(() => ("foo")),
+                  ),
+                  ["", [], ""],
+                ),
               );
             })(
-              operators.equal(apply(apply(nixScope.split, "fo*"), "foo"), [
-                "",
-                [],
-                "",
-              ]),
+              operators.equal(
+                apply(
+                  apply(nixScope.split, mkThunk(() => ("fo*"))),
+                  mkThunk(() => ("foo")),
+                ),
+                ["", [], ""],
+              ),
             );
           })(
-            operators.equal(apply(apply(nixScope.split, "fo*"), "fo"), [
-              "",
-              [],
-              "",
-            ]),
+            operators.equal(
+              apply(
+                apply(nixScope.split, mkThunk(() => ("fo*"))),
+                mkThunk(() => ("fo")),
+              ),
+              ["", [], ""],
+            ),
           );
-        })(operators.equal(apply(apply(nixScope.split, "fo+"), "f"), ["f"]));
+        })(
+          operators.equal(
+            apply(
+              apply(nixScope.split, mkThunk(() => ("fo+"))),
+              mkThunk(() => ("f")),
+            ),
+            ["f"],
+          ),
+        );
       })(
-        operators.equal(apply(apply(nixScope.split, "fo*"), "f"), ["", [], ""]),
+        operators.equal(
+          apply(
+            apply(nixScope.split, mkThunk(() => ("fo*"))),
+            mkThunk(() => ("f")),
+          ),
+          ["", [], ""],
+        ),
       );
     })(
-      operators.equal(apply(apply(nixScope.split, "foobar"), "foobar"), [
-        "",
-        [],
-        "",
-      ]),
+      operators.equal(
+        apply(
+          apply(nixScope.split, mkThunk(() => ("foobar"))),
+          mkThunk(() => ("foobar")),
+        ),
+        ["", [], ""],
+      ),
     );
   } finally {
     runtime.scopeStack.pop();
   }
-})(nixScope.builtins);
+})(runtime.withScope(nixScope, () => (nixScope.builtins)));

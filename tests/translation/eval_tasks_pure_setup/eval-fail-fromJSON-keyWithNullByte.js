@@ -1,8 +1,19 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-fromJSON-keyWithNullByte.nix";
 
-export default apply(nixScope.builtins["fromJSON"], `{"a\\u0000b": 1}`);
+export default apply(
+  nixScope.builtins["fromJSON"],
+  mkThunk(() => ('{"a\\u0000b": 1}')),
+);

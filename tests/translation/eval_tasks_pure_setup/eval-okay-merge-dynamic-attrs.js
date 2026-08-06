@@ -2,54 +2,56 @@ import {
   createRuntime,
   InterpolatedString,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-merge-dynamic-attrs.nix";
 const operators = runtime.operators;
 
-export default createScope((nixScope) => {
+export default createScope(nixScope, (nixScope) => {
   const obj = {};
-  obj.set1 = { "a": 1n };
-  obj.set1 = createScope((nixScope) => {
+  defGetter(obj, "set1", () => (createScope(nixScope, (nixScope) => {
     const obj = {};
-    {
-      const __k = new InterpolatedString(["", ""], [
-        () => (operators.add("b", "")),
-      ]);
-      if (__k !== null) obj[__k] = 2n;
-    }
+    defGetter(obj, "a", () => (1n));
     return obj;
-  });
-  obj.set2 = createScope((nixScope) => {
+  })));
+  defGetter(obj, "set1", () => (createScope(nixScope, (nixScope) => {
     const obj = {};
-    {
-      const __k = new InterpolatedString(["", ""], [
-        () => (operators.add("b", "")),
-      ]);
-      if (__k !== null) obj[__k] = 2n;
-    }
+    set(obj, [
+      new InterpolatedString(["", ""], [() => (operators.add("b", ""))]),
+    ], () => (2n));
     return obj;
-  });
-  obj.set2 = { "a": 1n };
-  if (obj["set3"] === undefined) obj["set3"] = {};
-  obj["set3"]["a"] = 1n;
-  if (obj["set3"] === undefined) obj["set3"] = {};
-  {
-    const __k = new InterpolatedString(["", ""], [
-      () => (operators.add("b", "")),
-    ]);
-    if (__k !== null) obj["set3"][__k] = 2n;
-  }
-  if (obj["set4"] === undefined) obj["set4"] = {};
-  {
-    const __k = new InterpolatedString(["", ""], [
-      () => (operators.add("b", "")),
-    ]);
-    if (__k !== null) obj["set4"][__k] = 2n;
-  }
-  if (obj["set4"] === undefined) obj["set4"] = {};
-  obj["set4"]["a"] = 1n;
+  })));
+  defGetter(obj, "set2", () => (createScope(nixScope, (nixScope) => {
+    const obj = {};
+    set(obj, [
+      new InterpolatedString(["", ""], [() => (operators.add("b", ""))]),
+    ], () => (2n));
+    return obj;
+  })));
+  defGetter(obj, "set2", () => (createScope(nixScope, (nixScope) => {
+    const obj = {};
+    defGetter(obj, "a", () => (1n));
+    return obj;
+  })));
+  set(obj, ["set3", "a"], () => (1n));
+  set(obj, [
+    "set3",
+    new InterpolatedString(["", ""], [() => (operators.add("b", ""))]),
+  ], () => (2n));
+  set(obj, [
+    "set4",
+    new InterpolatedString(["", ""], [() => (operators.add("b", ""))]),
+  ], () => (2n));
+  set(obj, ["set4", "a"], () => (1n));
   return obj;
 });

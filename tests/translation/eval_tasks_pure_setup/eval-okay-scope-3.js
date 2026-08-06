@@ -1,40 +1,64 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-scope-3.nix";
 
 export default (apply(
   apply(
     apply(
-      createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
-        createFunc(/*arg:*/ "as", null, {}, (nixScope) => (
-          createFunc({}, null, {}, (nixScope) => (
-            /*rec*/ createScope((nixScope) => {
-              nixScope.x = nixScope.as["x"];
-              defGetter(nixScope, "y", (nixScope) => nixScope.x);
-              const __result = {};
-              Object.defineProperty(__result, "x", {
-                enumerable: true,
-                get() {
-                  return nixScope.x;
-                },
-              });
-              Object.defineProperty(__result, "y", {
-                enumerable: true,
-                get() {
-                  return nixScope.y;
-                },
-              });
-              return __result;
-            })
-          ))
+      createFunc(/*arg:*/ "x", null, {}, nixScope, (nixScope) => (
+        createFunc(/*arg:*/ "as", null, {}, nixScope, (nixScope) => (
+          createFunc(
+            {},
+            null,
+            { args: { "x": false } },
+            nixScope,
+            (nixScope) => (
+              /*rec*/ createScope(nixScope, (nixScope) => {
+                defGetter(nixScope, "x", () => (nixScope.as["x"]));
+                defGetter(nixScope, "y", (nixScope) => (nixScope.x));
+                const __result = {};
+                Object.defineProperty(__result, "x", {
+                  enumerable: true,
+                  configurable: true,
+                  get() {
+                    return nixScope.x;
+                  },
+                });
+                Object.defineProperty(__result, "y", {
+                  enumerable: true,
+                  configurable: true,
+                  get() {
+                    return nixScope.y;
+                  },
+                });
+                return __result;
+              })
+            ),
+          )
         ))
       )),
-      2n,
+      mkThunk(() => (2n)),
     ),
-    { "x": 4n },
+    mkThunk(() => (createScope(nixScope, (nixScope) => {
+      const obj = {};
+      defGetter(obj, "x", () => (4n));
+      return obj;
+    }))),
   ),
-  { "x": 3n },
+  mkThunk(() => (createScope(nixScope, (nixScope) => {
+    const obj = {};
+    defGetter(obj, "x", () => (3n));
+    return obj;
+  }))),
 ))["y"];

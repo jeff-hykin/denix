@@ -1,4 +1,4 @@
-denix_eval: eval failed: Error: error: attribute 'key' required in genericClosure item
-    at genericClosure (file:///Users/jeffhykin/repos/denix/main/runtime.js:2703:31)
-    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:8:16
+denix: eval failed: Error: error: attribute 'key' required in genericClosure item
+    at genericClosure (file:///Users/jeffhykin/repos/denix/main/runtime.js:3692:31)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:466:20)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:16:16

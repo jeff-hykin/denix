@@ -1,5 +1,11 @@
-denix_eval: translation failed: Error: Dynamic attribute keys are not supported in rec sets
-    at nixNodeToJs (file:///Users/jeffhykin/repos/denix/translator.js:805:35)
-    at convertToJs (file:///Users/jeffhykin/repos/denix/translator.js:190:19)
-    at file:///Users/jeffhykin/repos/denix/run/denix_eval:109:24
-    at __drainNextTickAndMacrotasks (ext:core/01_core.js:439:7)
+denix: translation failed: Error: Dynamic attribute keys are not supported in rec sets
+    at nixNodeToJs (file:///Users/jeffhykin/repos/denix/translator.js:944:35)
+    at convertToJs (file:///Users/jeffhykin/repos/denix/translator.js:199:19)
+    at translateFile (file:///Users/jeffhykin/repos/denix/main/cli/denix.js:57:22)
+    at eventLoopTick (ext:core/01_core.js:179:7)
+    at async evaluateFile (file:///Users/jeffhykin/repos/denix/main/cli/denix.js:65:24)
+    at async l.actionHandler (file:///Users/jeffhykin/repos/denix/main/cli/denix.js:195:21)
+    at async l.execute (https://esm.sh/@jsr/cliffy__command@1.0.0-rc.7/denonext/command.mjs:17:8419)
+    at async l.parseCommand (https://esm.sh/@jsr/cliffy__command@1.0.0-rc.7/denonext/command.mjs:17:6135)
+    at async main (file:///Users/jeffhykin/repos/denix/main/cli/denix.js:341:5)
+    at async file:///Users/jeffhykin/repos/denix/main/cli/denix.js:356:5

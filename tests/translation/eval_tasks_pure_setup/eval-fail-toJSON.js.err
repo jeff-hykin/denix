@@ -1,8 +1,14 @@
-denix_eval: eval failed: Error: hah no
-    at throw (file:///Users/jeffhykin/repos/denix/main/runtime.js:1774:35)
-    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:20:25
-    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:118:24)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:17:7
-    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:118:24)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:10:3
+denix: eval failed: Error: hah no
+    at throw (file:///Users/jeffhykin/repos/denix/main/runtime.js:2356:35)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:466:20)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:32:20
+    at Object.get [as d] (file:///Users/jeffhykin/repos/denix/main/runtime.js:73:34)
+    at Object.toJSON (file:///Users/jeffhykin/repos/denix/main/runtime.js:933:78)
+    at Object.toJSON (file:///Users/jeffhykin/repos/denix/main/runtime.js:933:60)
+    at file:///Users/jeffhykin/repos/denix/main/runtime.js:916:70
+    at Array.map (<anonymous>)
+    at Object.toJSON (file:///Users/jeffhykin/repos/denix/main/runtime.js:916:49)
+    at Object.toJSON (file:///Users/jeffhykin/repos/denix/main/runtime.js:933:60)
+    at toJSON (file:///Users/jeffhykin/repos/denix/main/runtime.js:933:60)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:466:20)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:16:16

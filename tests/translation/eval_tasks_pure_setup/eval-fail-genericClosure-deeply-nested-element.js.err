@@ -1,9 +1,9 @@
-denix_eval: eval failed: Error: Import path does not exist: /var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/source_code/nix_lang/infinite-nesting.nix
-    at validateImportPath (file:///Users/jeffhykin/repos/denix/tools/import_resolver.js:114:15)
-    at loadAndEvaluateSync (file:///Users/jeffhykin/repos/denix/main/import_loader.js:211:5)
-    at Object.globalImportState.importFn (file:///Users/jeffhykin/repos/denix/main/runtime.js:2915:32)
-    at import (file:///Users/jeffhykin/repos/denix/main/runtime.js:1712:42)
-    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:37:23
-    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:118:24)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:11:24
+denix: eval failed: Error: error: attribute 'key' required in genericClosure item
+    at genericClosure (file:///Users/jeffhykin/repos/denix/main/runtime.js:3692:31)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:466:20)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:94:14
+    at force (file:///Users/jeffhykin/repos/denix/main/runtime.js:490:31)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:466:23)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:91:10
+    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:196:24)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:19:24

@@ -1,8 +1,0 @@
-denix_eval: eval failed: Error: error: evaluation aborted with the following error message: "context not discarded"
-    at abort (file:///Users/jeffhykin/repos/denix/main/runtime.js:1773:39)
-    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:27:12
-    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:2744:32)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:25:21
-    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:118:24)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:13:24

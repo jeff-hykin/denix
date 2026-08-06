@@ -1,4 +1,5 @@
-denix_eval: eval failed: Error: error: evaluation aborted with the following error message: "not ignored"
-    at abort (file:///Users/jeffhykin/repos/denix/main/runtime.js:1773:39)
-    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:22:20
+denix: eval failed: Error: assertion failed: {
+    foo = {
+      type = "derivation"
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:19:11
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:24:3

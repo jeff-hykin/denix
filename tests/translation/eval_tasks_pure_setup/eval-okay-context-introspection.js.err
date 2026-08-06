@@ -1,11 +1,9 @@
-denix_eval: eval failed: Error: error: cannot coerce path to a string
-    at InterpolatedString.toString (file:///Users/jeffhykin/repos/denix/main/runtime.js:197:35)
-    at InterpolatedString.toString (file:///Users/jeffhykin/repos/denix/main/runtime.js:200:35)
-    at unsafeDiscardStringContext (file:///Users/jeffhykin/repos/denix/main/runtime.js:2630:26)
-    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:79:11
-    at Object.get [as reconstructed-path] (file:///Users/jeffhykin/repos/denix/main/runtime.js:137:34)
-    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:112:48)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:41:7
-    at Object.get [as desired-context] (file:///Users/jeffhykin/repos/denix/main/runtime.js:137:34)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:157:58
+denix: eval failed: Error: Called builtins.typeOf, which only works with valid nix values, but instead got type undefined, with a value of: undefined 
+    at Object.typeOf (file:///Users/jeffhykin/repos/denix/main/runtime.js:776:31)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:471:101)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:228:11
+    at force (file:///Users/jeffhykin/repos/denix/main/runtime.js:490:31)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:466:23)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:223:5
+    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:196:24)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:21:24

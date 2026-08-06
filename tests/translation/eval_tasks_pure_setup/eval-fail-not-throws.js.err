@@ -1,4 +1,4 @@
-denix_eval: eval failed: Error: uh oh!
-    at throw (file:///Users/jeffhykin/repos/denix/main/runtime.js:1774:35)
-    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:9:33
+denix: eval failed: Error: uh oh!
+    at throw (file:///Users/jeffhykin/repos/denix/main/runtime.js:2356:35)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:466:20)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:18:3

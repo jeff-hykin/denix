@@ -1,19 +1,42 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-equal-function-attrset-distinct-similar.nix";
 const operators = runtime.operators;
 
 export default //
 //
-operators.equal({
-  "a": createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
-    nixScope.x
-  )),
-}, {
-  "a": createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
-    nixScope.x
-  )),
-});
+operators.equal(
+  createScope(nixScope, (nixScope) => {
+    const obj = {};
+    defGetter(
+      obj,
+      "a",
+      () => (createFunc(/*arg:*/ "x", null, {}, nixScope, (nixScope) => (
+        nixScope.x
+      ))),
+    );
+    return obj;
+  }),
+  createScope(nixScope, (nixScope) => {
+    const obj = {};
+    defGetter(
+      obj,
+      "a",
+      () => (createFunc(/*arg:*/ "x", null, {}, nixScope, (nixScope) => (
+        nixScope.x
+      ))),
+    );
+    return obj;
+  }),
+);

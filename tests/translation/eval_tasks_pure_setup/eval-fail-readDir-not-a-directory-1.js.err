@@ -1,5 +1,16 @@
-denix_eval: eval failed: NotADirectory: Not a directory (os error 20): readdir '/Users/jeffhykin/repos/denix/tests/translation/source_code/nix_lang/readDir/bar'
-    at Object.readDirSync (ext:deno_fs/30_fs.js:211:10)
-    at readDir (file:///Users/jeffhykin/repos/denix/main/runtime.js:2010:42)
-    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:12:18
+[0m[1m[31merror[0m: Uncaught (in promise) NotADirectory: Not a directory (os error 20): readdir '/Users/jeffhykin/repos/denix/tests/translation/source_code/nix_lang/readDir/bar'
+                for (const entry of Deno.readDirSync(absolutePath)) {
+[0m[31m                                         ^[0m
+    at [0m[1m[3mObject.readDirSync[0m ([0m[36mext:deno_fs/30_fs.js[0m:[0m[33m208[0m:[0m[33m10[0m)
+    at [0m[1m[3mreadDir[0m ([0m[36mfile:///Users/jeffhykin/repos/denix/main/runtime.js[0m:[0m[33m2601[0m:[0m[33m42[0m)
+    at [0m[1m[3mapply[0m ([0m[36mfile:///Users/jeffhykin/repos/denix/main/runtime.js[0m:[0m[33m466[0m:[0m[33m20[0m)
+    at [0m[36mfile:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js[0m:[0m[33m24[0m:[0m[33m12[0m
+    at [0m[1m[3mObject.get [as regularFile][0m ([0m[36mfile:///Users/jeffhykin/repos/denix/main/runtime.js[0m:[0m[33m242[0m:[0m[33m38[0m)
+    at [0m[36mfile:///Users/jeffhykin/repos/denix/main/runtime.js[0m:[0m[33m663[0m:[0m[33m64[0m
+    at [0m[1m[3mArray.map[0m ([0m[36m<anonymous>[0m)
+    at [0m[1m[3mnixRepr[0m ([0m[36mfile:///Users/jeffhykin/repos/denix/main/runtime.js[0m:[0m[33m663[0m:[0m[33m32[0m)
+    at [0m[1m[3ml.actionHandler[0m ([0m[36mfile:///Users/jeffhykin/repos/denix/main/cli/denix.js[0m:[0m[33m202[0m:[0m[33m15[0m)
+    at async [0m[1m[3ml.execute[0m ([0m[36mhttps://esm.sh/@jsr/cliffy__command@1.0.0-rc.7/denonext/command.mjs[0m:[0m[33m17[0m:[0m[33m8419[0m)
+    at async [0m[1m[3ml.parseCommand[0m ([0m[36mhttps://esm.sh/@jsr/cliffy__command@1.0.0-rc.7/denonext/command.mjs[0m:[0m[33m17[0m:[0m[33m6135[0m)
+    at async [0m[1m[3mmain[0m ([0m[36mfile:///Users/jeffhykin/repos/denix/main/cli/denix.js[0m:[0m[33m341[0m:[0m[33m5[0m)
+    at async [0m[36mfile:///Users/jeffhykin/repos/denix/main/cli/denix.js[0m:[0m[33m356[0m:[0m[33m5[0m

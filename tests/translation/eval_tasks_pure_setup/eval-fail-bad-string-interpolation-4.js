@@ -2,61 +2,125 @@ import {
   createRuntime,
   InterpolatedString,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-bad-string-interpolation-4.nix";
 
-export default /*let*/ createScope((nixScope) => {
+export default /*let*/ createScope(nixScope, (nixScope) => {
   defGetter(
     nixScope,
     "ha",
-    (nixScope) =>
-      createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
-        createFunc(/*arg:*/ "y", null, {}, (nixScope) => (
-          {
-            "a": apply(nixScope.x, nixScope.y),
-            "b": apply(nixScope.x, nixScope.y),
-            "c": apply(nixScope.x, nixScope.y),
-            "d": apply(nixScope.x, nixScope.y),
-            "e": apply(nixScope.x, nixScope.y),
-            "f": apply(nixScope.x, nixScope.y),
-            "g": apply(nixScope.x, nixScope.y),
-            "h": apply(nixScope.x, nixScope.y),
-            "j": apply(nixScope.x, nixScope.y),
-          }
-        ))
-      )),
+    (nixScope) => (createFunc(/*arg:*/ "x", null, {}, nixScope, (nixScope) => (
+      createFunc(/*arg:*/ "y", null, {}, nixScope, (nixScope) => (
+        createScope(nixScope, (nixScope) => {
+          const obj = {};
+          defGetter(
+            obj,
+            "a",
+            () => (apply(nixScope.x, mkThunk(() => (nixScope.y)))),
+          );
+          defGetter(
+            obj,
+            "b",
+            () => (apply(nixScope.x, mkThunk(() => (nixScope.y)))),
+          );
+          defGetter(
+            obj,
+            "c",
+            () => (apply(nixScope.x, mkThunk(() => (nixScope.y)))),
+          );
+          defGetter(
+            obj,
+            "d",
+            () => (apply(nixScope.x, mkThunk(() => (nixScope.y)))),
+          );
+          defGetter(
+            obj,
+            "e",
+            () => (apply(nixScope.x, mkThunk(() => (nixScope.y)))),
+          );
+          defGetter(
+            obj,
+            "f",
+            () => (apply(nixScope.x, mkThunk(() => (nixScope.y)))),
+          );
+          defGetter(
+            obj,
+            "g",
+            () => (apply(nixScope.x, mkThunk(() => (nixScope.y)))),
+          );
+          defGetter(
+            obj,
+            "h",
+            () => (apply(nixScope.x, mkThunk(() => (nixScope.y)))),
+          );
+          defGetter(
+            obj,
+            "j",
+            () => (apply(nixScope.x, mkThunk(() => (nixScope.y)))),
+          );
+          return obj;
+        })
+      ))
+    ))),
   );
   defGetter(
     nixScope,
     "has",
-    (nixScope) =>
+    (
+      nixScope,
+    ) => (apply(
       apply(
-        apply(
-          nixScope.ha,
-          apply(
+        nixScope.ha,
+        mkThunk(
+          () => (apply(
             nixScope.ha,
-            apply(
-              nixScope.ha,
-              apply(
+            mkThunk(
+              () => (apply(
                 nixScope.ha,
-                createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
-                  nixScope.x
-                )),
-              ),
+                mkThunk(
+                  () => (apply(
+                    nixScope.ha,
+                    mkThunk(
+                      () => (createFunc(
+                        /*arg:*/ "x",
+                        null,
+                        {},
+                        nixScope,
+                        (nixScope) => (
+                          nixScope.x
+                        ),
+                      ))
+                    ),
+                  ))
+                ),
+              ))
             ),
-          ),
+          ))
         ),
-        "ha",
       ),
+      mkThunk(() => ("ha")),
+    )),
   );
   defGetter(
     nixScope,
     "pkgs",
-    (nixScope) =>
-      apply(apply(nixScope.builtins["deepSeq"], nixScope.has), nixScope.has),
+    (
+      nixScope,
+    ) => (apply(
+      apply(nixScope.builtins["deepSeq"], mkThunk(() => (nixScope.has))),
+      mkThunk(() => (nixScope.has)),
+    )),
   );
   return (new InterpolatedString(["", ""], [() => (nixScope.pkgs)]));
 });

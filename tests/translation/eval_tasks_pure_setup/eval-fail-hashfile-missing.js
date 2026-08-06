@@ -2,36 +2,69 @@ import {
   createRuntime,
   Path,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-hashfile-missing.nix";
 
-export default /*let*/ createScope((nixScope) => {
-  nixScope.paths = [
-    new Path(["./this-file-is-definitely-not-there-7392097"], []),
-    "/and/neither/is/this/37293620",
-  ];
+export default /*let*/ createScope(nixScope, (nixScope) => {
+  defGetter(
+    nixScope,
+    "paths",
+    (
+      nixScope,
+    ) => [
+      new Path([
+        "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/this-file-is-definitely-not-there-7392097",
+      ], []),
+      "/and/neither/is/this/37293620",
+    ],
+  );
   return apply(
     nixScope.toString,
-    apply(
-      nixScope.builtins["concatLists"],
-      apply(
-        apply(
-          nixScope.map,
-          createFunc(/*arg:*/ "hash", null, {}, (nixScope) => (
+    mkThunk(
+      () => (apply(
+        nixScope.builtins["concatLists"],
+        mkThunk(
+          () => (apply(
             apply(
-              apply(
-                nixScope.map,
-                apply(nixScope.builtins["hashFile"], nixScope.hash),
+              nixScope.map,
+              mkThunk(
+                () => (createFunc(
+                  /*arg:*/ "hash",
+                  null,
+                  {},
+                  nixScope,
+                  (nixScope) => (
+                    apply(
+                      apply(
+                        nixScope.map,
+                        mkThunk(
+                          () => (apply(
+                            nixScope.builtins["hashFile"],
+                            mkThunk(() => (nixScope.hash)),
+                          ))
+                        ),
+                      ),
+                      mkThunk(() => (nixScope.paths)),
+                    )
+                  ),
+                ))
               ),
-              nixScope.paths,
-            )
-          )),
+            ),
+            mkThunk(() => ["md5", "sha1", "sha256", "sha512"]),
+          ))
         ),
-        ["md5", "sha1", "sha256", "sha512"],
-      ),
+      ))
     ),
   );
 });

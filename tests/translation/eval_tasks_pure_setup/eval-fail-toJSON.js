@@ -1,26 +1,40 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-toJSON.nix";
 
 export default apply(
   nixScope.builtins["toJSON"],
-  createScope((nixScope) => {
+  mkThunk(() => (createScope(nixScope, (nixScope) => {
     const obj = {};
-    if (obj["a"] === undefined) obj["a"] = {};
-    obj["a"]["b"] = [
-      true,
-      false,
-      "it's a bird",
-      createScope((nixScope) => {
-        const obj = {};
-        if (obj["c"] === undefined) obj["c"] = {};
-        obj["c"]["d"] = apply(nixScope.throw, "hah no");
-        return obj;
-      }),
-    ];
+    set(
+      obj,
+      ["a", "b"],
+      () => [
+        true,
+        false,
+        "it's a bird",
+        createScope(nixScope, (nixScope) => {
+          const obj = {};
+          set(
+            obj,
+            ["c", "d"],
+            () => (apply(nixScope.throw, mkThunk(() => ("hah no")))),
+          );
+          return obj;
+        }),
+      ],
+    );
     return obj;
-  }),
+  }))),
 );

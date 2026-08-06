@@ -107,9 +107,8 @@ Deno.test("fetchGit - shallow clone", async () => {
 
         // Shallow clone should still return valid metadata
         assertExists(result.rev);
-        assertEquals(typeof result.revCount, "bigint");
-        // Note: revCount for shallow clone will be 1
-        assertEquals(result.revCount, 1n);
+        // Shallow fetches omit revCount entirely (like Nix)
+        assertEquals(result.revCount, undefined);
     } catch (error) {
         if (!error.message.includes("git clone failed") &&
             !error.message.includes("network")) {

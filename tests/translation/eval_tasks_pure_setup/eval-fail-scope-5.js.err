@@ -1,0 +1,14 @@
+denix: eval failed: Error: error: infinite recursion encountered
+    at Object.get [as x] (file:///Users/jeffhykin/repos/denix/main/runtime.js:70:44)
+    at y (file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:25:73)
+    at file:///Users/jeffhykin/repos/denix/main/runtime.js:159:61
+    at Object.get [as y] (file:///Users/jeffhykin/repos/denix/main/runtime.js:73:34)
+    at x (file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:25:40)
+    at file:///Users/jeffhykin/repos/denix/main/runtime.js:159:61
+    at Object.get [as x] (file:///Users/jeffhykin/repos/denix/main/runtime.js:73:34)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:30:34
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:167:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:34:10
+    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:196:24)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:17:24

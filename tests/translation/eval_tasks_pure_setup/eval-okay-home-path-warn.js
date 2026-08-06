@@ -2,16 +2,26 @@ import {
   createRuntime,
   Path,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-home-path-warn.nix";
 
 export default apply(
   nixScope.builtins["isPath"],
-  new Path([
-    (typeof Deno !== "undefined" ? Deno.env.get("HOME") : process.env.HOME) +
-    "/foo",
-  ], []),
+  mkThunk(
+    () => (new Path([
+      (typeof Deno !== "undefined" ? Deno.env.get("HOME") : process.env.HOME) +
+      "/foo",
+    ], []))
+  ),
 );

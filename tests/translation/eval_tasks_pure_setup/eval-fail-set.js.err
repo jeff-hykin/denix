@@ -1,3 +1,3 @@
-denix_eval: eval failed: Error: error: attempt to call something which is not a function but float
-    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3025:19)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:8:16
+denix: eval failed: Error: error: attempt to call something which is not a function but float
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:471:15)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:16:16

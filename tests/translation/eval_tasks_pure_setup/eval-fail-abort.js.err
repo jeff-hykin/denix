@@ -1,6 +1,6 @@
-denix_eval: eval failed: Error: error: evaluation aborted with the following error message: "this should fail"
-    at abort (file:///Users/jeffhykin/repos/denix/main/runtime.js:1773:39)
-    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:11:10
-    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:2744:32)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:9:27
+denix: eval failed: Error: error: evaluation aborted with the following error message: "this should fail"
+    at abort (file:///Users/jeffhykin/repos/denix/main/runtime.js:2355:39)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:466:20)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:19:10
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:17:27

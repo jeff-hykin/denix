@@ -1,33 +1,49 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-regex-match.nix";
 const operators = runtime.operators;
 
-export default ((_withAttrs) => {
-  const nixScope = { ...runtime.scopeStack.slice(-1)[0], ..._withAttrs };
+export default ((nixScope) => {
   runtime.scopeStack.push(nixScope);
   try {
-    return /*let*/ createScope((nixScope) => {
+    return /*let*/ createScope(nixScope, (nixScope) => {
       defGetter(
         nixScope,
         "matches",
-        (nixScope) =>
-          createFunc(/*arg:*/ "pat", null, {}, (nixScope) => (
-            createFunc(/*arg:*/ "s", null, {}, (nixScope) => (
-              operators.notEqual(
-                apply(apply(nixScope.match, nixScope.pat), nixScope.s),
-                null,
-              )
-            ))
-          )),
+        (
+          nixScope,
+        ) => (createFunc(/*arg:*/ "pat", null, {}, nixScope, (nixScope) => (
+          createFunc(/*arg:*/ "s", null, {}, nixScope, (nixScope) => (
+            operators.notEqual(
+              apply(
+                apply(nixScope.match, mkThunk(() => (nixScope.pat))),
+                mkThunk(() => (nixScope.s)),
+              ),
+              null,
+            )
+          ))
+        ))),
       );
       defGetter(
         nixScope,
         "splitFN",
-        (nixScope) => apply(nixScope.match, "((.*)/)?([^/]*)\\.(nix|cc)"),
+        (
+          nixScope,
+        ) => (apply(
+          nixScope.match,
+          mkThunk(() => ("((.*)/)?([^/]*)\\.(nix|cc)")),
+        )),
       );
       return ((_cond) => {
         if (!_cond) {
@@ -118,7 +134,10 @@ export default ((_withAttrs) => {
                                     return true;
                                   })(
                                     operators.equal(
-                                      apply(nixScope.splitFN, "foobar.cc"),
+                                      apply(
+                                        nixScope.splitFN,
+                                        mkThunk(() => ("foobar.cc")),
+                                      ),
                                       [null, null, "foobar", "cc"],
                                     ),
                                   );
@@ -126,7 +145,7 @@ export default ((_withAttrs) => {
                                   operators.equal(
                                     apply(
                                       nixScope.splitFN,
-                                      "/path/to/foobar.nix",
+                                      mkThunk(() => ("/path/to/foobar.nix")),
                                     ),
                                     ["/path/to/", "/path/to", "foobar", "nix"],
                                   ),
@@ -136,9 +155,11 @@ export default ((_withAttrs) => {
                                   apply(
                                     apply(
                                       nixScope.match,
-                                      "[[:space:]]+([[:upper:]]+)[[:space:]]+",
+                                      mkThunk(
+                                        () => ("[[:space:]]+([[:upper:]]+)[[:space:]]+")
+                                      ),
                                     ),
-                                    "  FOO   ",
+                                    mkThunk(() => ("  FOO   ")),
                                   ),
                                   ["FOO"],
                                 ),
@@ -146,8 +167,11 @@ export default ((_withAttrs) => {
                             })(
                               operators.equal(
                                 apply(
-                                  apply(nixScope.match, "(.*)\\.nix"),
-                                  "foobar.nix",
+                                  apply(
+                                    nixScope.match,
+                                    mkThunk(() => ("(.*)\\.nix")),
+                                  ),
+                                  mkThunk(() => ("foobar.nix")),
                                 ),
                                 ["foobar"],
                               ),
@@ -157,9 +181,11 @@ export default ((_withAttrs) => {
                               apply(
                                 apply(
                                   nixScope.matches,
-                                  "[[:space:]]+([[:upper:]]+)[[:space:]]+",
+                                  mkThunk(
+                                    () => ("[[:space:]]+([[:upper:]]+)[[:space:]]+")
+                                  ),
                                 ),
-                                "  foo   ",
+                                mkThunk(() => ("  foo   ")),
                               ),
                             ),
                           );
@@ -167,30 +193,75 @@ export default ((_withAttrs) => {
                           apply(
                             apply(
                               nixScope.matches,
-                              "[[:space:]]+([^[:space:]]+)[[:space:]]+",
+                              mkThunk(
+                                () => ("[[:space:]]+([^[:space:]]+)[[:space:]]+")
+                              ),
                             ),
-                            "  foo   ",
+                            mkThunk(() => ("  foo   ")),
                           ),
                         );
                       })(
                         operators.negate(
-                          apply(apply(nixScope.matches, "fo*"), "foobar"),
+                          apply(
+                            apply(nixScope.matches, mkThunk(() => ("fo*"))),
+                            mkThunk(() => ("foobar")),
+                          ),
                         ),
                       );
                     })(
                       operators.negate(
-                        apply(apply(nixScope.matches, "fo{1,2}"), "fooo"),
+                        apply(
+                          apply(nixScope.matches, mkThunk(() => ("fo{1,2}"))),
+                          mkThunk(() => ("fooo")),
+                        ),
                       ),
                     );
-                  })(apply(apply(nixScope.matches, "fo{1,2}"), "foo"));
-                })(apply(apply(nixScope.matches, "fo+"), "foo"));
-              })(apply(apply(nixScope.matches, "fo*"), "foo"));
-            })(apply(apply(nixScope.matches, "fo*"), "fo"));
-          })(operators.negate(apply(apply(nixScope.matches, "fo+"), "f")));
-        })(apply(apply(nixScope.matches, "fo*"), "f"));
-      })(apply(apply(nixScope.matches, "foobar"), "foobar"));
+                  })(
+                    apply(
+                      apply(nixScope.matches, mkThunk(() => ("fo{1,2}"))),
+                      mkThunk(() => ("foo")),
+                    ),
+                  );
+                })(
+                  apply(
+                    apply(nixScope.matches, mkThunk(() => ("fo+"))),
+                    mkThunk(() => ("foo")),
+                  ),
+                );
+              })(
+                apply(
+                  apply(nixScope.matches, mkThunk(() => ("fo*"))),
+                  mkThunk(() => ("foo")),
+                ),
+              );
+            })(
+              apply(
+                apply(nixScope.matches, mkThunk(() => ("fo*"))),
+                mkThunk(() => ("fo")),
+              ),
+            );
+          })(
+            operators.negate(
+              apply(
+                apply(nixScope.matches, mkThunk(() => ("fo+"))),
+                mkThunk(() => ("f")),
+              ),
+            ),
+          );
+        })(
+          apply(
+            apply(nixScope.matches, mkThunk(() => ("fo*"))),
+            mkThunk(() => ("f")),
+          ),
+        );
+      })(
+        apply(
+          apply(nixScope.matches, mkThunk(() => ("foobar"))),
+          mkThunk(() => ("foobar")),
+        ),
+      );
     });
   } finally {
     runtime.scopeStack.pop();
   }
-})(nixScope.builtins);
+})(runtime.withScope(nixScope, () => (nixScope.builtins)));

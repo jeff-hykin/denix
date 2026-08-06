@@ -1,10 +1,19 @@
-denix_eval: eval failed: Error: nope
-    at throw (file:///Users/jeffhykin/repos/denix/main/runtime.js:1774:35)
-    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:9:42
-    at Object.get [as a] (file:///Users/jeffhykin/repos/denix/main/runtime.js:137:34)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:16:18
-    at Object.get [as b] (file:///Users/jeffhykin/repos/denix/main/runtime.js:137:34)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:40:52
-    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:118:24)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:8:24
+denix: eval failed: Error: nope
+    at throw (file:///Users/jeffhykin/repos/denix/main/runtime.js:2356:35)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:466:20)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:20:20
+    at Object.get [as a] (file:///Users/jeffhykin/repos/denix/main/runtime.js:242:38)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:49:31
+    at force (file:///Users/jeffhykin/repos/denix/main/runtime.js:490:31)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:466:23)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:47:11
+    at Object.get [as d] (file:///Users/jeffhykin/repos/denix/main/runtime.js:242:38)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:70:33
+    at force (file:///Users/jeffhykin/repos/denix/main/runtime.js:490:31)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:466:23)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:60:14
+    at force (file:///Users/jeffhykin/repos/denix/main/runtime.js:490:31)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:466:23)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:52:10
+    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:196:24)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:16:24

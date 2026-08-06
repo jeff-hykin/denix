@@ -1,23 +1,27 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-attrs4.nix";
 const operators = runtime.operators;
 
-export default /*let*/ createScope((nixScope) => {
-  nixScope.as = createScope((nixScope) => {
+export default /*let*/ createScope(nixScope, (nixScope) => {
+  defGetter(nixScope, "as", (nixScope) => (createScope(nixScope, (nixScope) => {
     const obj = {};
-    if (obj["x"] === undefined) obj["x"] = {};
-    if (obj["x"]["y"] === undefined) obj["x"]["y"] = {};
-    obj["x"]["y"]["z"] = 123n;
-    if (obj["a"] === undefined) obj["a"] = {};
-    if (obj["a"]["b"] === undefined) obj["a"]["b"] = {};
-    obj["a"]["b"]["c"] = 456n;
+    set(obj, ["x", "y", "z"], () => (123n));
+    set(obj, ["a", "b", "c"], () => (456n));
     return obj;
-  });
-  defGetter(nixScope, "bs", (nixScope) => null);
+  })));
+  defGetter(nixScope, "bs", (nixScope) => (null));
   return [
     operators.hasAttr(nixScope.as, "x"),
     operators.hasAttr(nixScope.as, "y"),

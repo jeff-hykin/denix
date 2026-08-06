@@ -1,9 +1,7 @@
-denix_eval: eval failed: Error: Called builtins.typeOf, which only works with valid nix values, but instead got type undefined, with a value of: undefined 
-    at Object.typeOf (file:///Users/jeffhykin/repos/denix/main/runtime.js:385:31)
-    at requireAttrSet (file:///Users/jeffhykin/repos/denix/main/runtime.js:230:62)
-    at Object.merge (file:///Users/jeffhykin/repos/denix/main/runtime.js:2798:13)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:10:52
-    at Object.get [as a] (file:///Users/jeffhykin/repos/denix/main/runtime.js:137:34)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:11:19
-    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:118:24)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:9:24
+denix: eval failed: Error: error: infinite recursion encountered
+    at Object.get [as a] (file:///Users/jeffhykin/repos/denix/main/runtime.js:239:48)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:18:72
+    at Object.get [as a] (file:///Users/jeffhykin/repos/denix/main/runtime.js:242:38)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:19:19
+    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:196:24)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:17:24

@@ -1,0 +1,1 @@
+{ bar = "hello"; foo = 42; }

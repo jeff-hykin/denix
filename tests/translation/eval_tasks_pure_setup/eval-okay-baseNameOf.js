@@ -2,11 +2,19 @@ import {
   createRuntime,
   Path,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-baseNameOf.nix";
 const operators = runtime.operators;
 
 export default ((_cond) => {
@@ -173,9 +181,10 @@ export default ((_cond) => {
                                                     operators.equal(
                                                       apply(
                                                         nixScope.baseNameOf,
-                                                        new Path(
-                                                          ["./foo/bar"],
-                                                          [],
+                                                        mkThunk(
+                                                          () => (new Path([
+                                                            "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/foo/bar",
+                                                          ], []))
                                                         ),
                                                       ),
                                                       "bar",
@@ -185,7 +194,11 @@ export default ((_cond) => {
                                                   operators.equal(
                                                     apply(
                                                       nixScope.baseNameOf,
-                                                      new Path(["./foo"], []),
+                                                      mkThunk(
+                                                        () => (new Path([
+                                                          "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/foo",
+                                                        ], []))
+                                                      ),
                                                     ),
                                                     "foo",
                                                   ),
@@ -194,7 +207,7 @@ export default ((_cond) => {
                                                 operators.equal(
                                                   apply(
                                                     nixScope.baseNameOf,
-                                                    "a//",
+                                                    mkThunk(() => ("a//")),
                                                   ),
                                                   "",
                                                 ),
@@ -203,20 +216,26 @@ export default ((_cond) => {
                                               operators.equal(
                                                 apply(
                                                   nixScope.baseNameOf,
-                                                  "a//b",
+                                                  mkThunk(() => ("a//b")),
                                                 ),
                                                 "b",
                                               ),
                                             );
                                           })(
                                             operators.equal(
-                                              apply(nixScope.baseNameOf, "C:a"),
+                                              apply(
+                                                nixScope.baseNameOf,
+                                                mkThunk(() => ("C:a")),
+                                              ),
                                               "C:a",
                                             ),
                                           );
                                         })(
                                           operators.equal(
-                                            apply(nixScope.baseNameOf, "a\\b"),
+                                            apply(
+                                              nixScope.baseNameOf,
+                                              mkThunk(() => ("a\\b")),
+                                            ),
                                             "a\\b",
                                           ),
                                         );
@@ -224,69 +243,124 @@ export default ((_cond) => {
                                         operators.equal(
                                           apply(
                                             nixScope.baseNameOf,
-                                            "a/b/c/d.",
+                                            mkThunk(() => ("a/b/c/d.")),
                                           ),
                                           "d.",
                                         ),
                                       );
                                     })(
                                       operators.equal(
-                                        apply(nixScope.baseNameOf, "a/b/c/d"),
+                                        apply(
+                                          nixScope.baseNameOf,
+                                          mkThunk(() => ("a/b/c/d")),
+                                        ),
                                         "d",
                                       ),
                                     );
                                   })(
                                     operators.equal(
-                                      apply(nixScope.baseNameOf, "a/b/c.."),
+                                      apply(
+                                        nixScope.baseNameOf,
+                                        mkThunk(() => ("a/b/c..")),
+                                      ),
                                       "c..",
                                     ),
                                   );
                                 })(
                                   operators.equal(
-                                    apply(nixScope.baseNameOf, "a/b/c."),
+                                    apply(
+                                      nixScope.baseNameOf,
+                                      mkThunk(() => ("a/b/c.")),
+                                    ),
                                     "c.",
                                   ),
                                 );
                               })(
                                 operators.equal(
-                                  apply(nixScope.baseNameOf, "a/b/c"),
+                                  apply(
+                                    nixScope.baseNameOf,
+                                    mkThunk(() => ("a/b/c")),
+                                  ),
                                   "c",
                                 ),
                               );
                             })(
                               operators.equal(
-                                apply(nixScope.baseNameOf, "a/b.."),
+                                apply(
+                                  nixScope.baseNameOf,
+                                  mkThunk(() => ("a/b..")),
+                                ),
                                 "b..",
                               ),
                             );
                           })(
                             operators.equal(
-                              apply(nixScope.baseNameOf, "a/b."),
+                              apply(
+                                nixScope.baseNameOf,
+                                mkThunk(() => ("a/b.")),
+                              ),
                               "b.",
                             ),
                           );
                         })(
                           operators.equal(
-                            apply(nixScope.baseNameOf, "a/b"),
+                            apply(nixScope.baseNameOf, mkThunk(() => ("a/b"))),
                             "b",
                           ),
                         );
                       })(
                         operators.equal(
-                          apply(nixScope.baseNameOf, "a/.."),
+                          apply(nixScope.baseNameOf, mkThunk(() => ("a/.."))),
                           "..",
                         ),
                       );
-                    })(operators.equal(apply(nixScope.baseNameOf, "a/."), "."));
-                  })(operators.equal(apply(nixScope.baseNameOf, "a/"), "a"));
+                    })(
+                      operators.equal(
+                        apply(nixScope.baseNameOf, mkThunk(() => ("a/."))),
+                        ".",
+                      ),
+                    );
+                  })(
+                    operators.equal(
+                      apply(nixScope.baseNameOf, mkThunk(() => ("a/"))),
+                      "a",
+                    ),
+                  );
                 })(
-                  operators.equal(apply(nixScope.baseNameOf, "a.b.."), "a.b.."),
+                  operators.equal(
+                    apply(nixScope.baseNameOf, mkThunk(() => ("a.b.."))),
+                    "a.b..",
+                  ),
                 );
-              })(operators.equal(apply(nixScope.baseNameOf, "a.b."), "a.b."));
-            })(operators.equal(apply(nixScope.baseNameOf, "a.b"), "a.b"));
-          })(operators.equal(apply(nixScope.baseNameOf, "a.."), "a.."));
-        })(operators.equal(apply(nixScope.baseNameOf, "a."), "a."));
-      })(operators.equal(apply(nixScope.baseNameOf, "a"), "a"));
-    })(operators.equal(apply(nixScope.baseNameOf, ".."), ".."));
-  })(operators.equal(apply(nixScope.baseNameOf, "."), "."));
-})(operators.equal(apply(nixScope.baseNameOf, ""), ""));
+              })(
+                operators.equal(
+                  apply(nixScope.baseNameOf, mkThunk(() => ("a.b."))),
+                  "a.b.",
+                ),
+              );
+            })(
+              operators.equal(
+                apply(nixScope.baseNameOf, mkThunk(() => ("a.b"))),
+                "a.b",
+              ),
+            );
+          })(
+            operators.equal(
+              apply(nixScope.baseNameOf, mkThunk(() => ("a.."))),
+              "a..",
+            ),
+          );
+        })(
+          operators.equal(
+            apply(nixScope.baseNameOf, mkThunk(() => ("a."))),
+            "a.",
+          ),
+        );
+      })(
+        operators.equal(apply(nixScope.baseNameOf, mkThunk(() => ("a"))), "a"),
+      );
+    })(
+      operators.equal(apply(nixScope.baseNameOf, mkThunk(() => (".."))), ".."),
+    );
+  })(operators.equal(apply(nixScope.baseNameOf, mkThunk(() => ("."))), "."));
+})(operators.equal(apply(nixScope.baseNameOf, mkThunk(() => (""))), ""));

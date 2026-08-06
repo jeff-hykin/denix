@@ -1,7 +1,4 @@
-denix_eval: eval failed: Error: Called builtins.typeOf, which only works with valid nix values, but instead got type undefined, with a value of: undefined 
-    at Object.typeOf (file:///Users/jeffhykin/repos/denix/main/runtime.js:385:31)
-    at Object.add (file:///Users/jeffhykin/repos/denix/main/runtime.js:2754:36)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:11:29
-    at file:///Users/jeffhykin/repos/denix/main/runtime.js:99:28
-    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:9:16
+denix: eval failed: Error: error: function called without required argument 'y'
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:135:39)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:17:16

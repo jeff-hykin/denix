@@ -1,1 +1,1 @@
-export default `a\nb`;
+export default "a\nb";

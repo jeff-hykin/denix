@@ -1,10 +1,10 @@
-// run_denix_build.js — spawn `run/denix_build` and capture its output.
+// run_denix_build.js — spawn `denix build` and capture its output.
 //
 // Returns { stdout, stderr, code, outputPaths }.
 // stdout contains the output path(s), one per line.
 
 const decoder = new TextDecoder()
-const denixBuildPath = new URL("../../../../run/denix_build", import.meta.url).pathname
+const denixCliPath = new URL("../../../../main/cli/denix.js", import.meta.url).pathname
 
 export async function runDenixBuild(args, opts = {}) {
     const env = { ...(opts.env || {}) }
@@ -26,7 +26,7 @@ export async function runDenixBuild(args, opts = {}) {
     }
 
     const cmdOpts = {
-        args: ["run", "--allow-all", "--quiet", denixBuildPath, ...args],
+        args: ["run", "--allow-all", "--quiet", denixCliPath, "build", ...args],
         env,
         clearEnv: true,
         stdout: "piped",

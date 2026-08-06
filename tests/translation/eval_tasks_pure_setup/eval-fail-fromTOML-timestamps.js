@@ -1,140 +1,21 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-fromTOML-timestamps.nix";
 
 export default apply(
   nixScope.builtins["fromTOML"],
-  `
-  key = "value"
-  bare_key = "value"
-  bare-key = "value"
-  1234 = "value"
-
-  "127.0.0.1" = "value"
-  "character encoding" = "value"
-  "ʎǝʞ" = "value"
-  'key2' = "value"
-  'quoted "value"' = "value"
-
-  name = "Orange"
-
-  physical.color = "orange"
-  physical.shape = "round"
-  site."google.com" = true
-
-  # This is legal according to the spec, but cpptoml doesn't handle it.
-  #a.b.c = 1
-  #a.d = 2
-
-  str = "I'm a string. \\"You can quote me\\". Name\\tJos\\u00E9\\nLocation\\tSF."
-
-  int1 = +99
-  int2 = 42
-  int3 = 0
-  int4 = -17
-  int5 = 1_000
-  int6 = 5_349_221
-  int7 = 1_2_3_4_5
-
-  hex1 = 0xDEADBEEF
-  hex2 = 0xdeadbeef
-  hex3 = 0xdead_beef
-
-  oct1 = 0o01234567
-  oct2 = 0o755
-
-  bin1 = 0b11010110
-
-  flt1 = +1.0
-  flt2 = 3.1415
-  flt3 = -0.01
-  flt4 = 5e+22
-  flt5 = 1e6
-  flt6 = -2E-2
-  flt7 = 6.626e-34
-  flt8 = 9_224_617.445_991_228_313
-
-  bool1 = true
-  bool2 = false
-
-  odt1 = 1979-05-27T07:32:00Z
-  odt2 = 1979-05-27T00:32:00-07:00
-  odt3 = 1979-05-27T00:32:00.999999-07:00
-  odt4 = 1979-05-27 07:32:00Z
-  ldt1 = 1979-05-27T07:32:00
-  ldt2 = 1979-05-27T00:32:00.999999
-  ld1 = 1979-05-27
-  lt1 = 07:32:00
-  lt2 = 00:32:00.999999
-
-  arr1 = [ 1, 2, 3 ]
-  arr2 = [ "red", "yellow", "green" ]
-  arr3 = [ [ 1, 2 ], [3, 4, 5] ]
-  arr4 = [ "all", 'strings', """are the same""", '''type''']
-  arr5 = [ [ 1, 2 ], ["a", "b", "c"] ]
-
-  arr7 = [
-    1, 2, 3
-  ]
-
-  arr8 = [
-    1,
-    2, # this is ok
-  ]
-
-  [table-1]
-  key1 = "some string"
-  key2 = 123
-
-
-  [table-2]
-  key1 = "another string"
-  key2 = 456
-
-  [dog."tater.man"]
-  type.name = "pug"
-
-  [a.b.c]
-  [ d.e.f ]
-  [ g .  h  . i ]
-  [ j . "ʞ" . 'l' ]
-  [x.y.z.w]
-
-  name = { first = "Tom", last = "Preston-Werner" }
-  point = { x = 1, y = 2 }
-  animal = { type.name = "pug" }
-
-  [[products]]
-  name = "Hammer"
-  sku = 738594937
-
-  [[products]]
-
-  [[products]]
-  name = "Nail"
-  sku = 284758393
-  color = "gray"
-
-  [[fruit]]
-    name = "apple"
-
-    [fruit.physical]
-      color = "red"
-      shape = "round"
-
-    [[fruit.variety]]
-      name = "red delicious"
-
-    [[fruit.variety]]
-      name = "granny smith"
-
-  [[fruit]]
-    name = "banana"
-
-    [[fruit.variety]]
-      name = "plantain"
-`,
+  mkThunk(
+    () => ('key = "value"\nbare_key = "value"\nbare-key = "value"\n1234 = "value"\n\n"127.0.0.1" = "value"\n"character encoding" = "value"\n"ʎǝʞ" = "value"\n\'key2\' = "value"\n\'quoted "value"\' = "value"\n\nname = "Orange"\n\nphysical.color = "orange"\nphysical.shape = "round"\nsite."google.com" = true\n\n# This is legal according to the spec, but cpptoml doesn\'t handle it.\n#a.b.c = 1\n#a.d = 2\n\nstr = "I\'m a string. \\"You can quote me\\". Name\\tJos\\u00E9\\nLocation\\tSF."\n\nint1 = +99\nint2 = 42\nint3 = 0\nint4 = -17\nint5 = 1_000\nint6 = 5_349_221\nint7 = 1_2_3_4_5\n\nhex1 = 0xDEADBEEF\nhex2 = 0xdeadbeef\nhex3 = 0xdead_beef\n\noct1 = 0o01234567\noct2 = 0o755\n\nbin1 = 0b11010110\n\nflt1 = +1.0\nflt2 = 3.1415\nflt3 = -0.01\nflt4 = 5e+22\nflt5 = 1e6\nflt6 = -2E-2\nflt7 = 6.626e-34\nflt8 = 9_224_617.445_991_228_313\n\nbool1 = true\nbool2 = false\n\nodt1 = 1979-05-27T07:32:00Z\nodt2 = 1979-05-27T00:32:00-07:00\nodt3 = 1979-05-27T00:32:00.999999-07:00\nodt4 = 1979-05-27 07:32:00Z\nldt1 = 1979-05-27T07:32:00\nldt2 = 1979-05-27T00:32:00.999999\nld1 = 1979-05-27\nlt1 = 07:32:00\nlt2 = 00:32:00.999999\n\narr1 = [ 1, 2, 3 ]\narr2 = [ "red", "yellow", "green" ]\narr3 = [ [ 1, 2 ], [3, 4, 5] ]\narr4 = [ "all", \'strings\', """are the same""", \'\'\'type\'\'\']\narr5 = [ [ 1, 2 ], ["a", "b", "c"] ]\n\narr7 = [\n  1, 2, 3\n]\n\narr8 = [\n  1,\n  2, # this is ok\n]\n\n[table-1]\nkey1 = "some string"\nkey2 = 123\n\n\n[table-2]\nkey1 = "another string"\nkey2 = 456\n\n[dog."tater.man"]\ntype.name = "pug"\n\n[a.b.c]\n[ d.e.f ]\n[ g .  h  . i ]\n[ j . "ʞ" . \'l\' ]\n[x.y.z.w]\n\nname = { first = "Tom", last = "Preston-Werner" }\npoint = { x = 1, y = 2 }\nanimal = { type.name = "pug" }\n\n[[products]]\nname = "Hammer"\nsku = 738594937\n\n[[products]]\n\n[[products]]\nname = "Nail"\nsku = 284758393\ncolor = "gray"\n\n[[fruit]]\n  name = "apple"\n\n  [fruit.physical]\n    color = "red"\n    shape = "round"\n\n  [[fruit.variety]]\n    name = "red delicious"\n\n  [[fruit.variety]]\n    name = "granny smith"\n\n[[fruit]]\n  name = "banana"\n\n  [[fruit.variety]]\n    name = "plantain"\n')
+  ),
 );

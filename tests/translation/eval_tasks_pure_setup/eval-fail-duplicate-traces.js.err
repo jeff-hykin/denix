@@ -1,11 +1,21 @@
-denix_eval: eval failed: Error: Uh oh!
-    at throw (file:///Users/jeffhykin/repos/denix/main/runtime.js:1774:35)
-    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:23:18
-    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:2744:43)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:17:19
-    at file:///Users/jeffhykin/repos/denix/main/runtime.js:60:32
-    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:19:18
-    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:2744:32)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:17:19
+denix: eval failed: Error: Uh oh!
+    at throw (file:///Users/jeffhykin/repos/denix/main/runtime.js:2356:35)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:466:20)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:30:16
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:43)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:24:17
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:26:16
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:24:17
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:26:16
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:24:17
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:34:10
+    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:196:24)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:19:9

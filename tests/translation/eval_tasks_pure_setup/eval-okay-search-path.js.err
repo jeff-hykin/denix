@@ -1,7 +1,9 @@
-denix_eval: eval failed: Error: Import path does not exist: /var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/source_code/nix_lang/lib.nix
-    at validateImportPath (file:///Users/jeffhykin/repos/denix/tools/import_resolver.js:114:15)
-    at loadAndEvaluateSync (file:///Users/jeffhykin/repos/denix/main/import_loader.js:211:5)
-    at Object.globalImportState.importFn (file:///Users/jeffhykin/repos/denix/main/runtime.js:2915:32)
-    at import (file:///Users/jeffhykin/repos/denix/main/runtime.js:1712:42)
-    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:120:4
+denix: eval failed: Error: Called builtins.typeOf, which only works with valid nix values, but instead got type undefined, with a value of: undefined 
+    at Object.typeOf (file:///Users/jeffhykin/repos/denix/main/runtime.js:776:31)
+    at requireList (file:///Users/jeffhykin/repos/denix/main/runtime.js:566:62)
+    at length (file:///Users/jeffhykin/repos/denix/main/runtime.js:1176:39)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:466:20)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:156:15
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:160:11
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:178:7
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:182:3

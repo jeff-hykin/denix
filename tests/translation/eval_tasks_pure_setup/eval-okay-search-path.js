@@ -2,19 +2,25 @@ import {
   createRuntime,
   Path,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-search-path.nix";
 const operators = runtime.operators;
 
-export default ((_withAttrs) => {
-  const nixScope = { ...runtime.scopeStack.slice(-1)[0], ..._withAttrs };
+export default ((nixScope) => {
   runtime.scopeStack.push(nixScope);
   try {
-    return ((_withAttrs) => {
-      const nixScope = { ...runtime.scopeStack.slice(-1)[0], ..._withAttrs };
+    return ((nixScope) => {
       runtime.scopeStack.push(nixScope);
       try {
         return ((_cond) => {
@@ -40,40 +46,74 @@ export default ((_withAttrs) => {
                     operators.add(
                       apply(
                         nixScope.import,
-                        (nixScope.builtins.findFile(
-                          nixScope.builtins.nixPath(),
-                        ))("a.nix"),
+                        mkThunk(
+                          () => ((nixScope.builtins.findFile(
+                            nixScope.builtins.nixPath,
+                          ))("a.nix"))
+                        ),
                       ),
                       apply(
                         nixScope.import,
-                        (nixScope.builtins.findFile(
-                          nixScope.builtins.nixPath(),
-                        ))("b.nix"),
+                        mkThunk(
+                          () => ((nixScope.builtins.findFile(
+                            nixScope.builtins.nixPath,
+                          ))("b.nix"))
+                        ),
                       ),
                     ),
                     apply(
                       nixScope.import,
-                      (nixScope.builtins.findFile(nixScope.builtins.nixPath()))(
-                        "c.nix",
+                      mkThunk(
+                        () => ((nixScope.builtins.findFile(
+                          nixScope.builtins.nixPath,
+                        ))("c.nix"))
                       ),
                     ),
                   ),
                   apply(
                     nixScope.import,
-                    (nixScope.builtins.findFile(nixScope.builtins.nixPath()))(
-                      "dir5/c.nix",
+                    mkThunk(
+                      () => ((nixScope.builtins.findFile(
+                        nixScope.builtins.nixPath,
+                      ))("dir5/c.nix"))
                     ),
                   ),
                 ),
-                /*let*/ createScope((nixScope) => {
-                  nixScope.__nixPath = [
-                    { "path": new Path(["../source_code/nix_lang/dir2"], []) },
-                    { "path": new Path(["../source_code/nix_lang/dir1"], []) },
-                  ];
+                /*let*/ createScope(nixScope, (nixScope) => {
+                  defGetter(
+                    nixScope,
+                    "__nixPath",
+                    (nixScope) => [
+                      createScope(nixScope, (nixScope) => {
+                        const obj = {};
+                        defGetter(
+                          obj,
+                          "path",
+                          () => (new Path([
+                            "/Users/jeffhykin/repos/denix/tests/translation/source_code/nix_lang/dir2",
+                          ], [])),
+                        );
+                        return obj;
+                      }),
+                      createScope(nixScope, (nixScope) => {
+                        const obj = {};
+                        defGetter(
+                          obj,
+                          "path",
+                          () => (new Path([
+                            "/Users/jeffhykin/repos/denix/tests/translation/source_code/nix_lang/dir1",
+                          ], [])),
+                        );
+                        return obj;
+                      }),
+                    ],
+                  );
                   return apply(
                     nixScope.import,
-                    (nixScope.builtins.findFile(nixScope.builtins.nixPath()))(
-                      "a.nix",
+                    mkThunk(
+                      () => ((nixScope.builtins.findFile(
+                        nixScope.builtins.nixPath,
+                      ))("a.nix"))
                     ),
                   );
                 }),
@@ -82,39 +122,73 @@ export default ((_withAttrs) => {
               operators.equal(
                 apply(
                   nixScope.length,
-                  apply(
-                    apply(
-                      nixScope.filter,
-                      createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
-                        operators.equal(
-                          apply(nixScope.baseNameOf, nixScope.x["path"]),
-                          "dir4",
-                        )
-                      )),
-                    ),
-                    nixScope.__nixPath,
+                  mkThunk(
+                    () => (apply(
+                      apply(
+                        nixScope.filter,
+                        mkThunk(
+                          () => (createFunc(
+                            /*arg:*/ "x",
+                            null,
+                            {},
+                            nixScope,
+                            (nixScope) => (
+                              operators.equal(
+                                apply(
+                                  nixScope.baseNameOf,
+                                  mkThunk(() => (nixScope.x["path"])),
+                                ),
+                                "dir4",
+                              )
+                            ),
+                          ))
+                        ),
+                      ),
+                      mkThunk(() => (nixScope.__nixPath)),
+                    ))
                   ),
                 ),
                 1n,
               ),
             );
-          })(operators.equal(apply(nixScope.length, nixScope.__nixPath), 5n));
+          })(
+            operators.equal(
+              apply(nixScope.length, mkThunk(() => (nixScope.__nixPath))),
+              5n,
+            ),
+          );
         })(
           apply(
             nixScope.isFunction,
-            apply(
-              nixScope.import,
-              (nixScope.builtins.findFile(nixScope.builtins.nixPath()))(
-                "nix/fetchurl.nix",
-              ),
+            mkThunk(
+              () => (apply(
+                nixScope.import,
+                mkThunk(
+                  () => ((nixScope.builtins.findFile(
+                    nixScope.builtins.nixPath,
+                  ))("nix/fetchurl.nix"))
+                ),
+              ))
             ),
           ),
         );
       } finally {
         runtime.scopeStack.pop();
       }
-    })(nixScope.builtins);
+    })(runtime.withScope(nixScope, () => (nixScope.builtins)));
   } finally {
     runtime.scopeStack.pop();
   }
-})(apply(nixScope.import, new Path(["../source_code/nix_lang/lib.nix"], [])));
+})(
+  runtime.withScope(
+    nixScope,
+    () => (apply(
+      nixScope.import,
+      mkThunk(
+        () => (new Path([
+          "/Users/jeffhykin/repos/denix/tests/translation/source_code/nix_lang/lib.nix",
+        ], []))
+      ),
+    )),
+  ),
+);

@@ -1,31 +1,53 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-foldlStrict-lazy-elements.nix";
 const operators = runtime.operators;
 
 export default //
-/*let*/ createScope((nixScope) => {
+/*let*/ createScope(nixScope, (nixScope) => {
   defGetter(
     nixScope,
     "lst",
-    (nixScope) =>
+    (
+      nixScope,
+    ) => (apply(
       apply(
         apply(
-          apply(
-            nixScope.builtins["foldl'"],
-            createFunc(/*arg:*/ "acc", null, {}, (nixScope) => (
-              createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
-                operators.listConcat(nixScope.acc, [nixScope.x])
-              ))
-            )),
+          nixScope.builtins["foldl'"],
+          mkThunk(
+            () => (createFunc(
+              /*arg:*/ "acc",
+              null,
+              {},
+              nixScope,
+              (nixScope) => (
+                createFunc(/*arg:*/ "x", null, {}, nixScope, (nixScope) => (
+                  operators.listConcat(nixScope.acc, [nixScope.x])
+                ))
+              ),
+            ))
           ),
-          [],
         ),
-        [42n, apply(nixScope.throw, "this shouldn't be evaluated")],
+        mkThunk(() => []),
       ),
+      mkThunk(
+        () => [
+          42n,
+          apply(nixScope.throw, mkThunk(() => ("this shouldn't be evaluated"))),
+        ]
+      ),
+    )),
   );
-  return apply(nixScope.builtins["head"], nixScope.lst);
+  return apply(nixScope.builtins["head"], mkThunk(() => (nixScope.lst)));
 });

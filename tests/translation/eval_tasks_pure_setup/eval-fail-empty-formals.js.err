@@ -1,8 +1,4 @@
-denix_eval: translation failed: Error: When handling a function, it didn't seem to be a simple function, but also didn't have <formals>. Not sure what happened:
-foo@{ }: 1
-    at nixNodeToJs (file:///Users/jeffhykin/repos/denix/translator.js:1078:23)
-    at nixNodeToJs (file:///Users/jeffhykin/repos/denix/translator.js:278:20)
-    at nixNodeToJs (file:///Users/jeffhykin/repos/denix/translator.js:563:25)
-    at convertToJs (file:///Users/jeffhykin/repos/denix/translator.js:190:19)
-    at file:///Users/jeffhykin/repos/denix/run/denix_eval:109:24
-    at __drainNextTickAndMacrotasks (ext:core/01_core.js:439:7)
+denix: eval failed: Error: error: function called with unexpected argument 'a'
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:129:43)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:16:16

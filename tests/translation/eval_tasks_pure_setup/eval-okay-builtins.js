@@ -2,11 +2,19 @@ import {
   createRuntime,
   Path,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-builtins.nix";
 const operators = runtime.operators;
 
 export default ((_cond) => {
@@ -17,7 +25,7 @@ export default ((_cond) => {
     if (!_cond) {
       throw new Error("assertion failed: " + "!builtins ? __currentSystem");
     }
-    return /*let*/ createScope((nixScope) => {
+    return /*let*/ createScope(nixScope, (nixScope) => {
       defGetter(
         nixScope,
         "x",
@@ -25,7 +33,10 @@ export default ((_cond) => {
           nixScope,
         ) => (operators.ifThenElse(
           operators.hasAttr(nixScope.builtins, "dirOf"),
-          () => (apply(nixScope.builtins["dirOf"], new Path(["/foo/bar"], []))),
+          () => (apply(
+            nixScope.builtins["dirOf"],
+            mkThunk(() => (new Path(["/foo/bar"], []))),
+          )),
           () => (""),
         )),
       );
@@ -36,7 +47,7 @@ export default ((_cond) => {
           nixScope,
         ) => (operators.ifThenElse(
           operators.hasAttr(nixScope.builtins, "fnord"),
-          () => (apply(nixScope.builtins["fnord"], "foo")),
+          () => (apply(nixScope.builtins["fnord"], mkThunk(() => ("foo")))),
           () => (""),
         )),
       );

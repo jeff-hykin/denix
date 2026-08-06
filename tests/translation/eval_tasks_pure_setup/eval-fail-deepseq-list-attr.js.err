@@ -1,4 +1,10 @@
-denix_eval: eval failed: Error: error in attr in list element
-    at throw (file:///Users/jeffhykin/repos/denix/main/runtime.js:1774:35)
-    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:12:21
+denix: eval failed: Error: error in attr in list element
+    at throw (file:///Users/jeffhykin/repos/denix/main/runtime.js:2356:35)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:466:20)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:28:18
+    at Object.get [as b] (file:///Users/jeffhykin/repos/denix/main/runtime.js:242:38)
+    at deepEval (file:///Users/jeffhykin/repos/denix/main/runtime.js:2348:41)
+    at deepEval (file:///Users/jeffhykin/repos/denix/main/runtime.js:2340:29)
+    at file:///Users/jeffhykin/repos/denix/main/runtime.js:2352:17
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:466:20)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:17:1

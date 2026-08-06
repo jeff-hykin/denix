@@ -1,1 +1,5 @@
-denix_eval: cannot resolve "parse-toml-timestamps": No such file or directory (os error 2): realpath 'parse-toml-timestamps'
+denix: eval failed: Error: Parse error on line 62, column 20: key/value pair doesn't have "="
+    at parse (https://deno.land/std@0.224.0/toml/_parser.ts:905:13)
+    at fromTOML (file:///Users/jeffhykin/repos/denix/main/runtime.js:1009:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:466:20)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:16:16

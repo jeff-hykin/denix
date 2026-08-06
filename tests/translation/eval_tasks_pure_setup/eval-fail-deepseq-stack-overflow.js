@@ -1,51 +1,83 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-deepseq-stack-overflow.nix";
 
 export default //
 //
-/*let*/ createScope((nixScope) => {
+/*let*/ createScope(nixScope, (nixScope) => {
   defGetter(
     nixScope,
     "long",
-    (nixScope) =>
+    (
+      nixScope,
+    ) => (apply(
       apply(
-        apply(
-          nixScope.builtins["genList"],
-          createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
+        nixScope.builtins["genList"],
+        mkThunk(
+          () => (createFunc(/*arg:*/ "x", null, {}, nixScope, (nixScope) => (
             nixScope.x
-          )),
+          )))
         ),
-        100000n,
       ),
+      mkThunk(() => (100000n)),
+    )),
   );
   defGetter(
     nixScope,
     "reverseLinkedList",
-    (nixScope) =>
+    (
+      nixScope,
+    ) => (apply(
       apply(
         apply(
-          apply(
-            nixScope.builtins["foldl'"],
-            createFunc(/*arg:*/ "tail", null, {}, (nixScope) => (
-              createFunc(/*arg:*/ "head", null, {}, (nixScope) => (
-                { "head": nixScope.head, "tail": nixScope.tail }
-              ))
-            )),
+          nixScope.builtins["foldl'"],
+          mkThunk(
+            () => (createFunc(
+              /*arg:*/ "tail",
+              null,
+              {},
+              nixScope,
+              (nixScope) => (
+                createFunc(/*arg:*/ "head", null, {}, nixScope, (nixScope) => (
+                  createScope(nixScope, (nixScope) => {
+                    const obj = {};
+                    defGetter(obj, "head", () => (nixScope.head));
+                    defGetter(obj, "tail", () => (nixScope.tail));
+                    return obj;
+                  })
+                ))
+              ),
+            ))
           ),
-          null,
         ),
-        nixScope.long,
+        mkThunk(() => (null)),
       ),
+      mkThunk(() => (nixScope.long)),
+    )),
   );
   return apply(
-    apply(nixScope.builtins["deepSeq"], nixScope.reverseLinkedList),
     apply(
-      nixScope.throw,
-      "unexpected success; expected a controlled stack overflow instead",
+      nixScope.builtins["deepSeq"],
+      mkThunk(() => (nixScope.reverseLinkedList)),
+    ),
+    mkThunk(
+      () => (apply(
+        nixScope.throw,
+        mkThunk(
+          () => ("unexpected success; expected a controlled stack overflow instead")
+        ),
+      ))
     ),
   );
 });

@@ -1,152 +1,292 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-intersectAttrs.nix";
 const operators = runtime.operators;
 
-export default /*let*/ createScope((nixScope) => {
-  nixScope.alphabet = {
-    "a": "a",
-    "b": "b",
-    "c": "c",
-    "d": "d",
-    "e": "e",
-    "f": "f",
-    "g": "g",
-    "h": "h",
-    "i": "i",
-    "j": "j",
-    "k": "k",
-    "l": "l",
-    "m": "m",
-    "n": "n",
-    "o": "o",
-    "p": "p",
-    "q": "q",
-    "r": "r",
-    "s": "s",
-    "t": "t",
-    "u": "u",
-    "v": "v",
-    "w": "w",
-    "x": "x",
-    "y": "y",
-    "z": "z",
-  };
-  defGetter(nixScope, "foo", (nixScope) =>
-    createScope((nixScope) => {
+export default /*let*/ createScope(nixScope, (nixScope) => {
+  defGetter(
+    nixScope,
+    "alphabet",
+    (nixScope) => (createScope(nixScope, (nixScope) => {
       const obj = {};
-      obj.f = nixScope.alphabet.f;
-      obj.o = nixScope.alphabet.o;
-      obj.b = nixScope.alphabet.b;
-      obj.a = nixScope.alphabet.a;
-      obj.r = nixScope.alphabet.r;
-      obj.z = nixScope.alphabet.z;
-      obj.q = nixScope.alphabet.q;
-      obj.u = nixScope.alphabet.u;
-      obj.x = nixScope.alphabet.x;
-      obj.aa = apply(nixScope.throw, "aa");
+      defGetter(obj, "a", () => ("a"));
+      defGetter(obj, "b", () => ("b"));
+      defGetter(obj, "c", () => ("c"));
+      defGetter(obj, "d", () => ("d"));
+      defGetter(obj, "e", () => ("e"));
+      defGetter(obj, "f", () => ("f"));
+      defGetter(obj, "g", () => ("g"));
+      defGetter(obj, "h", () => ("h"));
+      defGetter(obj, "i", () => ("i"));
+      defGetter(obj, "j", () => ("j"));
+      defGetter(obj, "k", () => ("k"));
+      defGetter(obj, "l", () => ("l"));
+      defGetter(obj, "m", () => ("m"));
+      defGetter(obj, "n", () => ("n"));
+      defGetter(obj, "o", () => ("o"));
+      defGetter(obj, "p", () => ("p"));
+      defGetter(obj, "q", () => ("q"));
+      defGetter(obj, "r", () => ("r"));
+      defGetter(obj, "s", () => ("s"));
+      defGetter(obj, "t", () => ("t"));
+      defGetter(obj, "u", () => ("u"));
+      defGetter(obj, "v", () => ("v"));
+      defGetter(obj, "w", () => ("w"));
+      defGetter(obj, "x", () => ("x"));
+      defGetter(obj, "y", () => ("y"));
+      defGetter(obj, "z", () => ("z"));
       return obj;
-    }));
+    })),
+  );
+  defGetter(
+    nixScope,
+    "foo",
+    (nixScope) => (createScope(nixScope, (nixScope) => {
+      const obj = {};
+      defGetter(obj, "f", () => (nixScope.alphabet.f));
+      defGetter(obj, "o", () => (nixScope.alphabet.o));
+      defGetter(obj, "b", () => (nixScope.alphabet.b));
+      defGetter(obj, "a", () => (nixScope.alphabet.a));
+      defGetter(obj, "r", () => (nixScope.alphabet.r));
+      defGetter(obj, "z", () => (nixScope.alphabet.z));
+      defGetter(obj, "q", () => (nixScope.alphabet.q));
+      defGetter(obj, "u", () => (nixScope.alphabet.u));
+      defGetter(obj, "x", () => (nixScope.alphabet.x));
+      defGetter(
+        obj,
+        "aa",
+        () => (apply(nixScope.throw, mkThunk(() => ("aa")))),
+      );
+      return obj;
+    })),
+  );
   defGetter(
     nixScope,
     "alphabetFail",
-    (nixScope) =>
-      apply(
-        apply(nixScope.builtins["mapAttrs"], nixScope.throw),
-        nixScope.alphabet,
-      ),
+    (
+      nixScope,
+    ) => (apply(
+      apply(nixScope.builtins["mapAttrs"], mkThunk(() => (nixScope.throw))),
+      mkThunk(() => (nixScope.alphabet)),
+    )),
   );
   return [
     apply(
       apply(
         nixScope.builtins["intersectAttrs"],
-        { "a": apply(nixScope.abort, "l1") },
+        mkThunk(() => (createScope(nixScope, (nixScope) => {
+          const obj = {};
+          defGetter(
+            obj,
+            "a",
+            () => (apply(nixScope.abort, mkThunk(() => ("l1")))),
+          );
+          return obj;
+        }))),
       ),
-      { "b": apply(nixScope.abort, "r1") },
+      mkThunk(() => (createScope(nixScope, (nixScope) => {
+        const obj = {};
+        defGetter(
+          obj,
+          "b",
+          () => (apply(nixScope.abort, mkThunk(() => ("r1")))),
+        );
+        return obj;
+      }))),
     ),
     apply(
       apply(
         nixScope.builtins["intersectAttrs"],
-        { "a": apply(nixScope.abort, "l2") },
+        mkThunk(() => (createScope(nixScope, (nixScope) => {
+          const obj = {};
+          defGetter(
+            obj,
+            "a",
+            () => (apply(nixScope.abort, mkThunk(() => ("l2")))),
+          );
+          return obj;
+        }))),
       ),
-      { "a": 1n },
-    ),
-    apply(
-      apply(nixScope.builtins["intersectAttrs"], nixScope.alphabetFail),
-      { "a": 1n },
+      mkThunk(() => (createScope(nixScope, (nixScope) => {
+        const obj = {};
+        defGetter(obj, "a", () => (1n));
+        return obj;
+      }))),
     ),
     apply(
       apply(
         nixScope.builtins["intersectAttrs"],
-        { "a": apply(nixScope.abort, "laa") },
+        mkThunk(() => (nixScope.alphabetFail)),
       ),
-      nixScope.alphabet,
-    ),
-    apply(
-      apply(nixScope.builtins["intersectAttrs"], nixScope.alphabetFail),
-      { "m": 1n },
+      mkThunk(() => (createScope(nixScope, (nixScope) => {
+        const obj = {};
+        defGetter(obj, "a", () => (1n));
+        return obj;
+      }))),
     ),
     apply(
       apply(
         nixScope.builtins["intersectAttrs"],
-        { "m": apply(nixScope.abort, "lam") },
+        mkThunk(() => (createScope(nixScope, (nixScope) => {
+          const obj = {};
+          defGetter(
+            obj,
+            "a",
+            () => (apply(nixScope.abort, mkThunk(() => ("laa")))),
+          );
+          return obj;
+        }))),
       ),
-      nixScope.alphabet,
-    ),
-    apply(
-      apply(nixScope.builtins["intersectAttrs"], nixScope.alphabetFail),
-      { "n": 1n },
+      mkThunk(() => (nixScope.alphabet)),
     ),
     apply(
       apply(
         nixScope.builtins["intersectAttrs"],
-        { "n": apply(nixScope.abort, "lan") },
+        mkThunk(() => (nixScope.alphabetFail)),
       ),
-      nixScope.alphabet,
-    ),
-    apply(
-      apply(nixScope.builtins["intersectAttrs"], nixScope.alphabetFail),
-      { "n": 1n, "p": 2n },
+      mkThunk(() => (createScope(nixScope, (nixScope) => {
+        const obj = {};
+        defGetter(obj, "m", () => (1n));
+        return obj;
+      }))),
     ),
     apply(
       apply(
         nixScope.builtins["intersectAttrs"],
-        {
-          "n": apply(nixScope.abort, "lan2"),
-          "p": apply(nixScope.abort, "lap"),
-        },
+        mkThunk(() => (createScope(nixScope, (nixScope) => {
+          const obj = {};
+          defGetter(
+            obj,
+            "m",
+            () => (apply(nixScope.abort, mkThunk(() => ("lam")))),
+          );
+          return obj;
+        }))),
       ),
-      nixScope.alphabet,
-    ),
-    apply(
-      apply(nixScope.builtins["intersectAttrs"], nixScope.alphabetFail),
-      { "n": 1n, "p": 2n },
+      mkThunk(() => (nixScope.alphabet)),
     ),
     apply(
       apply(
         nixScope.builtins["intersectAttrs"],
-        {
-          "n": apply(nixScope.abort, "lan2"),
-          "p": apply(nixScope.abort, "lap"),
-        },
+        mkThunk(() => (nixScope.alphabetFail)),
       ),
-      nixScope.alphabet,
+      mkThunk(() => (createScope(nixScope, (nixScope) => {
+        const obj = {};
+        defGetter(obj, "n", () => (1n));
+        return obj;
+      }))),
     ),
     apply(
-      apply(nixScope.builtins["intersectAttrs"], nixScope.alphabetFail),
-      nixScope.alphabet,
+      apply(
+        nixScope.builtins["intersectAttrs"],
+        mkThunk(() => (createScope(nixScope, (nixScope) => {
+          const obj = {};
+          defGetter(
+            obj,
+            "n",
+            () => (apply(nixScope.abort, mkThunk(() => ("lan")))),
+          );
+          return obj;
+        }))),
+      ),
+      mkThunk(() => (nixScope.alphabet)),
+    ),
+    apply(
+      apply(
+        nixScope.builtins["intersectAttrs"],
+        mkThunk(() => (nixScope.alphabetFail)),
+      ),
+      mkThunk(() => (createScope(nixScope, (nixScope) => {
+        const obj = {};
+        defGetter(obj, "n", () => (1n));
+        defGetter(obj, "p", () => (2n));
+        return obj;
+      }))),
+    ),
+    apply(
+      apply(
+        nixScope.builtins["intersectAttrs"],
+        mkThunk(() => (createScope(nixScope, (nixScope) => {
+          const obj = {};
+          defGetter(
+            obj,
+            "n",
+            () => (apply(nixScope.abort, mkThunk(() => ("lan2")))),
+          );
+          defGetter(
+            obj,
+            "p",
+            () => (apply(nixScope.abort, mkThunk(() => ("lap")))),
+          );
+          return obj;
+        }))),
+      ),
+      mkThunk(() => (nixScope.alphabet)),
+    ),
+    apply(
+      apply(
+        nixScope.builtins["intersectAttrs"],
+        mkThunk(() => (nixScope.alphabetFail)),
+      ),
+      mkThunk(() => (createScope(nixScope, (nixScope) => {
+        const obj = {};
+        defGetter(obj, "n", () => (1n));
+        defGetter(obj, "p", () => (2n));
+        return obj;
+      }))),
+    ),
+    apply(
+      apply(
+        nixScope.builtins["intersectAttrs"],
+        mkThunk(() => (createScope(nixScope, (nixScope) => {
+          const obj = {};
+          defGetter(
+            obj,
+            "n",
+            () => (apply(nixScope.abort, mkThunk(() => ("lan2")))),
+          );
+          defGetter(
+            obj,
+            "p",
+            () => (apply(nixScope.abort, mkThunk(() => ("lap")))),
+          );
+          return obj;
+        }))),
+      ),
+      mkThunk(() => (nixScope.alphabet)),
+    ),
+    apply(
+      apply(
+        nixScope.builtins["intersectAttrs"],
+        mkThunk(() => (nixScope.alphabetFail)),
+      ),
+      mkThunk(() => (nixScope.alphabet)),
     ),
     operators.equal(
       apply(
-        apply(nixScope.builtins["intersectAttrs"], nixScope.alphabet),
-        nixScope.foo,
+        apply(
+          nixScope.builtins["intersectAttrs"],
+          mkThunk(() => (nixScope.alphabet)),
+        ),
+        mkThunk(() => (nixScope.foo)),
       ),
       apply(
-        apply(nixScope.builtins["intersectAttrs"], nixScope.foo),
-        nixScope.alphabet,
+        apply(
+          nixScope.builtins["intersectAttrs"],
+          mkThunk(() => (nixScope.foo)),
+        ),
+        mkThunk(() => (nixScope.alphabet)),
       ),
     ),
   ];

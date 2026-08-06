@@ -2,85 +2,125 @@ import {
   createRuntime,
   InterpolatedString,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-delayed-with.nix";
 const operators = runtime.operators;
 
-export default /*let*/ createScope((nixScope) => {
-  defGetter(nixScope, "pkgs_", (nixScope) =>
-    ((_withAttrs) => {
-      const nixScope = { ...runtime.scopeStack.slice(-1)[0], ..._withAttrs };
-      runtime.scopeStack.push(nixScope);
-      try {
-        return ({
-          "a": apply(
+export default /*let*/ createScope(nixScope, (nixScope) => {
+  defGetter(nixScope, "pkgs_", (nixScope) => (((nixScope) => {
+    runtime.scopeStack.push(nixScope);
+    try {
+      return createScope(nixScope, (nixScope) => {
+        const obj = {};
+        defGetter(
+          obj,
+          "a",
+          () => (apply(
             nixScope.derivation,
-            {
-              "name": "a",
-              "system": nixScope.builtins["currentSystem"],
-              "builder": "/bin/sh",
-              "args": ["-c", "touch $out"],
-              "b": nixScope.b,
-            },
-          ),
-          "b": apply(
+            mkThunk(() => (createScope(nixScope, (nixScope) => {
+              const obj = {};
+              defGetter(obj, "name", () => ("a"));
+              defGetter(
+                obj,
+                "system",
+                () => (nixScope.builtins["currentSystem"]),
+              );
+              defGetter(obj, "builder", () => ("/bin/sh"));
+              defGetter(obj, "args", () => ["-c", "touch $out"]);
+              defGetter(obj, "b", () => (nixScope.b));
+              return obj;
+            }))),
+          )),
+        );
+        defGetter(
+          obj,
+          "b",
+          () => (apply(
             nixScope.derivation,
-            {
-              "name": "b",
-              "system": nixScope.builtins["currentSystem"],
-              "builder": "/bin/sh",
-              "args": ["-c", "touch $out"],
-              "a": nixScope.a,
-            },
-          ),
-          "c": nixScope.b,
-        });
-      } finally {
-        runtime.scopeStack.pop();
-      }
-    })(nixScope.pkgs));
+            mkThunk(() => (createScope(nixScope, (nixScope) => {
+              const obj = {};
+              defGetter(obj, "name", () => ("b"));
+              defGetter(
+                obj,
+                "system",
+                () => (nixScope.builtins["currentSystem"]),
+              );
+              defGetter(obj, "builder", () => ("/bin/sh"));
+              defGetter(obj, "args", () => ["-c", "touch $out"]);
+              defGetter(obj, "a", () => (nixScope.a));
+              return obj;
+            }))),
+          )),
+        );
+        defGetter(obj, "c", () => (nixScope.b));
+        return obj;
+      });
+    } finally {
+      runtime.scopeStack.pop();
+    }
+  })(runtime.withScope(nixScope, () => (nixScope.pkgs)))));
   defGetter(
     nixScope,
     "packageOverrides",
-    (nixScope) =>
-      createFunc(/*arg:*/ "pkgs", null, {}, (nixScope) => (
-        ((_withAttrs) => {
-          const nixScope = {
-            ...runtime.scopeStack.slice(-1)[0],
-            ..._withAttrs,
-          };
-          runtime.scopeStack.push(nixScope);
-          try {
-            return ({
-              "b": apply(
+    (
+      nixScope,
+    ) => (createFunc(/*arg:*/ "pkgs", null, {}, nixScope, (nixScope) => (
+      ((nixScope) => {
+        runtime.scopeStack.push(nixScope);
+        try {
+          return createScope(nixScope, (nixScope) => {
+            const obj = {};
+            defGetter(
+              obj,
+              "b",
+              () => (apply(
                 nixScope.derivation,
-                operators.merge(
-                  nixScope.b["drvAttrs"],
-                  {
-                    "name": new InterpolatedString(["", "-overridden"], [
-                      () => (nixScope.b["name"]),
-                    ]),
-                  },
+                mkThunk(
+                  () => (operators.merge(
+                    nixScope.b["drvAttrs"],
+                    createScope(nixScope, (nixScope) => {
+                      const obj = {};
+                      defGetter(
+                        obj,
+                        "name",
+                        () => (new InterpolatedString(["", "-overridden"], [
+                          () => (nixScope.b["name"]),
+                        ])),
+                      );
+                      return obj;
+                    }),
+                  ))
                 ),
-              ),
-            });
-          } finally {
-            runtime.scopeStack.pop();
-          }
-        })(nixScope.pkgs)
-      )),
+              )),
+            );
+            return obj;
+          });
+        } finally {
+          runtime.scopeStack.pop();
+        }
+      })(runtime.withScope(nixScope, () => (nixScope.pkgs)))
+    ))),
   );
   defGetter(
     nixScope,
     "pkgs",
-    (nixScope) =>
-      operators.merge(
-        nixScope.pkgs_,
-        apply(nixScope.packageOverrides, nixScope.pkgs_),
-      ),
+    (
+      nixScope,
+    ) => (operators.merge(
+      nixScope.pkgs_,
+      apply(nixScope.packageOverrides, mkThunk(() => (nixScope.pkgs_))),
+    )),
   );
   return (new InterpolatedString(["", " ", " ", ""], [
     () => (nixScope.pkgs["a"]["b"]["name"]),

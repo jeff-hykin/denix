@@ -2,32 +2,71 @@ import {
   createRuntime,
   Path,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-groupBy.nix";
 
-export default ((_withAttrs) => {
-  const nixScope = { ...runtime.scopeStack.slice(-1)[0], ..._withAttrs };
+export default ((nixScope) => {
   runtime.scopeStack.push(nixScope);
   try {
     return apply(
       apply(
         nixScope.builtins["groupBy"],
-        createFunc(/*arg:*/ "n", null, {}, (nixScope) => (
-          apply(
-            apply(apply(nixScope.builtins["substring"], 0n), 1n),
+        mkThunk(
+          () => (createFunc(/*arg:*/ "n", null, {}, nixScope, (nixScope) => (
             apply(
-              apply(nixScope.builtins["hashString"], "sha256"),
-              apply(nixScope.toString, nixScope.n),
-            ),
-          )
-        )),
+              apply(
+                apply(nixScope.builtins["substring"], mkThunk(() => (0n))),
+                mkThunk(() => (1n)),
+              ),
+              mkThunk(
+                () => (apply(
+                  apply(
+                    nixScope.builtins["hashString"],
+                    mkThunk(() => ("sha256")),
+                  ),
+                  mkThunk(
+                    () => (apply(
+                      nixScope.toString,
+                      mkThunk(() => (nixScope.n)),
+                    ))
+                  ),
+                ))
+              ),
+            )
+          )))
+        ),
       ),
-      apply(apply(nixScope.range, 0n), 31n),
+      mkThunk(
+        () => (apply(
+          apply(nixScope.range, mkThunk(() => (0n))),
+          mkThunk(() => (31n)),
+        ))
+      ),
     );
   } finally {
     runtime.scopeStack.pop();
   }
-})(apply(nixScope.import, new Path(["../source_code/nix_lang/lib.nix"], [])));
+})(
+  runtime.withScope(
+    nixScope,
+    () => (apply(
+      nixScope.import,
+      mkThunk(
+        () => (new Path([
+          "/Users/jeffhykin/repos/denix/tests/translation/source_code/nix_lang/lib.nix",
+        ], []))
+      ),
+    )),
+  ),
+);

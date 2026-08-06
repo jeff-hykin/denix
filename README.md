@@ -15,6 +15,41 @@ A Nix → JavaScript translator with 1-to-1 parity for Nix 2.18 builtins, implem
 
 ## Quick Start
 
+Install the `denix` CLI globally with Deno (no Nix installation required):
+
+```bash
+# From the web
+deno install -g --allow-all --name denix "https://raw.esm.sh/gh/jeff-hykin/denix@claude3/main/cli/denix.js"
+
+# Or from a local clone
+deno install -g --allow-all --name denix ./main/cli/denix.js
+```
+
+Then:
+
+```bash
+denix --help                                  # colorized help for all subcommands
+
+# Translate Nix to readable JavaScript
+denix translate default.nix                   # print translated JS to stdout
+denix translate -E '{ a = 1; b = a + 1; }'    # translate an inline expression
+denix translate default.nix -o default.js     # write JS to a file
+
+# Evaluate Nix and print the result
+denix eval -E '1 + 2'                         # 3
+denix eval default.nix -A version             # select an attribute path
+denix eval -E '{ a = [ 1 2 ]; }' --json       # JSON output (--xml works too)
+denix eval shell.nix --arg 'pkgs=import <nixpkgs> {}'
+
+# Build derivations (writes to ~/.cache/denix/store, symlinks ./result)
+denix build default.nix
+denix build -E '(import <nixpkgs> {}).cowsay'
+denix build ./my-flake#packages.aarch64-darwin.default
+denix build default.nix --dry-run             # print the .drv path only
+```
+
+## Running the Test Suite
+
 ```bash
 # Run all tests
 ./test.sh
@@ -31,6 +66,7 @@ deno test --allow-all
 
 ## Features
 
+- ✅ **`denix` CLI** - translate, eval, and build from the command line (`deno install`-able)
 - ✅ **102 Nix builtins** - All Nix 2.18 builtins implemented (100% feature complete)
 - ✅ **80.4% test coverage** - 82/102 builtins tested with 538 passing tests
 - ✅ **Import system** - `builtins.import` and `builtins.scopedImport` fully working
@@ -40,8 +76,10 @@ deno test --allow-all
 
 ## Using the Runtime
 
+No install needed — import straight from esm.sh:
+
 ```javascript
-import { builtins, operators } from "./main/runtime.js"
+import { builtins, operators } from "https://raw.esm.sh/gh/jeff-hykin/denix@claude3/main/runtime.js"
 
 // Type checking
 builtins.isAttrs({a: 1})       // true
@@ -58,10 +96,37 @@ operators.add(1n, 2n)           // 3n
 operators.divide(10n, 3n)       // 3n (integer division)
 ```
 
+## Importing Nix Code
+
+`builtins.import` evaluates real Nix files — local paths or URLs — and returns them as JavaScript values (Nix ints become BigInts, attrsets become objects, functions become functions):
+
+```javascript
+import { builtins } from "https://raw.esm.sh/gh/jeff-hykin/denix@claude3/main/runtime.js"
+
+// Import a local .nix file
+const flake = builtins.import("/path/to/project/flake.nix")
+flake.description                  // "my flake"
+flake.outputs                      // a callable JS function
+
+// Import Nix code straight from a URL
+const remoteFlake = builtins.import(
+    "https://cdn.jsdelivr.net/gh/jeff-hykin/denix@claude3/examples/flake-a/flake.nix"
+)
+// Relative imports inside a URL-imported file resolve against that URL,
+// so `import ./lib/helper.nix` inside it fetches the sibling URL.
+
+// .json files work too (Nix semantics: numbers become BigInts)
+const data = builtins.import("/path/to/data.json")
+
+// Flakes with inputs: builtins.getFlake resolves inputs recursively
+const resolved = await builtins.getFlake("path:/path/to/project")
+resolved.outputs                   // outputs called with resolved inputs
+```
+
 ## Using the Translator
 
 ```javascript
-import translate from "./translator.js"
+import { convertToJsSync } from "https://raw.esm.sh/gh/jeff-hykin/denix@claude3/translator.js"
 
 const nixCode = `
   let
@@ -70,17 +135,19 @@ const nixCode = `
   in x + y
 `
 
-const jsCode = translate(nixCode)
-const result = eval(jsCode)  // 3n
+const jsCode = convertToJsSync(nixCode)  // readable JS that maps 1-to-1 to the Nix
 ```
 
 ## Project Structure
 
 ```
 denix/
-├── translator.js                 # Nix → JS translator (1,264 lines)
+├── denix                   # CLI entry point (translate / eval / build)
+├── translator.js           # Nix → JS translator
 ├── main/
+│   ├── cli/denix.js        # CLI implementation (cliffy)
 │   ├── runtime.js          # 102 Nix builtins + operators (2,750+ lines)
+│   ├── builder.js          # Derivation builder (local build + cache substitution)
 │   ├── import_cache.js     # Import caching & circular detection
 │   ├── import_loader.js    # Nix file loading & evaluation
 │   ├── fetcher.js          # HTTP downloads with retry logic

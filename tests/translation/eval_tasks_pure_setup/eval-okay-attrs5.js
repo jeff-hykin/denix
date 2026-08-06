@@ -2,80 +2,123 @@ import {
   createRuntime,
   Path,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-attrs5.nix";
 const operators = runtime.operators;
 
-export default ((_withAttrs) => {
-  const nixScope = { ...runtime.scopeStack.slice(-1)[0], ..._withAttrs };
+export default ((nixScope) => {
   runtime.scopeStack.push(nixScope);
   try {
-    return /*let*/ createScope((nixScope) => {
-      nixScope.as = createScope((nixScope) => {
-        const obj = {};
-        if (obj["x"] === undefined) obj["x"] = {};
-        if (obj["x"]["y"] === undefined) obj["x"]["y"] = {};
-        obj["x"]["y"]["z"] = 123n;
-        if (obj["a"] === undefined) obj["a"] = {};
-        if (obj["a"]["b"] === undefined) obj["a"]["b"] = {};
-        obj["a"]["b"]["c"] = 456n;
-        return obj;
-      });
-      nixScope.bs = createScope((nixScope) => {
-        const obj = {};
-        if (obj["f-o-o"] === undefined) obj["f-o-o"] = {};
-        obj["f-o-o"]["bar"] = "foo";
-        return obj;
-      });
+    return /*let*/ createScope(nixScope, (nixScope) => {
+      defGetter(
+        nixScope,
+        "as",
+        (nixScope) => (createScope(nixScope, (nixScope) => {
+          const obj = {};
+          set(obj, ["x", "y", "z"], () => (123n));
+          set(obj, ["a", "b", "c"], () => (456n));
+          return obj;
+        })),
+      );
+      defGetter(
+        nixScope,
+        "bs",
+        (nixScope) => (createScope(nixScope, (nixScope) => {
+          const obj = {};
+          set(obj, ["f-o-o", "bar"], () => ("foo"));
+          return obj;
+        })),
+      );
       defGetter(
         nixScope,
         "or",
-        (nixScope) =>
-          createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
-            createFunc(/*arg:*/ "y", null, {}, (nixScope) => (
-              operators.or(nixScope.x, nixScope.y)
-            ))
-          )),
+        (
+          nixScope,
+        ) => (createFunc(/*arg:*/ "x", null, {}, nixScope, (nixScope) => (
+          createFunc(/*arg:*/ "y", null, {}, nixScope, (nixScope) => (
+            (nixScope.x) || (nixScope.y)
+          ))
+        ))),
       );
       return [
         nixScope.as["x"]["y"]["z"],
-        operators.selectOrDefault(nixScope.as, ["foo"], "foo"),
+        operators.selectOrDefault(nixScope.as, ["foo"], mkThunk(() => ("foo"))),
         operators.selectOrDefault(
           nixScope.as,
           ["x", "y", "bla"],
-          nixScope.as["a"]["b"]["c"],
+          mkThunk(() => (nixScope.as["a"]["b"]["c"])),
         ),
         operators.selectOrDefault(
           nixScope.as,
           ["a", "b", "c"],
-          nixScope.as["x"]["y"]["z"],
+          mkThunk(() => (nixScope.as["x"]["y"]["z"])),
         ),
         operators.selectOrDefault(
           nixScope.as,
           ["x", "y", "bla"],
-          operators.selectOrDefault(nixScope.bs, ["f-o-o", "bar"], "xyzzy"),
+          mkThunk(
+            () => (operators.selectOrDefault(
+              nixScope.bs,
+              ["f-o-o", "bar"],
+              mkThunk(() => ("xyzzy")),
+            ))
+          ),
         ),
         operators.selectOrDefault(
           nixScope.as,
           ["x", "y", "bla"],
-          operators.selectOrDefault(nixScope.bs, ["bar", "foo"], "xyzzy"),
+          mkThunk(
+            () => (operators.selectOrDefault(
+              nixScope.bs,
+              ["bar", "foo"],
+              mkThunk(() => ("xyzzy")),
+            ))
+          ),
         ),
         operators.selectOrDefault(
           123n,
           ["bla"],
-          operators.selectOrDefault(null, ["foo"], "xyzzy"),
+          mkThunk(
+            () => (operators.selectOrDefault(
+              null,
+              ["foo"],
+              mkThunk(() => ("xyzzy")),
+            ))
+          ),
         ),
-        apply(apply(apply(nixScope.fold, nixScope.or), []), [
-          true,
-          false,
-          false,
-        ]),
+        apply(
+          apply(
+            apply(nixScope.fold, mkThunk(() => (nixScope.or))),
+            mkThunk(() => []),
+          ),
+          mkThunk(() => [true, false, false]),
+        ),
       ];
     });
   } finally {
     runtime.scopeStack.pop();
   }
-})(apply(nixScope.import, new Path(["../source_code/nix_lang/lib.nix"], [])));
+})(
+  runtime.withScope(
+    nixScope,
+    () => (apply(
+      nixScope.import,
+      mkThunk(
+        () => (new Path([
+          "/Users/jeffhykin/repos/denix/tests/translation/source_code/nix_lang/lib.nix",
+        ], []))
+      ),
+    )),
+  ),
+);

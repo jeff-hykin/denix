@@ -2,32 +2,36 @@ import {
   createRuntime,
   InterpolatedString,
 } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-fail-dup-dynamic-attrs.nix";
 const operators = runtime.operators;
 
-export default ({
-  "set": createScope((nixScope) => {
+export default createScope(nixScope, (nixScope) => {
+  const obj = {};
+  defGetter(obj, "set", () => (createScope(nixScope, (nixScope) => {
     const obj = {};
-    {
-      const __k = new InterpolatedString(["", ""], [
-        () => (operators.add("", "b")),
-      ]);
-      if (__k !== null) obj[__k] = 1n;
-    }
+    set(obj, [
+      new InterpolatedString(["", ""], [() => (operators.add("", "b"))]),
+    ], () => (1n));
     return obj;
-  }),
-  "set": createScope((nixScope) => {
+  })));
+  defGetter(obj, "set", () => (createScope(nixScope, (nixScope) => {
     const obj = {};
-    {
-      const __k = new InterpolatedString(["", ""], [
-        () => (operators.add("b", "")),
-      ]);
-      if (__k !== null) obj[__k] = 2n;
-    }
+    set(obj, [
+      new InterpolatedString(["", ""], [() => (operators.add("b", ""))]),
+    ], () => (2n));
     return obj;
-  }),
+  })));
+  return obj;
 });

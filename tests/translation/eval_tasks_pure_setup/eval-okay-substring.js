@@ -1,17 +1,24 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-substring.nix";
 const operators = runtime.operators;
 
-export default ((_withAttrs) => {
-  const nixScope = { ...runtime.scopeStack.slice(-1)[0], ..._withAttrs };
+export default ((nixScope) => {
   runtime.scopeStack.push(nixScope);
   try {
-    return /*let*/ createScope((nixScope) => {
-      nixScope.s = "foobar";
+    return /*let*/ createScope(nixScope, (nixScope) => {
+      defGetter(nixScope, "s", (nixScope) => ("foobar"));
       return operators.add(
         operators.add(
           operators.add(
@@ -27,60 +34,108 @@ export default ((_withAttrs) => {
                               operators.add(
                                 operators.add(
                                   apply(
-                                    apply(apply(nixScope.substring, 1n), 2n),
-                                    nixScope.s,
+                                    apply(
+                                      apply(
+                                        nixScope.substring,
+                                        mkThunk(() => (1n)),
+                                      ),
+                                      mkThunk(() => (2n)),
+                                    ),
+                                    mkThunk(() => (nixScope.s)),
                                   ),
                                   "x",
                                 ),
                                 apply(
                                   apply(
-                                    apply(nixScope.substring, 0n),
-                                    apply(nixScope.stringLength, nixScope.s),
+                                    apply(
+                                      nixScope.substring,
+                                      mkThunk(() => (0n)),
+                                    ),
+                                    mkThunk(
+                                      () => (apply(
+                                        nixScope.stringLength,
+                                        mkThunk(() => (nixScope.s)),
+                                      ))
+                                    ),
                                   ),
-                                  nixScope.s,
+                                  mkThunk(() => (nixScope.s)),
                                 ),
                               ),
                               "y",
                             ),
                             apply(
-                              apply(apply(nixScope.substring, 3n), 100n),
-                              nixScope.s,
+                              apply(
+                                apply(nixScope.substring, mkThunk(() => (3n))),
+                                mkThunk(() => (100n)),
+                              ),
+                              mkThunk(() => (nixScope.s)),
                             ),
                           ),
                           "z",
                         ),
                         apply(
                           apply(
-                            apply(nixScope.substring, 2n),
-                            apply(
-                              apply(
-                                nixScope.sub,
-                                apply(nixScope.stringLength, nixScope.s),
-                              ),
-                              3n,
+                            apply(nixScope.substring, mkThunk(() => (2n))),
+                            mkThunk(
+                              () => (apply(
+                                apply(
+                                  nixScope.sub,
+                                  mkThunk(
+                                    () => (apply(
+                                      nixScope.stringLength,
+                                      mkThunk(() => (nixScope.s)),
+                                    ))
+                                  ),
+                                ),
+                                mkThunk(() => (3n)),
+                              ))
                             ),
                           ),
-                          nixScope.s,
+                          mkThunk(() => (nixScope.s)),
                         ),
                       ),
                       "a",
                     ),
-                    apply(apply(apply(nixScope.substring, 3n), 0n), nixScope.s),
+                    apply(
+                      apply(
+                        apply(nixScope.substring, mkThunk(() => (3n))),
+                        mkThunk(() => (0n)),
+                      ),
+                      mkThunk(() => (nixScope.s)),
+                    ),
                   ),
                   "b",
                 ),
-                apply(apply(apply(nixScope.substring, 3n), 1n), nixScope.s),
+                apply(
+                  apply(
+                    apply(nixScope.substring, mkThunk(() => (3n))),
+                    mkThunk(() => (1n)),
+                  ),
+                  mkThunk(() => (nixScope.s)),
+                ),
               ),
               "c",
             ),
-            apply(apply(apply(nixScope.substring, 5n), 10n), "perl"),
+            apply(
+              apply(
+                apply(nixScope.substring, mkThunk(() => (5n))),
+                mkThunk(() => (10n)),
+              ),
+              mkThunk(() => ("perl")),
+            ),
           ),
           "_",
         ),
-        apply(apply(apply(nixScope.substring, 3n), -1n), "tebbad"),
+        apply(
+          apply(
+            apply(nixScope.substring, mkThunk(() => (3n))),
+            mkThunk(() => (-1n)),
+          ),
+          mkThunk(() => ("tebbad")),
+        ),
       );
     });
   } finally {
     runtime.scopeStack.pop();
   }
-})(nixScope.builtins);
+})(runtime.withScope(nixScope, () => (nixScope.builtins)));

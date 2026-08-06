@@ -1,10 +1,10 @@
-Warning: Failed to format generated JavaScript: [0m[1m[31merror[0m: Expression expected at file:///_stdin.ts:27:5
-
-      .x["c"] = [];
-      ~
-
-denix_eval: eval failed: TypeError: The module's source code could not be parsed: Expression expected at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:27:5
-
-      .x["c"] = [];
-      ~
-    at async file:///Users/jeffhykin/repos/denix/run/denix_eval:134:17
+used
+used
+denix: eval failed: TypeError: Object.defineProperty called on non-object
+    at Object.defineProperty (<anonymous>)
+    at defGetter (file:///Users/jeffhykin/repos/denix/main/runtime.js:230:20)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:74:7
+    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:196:24)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:68:13
+    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:196:24)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:16:24

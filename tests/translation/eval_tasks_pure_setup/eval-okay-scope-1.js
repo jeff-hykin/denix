@@ -1,18 +1,35 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-scope-1.nix";
 
 export default (apply(
   apply(
-    createFunc({}, null, {}, (nixScope) => (
-      createFunc(/*arg:*/ "x", null, {}, (nixScope) => (
-        { "x": 1n, "y": nixScope.x }
+    createFunc({}, null, { args: { "x": false } }, nixScope, (nixScope) => (
+      createFunc(/*arg:*/ "x", null, {}, nixScope, (nixScope) => (
+        createScope(nixScope, (nixScope) => {
+          const obj = {};
+          defGetter(obj, "x", () => (1n));
+          defGetter(obj, "y", () => (nixScope.x));
+          return obj;
+        })
       ))
     )),
-    { "x": 2n },
+    mkThunk(() => (createScope(nixScope, (nixScope) => {
+      const obj = {};
+      defGetter(obj, "x", () => (2n));
+      return obj;
+    }))),
   ),
-  3n,
+  mkThunk(() => (3n)),
 ))["y"];

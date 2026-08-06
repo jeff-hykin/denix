@@ -1,5 +1,4 @@
-denix_eval: eval failed: Error: error: cannot coerce a set to a string
-    at Object.toString (file:///Users/jeffhykin/repos/denix/main/runtime.js:463:35)
-    at genericClosure (file:///Users/jeffhykin/repos/denix/main/runtime.js:2706:42)
-    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:8:16
+denix: eval failed: Error: error: cannot compare a set with a set
+    at genericClosure (file:///Users/jeffhykin/repos/denix/main/runtime.js:3699:31)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:466:20)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:16:16

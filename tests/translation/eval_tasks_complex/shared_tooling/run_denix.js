@@ -1,10 +1,10 @@
-// run_denix.js — spawn `run/denix_eval` and capture its output.
+// run_denix.js — spawn `denix eval` and capture its output.
 //
 // Accepts the same kind of arg list you would pass to nix-instantiate
 // (minus the binary name). Returns { stdout, stderr, code }.
 
 const decoder = new TextDecoder()
-const denixEvalPath = new URL("../../../../run/denix_eval", import.meta.url).pathname
+const denixCliPath = new URL("../../../../main/cli/denix.js", import.meta.url).pathname
 
 export async function runDenix(args, opts = {}) {
     const env = { ...(opts.env || {}) }
@@ -21,7 +21,7 @@ export async function runDenix(args, opts = {}) {
     }
 
     const proc = new Deno.Command(Deno.execPath(), {
-        args: ["run", "--allow-all", "--quiet", denixEvalPath, ...args],
+        args: ["run", "--allow-all", "--quiet", denixCliPath, "eval", ...args],
         cwd: opts.cwd,
         env,
         clearEnv: true,

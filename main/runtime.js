@@ -27,10 +27,15 @@ import { loadAndEvaluateSync } from "./import_loader.js"
 import { downloadWithRetry, extractNameFromUrl } from "./fetcher.js"
 import { extractTarball } from "./tar.js"
 import { hashDirectory, hashDirectorySync, hashPathSync, narHashToSRI } from "./nar_hash.js"
-import { ensureStoreDirectory, ensureStoreDirectorySync, computeFetchStorePath, getCachedPath, setCachedPath, atomicMove, atomicMoveSync, exists, STORE_DIR } from "./store_manager.js"
+import { ensureStoreDirectory, ensureStoreDirectorySync, computeFetchStorePath, getCachedPath, setCachedPath, setCachedPathSync, atomicMove, atomicMoveSync, exists, STORE_DIR } from "./store_manager.js"
 
 // registry system
 import { resolveIndirectReference } from "./registry.js"
+
+// Evaluation-mode settings shared by every runtime instance in this process.
+// `denix eval` defaults to pure evaluation (like `nix eval`); `--impure`
+// clears it. In pure mode fetchers require a locked input (e.g. a rev).
+export const evalSettings = { pureEval: false }
 
 //
 // Shared runtime (auto-created on first use)
@@ -111,6 +116,26 @@ import { resolveIndirectReference } from "./registry.js"
                     // FIELDS stay lazy: copy property descriptors (getters) rather
                     // than reading values.
                     const argSet = force(arg)
+                    // Strict formals, like real Nix: without `...`, unexpected
+                    // arguments are an error, and formals without defaults
+                    // must be supplied.
+                    if (metadata && metadata.args) {
+                        if (!builtins.isAttrs(argSet)) {
+                            throw new NixError(`error: value is ${builtins.typeOf(argSet)} while a set was expected`)
+                        }
+                        if (!metadata.ellipsis) {
+                            for (const k of Object.keys(argSet)) {
+                                if (!Object.hasOwn(metadata.args, k)) {
+                                    throw new NixError(`error: function called with unexpected argument '${k}'`)
+                                }
+                            }
+                        }
+                        for (const [k, hasDefault] of Object.entries(metadata.args)) {
+                            if (!hasDefault && !Object.hasOwn(argSet, k)) {
+                                throw new NixError(`error: function called without required argument '${k}'`)
+                            }
+                        }
+                    }
                     if (builtins.isAttrs(argSet)) {
                         for (const k of Object.keys(argSet)) {
                             Object.defineProperty(nixScope, k, Object.getOwnPropertyDescriptor(argSet, k))
@@ -560,6 +585,12 @@ import { resolveIndirectReference } from "./registry.js"
         }
         const walk = (v, d) => {
             if (v == null || d > 30) { return }
+            // A flattened Interpolater keeps its derivation references in
+            // `deps` (its getters are deleted after toString), so walk those
+            // too — otherwise context is lost once a string is flattened.
+            if (typeof v === "object" && v.deps instanceof Array) {
+                for (const dep of v.deps) { walk(dep, d + 1) }
+            }
             // Any context-carrying value (NixString, or a Path tagged by
             // builtins.path) merges its context.
             if (v && v.context instanceof Map) {
@@ -1126,8 +1157,11 @@ import { resolveIndirectReference } from "./registry.js"
                     return s.slice(startNum, end)
                 } else if (s instanceof InterpolatedString || s instanceof NixString) {
                     // be lazy for InterpolatedStrings; NixString carries string
-                    // context (returning undefined here broke lib.addContextFrom)
-                    return new InterpolatedString([""], [()=>s.toString().slice(startNum, end)])
+                    // context (returning undefined here broke lib.addContextFrom).
+                    // Real Nix keeps the WHOLE context of the source string even
+                    // when the slice is empty (context is per-string, not
+                    // per-character), so wrap the slice in a NixString carrying it.
+                    return new InterpolatedString([""], [()=>new NixString(s.toString().slice(startNum, end), computeStringContext(s))])
                 } else {
                     throw new NixError(`error: value is a ${builtins.typeOf(s)} while a string was expected`)
                 }
@@ -1495,25 +1529,61 @@ import { resolveIndirectReference } from "./registry.js"
                 // Return Path object
                 return new Path(storePath);
             },
-            "fetchGit": async (args) => {
-                // Parse arguments: can be string URL or {url, name?, rev?, ref?, submodules?, shallow?, allRefs?}
-                let url, name, rev, ref, submodules, shallow, allRefs;
-                if (typeof args === "string" || args instanceof InterpolatedString) {
-                    url = requireString(args);
-                    name = extractNameFromUrl(url) || "source";
+            // Synchronous on purpose: Nix evaluation is synchronous, so an async
+            // fetchGit would leak a Promise into translated code like
+            // `(builtins.fetchGit x).revCount` where nothing can await it.
+            "fetchGit": (args) => {
+                // Coerce a url/name/rev value that may be a string, an
+                // InterpolatedString, or a Path (path literals are valid urls)
+                const asStr = (v) => {
+                    v = force(v)
+                    if (v instanceof Path) { return v.toString() }
+                    return requireString(v).toString()
+                }
+                // Parse arguments: can be string URL, path, or {url, name?, rev?, ref?, submodules?, shallow?, allRefs?}
+                let url, name, rev, ref, refGiven, submodules, shallow, allRefs;
+                let publicKeys = [], verifyCommit = false;
+                if (typeof args === "string" || args instanceof InterpolatedString || args instanceof Path) {
+                    url = asStr(args);
+                    name = "source"; // Nix's fetchGit default, regardless of URL
                     rev = null;
                     ref = "HEAD";
+                    refGiven = false;
                     submodules = false;
                     shallow = false;
                     allRefs = false;
                 } else {
-                    url = requireString(args["url"]);
-                    name = args["name"] ? requireString(args["name"]) : (extractNameFromUrl(url) || "source");
-                    rev = args["rev"] ? requireString(args["rev"]) : null;
-                    ref = args["ref"] ? requireString(args["ref"]) : "HEAD";
+                    url = asStr(args["url"]);
+                    name = args["name"] ? requireString(args["name"]).toString() : "source";
+                    rev = args["rev"] ? requireString(args["rev"]).toString() : null;
+                    refGiven = args["ref"] != null;
+                    ref = refGiven ? requireString(args["ref"]).toString() : "HEAD";
                     submodules = args["submodules"] === true;
                     shallow = args["shallow"] === true;
                     allRefs = args["allRefs"] === true;
+                    // Signature verification args (Nix: publicKey/keytype,
+                    // publicKeys = [{key, type}], verifyCommit defaults on
+                    // when any key is given)
+                    if (args["publicKey"] != null) {
+                        publicKeys.push({
+                            key: requireString(args["publicKey"]).toString(),
+                            type: args["keytype"] != null ? requireString(args["keytype"]).toString() : "ssh-ed25519",
+                        });
+                    }
+                    if (args["publicKeys"] != null) {
+                        for (const entry of requireList(args["publicKeys"])) {
+                            const e = force(entry);
+                            publicKeys.push({
+                                key: requireString(e["key"]).toString(),
+                                type: e["type"] != null ? requireString(e["type"]).toString() : "ssh-ed25519",
+                            });
+                        }
+                    }
+                    verifyCommit = args["verifyCommit"] != null ? force(args["verifyCommit"]) === true : publicKeys.length > 0;
+                }
+
+                if (evalSettings.pureEval && !rev) {
+                    throw new NixError(`error: in pure evaluation mode, 'fetchGit' requires a locked input (specify a 'rev')`)
                 }
 
                 // Normalize ref: add refs/heads/ prefix unless ref starts with refs/ or is HEAD
@@ -1522,148 +1592,208 @@ import { resolveIndirectReference } from "./registry.js"
                     normalizedRef = `refs/heads/${ref}`;
                 }
 
-                // Ensure store directory exists
-                await ensureStoreDirectory();
+                ensureStoreDirectorySync();
+
+                const gitDecoder = new TextDecoder();
+                const runGit = (gitArgs, { check = true } = {}) => {
+                    let out;
+                    try {
+                        out = new Deno.Command("git", { args: gitArgs, stdout: "piped", stderr: "piped" }).outputSync();
+                    } catch (error) {
+                        throw new Error(
+                            `builtins.fetchGit requires git binary to be installed\n` +
+                            `Error: ${error.message}`
+                        );
+                    }
+                    const result = { code: out.code, stdout: gitDecoder.decode(out.stdout).trim(), stderr: gitDecoder.decode(out.stderr) };
+                    if (check && out.code !== 0) {
+                        throw new Error(`git ${gitArgs.join(" ")} failed: ${result.stderr}`);
+                    }
+                    return result;
+                };
+
+                // Nix rejects malformed ref names (same rules as git check-ref-format)
+                if (refGiven && ref !== "HEAD") {
+                    const refCheck = runGit(["check-ref-format", "--allow-onelevel", ref], { check: false });
+                    if (refCheck.code !== 0) {
+                        throw new NixError(`error: invalid Git branch/tag name '${ref}'`);
+                    }
+                }
+
+                const fmtLastModifiedDate = (epoch) => {
+                    const d = new Date(Number(epoch) * 1000);
+                    const p = (n) => String(n).padStart(2, "0");
+                    return `${d.getUTCFullYear()}${p(d.getUTCMonth() + 1)}${p(d.getUTCDate())}${p(d.getUTCHours())}${p(d.getUTCMinutes())}${p(d.getUTCSeconds())}`;
+                };
+
+                // Real Nix returns an attrset (so hasAttr/removeAttrs work on
+                // it); the non-enumerable toString keeps JS-side callers that
+                // treat the result like a path working.
+                const finishResult = (storePath, meta) => {
+                    const result = { outPath: storePath, ...meta };
+                    Object.defineProperty(result, "toString", { value: () => storePath, enumerable: false });
+                    return result;
+                };
+
+                const localPath = url.startsWith("/") ? url
+                    : url.startsWith("file://") ? url.slice("file://".length)
+                    : null;
+
+                // Nix refuses to fetch from shallow repositories unless shallow = true
+                if (localPath != null && !shallow) {
+                    const probe = runGit(["-C", localPath, "rev-parse", "--is-shallow-repository"], { check: false });
+                    if (probe.code === 0 && probe.stdout === "true") {
+                        throw new NixError(`error: '${url}' is a shallow Git repository, but fetching from a shallow repository requires 'shallow = true'`);
+                    }
+                }
 
                 // Check cache
                 // TODO: Store and retrieve metadata with cached paths
                 // For now, skip cache to ensure metadata is always available
                 const cacheKey = `fetchgit:${url}:${normalizedRef}:${rev || "tip"}`;
-                // const cached = await getCachedPath(cacheKey);
-                // if (cached && await exists(cached)) {
-                //     const result = new Path(cached);
-                //     return result;
-                // }
 
-                // Validate git binary exists
-                try {
-                    const gitVersion = new Deno.Command("git", {
-                        args: ["--version"],
-                        stdout: "piped",
-                        stderr: "piped",
-                    });
-                    const { code } = await gitVersion.output();
-                    if (code !== 0) {
-                        throw new Error("git command failed");
+                // Workdir semantics (plain local paths, no rev/ref requested):
+                // a dirty or headless worktree is copied from `git ls-files`
+                // instead of fetched, with rev reported as all zeros.
+                if (url.startsWith("/") && !rev && !refGiven) {
+                    const headProbe = runGit(["-C", url, "rev-parse", "HEAD"], { check: false });
+                    const hasHead = headProbe.code === 0;
+                    let dirty = false;
+                    if (hasHead) {
+                        const status = runGit(["-C", url, "status", "--porcelain"], { check: false });
+                        // untracked files ("??") do not make a worktree dirty
+                        dirty = status.code === 0 && status.stdout.split("\n").some((l) => l && !l.startsWith("??"));
                     }
-                } catch (error) {
-                    throw new Error(
-                        `builtins.fetchGit requires git binary to be installed\n` +
-                        `Error: ${error.message}`
-                    );
+                    if (!hasHead || dirty) {
+                        const files = runGit(["-C", url, "ls-files", "-z"]).stdout.split("\0").filter(Boolean);
+                        const tempDir = Deno.makeTempDirSync();
+                        for (const f of files) {
+                            const src = `${url}/${f}`;
+                            let st;
+                            try { st = Deno.lstatSync(src) } catch { continue }
+                            const dest = `${tempDir}/${f}`;
+                            Deno.mkdirSync(dest.slice(0, dest.lastIndexOf("/")), { recursive: true });
+                            if (st.isSymlink) {
+                                Deno.symlinkSync(Deno.readLinkSync(src), dest);
+                            } else {
+                                Deno.copyFileSync(src, dest);
+                            }
+                        }
+                        const narHash = hashPathSync(tempDir);
+                        const storePath = computeFetchStorePath(narHash, name);
+                        atomicMoveSync(tempDir, storePath);
+                        const meta = {
+                            rev: "0".repeat(40),
+                            shortRev: "0000000",
+                            revCount: 0n,
+                            lastModified: 0n,
+                            lastModifiedDate: "19700101000000",
+                            narHash: narHashToSRI(narHash),
+                            submodules,
+                        };
+                        if (hasHead) {
+                            meta.dirtyRev = `${headProbe.stdout}-dirty`;
+                            meta.dirtyShortRev = `${runGit(["-C", url, "rev-parse", "--short", "HEAD"]).stdout}-dirty`;
+                        }
+                        return finishResult(storePath, meta);
+                    }
+                    // clean worktree: fall through to a normal fetch
                 }
 
-                // Create temp directory for cloning
-                const tempDir = await Deno.makeTempDir();
-
+                // Normal fetch: init + fetch + checkout FETCH_HEAD. Unlike
+                // `clone --branch`, an explicit refspec handles branches, tags,
+                // and fully-qualified refs (refs/tags/x, refs/heads/x) uniformly.
+                const tempDir = Deno.makeTempDirSync();
                 try {
-                    // Build git clone command
-                    const cloneArgs = ["clone"];
-                    if (shallow) {
-                        cloneArgs.push("--depth", "1");
+                    runGit(["init", "-q", tempDir]);
+                    runGit(["-C", tempDir, "remote", "add", "origin", url]);
+                    const depthArgs = shallow ? ["--depth", "1"] : [];
+                    if (rev) {
+                        // Try fetching the rev directly (works for local repos and
+                        // servers with allowAnySHA1InWant); fall back to all refs.
+                        const direct = runGit(["-C", tempDir, "fetch", "-q", ...depthArgs, "origin", rev], { check: false });
+                        if (direct.code !== 0) {
+                            runGit(["-C", tempDir, "fetch", "-q", ...depthArgs, "origin", "+refs/*:refs/remotes/origin/*"]);
+                        }
+                        const co = runGit(["-C", tempDir, "checkout", "-q", rev], { check: false });
+                        if (co.code !== 0) {
+                            throw new Error(`git checkout ${rev} failed: ${co.stderr}`);
+                        }
+                    } else {
+                        const refspec = ref === "HEAD" ? "HEAD" : normalizedRef;
+                        const fetched = runGit(["-C", tempDir, "fetch", "-q", ...depthArgs, "origin", refspec], { check: false });
+                        if (fetched.code !== 0) {
+                            throw new Error(`git clone failed: fetching '${refspec}' from '${url}':\n${fetched.stderr}`);
+                        }
+                        runGit(["-C", tempDir, "checkout", "-q", "FETCH_HEAD"]);
+                    }
+                    if (allRefs) {
+                        runGit(["-C", tempDir, "fetch", "-q", "origin", "+refs/*:refs/*"], { check: false });
                     }
                     if (submodules) {
-                        cloneArgs.push("--recurse-submodules");
-                    }
-                    // Note: Only specify branch if not HEAD and not using rev
-                    // If rev is specified, we'll checkout after clone
-                    // Use the original ref for --branch (git expects branch name, not refs/heads/...)
-                    if (!rev && ref && ref !== "HEAD") {
-                        cloneArgs.push("--branch", ref);
-                    }
-                    cloneArgs.push(url, tempDir);
-
-                    // Execute git clone
-                    const cloneCmd = new Deno.Command("git", {
-                        args: cloneArgs,
-                        stdout: "piped",
-                        stderr: "piped",
-                    });
-
-                    const cloneResult = await cloneCmd.output();
-                    if (cloneResult.code !== 0) {
-                        const errorText = new TextDecoder().decode(cloneResult.stderr);
-                        throw new Error(`git clone failed: ${errorText}`);
+                        // protocol.file.allow: git blocks file-protocol submodule
+                        // clones by default (CVE-2022-39253); Nix allows them
+                        runGit(["-C", tempDir, "-c", "protocol.file.allow=always", "submodule", "update", "--init", "--recursive", "--quiet"]);
                     }
 
-                    // If allRefs is true, fetch all refs
-                    if (allRefs) {
-                        const fetchCmd = new Deno.Command("git", {
-                            args: ["-C", tempDir, "fetch", "--all"],
-                            stdout: "piped",
-                            stderr: "piped",
-                        });
-                        await fetchCmd.output(); // Ignore errors on fetch --all
-                    }
-
-                    // If specific revision requested, checkout that revision
-                    if (rev) {
-                        const checkoutCmd = new Deno.Command("git", {
-                            args: ["-C", tempDir, "checkout", rev],
-                            stdout: "piped",
-                            stderr: "piped",
-                        });
-                        const checkoutResult = await checkoutCmd.output();
-                        if (checkoutResult.code !== 0) {
-                            const errorText = new TextDecoder().decode(checkoutResult.stderr);
-                            throw new Error(`git checkout ${rev} failed: ${errorText}`);
+                    // Commit signature verification (ssh keys, like Nix's
+                    // verifyCommit): build an allowed-signers file and let git
+                    // check HEAD's signature against it.
+                    if (verifyCommit) {
+                        const signersFile = Deno.makeTempFileSync();
+                        try {
+                            Deno.writeTextFileSync(signersFile, publicKeys.map((k) => `* ${k.type} ${k.key}`).join("\n") + "\n");
+                            const verify = runGit(["-C", tempDir, "-c", `gpg.ssh.allowedSignersFile=${signersFile}`, "verify-commit", "HEAD"], { check: false });
+                            if (verify.code !== 0) {
+                                throw new NixError(`error: Commit signature verification on commit HEAD failed: ${verify.stderr}`);
+                            }
+                        } finally {
+                            try { Deno.removeSync(signersFile); } catch {}
                         }
-                    }
-
-                    // Helper function to run git command and get output
-                    async function gitOutput(args) {
-                        const cmd = new Deno.Command("git", {
-                            args: ["-C", tempDir, ...args],
-                            stdout: "piped",
-                            stderr: "piped",
-                        });
-                        const { code, stdout } = await cmd.output();
-                        if (code !== 0) {
-                            throw new Error(`git ${args.join(" ")} failed`);
-                        }
-                        return new TextDecoder().decode(stdout).trim();
                     }
 
                     // Extract metadata
-                    const fullRev = await gitOutput(["rev-parse", "HEAD"]);
-                    const shortRev = await gitOutput(["rev-parse", "--short", "HEAD"]);
-                    const revCountStr = await gitOutput(["rev-list", "--count", "HEAD"]);
-                    const revCount = BigInt(revCountStr);
-                    const lastModifiedStr = await gitOutput(["log", "-1", "--format=%ct", "HEAD"]);
-                    const lastModified = BigInt(lastModifiedStr);
+                    const fullRev = runGit(["-C", tempDir, "rev-parse", "HEAD"]).stdout;
+                    const shortRev = runGit(["-C", tempDir, "rev-parse", "--short", "HEAD"]).stdout;
+                    const lastModified = BigInt(runGit(["-C", tempDir, "log", "-1", "--format=%ct", "HEAD"]).stdout);
+                    // A shallow fetch cannot know the true commit count, so like
+                    // Nix the revCount attribute is omitted entirely.
+                    const revCount = shallow ? null : BigInt(runGit(["-C", tempDir, "rev-list", "--count", "HEAD"]).stdout);
 
-                    // Remove .git directory for determinism
-                    try {
-                        await Deno.remove(`${tempDir}/.git`, { recursive: true });
-                    } catch {
-                        // Ignore errors if .git doesn't exist or can't be removed
-                    }
+                    // Remove .git entries (recursively — submodule checkouts leave
+                    // .git files behind) for determinism
+                    const removeGitDirs = (dir) => {
+                        for (const e of Deno.readDirSync(dir)) {
+                            if (e.name === ".git") {
+                                Deno.removeSync(`${dir}/${e.name}`, { recursive: true });
+                            } else if (e.isDirectory) {
+                                removeGitDirs(`${dir}/${e.name}`);
+                            }
+                        }
+                    };
+                    removeGitDirs(tempDir);
 
-                    // Compute NAR hash of directory
-                    const narHash = await hashDirectory(tempDir);
-
-                    // Compute store path
+                    const narHash = hashPathSync(tempDir);
                     const storePath = computeFetchStorePath(narHash, name);
+                    atomicMoveSync(tempDir, storePath);
+                    setCachedPathSync(cacheKey, storePath);
 
-                    // Move to store
-                    await atomicMove(tempDir, storePath);
-
-                    // Cache the result
-                    await setCachedPath(cacheKey, storePath);
-
-                    // Return Path object with metadata as properties
-                    const result = new Path(storePath);
-                    result.rev = fullRev;
-                    result.shortRev = shortRev;
-                    result.revCount = revCount;
-                    result.lastModified = lastModified;
-                    result.narHash = narHashToSRI(narHash);
-                    result.submodules = submodules;
-                    return result;
+                    const meta = {
+                        rev: fullRev,
+                        shortRev,
+                        lastModified,
+                        lastModifiedDate: fmtLastModifiedDate(lastModified),
+                        narHash: narHashToSRI(narHash),
+                        submodules,
+                    };
+                    if (revCount != null) {
+                        meta.revCount = revCount;
+                    }
+                    return finishResult(storePath, meta);
                 } catch (error) {
                     // Clean up temp directory on error
                     try {
-                        await Deno.remove(tempDir, { recursive: true });
+                        Deno.removeSync(tempDir, { recursive: true });
                     } catch {
                         // Ignore cleanup errors
                     }
@@ -1811,6 +1941,7 @@ import { resolveIndirectReference } from "./registry.js"
 
                     // Return Path object with metadata as properties
                     const result = new Path(storePath);
+                    result.outPath = storePath;
                     result.rev = fullRev;
                     result.shortRev = shortRev;
                     result.revCount = revCount;
@@ -1828,11 +1959,15 @@ import { resolveIndirectReference } from "./registry.js"
                     throw error;
                 }
             },
-            "fetchTree": async (args) => {
+            "fetchTree": (args) => {
                 // fetchTree is a unified interface for fetching from different source types
                 // It accepts either:
                 //   1. An attribute set with {type, ...other params}
                 //   2. A URL-like string (requires flakes experimental feature)
+                // Synchronous on purpose for git/path-backed types: Nix
+                // evaluation is synchronous, so an async fetchTree would leak
+                // a Promise into translated code (e.g. `(fetchTree x).outPath`).
+                // Network-tarball/file/mercurial types still return Promises.
 
                 let attrs;
 
@@ -1871,6 +2006,13 @@ import { resolveIndirectReference } from "./registry.js"
                         if (parts[2]) {
                             attrs.rev = parts[2];
                         }
+                    }
+                    // Path scheme: path:///abs/path or path:/abs/path
+                    else if (urlString.startsWith("path:")) {
+                        attrs = {
+                            type: "path",
+                            path: urlString.replace(/^path:\/\/(?=\/)/, "").replace(/^path:/, ""),
+                        };
                     }
                     // Git URLs: git+https://, git+ssh://, git://
                     else if (urlString.match(/^git(\+https?|\+ssh)?:\/\//)) {
@@ -1920,7 +2062,7 @@ import { resolveIndirectReference } from "./registry.js"
                         if (attrs.shallow !== undefined) gitArgs.shallow = attrs.shallow;
                         if (attrs.allRefs !== undefined) gitArgs.allRefs = attrs.allRefs;
 
-                        const gitResult = await builtins.fetchGit(gitArgs);
+                        const gitResult = builtins.fetchGit(gitArgs);
 
                         // Return result with additional metadata if provided
                         if (attrs.lastModified !== undefined) {
@@ -1940,7 +2082,7 @@ import { resolveIndirectReference } from "./registry.js"
                         if (attrs.name) tarballArgs.name = attrs.name;
                         if (attrs.sha256) tarballArgs.sha256 = attrs.sha256;
 
-                        return await builtins.fetchTarball(tarballArgs);
+                        return builtins.fetchTarball(tarballArgs);
 
                     case "file":
                         // Delegate to fetchurl
@@ -1950,7 +2092,7 @@ import { resolveIndirectReference } from "./registry.js"
                         if (attrs.name) fileArgs.name = attrs.name;
                         if (attrs.sha256) fileArgs.sha256 = attrs.sha256;
 
-                        return await builtins.fetchurl(fileArgs);
+                        return builtins.fetchurl(fileArgs);
 
                     case "github":
                         // Transform GitHub shorthand to git URL
@@ -1981,7 +2123,7 @@ import { resolveIndirectReference } from "./registry.js"
                         if (attrs.shallow !== undefined) githubArgs.shallow = attrs.shallow;
                         if (attrs.allRefs !== undefined) githubArgs.allRefs = attrs.allRefs;
 
-                        const githubResult = await builtins.fetchGit(githubArgs);
+                        const githubResult = builtins.fetchGit(githubArgs);
 
                         // Add shortRev if not already present
                         if (!githubResult.shortRev && githubResult.rev) {
@@ -2020,7 +2162,7 @@ import { resolveIndirectReference } from "./registry.js"
                         if (attrs.shallow !== undefined) gitlabArgs.shallow = attrs.shallow;
                         if (attrs.allRefs !== undefined) gitlabArgs.allRefs = attrs.allRefs;
 
-                        return await builtins.fetchGit(gitlabArgs);
+                        return builtins.fetchGit(gitlabArgs);
 
                     case "sourcehut":
                         // Transform SourceHut shorthand to git URL
@@ -2052,7 +2194,7 @@ import { resolveIndirectReference } from "./registry.js"
                         if (attrs.shallow !== undefined) sourcehutArgs.shallow = attrs.shallow;
                         if (attrs.allRefs !== undefined) sourcehutArgs.allRefs = attrs.allRefs;
 
-                        return await builtins.fetchGit(sourcehutArgs);
+                        return builtins.fetchGit(sourcehutArgs);
 
                     case "mercurial":
                     case "hg":
@@ -2064,17 +2206,15 @@ import { resolveIndirectReference } from "./registry.js"
                         if (attrs.rev) hgArgs.rev = attrs.rev;
                         if (attrs.ref) hgArgs.ref = attrs.ref;
 
-                        const hgResult = await builtins.fetchMercurial(hgArgs);
-
                         // Return unified fetchTree format (same as git)
-                        return {
+                        return builtins.fetchMercurial(hgArgs).then((hgResult) => ({
                             outPath: hgResult.toString(),
                             rev: hgResult.rev,
                             shortRev: hgResult.shortRev,
                             revCount: hgResult.revCount,
                             lastModified: hgResult.lastModified,
                             narHash: hgResult.narHash,
-                        };
+                        }));
 
                     case "path":
                         // Delegate to builtins.path
@@ -2092,29 +2232,46 @@ import { resolveIndirectReference } from "./registry.js"
                         if (attrs.recursive !== undefined) pathArgs.recursive = attrs.recursive;
                         if (attrs.sha256) pathArgs.sha256 = attrs.sha256;
 
-                        return await builtins.path(pathArgs);
+                        const pathStorePath = builtins.path(pathArgs).toString();
+                        const materialized = `${STORE_DIR}/${pathStorePath.split("/").pop()}`;
+
+                        // Nix's path fetcher reports the source's mtime as
+                        // lastModified, unless explicitly overridden in attrs
+                        const srcStat = Deno.statSync(requireString(attrs.path).toString());
+                        const pathLastModified = attrs.lastModified !== undefined
+                            ? BigInt(force(attrs.lastModified))
+                            : BigInt(Math.floor((srcStat.mtime?.getTime() ?? 0) / 1000));
+                        const lmDate = new Date(Number(pathLastModified) * 1000);
+                        const pad2 = (n) => String(n).padStart(2, "0");
+                        const pathResult = {
+                            outPath: pathStorePath,
+                            narHash: narHashToSRI(hashPathSync(materialized)),
+                            lastModified: pathLastModified,
+                            lastModifiedDate: `${lmDate.getUTCFullYear()}${pad2(lmDate.getUTCMonth() + 1)}${pad2(lmDate.getUTCDate())}${pad2(lmDate.getUTCHours())}${pad2(lmDate.getUTCMinutes())}${pad2(lmDate.getUTCSeconds())}`,
+                        };
+                        Object.defineProperty(pathResult, "toString", { value: () => pathStorePath, enumerable: false });
+                        return pathResult;
 
                     case "indirect":
                         // Flake registry indirection - resolve via registry
                         const indirectId = requireString(attrs.id || attrs.ref).toString();
 
                         // Resolve the indirect reference via registry
-                        const resolvedRef = await resolveIndirectReference(indirectId);
-
-                        if (!resolvedRef) {
-                            throw new Error(
-                                `builtins.fetchTree: indirect flake reference "${indirectId}" not found in registry.\n` +
-                                `Available registries:\n` +
-                                `  - User: ~/.config/nix/registry.json\n` +
-                                `  - System: /etc/nix/registry.json\n` +
-                                `  - Global: https://channels.nixos.org/flake-registry.json\n` +
-                                `\n` +
-                                `You can also use explicit references like "github:owner/repo" instead.`
-                            );
-                        }
-
-                        // Recursively call fetchTree with the resolved reference
-                        return await builtins.fetchTree(resolvedRef);
+                        return resolveIndirectReference(indirectId).then((resolvedRef) => {
+                            if (!resolvedRef) {
+                                throw new Error(
+                                    `builtins.fetchTree: indirect flake reference "${indirectId}" not found in registry.\n` +
+                                    `Available registries:\n` +
+                                    `  - User: ~/.config/nix/registry.json\n` +
+                                    `  - System: /etc/nix/registry.json\n` +
+                                    `  - Global: https://channels.nixos.org/flake-registry.json\n` +
+                                    `\n` +
+                                    `You can also use explicit references like "github:owner/repo" instead.`
+                                );
+                            }
+                            // Recursively call fetchTree with the resolved reference
+                            return builtins.fetchTree(resolvedRef);
+                        });
 
                     default:
                         throw new Error(`builtins.fetchTree: unsupported type '${type}'`);
@@ -2169,12 +2326,24 @@ import { resolveIndirectReference } from "./registry.js"
                 return e2
             },
             "deepSeq": (e1)=>(e2)=>{
+                // Nix's forceValueDeep tracks visited lists/attrsets, so
+                // self-referential structures (as.y = as) terminate instead
+                // of overflowing the call stack.
+                const seen = new WeakSet()
                 const deepEval = (val) => {
                     if (val instanceof Array) {
+                        if (seen.has(val)) {
+                            return
+                        }
+                        seen.add(val)
                         for (const item of val) {
                             deepEval(item)
                         }
                     } else if (builtins.isAttrs(val)) {
+                        if (seen.has(val)) {
+                            return
+                        }
+                        seen.add(val)
                         for (const key of Object.keys(val)) {
                             deepEval(val[key])
                         }
@@ -3524,6 +3693,11 @@ import { resolveIndirectReference } from "./registry.js"
                     }
 
                     const cls = keyClass(item.key)
+                    // Nix's CompareValues only supports numbers, strings, and
+                    // paths as keys — anything else (sets, lists, …) errors.
+                    if (cls !== "number" && cls !== "string" && cls !== "path") {
+                        throw new NixError(`error: cannot compare a ${cls} with a ${cls}`)
+                    }
                     if (seenClass !== null && seenClass !== cls) {
                         throw new NixError(`error: cannot compare a ${seenClass} with a ${cls}`)
                     }

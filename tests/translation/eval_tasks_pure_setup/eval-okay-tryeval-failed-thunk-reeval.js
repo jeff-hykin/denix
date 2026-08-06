@@ -1,32 +1,54 @@
 import { createRuntime } from "file:///Users/jeffhykin/repos/denix/main/runtime.js";
-const { runtime, createFunc, createScope, defGetter, apply } = createRuntime();
+const {
+  runtime,
+  createFunc,
+  createScope,
+  defGetter,
+  apply,
+  set,
+  force,
+  mkThunk,
+} = createRuntime();
 const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1];
-runtime.currentFile = import.meta.url.startsWith("file://")
-  ? import.meta.url.slice(7)
-  : new URL(import.meta.url).pathname;
+runtime.currentFile =
+  "/Users/jeffhykin/repos/denix/tests/translation/eval_tasks_pure_setup/eval-okay-tryeval-failed-thunk-reeval.nix";
 
 export default //
-/*let*/ createScope((nixScope) => {
+/*let*/ createScope(nixScope, (nixScope) => {
   defGetter(
     nixScope,
     "foo",
-    (nixScope) =>
+    (
+      nixScope,
+    ) => (apply(
       apply(
-        apply(apply(nixScope.builtins["trace"], "throwing"), nixScope.throw),
-        "nope",
+        apply(nixScope.builtins["trace"], mkThunk(() => ("throwing"))),
+        mkThunk(() => (nixScope.throw)),
       ),
+      mkThunk(() => ("nope")),
+    )),
   );
   return apply(
     apply(
       apply(
         apply(
           nixScope.builtins["seq"],
-          (apply(nixScope.builtins["tryEval"], nixScope.foo))["success"],
+          mkThunk(
+            () => ((apply(
+              nixScope.builtins["tryEval"],
+              mkThunk(() => (nixScope.foo)),
+            ))["success"])
+          ),
         ),
-        nixScope.builtins["seq"],
+        mkThunk(() => (nixScope.builtins["seq"])),
       ),
-      (apply(nixScope.builtins["tryEval"], nixScope.foo))["success"],
+      mkThunk(
+        () => ((apply(
+          nixScope.builtins["tryEval"],
+          mkThunk(() => (nixScope.foo)),
+        ))["success"])
+      ),
     ),
-    "done",
+    mkThunk(() => ("done")),
   );
 });

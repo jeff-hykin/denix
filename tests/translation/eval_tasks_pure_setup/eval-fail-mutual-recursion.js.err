@@ -1,11 +1,177 @@
-denix_eval: eval failed: Error: Called builtins.typeOf, which only works with valid nix values, but instead got type undefined, with a value of: undefined 
-    at Object.typeOf (file:///Users/jeffhykin/repos/denix/main/runtime.js:385:31)
-    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:2742:84)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:63:30
-    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:2744:43)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:57:21
-    at file:///Users/jeffhykin/repos/denix/main/runtime.js:60:32
-    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:3021:50)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:59:20
-    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:2744:32)
-    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:57:21
+denix: eval failed: Error: Uh oh!
+    at throw (file:///Users/jeffhykin/repos/denix/main/runtime.js:2356:35)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:466:20)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:82:20
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:43)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:76:28
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:43)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:70:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:72:18
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:70:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:72:18
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:70:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:72:18
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:70:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:72:18
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:70:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:72:18
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:70:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:72:18
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:70:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:72:18
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:70:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:72:18
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:70:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:72:18
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:70:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:72:18
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:70:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:53:20
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:51:28
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:43)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:45:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:47:18
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:45:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:47:18
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:45:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:47:18
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:45:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:47:18
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:45:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:47:18
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:45:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:47:18
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:45:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:47:18
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:45:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:47:18
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:45:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:47:18
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:45:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:47:18
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:45:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:78:20
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:76:28
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:43)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:70:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:72:18
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:70:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:72:18
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:70:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:72:18
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:70:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:72:18
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:70:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:72:18
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:70:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:72:18
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:70:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:72:18
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:70:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:72:18
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:70:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:72:18
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:70:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:72:18
+    at Object.ifThenElse (file:///Users/jeffhykin/repos/denix/main/runtime.js:3747:32)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:70:19
+    at lambda (file:///Users/jeffhykin/repos/denix/main/runtime.js:106:32)
+    at apply (file:///Users/jeffhykin/repos/denix/main/runtime.js:465:62)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:88:10
+    at createScope (file:///Users/jeffhykin/repos/denix/main/runtime.js:196:24)
+    at file:///var/folders/_c/ycpr1qs95_v91nhhbx3s7gym0000gn/T/denix_eval/translated.js:37:9

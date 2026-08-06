@@ -165,7 +165,7 @@ const buildPreamble = (output, options) => {
     pre += `const nixScope = runtime.scopeStack[runtime.scopeStack.length - 1]\n`
     // Tell the runtime what file this translated module came from, so relative
     // `import ./foo` paths inside the nix source resolve correctly. When the
-    // caller knows the original source file (e.g. denix_eval/denix_build write
+    // caller knows the original source file (e.g. the denix CLI writes
     // the translated JS to a temp dir, so import.meta.url would point there,
     // not at the .nix), bake that path in. Otherwise fall back to the module's
     // own location.

@@ -139,6 +139,19 @@ export async function setCachedPath(cacheKey, storePath) {
     await saveCache(cache);
 }
 
+export function setCachedPathSync(cacheKey, storePath) {
+    let cache;
+    try {
+        cache = JSON.parse(Deno.readTextFileSync(CACHE_FILE));
+    } catch {
+        cache = {};
+    }
+    cache[cacheKey] = storePath;
+    const parentDir = CACHE_FILE.substring(0, CACHE_FILE.lastIndexOf('/'));
+    Deno.mkdirSync(parentDir, { recursive: true });
+    Deno.writeTextFileSync(CACHE_FILE, JSON.stringify(cache, null, 2));
+}
+
 /**
  * Acquire an exclusive lock and run a function
  * Prevents concurrent access to the same resource
