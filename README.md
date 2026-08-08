@@ -1,33 +1,159 @@
 # Denix - Nix to JavaScript Translator
 
-A Nix → JavaScript translator with 1-to-1 parity for Nix 2.18 builtins, implemented in Deno.
+A Nix → JavaScript translator/runner with 1-to-1 parity for Nix 2.18 builtins, implemented in Deno.
 
 [![Tests](https://img.shields.io/badge/tests-805%20passing-brightgreen)](#testing)
 [![Nix](https://img.shields.io/badge/Nix-2.18-blue)](https://nix.dev/manual/nix/2.18/language/builtins)
 [![Deno](https://img.shields.io/badge/Deno-latest-blue)](https://deno.land/)
 
-## Status
-
-**Translator:** ✅ 100% complete
-**Runtime:** ✅ all Nix builtins implemented and exercised by tests (805 passing unit tests)
-**Derivations:** ✅ byte-identical .drv output vs real Nix across the stdenv closure (515/515)
-**Build:** ✅ builds cowsay from nixpkgs end-to-end (substitution + local stdenv phases)
-
 ## Quick Start
 
-Install the `denix` CLI globally with Deno (no Nix installation required):
+Import your nix code ... inside JS
 
-```bash
-# From the web
-deno install -g --allow-all --name denix "https://raw.esm.sh/gh/jeff-hykin/denix@claude3/main/cli/denix.js"
+```javascript
+import { createRuntime } from "https://raw.esm.sh/gh/jeff-hykin/denix@claude3/main/runtime.js"
+const nix = createRuntime()
 
-# Or from a local clone
-deno install -g --allow-all --name denix ./main/cli/denix.js
+// eval *any* nix code
+const aFunction = await nix.evalNix(`x: x * 2`)
+// true:
+aFunction(10) == 20
+
+// import flakes
+const flake = nix.builtins.import("https://raw.githubusercontent.com/NixOS/templates/master/trivial/flake.nix")
+flake.description // "my flake"
+flake.outputs     // a callable JS function
+
+// translate bits of nix to js
+import { convertToJsSync } from "https://raw.esm.sh/gh/jeff-hykin/denix@claude3/translator.js"
+console.log(convertToJsSync(`
+  let
+    x = 1;
+    y = 2;
+  in
+    x + y
+`))
+
+// becomes basically:
+scope.let$({
+    x: 1n,
+    y: 2n,
+}).in$(scope=>
+    operators.add(scope.x, scope.y)
+)
 ```
 
-Then:
+### CLI Translate
+
+```sh
+# Install from the web ...
+deno install -g --allow-all --name denix "https://raw.esm.sh/gh/jeff-hykin/denix@claude3/main/cli/denix.js"
+# Translate Nix to readable JavaScript
+denix translate default.nix                   # print translated JS to stdout
+denix translate -E '{ a = 1; b = a + 1; }'    # translate an inline expression
+denix translate default.nix -o default.js     # write JS to a file
+```
+
+### Translation Examples
+
+<table>
+<tr><th>Nix</th><th>Translated JavaScript</th></tr>
+<tr>
+<td>
+
+```nix
+1.0 + 2
+```
+
+</td>
+<td>
+
+```javascript
+operators.add(1.0, 2n)
+// BigInt === NixInt (js doesn't have ints)
+```
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+```nix
+if builtins.isInt 42
+  then "yes"
+  else "no"
+```
+
+</td>
+<td>
+
+```javascript
+scope.if$(builtins.isInt(42n))
+  .then$("yes")
+  .else$("no")
+```
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+```nix
+let
+  x = 1;
+  y = 2;
+in x + y
+```
+
+</td>
+<td>
+
+```javascript
+scope.let$({
+  x: 1n,
+  y: 2n,
+}).in$((scope) => operators.add(scope.x, scope.y))
+```
+
+</td>
+</tr>
+
+
+<tr>
+<td>
+
+```nix
+{
+  name = "demo";
+  greet = user: "hi ${user}";
+  nested.value = 1;
+}
+```
+
+</td>
+<td>
+
+```javascript
+scope.attrSet$({
+  name: "demo",
+  greet: () =>
+    scope.func$("user", (scope) =>
+      scope.str$(() => ["hi ", scope.user])
+    ),
+  ...scope.deepSet$(["nested", "value"], 1n),
+})
+```
+
+</td>
+</tr>
+</table>
 
 ```bash
+# Install from the web ...
+deno install -g --allow-all --name denix "https://raw.esm.sh/gh/jeff-hykin/denix@claude3/main/cli/denix.js"
+
 denix --help                                  # colorized help for all subcommands
 
 # Translate Nix to readable JavaScript
@@ -61,19 +187,17 @@ deno test --allow-all main/tests/
 
 ## Features
 
-- ✅ **`denix` CLI** - translate, eval, and build from the command line (`deno install`-able)
+- ✅ **Pure Deno** - And Zero npm/jsr dependencies, URL imports only (as God intended 🚀), bundlable
+- ✅ **`denix` CLI** - translate, eval, and build from the command line
 - ✅ **All Nix builtins** - every Nix 2.18 builtin implemented and covered by tests (805 passing)
 - ✅ **Import system** - `builtins.import` and `builtins.scopedImport` fully working
-- ✅ **Derivations** - .drv output byte-identical to real Nix (verified across the stdenv closure)
-- ✅ **Network fetchers** - fetchGit, fetchTarball, fetchurl, fetchTree, fetchMercurial, path, filterSource
-- ✅ **Pure Deno** - Zero npm/jsr dependencies, only URL imports
 
 ## Using the Runtime
 
-No install needed — import straight from esm.sh:
-
 ```javascript
-import { builtins, operators } from "https://raw.esm.sh/gh/jeff-hykin/denix@claude3/main/runtime.js"
+import { createRuntime } from "https://raw.esm.sh/gh/jeff-hykin/denix@claude3/main/runtime.js"
+
+const { builtins, operators, apply, evalNix } = createRuntime()
 
 // Type checking
 builtins.isAttrs({a: 1})       // true
@@ -88,6 +212,10 @@ builtins.map(x => x * 2n)([1n, 2n, 3n])  // [2n, 4n, 6n]
 // Operators
 operators.add(1n, 2n)           // 3n
 operators.divide(10n, 3n)       // 3n (integer division)
+
+// Evaluate Nix source strings (functions come back as callable JS values)
+const inc = await evalNix(`x: x + 1`)
+apply(inc, 41n)                 // 42n
 ```
 
 ## Importing Nix Code
@@ -95,7 +223,9 @@ operators.divide(10n, 3n)       // 3n (integer division)
 `builtins.import` evaluates real Nix files — local paths or URLs — and returns them as JavaScript values (Nix ints become BigInts, attrsets become objects, functions become functions):
 
 ```javascript
-import { builtins } from "https://raw.esm.sh/gh/jeff-hykin/denix@claude3/main/runtime.js"
+import { createRuntime } from "https://raw.esm.sh/gh/jeff-hykin/denix@claude3/main/runtime.js"
+
+const { builtins } = createRuntime()
 
 // Import a local .nix file
 const flake = builtins.import("/path/to/project/flake.nix")
@@ -104,7 +234,7 @@ flake.outputs                      // a callable JS function
 
 // Import Nix code straight from a URL
 const remoteFlake = builtins.import(
-    "https://cdn.jsdelivr.net/gh/jeff-hykin/denix@claude3/examples/flake-a/flake.nix"
+    "https://raw.githubusercontent.com/jeff-hykin/denix/claude3/examples/flake-a/flake.nix"
 )
 // Relative imports inside a URL-imported file resolve against that URL,
 // so `import ./lib/helper.nix` inside it fetches the sibling URL.
