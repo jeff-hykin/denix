@@ -50,14 +50,120 @@ async function stageInput(file, expr) {
     return path
 }
 
-async function translateFile(nixFileAbs) {
+async function translateFile(nixFileAbs, extraOptions = {}) {
     const { convertToJs } = await import("../../translator.js")
     const source = await Deno.readTextFile(nixFileAbs)
     try {
-        return await convertToJs(source, { runtimePath, sourceFile: nixFileAbs })
+        return await convertToJs(source, { runtimePath, sourceFile: nixFileAbs, ...extraOptions })
     } catch (err) {
-        fail(`translation failed: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}`)
+        fail(`translation failed in ${nixFileAbs}: ${err instanceof Error ? (err.stack ?? err.message) : String(err)}`)
     }
+}
+
+// --------------------------------------------------------------
+// static import following
+// --------------------------------------------------------------
+// What `import ./thing` names on disk, applying nix's directory rule. Returns
+// null for anything that can't become a static JS import (URLs, JSON, missing
+// files) so it stays a runtime import.
+function resolveNixImport(target) {
+    if (/^[a-z][a-z0-9+.-]*:\/\//i.test(target)) { return null }
+    let info
+    try { info = Deno.statSync(target) } catch { return null }
+    if (info.isDirectory) {
+        const inside = `${target.replace(/\/$/, "")}/default.nix`
+        try { Deno.statSync(inside) } catch { return null }
+        return inside
+    }
+    return target.endsWith(".nix") ? target : null
+}
+
+// FNV-1a over the absolute path: short, stable across runs and machines, and
+// (with the basename in front) readable in the generated import list.
+function pathHash(text) {
+    let hash = 0x811c9dc5
+    for (let index = 0; index < text.length; index++) {
+        hash = Math.imul(hash ^ text.charCodeAt(index), 0x01000193) >>> 0
+    }
+    return hash.toString(16).padStart(8, "0")
+}
+
+const identifierForNixFile = (absPath) =>
+    `_nix_${absPath.replace(/\.nix$/, "").split("/").pop().replace(/[^A-Za-z0-9_]/g, "_")}_${pathHash(absPath)}`
+
+const dirNameOf = (path) => path.replace(/\/[^/]*$/, "")
+
+// The output tree mirrors the source tree, so the JS specifier between two
+// translated files is just the relative path between the two .nix files.
+function relativeSpecifier(fromDir, toPath) {
+    const from = fromDir.split("/").filter(Boolean)
+    const to = toPath.split("/").filter(Boolean)
+    let shared = 0
+    while (shared < from.length && shared < to.length - 1 && from[shared] === to[shared]) { shared++ }
+    const ups = Array(from.length - shared).fill("..")
+    const down = to.slice(shared)
+    const joined = [...ups, ...down].join("/").replace(/\.nix$/, ".js")
+    return joined.startsWith(".") ? joined : `./${joined}`
+}
+
+// Every .nix file under a directory, deepest-last.
+async function nixFilesUnder(dir) {
+    const found = []
+    for await (const entry of Deno.readDir(dir)) {
+        const path = `${dir}/${entry.name}`
+        if (entry.isDirectory) {
+            found.push(...await nixFilesUnder(path))
+        } else if (entry.name.endsWith(".nix")) {
+            found.push(path)
+        }
+    }
+    return found
+}
+
+// Translate each root and, transitively, every file it statically imports.
+// Returns a map of .nix path -> translated JS.
+async function translateTree(roots, { follow, runtimeImportPath, relocationRoot }) {
+    const translated = new Map()
+    const dynamicImports = []
+    const pending = [...roots]
+    while (pending.length > 0) {
+        const nixPath = pending.shift()
+        if (translated.has(nixPath)) { continue }
+        translated.set(nixPath, null) // reserve the slot before recursing
+        const sourceDir = dirNameOf(nixPath)
+        const js = await translateFile(nixPath, {
+            ...(runtimeImportPath ? { runtimePath: runtimeImportPath } : {}),
+            relocationRoot,
+            resolveStaticImport: !follow ? undefined : (target) => {
+                const resolved = resolveNixImport(target)
+                if (!resolved) { return null }
+                pending.push(resolved)
+                return {
+                    identifier: identifierForNixFile(resolved),
+                    specifier: relativeSpecifier(sourceDir, resolved),
+                }
+            },
+            reportDynamicImport: (info) => dynamicImports.push({ ...info, file: nixPath }),
+        })
+        translated.set(nixPath, js)
+    }
+    for (const { file, line, text } of dynamicImports) {
+        console.error(`denix: warning: ${file}:${line}: dynamic import left for the runtime: ${text}`)
+    }
+    return translated
+}
+
+// Deepest directory containing every path.
+function commonDirectoryOf(paths) {
+    const split = paths.map((path) => dirNameOf(path).split("/"))
+    const first = split[0]
+    let shared = first.length
+    for (const parts of split.slice(1)) {
+        let index = 0
+        while (index < shared && index < parts.length && parts[index] === first[index]) { index++ }
+        shared = index
+    }
+    return first.slice(0, shared).join("/")
 }
 
 // Translate a nix file and import the result, returning the evaluated value.
@@ -76,7 +182,10 @@ async function evaluateFile(nixFileAbs, emitTranslated = null) {
     await Deno.writeTextFile(tmpJs, translated)
     try {
         const mod = await import("file://" + tmpJs)
-        let value = mod.default
+        const { createRuntime } = await import("../runtime.js")
+        // A translated module exports `nixFile(...)`: a function waiting for the
+        // runtime it should be evaluated against.
+        let value = mod.default(createRuntime({ currentFile: nixFileAbs }))
         if (value && typeof value.then === "function") {
             value = await value
         }
@@ -157,17 +266,45 @@ const translate = new Command()
     .arguments("[file:string]")
     .option("-E, --expr <expr:string>", "Translate an inline Nix expression instead of a file.")
     .option("-o, --output <path:string>", "Write the JavaScript to a file instead of stdout.")
+    .option("-d, --out-dir <path:string>", "Write a mirrored tree of .js files here, one per translated .nix file.")
+    .option("--no-follow-imports", "Leave `import ./x.nix` as a runtime import instead of a static JS import. (Only has an effect with --out-dir, since followed imports need somewhere to be written.)")
+    .option("--runtime-path <path:string>", "What the emitted files should `import { nixFile } from`. Defaults to this checkout; set it to a URL when publishing the output.")
+    .option("--relocate-from <path:string>", "Emit paths under this directory relative to the module (via import.meta.url) instead of as absolute paths, so the output tree works on any machine. Defaults to the directory being translated.")
     .example("file to stdout", "denix translate default.nix")
     .example("inline expression", `denix translate -E '{ a = 1; b = a + 1; }'`)
     .example("write to file", "denix translate default.nix -o default.js")
-    .action(async ({ expr, output }, file) => {
+    .example("whole tree", "denix translate lib/default.nix --out-dir ./translated")
+    .example("every file in a directory", "denix translate ./lib --out-dir ./translated")
+    .action(async ({ expr, output, outDir, followImports, runtimePath: runtimeImportPath, relocateFrom }, file) => {
         const nixFileAbs = await stageInput(file, expr)
-        const translated = await translateFile(nixFileAbs)
-        if (output) {
-            await Deno.writeTextFile(output, translated)
-        } else {
-            await Deno.stdout.write(new TextEncoder().encode(translated))
+        const follow = followImports && outDir != null
+        // A directory with --out-dir means "translate everything under here";
+        // without one it means nix's `import ./dir` rule, i.e. its default.nix.
+        const isDirectory = (await Deno.stat(nixFileAbs)).isDirectory
+        const roots = isDirectory
+            ? (outDir != null ? await nixFilesUnder(nixFileAbs) : [`${nixFileAbs}/default.nix`])
+            : [nixFileAbs]
+        const relocationRoot = relocateFrom ?? (outDir != null && isDirectory ? nixFileAbs : null)
+        const translated = await translateTree(roots, { follow, runtimeImportPath, relocationRoot })
+
+        if (outDir == null) {
+            const js = translated.get(roots[0])
+            if (output) {
+                await Deno.writeTextFile(output, js)
+            } else {
+                await Deno.stdout.write(new TextEncoder().encode(js))
+            }
+            cleanup()
+            return
         }
+
+        const root = commonDirectoryOf([...translated.keys()])
+        for (const [nixPath, js] of translated) {
+            const outPath = `${outDir}${nixPath.slice(root.length).replace(/\.nix$/, ".js")}`
+            await Deno.mkdir(dirNameOf(outPath), { recursive: true })
+            await Deno.writeTextFile(outPath, js)
+        }
+        console.error(`denix: wrote ${translated.size} file${translated.size === 1 ? "" : "s"} to ${outDir}`)
         cleanup()
     })
 

@@ -11,7 +11,7 @@ A Nix → JavaScript translator/runner with 1-to-1 parity for Nix 2.18 builtins,
 Import your nix code ... inside JS
 
 ```javascript
-import { createRuntime } from "https://raw.esm.sh/gh/jeff-hykin/denix@claude3/main/runtime.js"
+import { createRuntime } from "https://raw.esm.sh/gh/jeff-hykin/denix@master/main/runtime.js"
 const nix = createRuntime()
 
 // eval *any* nix code
@@ -25,7 +25,7 @@ flake.description // "my flake"
 flake.outputs     // a callable JS function
 
 // translate bits of nix to js
-import { convertToJsSync } from "https://raw.esm.sh/gh/jeff-hykin/denix@claude3/translator.js"
+import { convertToJsSync } from "https://raw.esm.sh/gh/jeff-hykin/denix@master/translator.js"
 console.log(convertToJsSync(`
   let
     x = 1;
@@ -47,11 +47,13 @@ scope.let$({
 
 ```sh
 # Install from the web ...
-deno install -g --allow-all --name denix "https://raw.esm.sh/gh/jeff-hykin/denix@claude3/main/cli/denix.js"
+deno install -g --allow-all --name denix "https://raw.esm.sh/gh/jeff-hykin/denix@master/main/cli/denix.js"
 # Translate Nix to readable JavaScript
 denix translate default.nix                   # print translated JS to stdout
 denix translate -E '{ a = 1; b = a + 1; }'    # translate an inline expression
 denix translate default.nix -o default.js     # write JS to a file
+denix translate default.nix -d ./out          # follow `import ./x.nix` and write the whole tree
+denix translate ./lib -d ./out                # translate every .nix file under a directory
 ```
 
 ### Translation Examples
@@ -165,9 +167,46 @@ instead of a plain template literal whenever a store path is interpolated — a
 plain literal stringifies the derivation and silently drops the Nix string
 context, so the result no longer records that it depends on that path.
 
+Every translated file is one module with nothing but a header and an expression:
+
+```javascript
+import { nixFile } from "https://raw.esm.sh/gh/jeff-hykin/denix@master/main/runtime.js"
+import _nix_strings_1a2b3c4d from "./strings.js"   // was: import ./strings.nix
+
+export default nixFile("/abs/path/to/default.nix", ({ scope }) => (
+  /* the translated expression */
+))
+```
+
+The file never creates a runtime — it exports a function that *takes* one, so
+the caller decides which store and scope it evaluates against (and the result is
+memoized per runtime, like Nix's import cache):
+
+```javascript
+import { createRuntime } from ".../main/runtime.js"
+import myLib from "./out/lib/default.js"
+
+const lib = myLib(createRuntime())
+```
+
+`denix translate -d <dir>` follows `import ./x.nix` (including the `./dir` →
+`./dir/default.nix` rule) and rewrites each one into a static JS import, named
+by hashing the file's absolute path so the name is stable across runs. Imports
+whose target isn't a literal path — `import file`, `import <nixpkgs>`,
+`import ./${name}.nix` — can't be resolved ahead of time, so they stay runtime
+imports and translate prints a warning naming the file and line.
+
+Two flags matter when the output is going to be published rather than used in
+place: `--runtime-path <url>` sets what the emitted files `import { nixFile }
+from`, and `--relocate-from <dir>` emits every path under that directory as
+`new URL("./x", import.meta.url).pathname` instead of an absolute path, so the
+tree works on any machine (it defaults to the directory being translated). Nix
+files that read data next to themselves — `builtins.readFile ./.version` — then
+need that data copied alongside the JS.
+
 ```bash
 # Install from the web ...
-deno install -g --allow-all --name denix "https://raw.esm.sh/gh/jeff-hykin/denix@claude3/main/cli/denix.js"
+deno install -g --allow-all --name denix "https://raw.esm.sh/gh/jeff-hykin/denix@master/main/cli/denix.js"
 
 denix --help                                  # colorized help for all subcommands
 
@@ -175,6 +214,8 @@ denix --help                                  # colorized help for all subcomman
 denix translate default.nix                   # print translated JS to stdout
 denix translate -E '{ a = 1; b = a + 1; }'    # translate an inline expression
 denix translate default.nix -o default.js     # write JS to a file
+denix translate default.nix -d ./out          # follow `import ./x.nix` and write the whole tree
+denix translate ./lib -d ./out                # translate every .nix file under a directory
 
 # Evaluate Nix and print the result (pure by default, like `nix eval`)
 denix eval -E '1 + 2'                         # 3
@@ -210,7 +251,7 @@ deno test --allow-all main/tests/
 ## Using the Runtime
 
 ```javascript
-import { createRuntime } from "https://raw.esm.sh/gh/jeff-hykin/denix@claude3/main/runtime.js"
+import { createRuntime } from "https://raw.esm.sh/gh/jeff-hykin/denix@master/main/runtime.js"
 
 const { builtins, operators, apply, evalNix } = createRuntime()
 
@@ -238,7 +279,7 @@ apply(inc, 41n)                 // 42n
 `builtins.import` evaluates real Nix files — local paths or URLs — and returns them as JavaScript values (Nix ints become BigInts, attrsets become objects, functions become functions):
 
 ```javascript
-import { createRuntime } from "https://raw.esm.sh/gh/jeff-hykin/denix@claude3/main/runtime.js"
+import { createRuntime } from "https://raw.esm.sh/gh/jeff-hykin/denix@master/main/runtime.js"
 
 const { builtins } = createRuntime()
 
@@ -265,7 +306,7 @@ resolved.outputs                   // outputs called with resolved inputs
 ## Using the Translator
 
 ```javascript
-import { convertToJsSync } from "https://raw.esm.sh/gh/jeff-hykin/denix@claude3/translator.js"
+import { convertToJsSync } from "https://raw.esm.sh/gh/jeff-hykin/denix@master/translator.js"
 
 const nixCode = `
   let

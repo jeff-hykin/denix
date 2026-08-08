@@ -76,7 +76,7 @@ async function evaluateWithNix(nixExpr) {
 async function evaluateWithDenix(nixExpr) {
     try {
         // Translate to JS
-        const jsCode = await convertToJs(nixExpr)
+        const jsCode = await convertToJs(nixExpr, { bare: true })
 
         // Create runtime
         const runtimeContext = createRuntime()
@@ -289,7 +289,7 @@ export async function runTestSuite(tests, options = {}) {
  * Save generated JS code to file
  */
 export function saveGeneratedJS(nixExpr, outputPath) {
-    const jsCode = convertToJs(nixExpr)
+    const jsCode = convertToJs(nixExpr, { bare: true })
     Deno.writeTextFileSync(outputPath, jsCode)
     return jsCode
 }

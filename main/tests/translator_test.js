@@ -22,7 +22,7 @@ import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts"
 // changes), we extract the trailing expression and evaluate it against the REAL
 // runtime, binding exactly the identifiers the preamble would have bound.
 const evalTranslated = (nixCode) => {
-    const jsCode = convertToJsSync(nixCode)
+    const jsCode = convertToJsSync(nixCode, { bare: true })
     const { createFunc, createScope, defGetter, apply, set, force, mkThunk, nixArg, runtime } = createFullRuntime()
 
     const marker = "export default "

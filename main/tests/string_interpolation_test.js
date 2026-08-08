@@ -17,7 +17,7 @@ import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts"
 // `export default <expr>` and bind exactly the identifiers the module preamble
 // would have. (See translator_test.js for the rationale.)
 const evalTranslated = (nixCode) => {
-    const jsCode = convertToJsSync(nixCode)
+    const jsCode = convertToJsSync(nixCode, { bare: true })
     const { createFunc, createScope, defGetter, apply, set, force, mkThunk, nixArg, runtime } = createFullRuntime()
 
     const marker = "export default "

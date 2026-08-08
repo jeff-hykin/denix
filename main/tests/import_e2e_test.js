@@ -105,7 +105,7 @@ async function cleanup() {
 // currentFile context used to resolve relative imports.
 function evaluateNixFile(filepath, rt) {
     const content = Deno.readTextFileSync(filepath)
-    const jsCode = convertToJsSync(content)
+    const jsCode = convertToJsSync(content, { bare: true })
 
     const marker = "export default "
     const idx = jsCode.lastIndexOf(marker)

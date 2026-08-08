@@ -139,34 +139,56 @@ import { isValidKeyLiteral } from 'https://esm.sh/gh/jeff-hykin/good-js@1.18.2.0
     // handle converting <nixpkgs> to builtins.findFile builtins.nixPath "nixpkgs"
 
 //
-// build the runtime-import preamble for a chunk of translated JS.
-// Shared by both convertToJs and convertToJsSync so the two paths stay in
-// lockstep.
+// Wrap a translated expression in the module shape every denix .js file has:
 //
-const buildPreamble = (output, options) => {
-    // whenever the output references anything runtime-provided, we need the
-    // createRuntime() import — and `scope` is now the only such identifier.
-    if (!/\bscope\b/.test(output)) return ""
+//     import { nixFile } from "<runtime>"
+//     import _nix_foo_1a2b3c4d from "./foo.js"   // one per hoisted nix import
+//
+//     export default nixFile("/abs/path.nix", ({ scope }) => <expression>)
+//
+// The module itself never creates a runtime — the caller passes one in — which
+// is what lets a single translated tree be evaluated against different stores.
+// Shared by convertToJs and convertToJsSync so the two paths stay in lockstep.
+//
+const buildModule = (output, options, hoistedImports) => {
+    const expression = output.trim()
+    // Bare mode: callers that already hold a runtime (the `import` builtin, the
+    // repl, evalNix) evaluate the trailing expression directly, so the module
+    // wrapper would just be something to strip back off.
+    if (options.bare) { return `\nexport default ${expression}` }
 
+    const runtimePath = options.runtimePath || "./main/runtime.js"
+    // Which file this came from: used for unsafeGetAttrPos and for resolving
+    // relative paths in imports that stayed dynamic. The translated .js rarely
+    // sits next to the .nix, so bake the real path in when we know it.
+    const source = options.sourceFile ? pathLiteralJs(options.sourceFile) : "import.meta"
+    let header = `import { nixFile } from ${JSON.stringify(runtimePath)}\n`
+    for (const { identifier, specifier } of hoistedImports) {
+        header += `import ${identifier} from ${JSON.stringify(specifier)}\n`
+    }
     // `scope` is the one and only handle the emitted code gets: the runtime's
     // root scope, seeded with builtins/true/false/null/derivation/import/abort/
     // throw, carrying the scope.*$ helper API, and forwarding every runtime
     // attribute as `name$` (scope.apply$, scope.operators$, scope.Path$, …).
-    const runtimePath = options.runtimePath || "./main/runtime.js"
-    const destructured = ["scope"]
-    // currentFile tells the runtime what file this translated module came
-    // from, so relative `import ./foo` paths inside the nix source resolve
-    // correctly. When the caller knows the original source file (e.g. the
-    // denix CLI writes the translated JS to a temp dir, so import.meta.url
-    // would point there, not at the .nix), bake that path in. Otherwise fall
-    // back to the module's own location.
-    const currentFile = options.sourceFile
-        ? JSON.stringify(options.sourceFile)
-        : `import.meta.url.startsWith("file://") ? import.meta.url.slice(7) : new URL(import.meta.url).pathname`
-    let pre = ""
-    pre += `import { createRuntime } from "${runtimePath}"\n`
-    pre += `const { ${destructured.join(", ")} } = createRuntime({\n    currentFile: ${currentFile}\n})\n`
-    return pre
+    return `${header}\nexport default nixFile(${source}, ({ scope }) => (\n${expression}\n))`
+}
+
+// Set for the duration of a translation. `resolveStaticImport(absPath)` returns
+// {identifier, specifier} for a nix import that should become a static JS
+// import, or null to leave it as a runtime import; `reportDynamicImport` is
+// told about every `import <expr>` whose target isn't a literal path.
+let resolveStaticImport = null
+let reportDynamicImport = null
+let hoistedImports = []
+
+const beginTranslation = (options) => {
+    translationSourceDir = options.sourceFile
+        ? options.sourceFile.replace(/\/[^/]*$/, "")
+        : null
+    relocationRoot = options.relocationRoot ? options.relocationRoot.replace(/\/$/, "") : null
+    resolveStaticImport = options.resolveStaticImport || null
+    reportDynamicImport = options.reportDynamicImport || null
+    hoistedImports = []
 }
 
 //
@@ -175,9 +197,7 @@ const buildPreamble = (output, options) => {
 //
 //
 export const convertToJs = async (code, options = {}) => {
-    translationSourceDir = options.sourceFile
-        ? options.sourceFile.replace(/\/[^/]*$/, "")
-        : null
+    beginTranslation(options)
     const tree = parse(code)
     const rootNode = tree.rootNode
     let output = ""
@@ -185,10 +205,7 @@ export const convertToJs = async (code, options = {}) => {
         output += nixNodeToJs(node)
     }
 
-    let result = buildPreamble(output, options)
-
-    // Always export the result as a module
-    result += `\nexport default ${output.trim()}`
+    let result = buildModule(output, options, hoistedImports)
 
     // Format the result with Deno's built-in formatter
     try {
@@ -221,9 +238,7 @@ export const convertToJs = async (code, options = {}) => {
 
 // Synchronous version without formatting (for compatibility)
 export const convertToJsSync = (code, options = {}) => {
-    translationSourceDir = options.sourceFile
-        ? options.sourceFile.replace(/\/[^/]*$/, "")
-        : null
+    beginTranslation(options)
     const tree = parse(code)
     const rootNode = tree.rootNode
     let output = ""
@@ -231,12 +246,7 @@ export const convertToJsSync = (code, options = {}) => {
         output += nixNodeToJs(node)
     }
 
-    let result = buildPreamble(output, options)
-
-    // Always export the result as a module
-    result += `\nexport default ${output.trim()}`
-
-    return result
+    return buildModule(output, options, hoistedImports)
 }
 
 // Directory of the source .nix file currently being translated, if known.
@@ -264,6 +274,66 @@ const resolveSourceRelativePath = (text) => {
         if (p === "..") { out.pop() } else { out.push(p) }
     }
     return "/" + out.join("/")
+}
+
+// Paths baked into the output are absolute, which is wrong the moment the JS is
+// used on another machine. When a relocation root is given, anything under it is
+// emitted relative to the module instead — the output tree mirrors the source
+// tree, so the same relative path works from either side.
+let relocationRoot = null
+
+const pathLiteralJs = (absPath) => {
+    if (!relocationRoot || !translationSourceDir || !(absPath === relocationRoot || absPath.startsWith(relocationRoot + "/"))) {
+        return JSON.stringify(absPath)
+    }
+    const from = translationSourceDir.split("/").filter(Boolean)
+    const to = absPath.split("/").filter(Boolean)
+    let shared = 0
+    while (shared < from.length && shared < to.length - 1 && from[shared] === to[shared]) { shared++ }
+    const relative = [...Array(from.length - shared).fill(".."), ...to.slice(shared)].join("/")
+    return `new URL(${JSON.stringify(relative.startsWith(".") ? relative : "./" + relative)}, import.meta.url).pathname`
+}
+
+// The absolute path an `import` argument names, or null when the argument is
+// anything but a literal path (`import <nixpkgs>`, `import ./${name}.nix`,
+// `import (something)` …), which can only be resolved while evaluating.
+const staticImportTargetOf = (node) => {
+    if (!node) { return null }
+    if (node.type === "path_expression") {
+        if (valueBasedChildren(node).some((each) => each.type === "interpolation")) { return null }
+        return resolveSourceRelativePath(node.text)
+    }
+    if (node.type === "string_expression") {
+        if (valueBasedChildren(node).some((each) => each.type === "interpolation")) { return null }
+        const text = node.text.slice(1, -1)
+        // only a path-shaped string is a file reference; nix strings can hold
+        // escapes, so anything with a backslash is left to the runtime
+        if (text.includes("\\") || !(text.startsWith("/") || text.startsWith("./") || text.startsWith("../"))) { return null }
+        return resolveSourceRelativePath(text)
+    }
+    return null
+}
+
+// If this call is `import <literal path>` and the host wants that file turned
+// into a static JS import, register it and return the JS expression that
+// evaluates it against the current runtime. Otherwise null (and, for a
+// non-literal target, a dynamic-import warning on the way out).
+const hoistImportCall = (callee, firstArg) => {
+    const isImport = (callee.type === "variable_expression" && callee.text === "import") ||
+        (callee.type === "select_expression" && callee.text === "builtins.import")
+    if (!isImport) { return null }
+    const target = staticImportTargetOf(firstArg)
+    if (target == null) {
+        reportDynamicImport?.({ text: firstArg ? `import ${firstArg.text}` : "import", line: (firstArg ?? callee).startPosition?.row + 1 })
+        return null
+    }
+    if (!resolveStaticImport) { return null }
+    const resolved = resolveStaticImport(target)
+    if (!resolved) { return null }
+    if (!hoistedImports.some((each) => each.identifier === resolved.identifier)) {
+        hoistedImports.push(resolved)
+    }
+    return `${resolved.identifier}(scope.runtime$)`
 }
 
 // Decode a single indented-string ('' … '') escape sequence into the literal
@@ -651,7 +721,7 @@ const nixNodeToJs = (node)=>{
             // Simple path without interpolation. Relative paths are resolved
             // against the source file's directory (Nix semantics), so the import
             // target is stable regardless of when a lazy thunk later fires.
-            return `(new scope.Path$([${JSON.stringify(resolveSourceRelativePath(node.text))}], []))`
+            return `(new scope.Path$([${pathLiteralJs(resolveSourceRelativePath(node.text))}], []))`
         }
 
         // Handle interpolated paths like ./${dir}/file
@@ -701,6 +771,15 @@ const nixNodeToJs = (node)=>{
             const c = valueBasedChildren(callee)
             argNodes.unshift(c[1])
             callee = c[0]
+        }
+        const hoisted = hoistImportCall(callee, argNodes[0])
+        if (hoisted) {
+            // `import ./x.nix` became a real JS import; anything applied on top
+            // of it (`import ./x.nix { }`) still goes through apply.
+            const rest = argNodes.slice(1)
+            return rest.length === 0
+                ? hoisted
+                : `scope.apply$(${hoisted}, ${rest.map((a) => lazyOrRaw(a)).join(", ")})`
         }
         return `scope.apply$(${nixNodeToJs(callee)}, ${argNodes.map((a) => lazyOrRaw(a)).join(", ")})`
     } else if (node.type == "if_expression") {
@@ -1248,8 +1327,12 @@ const nixNodeToJs = (node)=>{
         const bodyIndex = children.findIndex(each => each.type === "in") + 1
         const body = children[bodyIndex]
 
-        if (!bindingSet || !body) {
-            throw Error(`let_expression missing binding_set or body: ${node.text}`)
+        if (!body) {
+            throw Error(`let_expression missing body: ${node.text}`)
+        }
+        // `let in body` is legal nix and just means the body
+        if (!bindingSet) {
+            return nixNodeToJs(body, depth)
         }
 
         // Process bindings

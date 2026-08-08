@@ -74,8 +74,10 @@ async function evaluateWithJs(jsPath) {
         // Dynamic import with timestamp to bypass cache
         const module = await import(`${jsPath}?t=${Date.now()}`)
 
-        // Get the default export
-        let result = module.default
+        // A translated module's default export is a nixFile() waiting for the
+        // runtime it should be evaluated against.
+        const { createRuntime } = await import("../main/runtime.js")
+        let result = module.default(createRuntime())
 
         // If it's a promise, await it
         if (result instanceof Promise) {

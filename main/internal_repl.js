@@ -59,7 +59,7 @@ export async function createInternalRepl(opts = {}) {
             // runtime, then `export default <expr>`. We already have the
             // runtime, so evaluate just the trailing expression (same
             // approach as loadNixFileSync in import_loader.js).
-            const jsCode = convertToJsSync(exprString)
+            const jsCode = convertToJsSync(exprString, { bare: true })
             const marker = "export default "
             const markerIdx = jsCode.lastIndexOf(marker)
             const cleanCode = (markerIdx >= 0 ? jsCode.slice(markerIdx + marker.length) : jsCode).trim()

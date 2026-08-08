@@ -93,7 +93,7 @@ async function loadNixFile(content, runtime, filepath) {
     // preamble that wires up the runtime, then `export default <expr>`. We
     // already have the runtime here, so discard the preamble and evaluate the
     // trailing expression (same marker approach as loadNixFileSync).
-    const jsCode = await convertToJs(content, { sourceFile: filepath })
+    const jsCode = await convertToJs(content, { sourceFile: filepath, bare: true })
     const marker = "export default "
     const markerIdx = jsCode.lastIndexOf(marker)
     const cleanCode = (markerIdx >= 0 ? jsCode.slice(markerIdx + marker.length) : jsCode).trim()
@@ -169,7 +169,7 @@ function loadNixFileSync(content, runtime, filepath) {
     // regex-stripped individual preamble lines and dropped comment lines, which
     // mangled multi-line expressions in larger files like nixpkgs lib.)
     // Pass sourceFile so relative path literals resolve against this file's dir.
-    const jsCode = convertToJsSync(content, { sourceFile: filepath })
+    const jsCode = convertToJsSync(content, { sourceFile: filepath, bare: true })
     const marker = "export default "
     const markerIdx = jsCode.lastIndexOf(marker)
     const cleanCode = (markerIdx >= 0 ? jsCode.slice(markerIdx + marker.length) : jsCode).trim()

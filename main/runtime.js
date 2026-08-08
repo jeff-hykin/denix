@@ -44,6 +44,9 @@ export const evalSettings = { pureEval: false }
     // runtime context (import, scopedImport, getFlake) create one on demand so
     // `import { builtins } from "./runtime.js"` works with no setup.
     let currentRuntime = null
+    // The scope-carrying half of the same runtime (what createRuntime() hands
+    // back as `.runtime`). nixFile() falls back to this when no runtime is given.
+    let currentScopedRuntime = null
     const requireRuntime = ()=>{
         if (!currentRuntime) { createRuntime() }
         return currentRuntime
@@ -4098,6 +4101,16 @@ export const evalSettings = { pureEval: false }
         if (importCache.has(absPath)) {
             return importCache.get(absPath)
         }
+        // An already-translated tree can hand the runtime a map of nix path ->
+        // nixFile module. Imports that couldn't be resolved statically (nixpkgs
+        // lib's `callLibs = file: import file {...}` is the classic one) find
+        // the translated module here instead of re-reading the .nix.
+        const preTranslated = runtime.nixModules?.[absPath]
+        if (preTranslated) {
+            const result = preTranslated(runtime.scopedHandle ?? runtime)
+            importCache.set(absPath, result)
+            return result
+        }
         // Track import stack for circular detection
         importCache.pushStack(absPath)
         const prevFile = runtime.currentFile
@@ -4132,6 +4145,39 @@ export const evalSettings = { pureEval: false }
         }
     }
 
+    // A translated Nix file is emitted as a module whose whole body is:
+    //     export default nixFile("/path/to/it.nix", ({ scope }) => <expression>)
+    // The result is a function that takes a nix runtime and evaluates the file
+    // against it, so the caller — not the file — picks the store/scope it runs
+    // in. Results are memoized per runtime, matching nix's import cache.
+    export const nixFile = (source, body)=>{
+        const filePath = typeof source === "string"
+            ? source
+            : source?.filename ?? (source?.url ? new URL(source.url).pathname : null)
+        const resultPerRuntime = new WeakMap()
+        const evaluate = (given)=>{
+            const runtime = given?.rootScope ? given : (given?.runtime ?? currentScopedRuntime ?? createRuntime({ currentFile: filePath }).runtime)
+            if (resultPerRuntime.has(runtime)) { return resultPerRuntime.get(runtime) }
+            const previousFile = runtime.currentFile
+            runtime.currentFile = filePath
+            try {
+                const value = body({
+                    scope: runtime.rootScope,
+                    builtins: runtime.builtins,
+                    operators: runtime.operators,
+                    nixArg: runtime.nixArg,
+                    runtime,
+                })
+                resultPerRuntime.set(runtime, value)
+                return value
+            } finally {
+                runtime.currentFile = previousFile
+            }
+        }
+        evaluate.nixFilePath = filePath
+        return evaluate
+    }
+
     export const createRuntime = (options = {})=>{
         // Create import cache for this runtime instance
         const importCache = new ImportCache()
@@ -4145,6 +4191,9 @@ export const evalSettings = { pureEval: false }
             importCache,
             withScope: createWithScope,
             currentFile: options.currentFile || null, // Track current file for relative imports
+            // nix path -> nixFile module, for trees that were translated ahead
+            // of time (see importFile)
+            nixModules: options.nixModules || null,
         }
 
         const rootScope = {
@@ -4189,6 +4238,10 @@ export const evalSettings = { pureEval: false }
             get currentFile() { return runtime.currentFile },
             set currentFile(v) { runtime.currentFile = v },
         }
+        currentScopedRuntime = runtimeWithScope
+        // importFile only ever sees the inner runtime, but a pre-translated
+        // module needs the scope-carrying half to evaluate against.
+        runtime.scopedHandle = runtimeWithScope
         runtimeWithScope.createFunc = createCreateFunc(runtimeWithScope)
         runtimeWithScope.createScope = createCreateScope(runtimeWithScope)
         runtimeWithScope.defGetter = createDefGetter(runtimeWithScope)
@@ -4430,7 +4483,7 @@ export const evalSettings = { pureEval: false }
                 // The translator emits a full module (runtime preamble +
                 // `export default <expr>`); we already have the runtime, so
                 // evaluate just the trailing expression.
-                const jsCode = convertToJsSync(nixCode)
+                const jsCode = convertToJsSync(nixCode, { bare: true })
                 const marker = "export default "
                 const markerIdx = jsCode.lastIndexOf(marker)
                 const cleanCode = (markerIdx >= 0 ? jsCode.slice(markerIdx + marker.length) : jsCode).trim()
