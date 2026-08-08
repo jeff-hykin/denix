@@ -130,3 +130,28 @@ Deno.test("dirOf - root", () => {
     const result = builtins.dirOf("/")
     assertEquals(result, "/")
 })
+
+// real Nix coerces paths and derivations in substring; lib.addContextFrom is
+// `substring 0 0 src + dst`, so a derivation source has to keep its context
+Deno.test("substring - coerces a path", () => {
+    assertEquals(String(builtins.substring(0n)(3n)(new Path(["/foo/bar"]))), "/fo")
+})
+
+Deno.test("substring - coerces a derivation and keeps its context", () => {
+    const drv = builtins.derivation({ name: "demo", system: "x86_64-linux", builder: "/bin/sh" })
+    const empty = builtins.substring(0n)(0n)(drv)
+    assertEquals(String(empty), "")
+    assertEquals(builtins.hasContext(empty), true)
+})
+
+Deno.test("substring - still rejects non-coercible values", () => {
+    for (const bad of [123n, true, { a: 1n }]) {
+        let threw = false
+        try {
+            builtins.substring(0n)(1n)(bad)
+        } catch (error) {
+            threw = true
+        }
+        assertEquals(threw, true)
+    }
+})

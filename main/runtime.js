@@ -1254,6 +1254,10 @@ export const evalSettings = { pureEval: false }
                     // when the slice is empty (context is per-string, not
                     // per-character), so wrap the slice in a NixString carrying it.
                     return new InterpolatedString([""], [()=>new NixString(s.toString().slice(startNum, end), computeStringContext(s))])
+                } else if (s instanceof Path || (s && typeof s == "object" && (s.outPath !== undefined || force(s.__toString) !== undefined))) {
+                    // real Nix coerces paths and derivations here (lib.addContextFrom
+                    // relies on `substring 0 0 someDerivation` keeping the context)
+                    return builtins.substring(start)(len)(builtins.toString(s))
                 } else {
                     throw new NixError(`error: value is a ${builtins.typeOf(s)} while a string was expected`)
                 }
