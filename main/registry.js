@@ -10,7 +10,10 @@
  * 3. Global registry: https://channels.nixos.org/flake-registry.json
  */
 
-import { FileSystem } from "https://deno.land/x/quickr@0.6.51/main/file_system.js"
+// everything here is synchronous (subprocess-backed for the network fetch)
+// because nix evaluation can't await: `builtins.getFlake "nixpkgs"` needs the
+// registry resolved mid-expression.
+import { runFetchWorkerSync } from "./fetcher.js"
 
 const GLOBAL_REGISTRY_URL = "https://channels.nixos.org/flake-registry.json"
 const USER_REGISTRY_PATH = `${Deno.env.get("HOME") || "~"}/.config/nix/registry.json`
@@ -26,10 +29,9 @@ const CACHE_TTL = 3600000 // 1 hour in milliseconds
  * @param {string} path - Path to registry file
  * @returns {object|null} - Parsed registry or null if not found
  */
-async function loadRegistryFile(path) {
+function loadRegistryFile(path) {
     try {
-        const content = await Deno.readTextFile(path)
-        return JSON.parse(content)
+        return JSON.parse(Deno.readTextFileSync(path))
     } catch (error) {
         // File doesn't exist or can't be read
         return null
@@ -40,21 +42,9 @@ async function loadRegistryFile(path) {
  * Fetch the global registry from the internet
  * @returns {object|null} - Parsed registry or null if fetch fails
  */
-async function fetchGlobalRegistry() {
+function fetchGlobalRegistry() {
     try {
-        const response = await fetch(GLOBAL_REGISTRY_URL, {
-            headers: {
-                'User-Agent': 'Denix/1.0',
-            },
-        })
-
-        if (!response.ok) {
-            console.warn(`Failed to fetch global registry: HTTP ${response.status}`)
-            return null
-        }
-
-        const text = await response.text()
-        return JSON.parse(text)
+        return JSON.parse(runFetchWorkerSync({ kind: "fetchText", url: GLOBAL_REGISTRY_URL }).text)
     } catch (error) {
         console.warn(`Failed to fetch global registry: ${error.message}`)
         return null
@@ -66,7 +56,7 @@ async function fetchGlobalRegistry() {
  * Tries in order: user registry, system registry, global registry
  * @returns {object} - Combined registry
  */
-export async function loadRegistry() {
+export function loadRegistry() {
     // Check cache first
     const now = Date.now()
     if (registryCache && registryCacheTime && (now - registryCacheTime) < CACHE_TTL) {
@@ -80,9 +70,9 @@ export async function loadRegistry() {
     }
 
     // Try loading registries in order of precedence
-    const userRegistry = await loadRegistryFile(USER_REGISTRY_PATH)
-    const systemRegistry = await loadRegistryFile(SYSTEM_REGISTRY_PATH)
-    const globalRegistry = await fetchGlobalRegistry()
+    const userRegistry = loadRegistryFile(USER_REGISTRY_PATH)
+    const systemRegistry = loadRegistryFile(SYSTEM_REGISTRY_PATH)
+    const globalRegistry = fetchGlobalRegistry()
 
     // Combine registries (user overrides system overrides global)
     // We build a map to handle overrides properly
@@ -130,8 +120,8 @@ export async function loadRegistry() {
  * @param {string} flakeId - The indirect flake identifier (e.g., "nixpkgs")
  * @returns {object|null} - The "to" reference or null if not found
  */
-export async function lookupFlake(flakeId) {
-    const registry = await loadRegistry()
+export function lookupFlake(flakeId) {
+    const registry = loadRegistry()
 
     // Find the flake entry
     for (const entry of registry.flakes) {
@@ -148,8 +138,8 @@ export async function lookupFlake(flakeId) {
  * @param {string} flakeId - The indirect flake identifier
  * @returns {string|null} - The resolved flake reference string or null if not found
  */
-export async function resolveIndirectReference(flakeId) {
-    const target = await lookupFlake(flakeId)
+export function resolveIndirectReference(flakeId) {
+    const target = lookupFlake(flakeId)
 
     if (!target) {
         return null
@@ -203,8 +193,8 @@ export function clearRegistryCache() {
  * Get registry statistics
  * @returns {object} - Registry info
  */
-export async function getRegistryInfo() {
-    const registry = await loadRegistry()
+export function getRegistryInfo() {
+    const registry = loadRegistry()
 
     return {
         version: registry.version,

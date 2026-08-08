@@ -311,8 +311,9 @@ const remoteFlake = builtins.import(
 // .json files work too (Nix semantics: numbers become BigInts)
 const data = builtins.import("/path/to/data.json")
 
-// Flakes with inputs: builtins.getFlake resolves inputs recursively
-const resolved = await builtins.getFlake("path:/path/to/project")
+// Flakes with inputs: builtins.getFlake resolves inputs recursively.
+// It's synchronous, so nix source can call it too (`let f = builtins.getFlake "…";`)
+const resolved = builtins.getFlake("path:/path/to/project")
 resolved.outputs                   // outputs called with resolved inputs
 ```
 

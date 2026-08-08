@@ -83,7 +83,9 @@ Deno.test("getFlake - is a function", () => {
     assertEquals(typeof builtins.getFlake, "function");
 });
 
-Deno.test("getFlake - returns async (Promise)", async () => {
+// synchronous so nix source can call it: a Promise here would make
+// `let f = builtins.getFlake "..."; in f.outputs` evaluate to undefined
+Deno.test("getFlake - returns the flake synchronously", async () => {
     const tempDir = await Deno.makeTempDir();
     try {
         // Create minimal valid flake
@@ -96,8 +98,8 @@ Deno.test("getFlake - returns async (Promise)", async () => {
         );
 
         const result = builtins.getFlake(tempDir);
-        assertEquals(result instanceof Promise, true);
-        await result; // Ensure it completes
+        assertEquals(result instanceof Promise, false);
+        assertEquals(`${result.description}`, "test");
     } finally {
         await Deno.remove(tempDir, { recursive: true });
     }

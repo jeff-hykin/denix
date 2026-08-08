@@ -3,6 +3,32 @@
  * Used by fetchTarball, fetchurl, and other network-based builtins
  */
 
+import { NixError } from "./errors.js"
+
+// Run fetch_worker.js (async downloads) as a SYNCHRONOUS subprocess so
+// fetchurl/fetchTarball/registry lookups can be sync: nix evaluation is
+// synchronous, so awaiting mid-expression isn't an option.
+export function runFetchWorkerSync(payload) {
+    const workerUrl = new URL("./fetch_worker.js", import.meta.url).href
+    const out = new Deno.Command(Deno.execPath(), {
+        args: ["run", "--quiet", "--no-lock", "--allow-all", workerUrl, JSON.stringify(payload)],
+        stdout: "piped",
+        stderr: "piped",
+    }).outputSync()
+    const stdout = new TextDecoder().decode(out.stdout).trim()
+    let result
+    try {
+        result = JSON.parse(stdout.split("\n").pop())
+    } catch {
+        const stderr = new TextDecoder().decode(out.stderr).trim()
+        throw new NixError(`error: ${payload.kind} of '${payload.url}' failed:\n${stderr || stdout}`)
+    }
+    if (result.error != null) {
+        throw new NixError(`error: ${result.error}`)
+    }
+    return result
+}
+
 /**
  * Download a file from URL to destPath with streaming (doesn't load into memory)
  * @param {string} url - URL to download from

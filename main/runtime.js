@@ -24,7 +24,7 @@ import { resolveImportPath, isUrl } from "../tools/import_resolver.js"
 import { loadAndEvaluateSync } from "./import_loader.js"
 
 // fetcher system
-import { downloadWithRetry, extractNameFromUrl } from "./fetcher.js"
+import { downloadWithRetry, extractNameFromUrl, runFetchWorkerSync } from "./fetcher.js"
 import { extractTarball } from "./tar.js"
 import { hashDirectory, hashDirectorySync, hashPathSync, narHashToSRI } from "./nar_hash.js"
 import { ensureStoreDirectory, ensureStoreDirectorySync, computeFetchStorePath, getCachedPath, getCachedPathSync, setCachedPath, setCachedPathSync, atomicMove, atomicMoveSync, exists, STORE_DIR } from "./store_manager.js"
@@ -279,29 +279,6 @@ export const evalSettings = { pureEval: false }
     // Escape special regex characters in a string for use in RegExp
     function escapeRegexMatch(str) {
         return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    }
-
-    // Run fetch_worker.js (async downloads) as a SYNCHRONOUS subprocess so
-    // fetchurl/fetchTarball can be sync builtins. Returns the store path.
-    function runFetchWorkerSync(payload) {
-        const workerUrl = new URL("./fetch_worker.js", import.meta.url).href
-        const out = new Deno.Command(Deno.execPath(), {
-            args: ["run", "--quiet", "--no-lock", "--allow-all", workerUrl, JSON.stringify(payload)],
-            stdout: "piped",
-            stderr: "piped",
-        }).outputSync()
-        const stdout = new TextDecoder().decode(out.stdout).trim()
-        let result
-        try {
-            result = JSON.parse(stdout.split("\n").pop())
-        } catch {
-            const stderr = new TextDecoder().decode(out.stderr).trim()
-            throw new NixError(`error: ${payload.kind} of '${payload.url}' failed:\n${stderr || stdout}`)
-        }
-        if (result.error != null) {
-            throw new NixError(`error: ${result.error}`)
-        }
-        return result.storePath
     }
 
 //
@@ -1530,7 +1507,7 @@ export const evalSettings = { pureEval: false }
                 if (cached) {
                     return new Path(cached);
                 }
-                return new Path(runFetchWorkerSync({ kind: "fetchurl", url: `${url}`, sha256: sha256 && `${sha256}`, name: `${name}`, cacheKey }));
+                return new Path(runFetchWorkerSync({ kind: "fetchurl", url: `${url}`, sha256: sha256 && `${sha256}`, name: `${name}`, cacheKey }).storePath);
             },
             "fetchTarball": (args) => {
                 // Parse arguments: can be string URL or {url, sha256?, name?}
@@ -1552,7 +1529,7 @@ export const evalSettings = { pureEval: false }
                 if (cached) {
                     return new Path(cached);
                 }
-                return new Path(runFetchWorkerSync({ kind: "fetchTarball", url: `${url}`, sha256: sha256 && `${sha256}`, name: `${name}`, cacheKey }));
+                return new Path(runFetchWorkerSync({ kind: "fetchTarball", url: `${url}`, sha256: sha256 && `${sha256}`, name: `${name}`, cacheKey }).storePath);
             },
             // Synchronous on purpose: Nix evaluation is synchronous, so an async
             // fetchGit would leak a Promise into translated code like
@@ -1825,7 +1802,7 @@ export const evalSettings = { pureEval: false }
                     throw error;
                 }
             },
-            "fetchMercurial": async (args) => {
+            "fetchMercurial": (args) => {
                 // Parse arguments: can be string URL or {url, name?, rev?, ref?}
                 let url, name, rev, ref;
                 if (typeof args === "string" || args instanceof InterpolatedString) {
@@ -1841,16 +1818,11 @@ export const evalSettings = { pureEval: false }
                 }
 
                 // Ensure store directory exists
-                await ensureStoreDirectory();
+                ensureStoreDirectorySync();
 
                 // Check cache
                 const cacheKey = `fetchhg:${url}:${ref}:${rev || "tip"}`;
-                // Skip cache for now to ensure metadata is always available
-                // const cached = await getCachedPath(cacheKey);
-                // if (cached && await exists(cached)) {
-                //     const result = new Path(cached);
-                //     return result;
-                // }
+                // deliberately not read back from cache, so metadata is always available
 
                 // Validate hg binary exists
                 try {
@@ -1859,7 +1831,7 @@ export const evalSettings = { pureEval: false }
                         stdout: "piped",
                         stderr: "piped",
                     });
-                    const { code } = await hgVersion.output();
+                    const { code } = hgVersion.outputSync();
                     if (code !== 0) {
                         throw new Error("hg command failed");
                     }
@@ -1871,7 +1843,7 @@ export const evalSettings = { pureEval: false }
                 }
 
                 // Create temp directory for cloning
-                const tempDir = await Deno.makeTempDir();
+                const tempDir = Deno.makeTempDirSync();
 
                 try {
                     // Build hg clone command
@@ -1891,7 +1863,7 @@ export const evalSettings = { pureEval: false }
                         stderr: "piped",
                     });
 
-                    const cloneResult = await cloneCmd.output();
+                    const cloneResult = cloneCmd.outputSync();
                     if (cloneResult.code !== 0) {
                         const errorText = new TextDecoder().decode(cloneResult.stderr);
                         throw new Error(`hg clone failed: ${errorText}`);
@@ -1904,7 +1876,7 @@ export const evalSettings = { pureEval: false }
                             stdout: "piped",
                             stderr: "piped",
                         });
-                        const updateResult = await updateCmd.output();
+                        const updateResult = updateCmd.outputSync();
                         if (updateResult.code !== 0) {
                             const errorText = new TextDecoder().decode(updateResult.stderr);
                             throw new Error(`hg update -r ${rev} failed: ${errorText}`);
@@ -1912,13 +1884,13 @@ export const evalSettings = { pureEval: false }
                     }
 
                     // Helper function to run hg command and get output
-                    async function hgOutput(args) {
+                    function hgOutput(args) {
                         const cmd = new Deno.Command("hg", {
                             args: ["-R", tempDir, ...args],
                             stdout: "piped",
                             stderr: "piped",
                         });
-                        const { code, stdout } = await cmd.output();
+                        const { code, stdout } = cmd.outputSync();
                         if (code !== 0) {
                             throw new Error(`hg ${args.join(" ")} failed`);
                         }
@@ -1927,7 +1899,7 @@ export const evalSettings = { pureEval: false }
 
                     // Extract metadata using hg log with template
                     // Mercurial template fields: {node} = full hash, {date} = timestamp, {rev} = revision number
-                    const logOutput = await hgOutput([
+                    const logOutput = hgOutput([
                         "log",
                         "-r", ".",
                         "--template", "{node}\\n{date|hgdate}\\n{rev}\\n"
@@ -1947,22 +1919,22 @@ export const evalSettings = { pureEval: false }
 
                     // Remove .hg directory for determinism
                     try {
-                        await Deno.remove(`${tempDir}/.hg`, { recursive: true });
+                        Deno.removeSync(`${tempDir}/.hg`, { recursive: true });
                     } catch {
                         // Ignore errors if .hg doesn't exist or can't be removed
                     }
 
                     // Compute NAR hash of directory
-                    const narHash = await hashDirectory(tempDir);
+                    const narHash = hashDirectorySync(tempDir);
 
                     // Compute store path
                     const storePath = computeFetchStorePath(narHash, name);
 
                     // Move to store
-                    await atomicMove(tempDir, storePath);
+                    atomicMoveSync(tempDir, storePath);
 
                     // Cache the result
-                    await setCachedPath(cacheKey, storePath);
+                    setCachedPathSync(cacheKey, storePath);
 
                     // Return Path object with metadata as properties
                     const result = new Path(storePath);
@@ -1977,7 +1949,7 @@ export const evalSettings = { pureEval: false }
                 } catch (error) {
                     // Clean up temp directory on error
                     try {
-                        await Deno.remove(tempDir, { recursive: true });
+                        Deno.removeSync(tempDir, { recursive: true });
                     } catch {
                         // Ignore cleanup errors
                     }
@@ -1989,10 +1961,9 @@ export const evalSettings = { pureEval: false }
                 // It accepts either:
                 //   1. An attribute set with {type, ...other params}
                 //   2. A URL-like string (requires flakes experimental feature)
-                // Synchronous on purpose for git/path-backed types: Nix
-                // evaluation is synchronous, so an async fetchTree would leak
-                // a Promise into translated code (e.g. `(fetchTree x).outPath`).
-                // Network-tarball/file/mercurial types still return Promises.
+                // Synchronous on purpose: Nix evaluation is synchronous, so an
+                // async fetchTree would leak a Promise into translated code
+                // (e.g. `(fetchTree x).outPath`).
 
                 let attrs;
 
@@ -2232,14 +2203,15 @@ export const evalSettings = { pureEval: false }
                         if (attrs.ref) hgArgs.ref = attrs.ref;
 
                         // Return unified fetchTree format (same as git)
-                        return builtins.fetchMercurial(hgArgs).then((hgResult) => ({
+                        const hgResult = builtins.fetchMercurial(hgArgs);
+                        return {
                             outPath: hgResult.toString(),
                             rev: hgResult.rev,
                             shortRev: hgResult.shortRev,
                             revCount: hgResult.revCount,
                             lastModified: hgResult.lastModified,
                             narHash: hgResult.narHash,
-                        }));
+                        };
 
                     case "path":
                         // Delegate to builtins.path
@@ -2282,21 +2254,20 @@ export const evalSettings = { pureEval: false }
                         const indirectId = requireString(attrs.id || attrs.ref).toString();
 
                         // Resolve the indirect reference via registry
-                        return resolveIndirectReference(indirectId).then((resolvedRef) => {
-                            if (!resolvedRef) {
-                                throw new Error(
-                                    `builtins.fetchTree: indirect flake reference "${indirectId}" not found in registry.\n` +
-                                    `Available registries:\n` +
-                                    `  - User: ~/.config/nix/registry.json\n` +
-                                    `  - System: /etc/nix/registry.json\n` +
-                                    `  - Global: https://channels.nixos.org/flake-registry.json\n` +
-                                    `\n` +
-                                    `You can also use explicit references like "github:owner/repo" instead.`
-                                );
-                            }
-                            // Recursively call fetchTree with the resolved reference
-                            return builtins.fetchTree(resolvedRef);
-                        });
+                        const resolvedRef = resolveIndirectReference(indirectId);
+                        if (!resolvedRef) {
+                            throw new Error(
+                                `builtins.fetchTree: indirect flake reference "${indirectId}" not found in registry.\n` +
+                                `Available registries:\n` +
+                                `  - User: ~/.config/nix/registry.json\n` +
+                                `  - System: /etc/nix/registry.json\n` +
+                                `  - Global: https://channels.nixos.org/flake-registry.json\n` +
+                                `\n` +
+                                `You can also use explicit references like "github:owner/repo" instead.`
+                            );
+                        }
+                        // Recursively call fetchTree with the resolved reference
+                        return builtins.fetchTree(resolvedRef);
 
                     default:
                         throw new Error(`builtins.fetchTree: unsupported type '${type}'`);
@@ -3187,7 +3158,7 @@ export const evalSettings = { pureEval: false }
                 }
                 return 0n
             },
-            "getFlake": async (flakeRef, presetInputs = null) => {
+            "getFlake": (flakeRef, presetInputs = null) => {
                 // getFlake fetches a flake and returns its output attributes and metadata
                 // Usage: builtins.getFlake "github:owner/repo" or builtins.getFlake "/path/to/flake"
                 // presetInputs (internal): inputs already resolved by a parent
@@ -3216,18 +3187,18 @@ export const evalSettings = { pureEval: false }
                         sourcePath = parsedRef.path;
                         // Resolve relative paths
                         if (!sourcePath.startsWith("/")) {
-                            sourcePath = await Deno.realPath(sourcePath);
+                            sourcePath = Deno.realPathSync(sourcePath);
                         }
                         sourceInfo = {
                             type: "path",
                             path: sourcePath,
-                            narHash: narHashToSRI(await hashDirectory(sourcePath)),
+                            narHash: narHashToSRI(hashDirectorySync(sourcePath)),
                         };
                         break;
 
                     case "github":
                         // Fetch from GitHub using fetchTree
-                        const githubResult = await builtins.fetchTree({
+                        const githubResult = builtins.fetchTree({
                             type: "github",
                             owner: parsedRef.owner,
                             repo: parsedRef.repo,
@@ -3248,7 +3219,7 @@ export const evalSettings = { pureEval: false }
 
                     case "gitlab":
                         // Fetch from GitLab using fetchTree
-                        const gitlabResult = await builtins.fetchTree({
+                        const gitlabResult = builtins.fetchTree({
                             type: "gitlab",
                             owner: parsedRef.owner,
                             repo: parsedRef.repo,
@@ -3269,7 +3240,7 @@ export const evalSettings = { pureEval: false }
 
                     case "git":
                         // Fetch from Git repository
-                        const gitResult = await builtins.fetchGit({
+                        const gitResult = builtins.fetchGit({
                             url: parsedRef.url,
                             rev: parsedRef.rev,
                             ref: parsedRef.ref,
@@ -3289,7 +3260,7 @@ export const evalSettings = { pureEval: false }
                     case "mercurial":
                     case "hg":
                         // Fetch from Mercurial repository
-                        const hgResult = await builtins.fetchMercurial({
+                        const hgResult = builtins.fetchMercurial({
                             url: parsedRef.url,
                             rev: parsedRef.rev,
                             ref: parsedRef.ref,
@@ -3317,19 +3288,19 @@ export const evalSettings = { pureEval: false }
                         }
                         const filePath = force(builtins.fetchurl(parsedRef.url)).toString();
                         const fileFlakeDir = `${filePath}-flake`;
-                        await Deno.mkdir(fileFlakeDir, { recursive: true });
-                        await Deno.copyFile(filePath, `${fileFlakeDir}/flake.nix`);
+                        Deno.mkdirSync(fileFlakeDir, { recursive: true });
+                        Deno.copyFileSync(filePath, `${fileFlakeDir}/flake.nix`);
                         sourcePath = fileFlakeDir;
                         sourceInfo = {
                             type: "file",
                             url: parsedRef.url,
-                            narHash: narHashToSRI(await hashDirectory(fileFlakeDir)),
+                            narHash: narHashToSRI(hashDirectorySync(fileFlakeDir)),
                         };
                         break;
 
                     case "tarball":
                         // Fetch tarball
-                        const tarballResult = await builtins.fetchTarball({
+                        const tarballResult = builtins.fetchTarball({
                             url: parsedRef.url,
                         });
                         sourcePath = tarballResult.toString();
@@ -3342,7 +3313,7 @@ export const evalSettings = { pureEval: false }
 
                     case "indirect":
                         // Indirect references (registry lookup)
-                        const resolvedFlakeRef = await resolveIndirectReference(parsedRef.id);
+                        const resolvedFlakeRef = resolveIndirectReference(parsedRef.id);
 
                         if (!resolvedFlakeRef) {
                             throw new Error(
@@ -3357,7 +3328,7 @@ export const evalSettings = { pureEval: false }
                         }
 
                         // Recursively call getFlake with the resolved reference
-                        return await builtins.getFlake(resolvedFlakeRef);
+                        return builtins.getFlake(resolvedFlakeRef);
 
                     default:
                         throw new Error(`builtins.getFlake: unsupported flake reference type: ${parsedRef.type}`);
@@ -3367,7 +3338,7 @@ export const evalSettings = { pureEval: false }
                 const flakePath = `${sourcePath}/flake.nix`;
                 let flakeNixExists = false;
                 try {
-                    await Deno.stat(flakePath);
+                    Deno.statSync(flakePath);
                     flakeNixExists = true;
                 } catch {
                     throw new Error(
@@ -3382,7 +3353,7 @@ export const evalSettings = { pureEval: false }
                 // - inputs (attribute set of flake references)
                 // - outputs (function taking inputs as arguments)
 
-                const flakeExpr = await loadAndEvaluateSync(flakePath, requireRuntime());
+                const flakeExpr = loadAndEvaluateSync(flakePath, requireRuntime());
 
                 // Validate flake structure
                 if (!builtins.isAttrs(flakeExpr)) {
@@ -3402,7 +3373,7 @@ export const evalSettings = { pureEval: false }
                 const lockPath = `${sourcePath}/flake.lock`;
                 let lockData = null;
                 try {
-                    const lockContent = await Deno.readTextFile(lockPath);
+                    const lockContent = Deno.readTextFileSync(lockPath);
                     lockData = JSON.parse(lockContent);
                 } catch {
                     // No lock file or invalid JSON - that's okay, we'll use unlocked inputs
@@ -3485,14 +3456,14 @@ export const evalSettings = { pureEval: false }
                     // get the ROOT's nixpkgs, not the one in its own lock.
                     const lockNodeCache = new Map();
                     const lockNodeInProgress = new Set();
-                    const resolveLockNode = async (nodeKey) => {
+                    const resolveLockNode = (nodeKey) => {
                         if (lockNodeCache.has(nodeKey)) { return lockNodeCache.get(nodeKey); }
                         const node = lockData.nodes[nodeKey];
                         let ref = node && refFromLocked(node.locked);
                         if (ref == null) { return null; }
                         ref = resolveRelativePath(ref);
                         if (node.flake === false) {
-                            const source = await builtins.fetchTree(builtins.parseFlakeRef(ref));
+                            const source = builtins.fetchTree(builtins.parseFlakeRef(ref));
                             lockNodeCache.set(nodeKey, source);
                             return source;
                         }
@@ -3503,13 +3474,13 @@ export const evalSettings = { pureEval: false }
                                 const childKey = resolveNodeKey(childKeyOrPath);
                                 // on a graph cycle, let the child flake resolve itself
                                 if (childKey == null || lockNodeInProgress.has(childKey)) { continue; }
-                                const childValue = await resolveLockNode(childKey);
+                                const childValue = resolveLockNode(childKey);
                                 if (childValue != null) { preset[childName] = childValue; }
                             }
                         } finally {
                             lockNodeInProgress.delete(nodeKey);
                         }
-                        const result = await builtins.getFlake(ref, preset);
+                        const result = builtins.getFlake(ref, preset);
                         lockNodeCache.set(nodeKey, result);
                         return result;
                     };
@@ -3547,7 +3518,7 @@ export const evalSettings = { pureEval: false }
                             if (nodeKey != null) {
                                 let resolved;
                                 try {
-                                    resolved = await resolveLockNode(nodeKey);
+                                    resolved = resolveLockNode(nodeKey);
                                 } catch (error) {
                                     throw new Error(
                                         `builtins.getFlake: failed to resolve locked input '${inputName}': ${error.message}`
@@ -3570,8 +3541,8 @@ export const evalSettings = { pureEval: false }
                         const isFlake = !(builtins.isAttrs(inputSpec) && inputSpec.flake === false);
                         try {
                             inputs[inputName] = isFlake
-                                ? await builtins.getFlake(inputRef)
-                                : await builtins.fetchTree(builtins.parseFlakeRef(inputRef));
+                                ? builtins.getFlake(inputRef)
+                                : builtins.fetchTree(builtins.parseFlakeRef(inputRef));
                         } catch (error) {
                             throw new Error(
                                 `builtins.getFlake: failed to resolve input '${inputName}' from ${inputRef}: ${error.message}`

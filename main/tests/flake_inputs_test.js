@@ -129,3 +129,31 @@ Deno.test("flake.lock pins inputs (overrides the spec url)", async () => {
 
     await Deno.remove(root, { recursive: true })
 })
+
+// getFlake has to be synchronous: called from nix source an async version
+// would silently evaluate to a Promise (so `.outputs` came back undefined).
+Deno.test("getFlake is callable from inside nix source", async () => {
+    const root = await Deno.makeTempDir({ prefix: "denix_flake_sync_" })
+    await Deno.writeTextFile(`${root}/flake.nix`, `{
+        description = "a tiny flake";
+        outputs = { self }: { greeting = "hi"; };
+    }`)
+
+    const { apply, evalNix } = createRuntime()
+    const describe = await evalNix(`
+        name:
+            let
+                flake = builtins.getFlake "path:${root}";
+            in
+                {
+                    inherit name;
+                    description = flake.description;
+                    outputNames = builtins.attrNames flake.outputs;
+                }
+    `)
+    const described = apply(describe, "hi")
+    assertEquals(force(described.description), "a tiny flake")
+    assertEquals(described.outputNames.map((each) => force(each)), ["greeting"])
+
+    await Deno.remove(root, { recursive: true })
+})

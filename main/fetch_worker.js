@@ -1,9 +1,10 @@
-// Subprocess worker for builtins.fetchurl / builtins.fetchTarball.
-// Nix evaluation is synchronous, so the runtime can't await downloads
+// Subprocess worker for builtins.fetchurl / builtins.fetchTarball / registry
+// lookups. Nix evaluation is synchronous, so the runtime can't await downloads
 // mid-expression (e.g. `import (builtins.fetchTarball ...)`); instead it
 // spawns this script with outputSync. Payload comes in as JSON argv[0]:
 //   { kind: "fetchurl"|"fetchTarball", url, sha256?, name, cacheKey }
-// and the result goes to stdout as JSON: { storePath } or { error }.
+//   { kind: "fetchText", url }
+// and the result goes to stdout as JSON: { storePath } / { text } / { error }.
 import { downloadWithRetry } from "./fetcher.js"
 import { extractTarball } from "./tar.js"
 import { hashDirectory } from "./nar_hash.js"
@@ -68,10 +69,22 @@ const fetchTarball = async ({ url, sha256, name, cacheKey }) => {
     return storePath
 }
 
+const fetchText = async ({ url }) => {
+    const response = await fetch(url, { headers: { "User-Agent": "Denix/1.0" } })
+    if (!response.ok) {
+        throw new Error(`fetching ${url} gave HTTP ${response.status}`)
+    }
+    return await response.text()
+}
+
 try {
     const payload = JSON.parse(Deno.args[0])
-    const storePath = payload.kind === "fetchurl" ? await fetchurl(payload) : await fetchTarball(payload)
-    console.log(JSON.stringify({ storePath }))
+    if (payload.kind === "fetchText") {
+        console.log(JSON.stringify({ text: await fetchText(payload) }))
+    } else {
+        const storePath = payload.kind === "fetchurl" ? await fetchurl(payload) : await fetchTarball(payload)
+        console.log(JSON.stringify({ storePath }))
+    }
 } catch (error) {
     console.log(JSON.stringify({ error: error?.message || String(error) }))
     Deno.exit(1)
