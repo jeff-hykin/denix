@@ -6,6 +6,12 @@ import { sha256Hex } from "./hashing.js"
 // Nix's base-32 alphabet (note: no 'e', 'o', 't', 'u')
 const NIX_BASE32_ALPHABET = "0123456789abcdfghijklmnpqrsvwxyz"
 
+// Logical Nix store directory (like real Nix's NIX_STORE_DIR). Store-path
+// hashes embed this value, so a non-default dir yields different paths than
+// cache.nixos.org (exactly as with real Nix). Read lazily so env changes made
+// before evaluation (e.g. by test harnesses) take effect.
+export const getStoreDir = () => Deno.env.get("NIX_STORE_DIR") || "/nix/store"
+
 /**
  * Encode bytes to Nix base-32 format
  * Nix uses a custom base-32 encoding with reverse byte order
@@ -102,7 +108,7 @@ export function normalizeHashToHex(hashStr, algoHint) {
  * @param {string} name
  * @param {{algo:string, hex:string, recursive:boolean}} info
  */
-export function makeFixedOutputPath(name, info, storeDir = "/nix/store", references = []) {
+export function makeFixedOutputPath(name, info, storeDir = getStoreDir(), references = []) {
     const { algo, hex, recursive } = info
     if (algo === "sha256" && recursive) {
         const type = "source" + [...references].sort().map((r) => `:${r}`).join("")
@@ -153,7 +159,7 @@ function compressHash(hashBytes) {
  * Compute store path hash for a derivation
  * Based on Nix's store path computation algorithm
  */
-export function computeStorePath(type, hashInput, name, storeDir = "/nix/store") {
+export function computeStorePath(type, hashInput, name, storeDir = getStoreDir()) {
     // 1. Compute SHA-256 hash of the input
     const fullHash = sha256Hex(hashInput)
 
@@ -210,7 +216,7 @@ export function serializeDerivation(drv) {
  * Compute the hash for a derivation's output path
  * This uses the "output:..." string format for fixed-output derivations
  */
-export function computeOutputPath(drvSerialized, outputName, name, storeDir = "/nix/store") {
+export function computeOutputPath(drvSerialized, outputName, name, storeDir = getStoreDir()) {
     // For non-fixed-output derivations, the output path is computed from
     // a hash of: "output:" + outputName + ":sha256:" + hash(drvSerialized) + ":" + storeDir + ":" + name
 
@@ -228,7 +234,7 @@ export function computeOutputPath(drvSerialized, outputName, name, storeDir = "/
  * Uses the "text" content-addressing method
  * Based on: https://github.com/NixOS/nix/blob/master/src/libstore/store-api.cc
  */
-export function computeDrvPath(drvSerialized, name, storeDir = "/nix/store", references = []) {
+export function computeDrvPath(drvSerialized, name, storeDir = getStoreDir(), references = []) {
     // Step 1: Hash the .drv content
     const contentHash = sha256Hex(drvSerialized)
 

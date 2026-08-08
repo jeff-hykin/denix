@@ -23,6 +23,7 @@ const runtime = {
     mkThunk: _rt.mkThunk,
     force: _rt.force,
     scopeStack: _rt.runtime.scopeStack,
+    attachScopeHelpers: _rt.runtime.attachScopeHelpers,
     nixRepr: (value) => {
         if (typeof value === 'string') {
             return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`

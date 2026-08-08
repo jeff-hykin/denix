@@ -17,7 +17,11 @@ const currentSystem = () =>
 
 Deno.test("builder realizes a two-derivation closure", async () => {
     const storeRoot = await Deno.makeTempDir({ prefix: "denix_closure_test_" })
+    // DENIX_STORE_ROOT is process-wide; restore it so later test files don't
+    // compute store paths under this (deleted) temp dir.
+    const prevRoot = Deno.env.get("DENIX_STORE_ROOT")
     Deno.env.set("DENIX_STORE_ROOT", storeRoot)
+    try {
     createRuntime() // initialize globalImportState / runtime
 
     const system = currentSystem()
@@ -59,6 +63,8 @@ Deno.test("builder realizes a two-derivation closure", async () => {
     // The dependency must have been materialized in the relocatable store.
     const depBase = dep.outPath.split("/").pop()
     await Deno.stat(`${storeRoot}/${depBase}`) // throws if missing
-
-    await Deno.remove(storeRoot, { recursive: true })
+    } finally {
+        prevRoot === undefined ? Deno.env.delete("DENIX_STORE_ROOT") : Deno.env.set("DENIX_STORE_ROOT", prevRoot)
+        await Deno.remove(storeRoot, { recursive: true })
+    }
 })

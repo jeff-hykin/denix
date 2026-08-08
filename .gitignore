@@ -24,3 +24,5 @@ build/
 
 # OS files
 Thumbs.db
+**/*.ignore.*
+**/*.ignore

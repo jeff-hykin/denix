@@ -35,7 +35,7 @@ Deno.test("fetchTree - tarball type with URL", async () => {
     });
 
     assertExists(result.toString()); // outPath
-    assertEquals(result.toString().includes("2.0"), true);
+    assertEquals(result.toString().endsWith("-source"), true); // real Nix names tarball fetches "source"
 });
 
 Deno.test("fetchTree - file type with URL", async () => {
@@ -106,7 +106,7 @@ Deno.test("fetchTree - tarball URL string syntax (auto-detection)", async () => 
     );
 
     assertExists(result.toString()); // outPath
-    assertEquals(result.toString().includes("2.0"), true);
+    assertEquals(result.toString().endsWith("-source"), true); // real Nix names tarball fetches "source"
 });
 
 Deno.test("fetchTree - file URL string syntax (auto-detection)", async () => {

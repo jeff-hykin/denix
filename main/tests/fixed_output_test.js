@@ -33,9 +33,21 @@ Deno.test("recursive fixed-output drvPath + outPath match Nix", () => {
     assertEquals(d.outPath, "/nix/store/cpf4wg054yc2gxqj2lgp85539z3zp5x2-fixed-2")
 })
 
-Deno.test("fixed-output build verifies matching hash", async () => {
-    const storeRoot = await Deno.makeTempDir({ prefix: "denix_fo_ok_" })
+// DENIX_STORE_ROOT is process-wide; restore it so later test files don't
+// compute store paths under a (deleted) temp dir.
+const withStoreRoot = async (prefix, fn) => {
+    const storeRoot = await Deno.makeTempDir({ prefix })
+    const prevRoot = Deno.env.get("DENIX_STORE_ROOT")
     Deno.env.set("DENIX_STORE_ROOT", storeRoot)
+    try {
+        await fn()
+    } finally {
+        prevRoot === undefined ? Deno.env.delete("DENIX_STORE_ROOT") : Deno.env.set("DENIX_STORE_ROOT", prevRoot)
+        await Deno.remove(storeRoot, { recursive: true })
+    }
+}
+
+Deno.test("fixed-output build verifies matching hash", () => withStoreRoot("denix_fo_ok_", async () => {
     const d = builtins.derivation({
         name: "fo-ok", system: builtins.currentSystem, builder: "/bin/sh",
         args: ["-c", "printf hello > $out"], // no newline → matches HELLO_SRI
@@ -43,17 +55,13 @@ Deno.test("fixed-output build verifies matching hash", async () => {
     })
     const result = await build(d)
     assertEquals(await Deno.readTextFile(result.outputPaths.out), "hello")
-    await Deno.remove(storeRoot, { recursive: true })
-})
+}))
 
-Deno.test("fixed-output build rejects on hash mismatch", async () => {
-    const storeRoot = await Deno.makeTempDir({ prefix: "denix_fo_bad_" })
-    Deno.env.set("DENIX_STORE_ROOT", storeRoot)
+Deno.test("fixed-output build rejects on hash mismatch", () => withStoreRoot("denix_fo_bad_", async () => {
     const d = builtins.derivation({
         name: "fo-bad", system: builtins.currentSystem, builder: "/bin/sh",
         args: ["-c", "printf WRONG > $out"],
         outputHashMode: "flat", outputHashAlgo: "sha256", outputHash: HELLO_SRI,
     })
     await assertRejects(() => build(d), Error, "hash mismatch")
-    await Deno.remove(storeRoot, { recursive: true })
-})
+}))

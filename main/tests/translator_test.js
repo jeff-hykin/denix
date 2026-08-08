@@ -23,7 +23,7 @@ import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts"
 // runtime, binding exactly the identifiers the preamble would have bound.
 const evalTranslated = (nixCode) => {
     const jsCode = convertToJsSync(nixCode)
-    const { createFunc, createScope, defGetter, apply, set, force, mkThunk, runtime } = createFullRuntime()
+    const { createFunc, createScope, defGetter, apply, set, force, mkThunk, nixArg, runtime } = createFullRuntime()
 
     const marker = "export default "
     const idx = jsCode.lastIndexOf(marker)
@@ -43,6 +43,8 @@ const evalTranslated = (nixCode) => {
         "force",
         "mkThunk",
         "nixScope",
+        "scope",
+        "nixArg",
         "Path",
         "InterpolatedString",
         `return (${expr})`,
@@ -59,6 +61,8 @@ const evalTranslated = (nixCode) => {
         force,
         mkThunk,
         nixScope,
+        nixScope,
+        nixArg,
         Path,
         InterpolatedString,
     )

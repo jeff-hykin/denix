@@ -7,7 +7,7 @@ import { makeFixedOutputPath, normalizeHashToHex } from "../tools/store_path.js"
 
 // Store directory in user's home directory (no root permissions needed)
 const HOME = Deno.env.get("HOME") || Deno.env.get("USERPROFILE") || "/tmp";
-export const STORE_DIR = `${HOME}/.cache/denix/store`;
+export const STORE_DIR = Deno.env.get("DENIX_STORE_ROOT") || `${HOME}/.cache/denix/store`;
 const CACHE_FILE = `${HOME}/.cache/denix/cache.json`;
 const LOCK_DIR = `${HOME}/.cache/denix/locks`;
 
@@ -123,6 +123,31 @@ export async function getCachedPath(cacheKey) {
         // Path doesn't exist, remove from cache
         delete cache[cacheKey];
         await saveCache(cache);
+        return null;
+    }
+}
+
+/**
+ * Synchronous version of getCachedPath (missing paths are NOT pruned from
+ * the cache file here — the async writer owns mutation)
+ * @param {string} cacheKey - Cache key
+ * @returns {string|null} - Store path if cached and exists, null otherwise
+ */
+export function getCachedPathSync(cacheKey) {
+    let cache
+    try {
+        cache = JSON.parse(Deno.readTextFileSync(CACHE_FILE));
+    } catch {
+        return null;
+    }
+    const storePath = cache[cacheKey];
+    if (!storePath) {
+        return null;
+    }
+    try {
+        Deno.statSync(storePath);
+        return storePath;
+    } catch {
         return null;
     }
 }

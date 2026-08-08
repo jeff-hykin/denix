@@ -4,29 +4,52 @@ import { hashPathSync } from "../nar_hash.js"
 
 // Serve a real tarball from a local HTTP server so tests are deterministic and
 // offline-safe (previously these fetched httpbin random bytes, which can never
-// be a valid gzip — the failures were masked by over-broad network catches)
-const tarballBytes = await (async () => {
-    const tempDir = await Deno.makeTempDir()
+// be a valid gzip — the failures were masked by over-broad network catches).
+// fetchTarball downloads synchronously (blocking subprocess), so the fixture
+// server must live in a separate process — an in-process Deno.serve could
+// never respond while the main thread is blocked.
+const tempDir = await Deno.makeTempDir()
+const tarPath = `${tempDir}/test.tar.gz`
+{
     await Deno.mkdir(`${tempDir}/content/myproject`, { recursive: true })
     await Deno.writeTextFile(`${tempDir}/content/myproject/README.md`, "# Test Project\n\nHello, World!")
     await Deno.writeTextFile(`${tempDir}/content/myproject/file.txt`, "Test content")
-    const tarPath = `${tempDir}/test.tar.gz`
     const { code } = await new Deno.Command("tar", {
         args: ["-czf", tarPath, "-C", `${tempDir}/content`, "myproject"],
     }).output()
     if (code !== 0) {
         throw new Error("Failed to create test tarball")
     }
-    const bytes = await Deno.readFile(tarPath)
-    await Deno.remove(tempDir, { recursive: true })
-    return bytes
-})()
+}
 
-const server = Deno.serve({ port: 0, onListen: () => {} }, () => {
-    return new Response(tarballBytes, { headers: { "content-type": "application/gzip" } })
+const serverCode = `
+const bytes = await Deno.readFile(Deno.args[0])
+Deno.serve({ port: 0, onListen: ({ port }) => console.log(port) }, () => {
+    return new Response(bytes, { headers: { "content-type": "application/gzip" } })
 })
-const baseUrl = `http://localhost:${server.addr.port}`
-globalThis.addEventListener("unload", () => server.shutdown())
+`
+const child = new Deno.Command(Deno.execPath(), {
+    args: ["eval", serverCode, tarPath],
+    stdout: "piped",
+    stderr: "null",
+}).spawn()
+const port = await (async () => {
+    const reader = child.stdout.getReader()
+    let text = ""
+    while (!text.includes("\n")) {
+        const { value, done } = await reader.read()
+        if (done) {
+            throw new Error("fixture server exited before printing its port")
+        }
+        text += new TextDecoder().decode(value)
+    }
+    return parseInt(text)
+})()
+const baseUrl = `http://localhost:${port}`
+globalThis.addEventListener("unload", () => {
+    try { child.kill() } catch { /* already gone */ }
+    try { Deno.removeSync(tempDir, { recursive: true }) } catch { /* already gone */ }
+})
 
 Deno.test("fetchTarball - string URL argument", async () => {
     const result = await builtins.fetchTarball(`${baseUrl}/pkg-string.tar.gz`)
@@ -78,9 +101,9 @@ Deno.test("fetchTarball - accepts correct sha256 (NAR hash of unpacked tree)", a
     assertEquals(result.toString(), plain.toString())
 })
 
-Deno.test("fetchTarball - extracts name from URL", async () => {
+Deno.test("fetchTarball - default store name is 'source' (real Nix)", async () => {
     const result = await builtins.fetchTarball(`${baseUrl}/repo/archive/v1.0.0.tar.gz`)
 
     const path = result.toString()
-    assert(path.includes("v1.0.0") || path.includes("1.0.0"))
+    assert(path.endsWith("-source"), `expected basename ending in -source: ${path}`)
 })

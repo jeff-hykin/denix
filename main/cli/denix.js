@@ -239,6 +239,10 @@ const buildCmd = addIgnoredNixFlags(new Command())
                 const idx = target.indexOf("#")
                 flakeRef = target.slice(0, idx)
                 flakeAttrPath = target.slice(idx + 1)
+            } else if (/^(github|gitlab|git\+|hg\+|file\+|path|flake|tarball):/.test(target) || /^https?:\/\//.test(target)) {
+                // flake reference: github:owner/repo[/rev], a tarball URL, or
+                // a URL to a raw flake.nix file
+                flakeRef = target
             } else {
                 try {
                     const st = await Deno.stat(target)

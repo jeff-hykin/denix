@@ -66,6 +66,7 @@ export async function createInternalRepl(opts = {}) {
 
             const fn = new Function(
                 "runtime", "operators", "builtins", "nixScope",
+                "scope", "nixArg",
                 "InterpolatedString", "Path",
                 "createFunc", "createScope", "defGetter",
                 "apply", "set", "force", "mkThunk",
@@ -73,6 +74,7 @@ export async function createInternalRepl(opts = {}) {
             )
             return fn(
                 runtimeWithScope, operators, builtins, nixScope,
+                nixScope, rtResult.nixArg,
                 innerRuntime.InterpolatedString, innerRuntime.Path,
                 rtResult.createFunc, rtResult.createScope, rtResult.defGetter,
                 rtResult.apply, rtResult.set, rtResult.force, rtResult.mkThunk,

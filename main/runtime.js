@@ -9,7 +9,7 @@ import { lazyMap } from "../tools/lazy_array.js"
 // Removed prex dependency due to WASM initialization issues
 // Replaced with custom POSIX regex converter below
 import { parse as tomlParse } from "https://deno.land/std@0.224.0/toml/mod.ts"
-import { serializeDerivation, computeDrvPath, computeOutputPath, encodeBase32, makeFixedOutputPath, fixedOutputModuloHash, normalizeHashToHex } from "../tools/store_path.js"
+import { serializeDerivation, computeDrvPath, computeOutputPath, encodeBase32, makeFixedOutputPath, fixedOutputModuloHash, normalizeHashToHex, getStoreDir } from "../tools/store_path.js"
 
 // core stuff
 import { NixError, NotImplemented } from "./errors.js"
@@ -27,7 +27,7 @@ import { loadAndEvaluateSync } from "./import_loader.js"
 import { downloadWithRetry, extractNameFromUrl } from "./fetcher.js"
 import { extractTarball } from "./tar.js"
 import { hashDirectory, hashDirectorySync, hashPathSync, narHashToSRI } from "./nar_hash.js"
-import { ensureStoreDirectory, ensureStoreDirectorySync, computeFetchStorePath, getCachedPath, setCachedPath, setCachedPathSync, atomicMove, atomicMoveSync, exists, STORE_DIR } from "./store_manager.js"
+import { ensureStoreDirectory, ensureStoreDirectorySync, computeFetchStorePath, getCachedPath, getCachedPathSync, setCachedPath, setCachedPathSync, atomicMove, atomicMoveSync, exists, STORE_DIR } from "./store_manager.js"
 
 // registry system
 import { resolveIndirectReference } from "./registry.js"
@@ -278,6 +278,29 @@ export const evalSettings = { pureEval: false }
         return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     }
 
+    // Run fetch_worker.js (async downloads) as a SYNCHRONOUS subprocess so
+    // fetchurl/fetchTarball can be sync builtins. Returns the store path.
+    function runFetchWorkerSync(payload) {
+        const workerUrl = new URL("./fetch_worker.js", import.meta.url).href
+        const out = new Deno.Command(Deno.execPath(), {
+            args: ["run", "--quiet", "--no-lock", "--allow-all", workerUrl, JSON.stringify(payload)],
+            stdout: "piped",
+            stderr: "piped",
+        }).outputSync()
+        const stdout = new TextDecoder().decode(out.stdout).trim()
+        let result
+        try {
+            result = JSON.parse(stdout.split("\n").pop())
+        } catch {
+            const stderr = new TextDecoder().decode(out.stderr).trim()
+            throw new NixError(`error: ${payload.kind} of '${payload.url}' failed:\n${stderr || stdout}`)
+        }
+        if (result.error != null) {
+            throw new NixError(`error: ${result.error}`)
+        }
+        return result.storePath
+    }
+
 //
 // classes
 //
@@ -339,8 +362,15 @@ export const evalSettings = { pureEval: false }
                                 this.context ||= new Map()
                                 for (const [k, e] of value.context) { this.context.set(k, e) }
                             }
-                        } else if (value && typeof value === "object" && value.outPath) {
+                        } else if (value && (typeof value === "object" || isFunctorSet(value)) && value.outPath) {
                             value = value.outPath
+                        } else if (value && (typeof value === "object" || isFunctorSet(value)) && typeof force(value.__toString) === "function") {
+                            // Sets with __toString coerce in interpolations (real Nix)
+                            value = builtins.toString(value)
+                            if (value instanceof NixString && value.context instanceof Map) {
+                                this.context ||= new Map()
+                                for (const [k, e] of value.context) { this.context.set(k, e) }
+                            }
                         }
                         if (!builtins.isString(value)) {
                             throw new NixError(`error: cannot coerce ${builtins.typeOf(value)} to a string`)
@@ -375,7 +405,7 @@ export const evalSettings = { pureEval: false }
     export const copyPathToStore = (fsPath) => {
         fsPath = FileSystem.makeAbsolutePath(fsPath.toString())
         // Already a (virtual) store path, nothing to copy
-        if (fsPath.startsWith("/nix/store/")) { return fsPath }
+        if (fsPath.startsWith(getStoreDir() + "/")) { return fsPath }
         const cached = sourcePathCache.get(fsPath)
         if (cached) { return cached }
         const storeRoot = Deno.env.get("DENIX_STORE_ROOT") ||
@@ -383,7 +413,7 @@ export const evalSettings = { pureEval: false }
         // The root of a store entry we already materialized (e.g. a fetched
         // tarball) keeps its identity instead of being re-copied.
         if (FileSystem.parentPath(fsPath) === storeRoot) {
-            return `/nix/store/${FileSystem.basename(fsPath)}`
+            return `${getStoreDir()}/${FileSystem.basename(fsPath)}`
         }
         const name = FileSystem.basename(fsPath)
         const hex = hashPathSync(fsPath).replace(/^sha256:/, "")
@@ -450,30 +480,79 @@ export const evalSettings = { pureEval: false }
         }
     }
     export const mkThunk = (fn) => new Thunk(fn)
+
+    // Argument-spec markers for scope.func$({ x: nixArg.NoDefault, ... }, fn).
+    // NoDefault = required formal (no default), AllArgs = the `@args` binding,
+    // Ellipsis = the `...` in `{ a, ... }:`.
+    export const nixArg = {
+        NoDefault: Symbol("nixArg.NoDefault"),
+        AllArgs: Symbol("nixArg.AllArgs"),
+        Ellipsis: Symbol("nixArg.Ellipsis"),
+    }
+    export const NoDefault = nixArg.NoDefault
+    export const AllArgs = nixArg.AllArgs
+
+    // Marker for nested-path assignments inside scope.attrSet$ / scope.let$
+    // specs: `...scope.deepSet$(["a","b"], value)` spreads to a symbol-keyed
+    // entry holding one of these.
+    class DeepSetEntry {
+        constructor(path, value) {
+            this.path = path
+            this.value = value
+        }
+    }
     // apply: function application that handles __functor attrsets (callable
-    // attrsets in Nix)
-    export function apply(fn, arg) {
-        // The callee itself may be a thunk (e.g. a lazily-bound variable).
-        fn = force(fn)
-        if (typeof fn === "function") {
-            // A denix-created Nix lambda accepts the argument lazily (as a
-            // thunk) — this is what makes Nix's lazy argument passing work,
-            // e.g. the `rattrs self` fixed point in lib.makeExtensible.
-            // A few builtins (tryEval, …) also want the unforced thunk so
-            // they can control evaluation. Everything else (builtins /
-            // curried JS helpers) wants a real value.
-            if (fn.__nixLambda || lazyArgFns.has(fn)) return fn(arg)
-            return fn(force(arg))
+    // attrsets in Nix). Variadic: apply(f, a, b) is ((f a) b), so curried Nix
+    // calls read as one flat call. A JS-function argument is a lazy getter
+    // (the translator's convention — eager-safe expressions never evaluate to
+    // functions) and is thunked here, so call sites need no explicit mkThunk.
+    export function apply(fn, ...args) {
+        for (let arg of args) {
+            // The callee itself may be a thunk (e.g. a lazily-bound variable).
+            fn = force(fn)
+            // A functor-set arg is a VALUE (callable attrset), not a getter.
+            if (typeof arg === "function" && !isFunctorSet(arg)) { arg = mkThunk(arg) }
+            if (typeof fn === "function") {
+                // A denix-created Nix lambda accepts the argument lazily (as a
+                // thunk) — this is what makes Nix's lazy argument passing work,
+                // e.g. the `rattrs self` fixed point in lib.makeExtensible.
+                // A few builtins (tryEval, …) also want the unforced thunk so
+                // they can control evaluation. Everything else (builtins /
+                // curried JS helpers) wants a real value.
+                fn = (fn.__nixLambda || lazyArgFns.has(fn)) ? fn(arg) : fn(force(arg))
+            } else if (fn && typeof fn === "object" && "__functor" in fn) {
+                fn = apply(apply(fn.__functor, fn), arg)
+            } else {
+                throw new NixError(`error: attempt to call something which is not a function but ${builtins.typeOf(fn)}`)
+            }
         }
-        if (fn && typeof fn === "object" && "__functor" in fn) {
-            return apply(apply(fn.__functor, fn), arg)
-        }
-        throw new NixError(`error: attempt to call something which is not a function but ${builtins.typeOf(fn)}`)
+        return fn
     }
     // Builtins that must receive their argument UNFORCED (as a Thunk) so they
     // can control evaluation themselves — e.g. builtins.tryEval needs to force
     // inside a try/catch. `apply` checks this set and skips forcing for them.
     const lazyArgFns = new WeakSet()
+
+    // Functor attrsets ({ __functor = self: arg: …; }) are represented as
+    // CALLABLE JS functions carrying their attrs as properties, so Nix-level
+    // "call it" and "read its attrs" both work naturally. The Symbol marker
+    // lets every type check distinguish them from real lambdas (Nix says a
+    // functor set is a "set", NOT a "lambda"). Creation-time wrapping happens
+    // in attrSet$/recAttrSet$/merge; attrsets built by other paths (e.g.
+    // listToAttrs) stay plain objects and are handled by apply's fallback.
+    const FUNCTOR_SET = Symbol("functorSet")
+    export const isFunctorSet = (value) => typeof value === "function" && FUNCTOR_SET in value
+    export const makeFunctorTarget = () => {
+        // Self is passed pre-thunked so apply doesn't mistake the callable
+        // target for a lazy getter and re-wrap it.
+        const fn = (arg) => apply(apply(fn.__functor, mkThunk(() => fn)), arg instanceof Thunk ? arg : mkThunk(() => arg))
+        // A function's built-in own props would pollute attrNames/hasAttr.
+        delete fn.name
+        delete fn.length
+        fn[FUNCTOR_SET] = true
+        lazyArgFns.add(fn) // receive args unforced; the wrapper normalizes
+        return fn
+    }
 
     // Flake resolution caches (process-lifetime). `flakeEvalCache` dedupes
     // fully-resolved flakes by reference string (so a shared input like nixpkgs
@@ -652,12 +731,12 @@ export const evalSettings = { pureEval: false }
                 + '"'
         }
         if (value instanceof Path) return value.toString()
-        if (typeof value === "function") return "<LAMBDA>"
+        if (typeof value === "function" && !isFunctorSet(value)) return "<LAMBDA>"
         if (Array.isArray(value)) {
             if (value.length === 0) return "[ ]"
             return "[ " + value.map(nixRepr).join(" ") + " ]"
         }
-        if (typeof value === "object") {
+        if (typeof value === "object" || isFunctorSet(value)) {
             const keys = Object.keys(value).sort()
             if (keys.length === 0) return "{ }"
             return "{ " + keys.map(k => `${k} = ${nixRepr(value[k])};`).join(" ") + " }"
@@ -682,9 +761,9 @@ export const evalSettings = { pureEval: false }
             if (v instanceof InterpolatedString) return inner(v.toString())
             if (typeof v === "string") return `<string value="${xmlEscape(v)}" />`
             if (v instanceof Path) return `<path value="${xmlEscape(v.toString())}" />`
-            if (typeof v === "function") return "<function />"
+            if (typeof v === "function" && !isFunctorSet(v)) return "<function />"
             if (Array.isArray(v)) return `<list>${v.map(inner).join("")}</list>`
-            if (typeof v === "object") {
+            if (typeof v === "object" || isFunctorSet(v)) {
                 const keys = Object.keys(v).sort()
                 return `<attrs>${keys.map(k => `<attr name="${xmlEscape(k)}">${inner(v[k])}</attr>`).join("")}</attrs>`
             }
@@ -747,8 +826,8 @@ export const evalSettings = { pureEval: false }
             "isPath": (value)=>force(value) instanceof Path,
             "isString": (value)=>{value=force(value); return value instanceof InterpolatedString || value instanceof NixString || typeof value == "string"},
             "isList": (value)=>force(value) instanceof Array,
-            "isAttrs": (value)=>{value=force(value); return value != null && Object.getPrototypeOf({}) == Object.getPrototypeOf(value)},
-            "isFunction": (value)=>force(value) instanceof Function,
+            "isAttrs": (value)=>{value=force(value); return value != null && (Object.getPrototypeOf({}) == Object.getPrototypeOf(value) || isFunctorSet(value))},
+            "isFunction": (value)=>{value=force(value); return value instanceof Function && !isFunctorSet(value)},
             "typeOf": (value)=>{
                 value = force(value)
                 switch (typeof value) {
@@ -756,7 +835,7 @@ export const evalSettings = { pureEval: false }
                     case "bigint":   return "int"   ; break;
                     case "number":   return "float" ; break;
                     case "string":   return "string"; break;
-                    case "function": return "lambda"; break;
+                    case "function": return isFunctorSet(value) ? "set" : "lambda"; break;
                     case "object":
                         if (value == null) {
                             return "null"
@@ -841,7 +920,10 @@ export const evalSettings = { pureEval: false }
                     case "bigint":
                         return `${value}` 
                     case "function":
-                        throw new NixError(`error: cannot coerce a function to a string`)
+                        if (!isFunctorSet(value)) {
+                            throw new NixError(`error: cannot coerce a function to a string`)
+                        }
+                        // falls through: functor sets coerce like sets
                     case "object":
                         if (value == null) {
                             return ""
@@ -857,7 +939,7 @@ export const evalSettings = { pureEval: false }
                                 parts.flatMap(depsOf),
                                 mergedContext(...parts),
                             )
-                        } else if (Object.getPrototypeOf({}) == Object.getPrototypeOf(value)) {
+                        } else if (Object.getPrototypeOf({}) == Object.getPrototypeOf(value) || isFunctorSet(value)) {
                             // Sets coerce like real Nix: __toString first, then outPath
                             const toStr = force(value.__toString)
                             if (typeof toStr === "function") {
@@ -905,6 +987,13 @@ export const evalSettings = { pureEval: false }
                         // but should serialize to their outPath string
                         if (value && typeof value === "object" && value.type === "derivation") {
                             return JSON.stringify(value.outPath)
+                        }
+                        if (isFunctorSet(value)) {
+                            // serializes as a set; errors on the __functor lambda
+                            // inside, exactly like real Nix
+                            const keys = Object.getOwnPropertyNames(value).sort()
+                            const entries = keys.map((each)=>`${JSON.stringify(each)}:${builtins.toJSON(force(value[each]))}`)
+                            return `{${entries.join(",")}}`
                         }
                         throw new NixError(`error: cannot convert a function to JSON`)
                     case "object":
@@ -989,7 +1078,7 @@ export const evalSettings = { pureEval: false }
                                 return toXml(FileSystem.makeAbsolutePath(value.toString()))
                             } else if (value instanceof Array) {
                                 return `<list>${value.map(toXml).join('')}</list>`
-                            } else if (Object.getPrototypeOf({}) == Object.getPrototypeOf(value)) {
+                            } else if (Object.getPrototypeOf({}) == Object.getPrototypeOf(value) || isFunctorSet(value)) {
                                 const attrs = Object.keys(value).map(key =>
                                     `<attr name="${key.replace(/"/g, '&quot;')}">${toXml(value[key])}</attr>`
                                 ).join('')
@@ -1036,7 +1125,7 @@ export const evalSettings = { pureEval: false }
                     each => {
                         each = force(each)
                         // Sets coerce like real Nix (__toString, then outPath)
-                        if (each != null && Object.getPrototypeOf({}) == Object.getPrototypeOf(each)) {
+                        if (each != null && (Object.getPrototypeOf({}) == Object.getPrototypeOf(each) || isFunctorSet(each))) {
                             return builtins.toString(each)
                         }
                         requireString(each)
@@ -1409,7 +1498,12 @@ export const evalSettings = { pureEval: false }
             },
         
         // fetchers
-            "fetchurl": async (args) => {
+            // Synchronous on purpose (like fetchGit below): Nix evaluation is
+            // synchronous, so an async fetcher would leak a Promise into
+            // translated code like `import (builtins.fetchTarball url)` where
+            // nothing can await it. The actual (async) download/extract work
+            // happens in fetch_worker.js via a sync subprocess.
+            "fetchurl": (args) => {
                 // Parse arguments: can be string URL or {url, sha256?, name?}
                 let url, sha256, name;
                 if (typeof args === "string" || args instanceof InterpolatedString) {
@@ -1420,114 +1514,34 @@ export const evalSettings = { pureEval: false }
                     sha256 = args["sha256"] ? requireString(args["sha256"]) : null;
                     name = args["name"] ? requireString(args["name"]) : extractNameFromUrl(url);
                 }
-
-                // Ensure store directory exists
-                await ensureStoreDirectory();
-
-                // Check cache
-                const cacheKey = `fetchurl:${url}:${sha256 || ""}`;
-                const cached = await getCachedPath(cacheKey);
-                if (cached && await exists(cached)) {
+                const cacheKey = `fetchurl:${url}:${sha256 || ""}:${name}`;
+                const cached = getCachedPathSync(cacheKey);
+                if (cached) {
                     return new Path(cached);
                 }
-
-                // Download file
-                const tempFile = `${await Deno.makeTempDir()}/download`;
-                await downloadWithRetry(url, tempFile);
-
-                // Validate SHA256 if provided (before moving to store)
-                if (sha256) {
-                    const fileBytes = await Deno.readFile(tempFile);
-                    const actualHash = sha256Hex(fileBytes);
-                    const normalizedExpected = sha256.replace(/^sha256[:-]/, '');
-                    if (actualHash !== normalizedExpected) {
-                        // Clean up temp file
-                        try { await Deno.remove(tempFile); } catch {}
-                        throw new Error(
-                            `Hash mismatch for ${url}:\n` +
-                            `  Expected: ${normalizedExpected}\n` +
-                            `  Actual:   ${actualHash}`
-                        );
-                    }
-                }
-
-                // Compute hash of file for store path
-                const fileBytes = await Deno.readFile(tempFile);
-                const fileHash = "sha256:" + sha256Hex(fileBytes);
-
-                // builtins.fetchurl produces a FLAT file store path (real Nix
-                // stores the downloaded file itself, not a wrapping directory)
-                const storePath = computeFetchStorePath(fileHash, name, { recursive: false });
-                await atomicMove(tempFile, storePath);
-
-                // Cache the result
-                await setCachedPath(cacheKey, storePath);
-
-                return new Path(storePath);
+                return new Path(runFetchWorkerSync({ kind: "fetchurl", url: `${url}`, sha256: sha256 && `${sha256}`, name: `${name}`, cacheKey }));
             },
-            "fetchTarball": async (args) => {
+            "fetchTarball": (args) => {
                 // Parse arguments: can be string URL or {url, sha256?, name?}
+                // Default name is "source" (real Nix semantics) — NOT derived
+                // from the URL. Getting this wrong changes the source store
+                // path and therefore every downstream derivation hash, which
+                // breaks binary-cache substitution of e.g. pinned nixpkgs.
                 let url, sha256, name;
                 if (typeof args === "string" || args instanceof InterpolatedString) {
                     url = requireString(args);
-                    name = extractNameFromUrl(url);
+                    name = "source";
                 } else {
                     url = requireString(args["url"]);
                     sha256 = args["sha256"] ? requireString(args["sha256"]) : null;
-                    name = args["name"] ? requireString(args["name"]) : extractNameFromUrl(url);
+                    name = args["name"] ? requireString(args["name"]) : "source";
                 }
-
-                // Ensure store directory exists
-                await ensureStoreDirectory();
-
-                // Check cache
-                const cacheKey = `${url}:${sha256 || ""}`;
-                const cached = await getCachedPath(cacheKey);
-                if (cached && await exists(cached)) {
+                const cacheKey = `fetchTarball:${url}:${sha256 || ""}:${name}`;
+                const cached = getCachedPathSync(cacheKey);
+                if (cached) {
                     return new Path(cached);
                 }
-
-                // Download tarball
-                const tempTar = `${await Deno.makeTempDir()}/download.tar.gz`;
-                await downloadWithRetry(url, tempTar);
-
-                // Extract tarball (sha256 is validated against the NAR hash of
-                // the extracted tree below, like real Nix — not the raw tarball)
-                const tempExtract = `${await Deno.makeTempDir()}/extracted`;
-                await extractTarball(tempTar, tempExtract);
-
-                // Clean up tarball
-                try {
-                    await Deno.remove(tempTar);
-                } catch {}
-
-                // Compute NAR hash of extracted directory
-                const narHash = await hashDirectory(tempExtract);
-
-                // Verify sha256 matches NAR hash if provided
-                if (sha256) {
-                    const normalizedExpected = sha256.replace(/^sha256[:-]/, '');
-                    const normalizedActual = narHash.replace(/^sha256[:-]/, '');
-                    if (normalizedActual !== normalizedExpected) {
-                        throw new Error(
-                            `Hash mismatch for ${url}:\n` +
-                            `  Expected: ${normalizedExpected}\n` +
-                            `  Actual:   ${normalizedActual}`
-                        );
-                    }
-                }
-
-                // Compute store path
-                const storePath = computeFetchStorePath(narHash, name);
-
-                // Move to store
-                await atomicMove(tempExtract, storePath);
-
-                // Cache the result
-                await setCachedPath(cacheKey, storePath);
-
-                // Return Path object
-                return new Path(storePath);
+                return new Path(runFetchWorkerSync({ kind: "fetchTarball", url: `${url}`, sha256: sha256 && `${sha256}`, name: `${name}`, cacheKey }));
             },
             // Synchronous on purpose: Nix evaluation is synchronous, so an async
             // fetchGit would leak a Promise into translated code like
@@ -2408,7 +2422,7 @@ export const evalSettings = { pureEval: false }
                 // Compute store path using text method (similar to .drv files)
                 // Fingerprint: "text:sha256:<content-hash>:/nix/store:<name>"
                 const contentHash = sha256Hex(contentStr)
-                const fingerprint = `text:sha256:${contentHash}:/nix/store:${nameStr}`
+                const fingerprint = `text:sha256:${contentHash}:${getStoreDir()}:${nameStr}`
                 const fingerprintHash = sha256Hex(fingerprint)
 
                 // Convert to bytes and XOR-fold to 20 bytes
@@ -2440,7 +2454,7 @@ export const evalSettings = { pureEval: false }
                 }
                 hash32 = hash32.padStart(32, "0")
 
-                const storePath = `/nix/store/${hash32}-${nameStr}`
+                const storePath = `${getStoreDir()}/${hash32}-${nameStr}`
 
                 // Materialize the file in the relocatable store so builders that
                 // use it as a source can actually read it.
@@ -2473,7 +2487,8 @@ export const evalSettings = { pureEval: false }
             "path": (args) => {
                 // Parse arguments
                 requireAttrSet(args);
-                const sourcePath = requireString(args["path"]).toString();
+                const rawPath = force(args["path"])
+                const sourcePath = (rawPath instanceof Path ? rawPath : requireString(rawPath)).toString();
 
                 // Get optional parameters
                 const name = args["name"]
@@ -2676,10 +2691,10 @@ export const evalSettings = { pureEval: false }
                     return { prefix, path }
                 })
             },
-            "storeDir": "/nix/store",
+            get "storeDir"() { return getStoreDir() },
             "storePath": (path)=>{
                 const pathStr = requireString(path).toString()
-                const storeDir = "/nix/store"
+                const storeDir = getStoreDir()
 
                 // Check if path is in store
                 if (!pathStr.startsWith(storeDir + "/")) {
@@ -2824,10 +2839,10 @@ export const evalSettings = { pureEval: false }
                         if (v instanceof Array) {
                             return v.map(coerceForDrv).join(" ")
                         }
-                        if (v?.type === "derivation" || (v && typeof v === "object" && !(v instanceof Interpolater) && v.outPath !== undefined)) {
+                        if (v?.type === "derivation" || (v && (typeof v === "object" || isFunctorSet(v)) && !(v instanceof Interpolater) && v.outPath !== undefined)) {
                             return force(v.outPath).toString()
                         }
-                        if (v && typeof v === "object" && !(v instanceof Interpolater) && typeof v.__toString === "function") {
+                        if (v && (typeof v === "object" || isFunctorSet(v)) && !(v instanceof Interpolater) && typeof v.__toString === "function") {
                             return requireString(apply(v.__toString, v)).toString()
                         }
                         if (v instanceof Path) {
@@ -2908,7 +2923,7 @@ export const evalSettings = { pureEval: false }
                         env[outputName] = ""
                     }
 
-                    const storeDir = "/nix/store"
+                    const storeDir = getStoreDir()
 
                     // ---- input derivations (hashDerivationModulo) --------------
                     // Nix computes output paths from `hashDerivationModulo`, where
@@ -3161,15 +3176,20 @@ export const evalSettings = { pureEval: false }
                 }
                 return 0n
             },
-            "getFlake": async (flakeRef) => {
+            "getFlake": async (flakeRef, presetInputs = null) => {
                 // getFlake fetches a flake and returns its output attributes and metadata
                 // Usage: builtins.getFlake "github:owner/repo" or builtins.getFlake "/path/to/flake"
+                // presetInputs (internal): inputs already resolved by a parent
+                // flake's lock graph (cross-flake `follows` overrides) — such
+                // calls bypass the eval cache since the same ref can resolve
+                // differently under different parents.
 
                 const refString = requireString(flakeRef).toString();
+                const hasPreset = presetInputs != null && Object.keys(presetInputs).length > 0;
 
                 // Dedup fully-resolved flakes, and break input cycles by
                 // returning the in-progress flake object.
-                if (flakeEvalCache.has(refString)) { return flakeEvalCache.get(refString); }
+                if (!hasPreset && flakeEvalCache.has(refString)) { return flakeEvalCache.get(refString); }
                 if (flakeInProgress.has(refString)) { return flakeInProgress.get(refString); }
 
                 // Parse the flake reference
@@ -3275,6 +3295,27 @@ export const evalSettings = { pureEval: false }
                         };
                         break;
 
+                    case "file":
+                        // A URL to a bare .nix file (e.g. a raw flake.nix on
+                        // GitHub): stage the file in a directory as flake.nix
+                        // so it evaluates like a flake.
+                        if (!parsedRef.url.split(/[?#]/)[0].endsWith(".nix")) {
+                            throw new Error(
+                                `builtins.getFlake: '${parsedRef.url}' is a plain file, not a flake (only usable as an input with flake = false)`
+                            );
+                        }
+                        const filePath = force(builtins.fetchurl(parsedRef.url)).toString();
+                        const fileFlakeDir = `${filePath}-flake`;
+                        await Deno.mkdir(fileFlakeDir, { recursive: true });
+                        await Deno.copyFile(filePath, `${fileFlakeDir}/flake.nix`);
+                        sourcePath = fileFlakeDir;
+                        sourceInfo = {
+                            type: "file",
+                            url: parsedRef.url,
+                            narHash: narHashToSRI(await hashDirectory(fileFlakeDir)),
+                        };
+                        break;
+
                     case "tarball":
                         // Fetch tarball
                         const tarballResult = await builtins.fetchTarball({
@@ -3361,10 +3402,15 @@ export const evalSettings = { pureEval: false }
                 };
 
                 // Build the initial flake result
+                // Real Nix exposes the source store path as outPath on both the
+                // flake itself and its sourceInfo (this is what makes
+                // `import nixpkgs {}` work — import coerces via outPath).
+                sourceInfo.outPath = sourcePath;
                 const flakeResult = {
                     _type: "flake",
                     description: description,
                     sourceInfo: sourceInfo,
+                    outPath: sourcePath,
                     inputs: inputs,
                     outputs: null, // Will be set after calling outputs function
                 };
@@ -3399,18 +3445,62 @@ export const evalSettings = { pureEval: false }
                             case "gitlab": return `gitlab:${locked.owner}/${locked.repo}${rev ? "/" + rev : ""}`;
                             case "git": return `git+${locked.url}${locked.rev ? `?rev=${locked.rev}` : ""}`;
                             case "tarball": return locked.url || null;
+                            case "file": return locked.url ? `file+${locked.url}` : null;
                             case "path": return `path:${locked.path}`;
                             case "indirect": return locked.id || null;
                             default: return locked.url || null;
                         }
                     };
-                    // Locked ref for a root input name, if flake.lock pins it.
-                    const lockedRefFor = (inputName) => {
-                        if (!lockData || !lockData.nodes || !lockData.root) { return null; }
-                        const rootInputs = lockData.nodes[lockData.root]?.inputs || {};
-                        const nodeKey = rootInputs[inputName];
-                        if (typeof nodeKey !== "string") { return null; } // arrays == follows
-                        return refFromLocked(lockData.nodes[nodeKey]?.locked);
+                    // Resolve a lock-graph node reference: node.inputs values
+                    // are either a node key (string) or a `follows` path
+                    // (array) walked from the lock root.
+                    const resolveNodeKey = (keyOrPath) => {
+                        if (typeof keyOrPath === "string") { return keyOrPath; }
+                        if (!Array.isArray(keyOrPath)) { return null; }
+                        let key = lockData.root;
+                        for (const seg of keyOrPath) {
+                            const next = lockData.nodes[key]?.inputs?.[seg];
+                            if (next == null) { return null; }
+                            key = resolveNodeKey(next);
+                            if (key == null) { return null; }
+                        }
+                        return key;
+                    };
+
+                    // Fetch + evaluate a lock node once, resolving ITS inputs
+                    // from this lock graph too. Real Nix: the root flake.lock
+                    // governs the whole input tree — e.g. with
+                    // `fenix.inputs.nixpkgs.follows = "nixpkgs"`, fenix must
+                    // get the ROOT's nixpkgs, not the one in its own lock.
+                    const lockNodeCache = new Map();
+                    const lockNodeInProgress = new Set();
+                    const resolveLockNode = async (nodeKey) => {
+                        if (lockNodeCache.has(nodeKey)) { return lockNodeCache.get(nodeKey); }
+                        const node = lockData.nodes[nodeKey];
+                        let ref = node && refFromLocked(node.locked);
+                        if (ref == null) { return null; }
+                        ref = resolveRelativePath(ref);
+                        if (node.flake === false) {
+                            const source = await builtins.fetchTree(builtins.parseFlakeRef(ref));
+                            lockNodeCache.set(nodeKey, source);
+                            return source;
+                        }
+                        const preset = {};
+                        lockNodeInProgress.add(nodeKey);
+                        try {
+                            for (const [childName, childKeyOrPath] of Object.entries(node.inputs || {})) {
+                                const childKey = resolveNodeKey(childKeyOrPath);
+                                // on a graph cycle, let the child flake resolve itself
+                                if (childKey == null || lockNodeInProgress.has(childKey)) { continue; }
+                                const childValue = await resolveLockNode(childKey);
+                                if (childValue != null) { preset[childName] = childValue; }
+                            }
+                        } finally {
+                            lockNodeInProgress.delete(nodeKey);
+                        }
+                        const result = await builtins.getFlake(ref, preset);
+                        lockNodeCache.set(nodeKey, result);
+                        return result;
                     };
 
                     // Resolve a (possibly relative) path ref against this flake.
@@ -3431,13 +3521,38 @@ export const evalSettings = { pureEval: false }
                     // Pass 1: resolve all non-`follows` inputs.
                     const followsInputs = [];
                     for (const [inputName, inputSpec] of Object.entries(inputsSpec)) {
+                        // A parent flake's lock graph already pinned this input
+                        // (cross-flake `follows` override).
+                        if (presetInputs && inputName in presetInputs) {
+                            inputs[inputName] = presetInputs[inputName];
+                            continue;
+                        }
+
+                        // Lock-graph resolution: flake.lock pins this input AND
+                        // its transitive inputs (including follows edges).
+                        const rootKeyOrPath = lockData?.nodes?.[lockData.root]?.inputs?.[inputName];
+                        if (rootKeyOrPath != null) {
+                            const nodeKey = resolveNodeKey(rootKeyOrPath);
+                            if (nodeKey != null) {
+                                let resolved;
+                                try {
+                                    resolved = await resolveLockNode(nodeKey);
+                                } catch (error) {
+                                    throw new Error(
+                                        `builtins.getFlake: failed to resolve locked input '${inputName}': ${error.message}`
+                                    );
+                                }
+                                if (resolved != null) { inputs[inputName] = resolved; continue; }
+                            }
+                        }
+
                         // `inputs.X.follows = "Y"`: defer to pass 2 (point at sibling).
                         if (builtins.isAttrs(inputSpec) && inputSpec.follows != null) {
                             followsInputs.push([inputName, requireString(inputSpec.follows).toString()]);
                             continue;
                         }
 
-                        let inputRef = lockedRefFor(inputName) || inputRefOf(inputSpec);
+                        let inputRef = inputRefOf(inputSpec);
                         if (inputRef == null) { continue; }
                         inputRef = resolveRelativePath(inputRef);
 
@@ -3471,7 +3586,8 @@ export const evalSettings = { pureEval: false }
                     flakeResult.outputs = outputsFn(inputs);
                 } catch (error) {
                     throw new Error(
-                        `builtins.getFlake: error evaluating flake outputs: ${error.message}`
+                        `builtins.getFlake: error evaluating flake outputs: ${error.message}`,
+                        { cause: error }
                     );
                 }
 
@@ -3486,7 +3602,7 @@ export const evalSettings = { pureEval: false }
                     }
                 }
 
-                flakeEvalCache.set(refString, flakeResult);
+                if (!hasPreset) { flakeEvalCache.set(refString, flakeResult); }
                 return flakeResult;
             },
             "parseFlakeRef": (flakeRef)=>{
@@ -3505,19 +3621,31 @@ export const evalSettings = { pureEval: false }
                     return { type: "git", url }
                 }
 
-                // GitHub shorthand: github:owner/repo[/ref]
+                // Plain file with explicit file+ prefix
+                if (ref.startsWith("file+")) {
+                    return { type: "file", url: ref.slice(5) }
+                }
+
+                // GitHub shorthand: github:owner/repo[/ref-or-rev]
                 if (ref.startsWith("github:")) {
                     const parts = ref.slice(7).split("/")
                     const result = { type: "github", owner: parts[0], repo: parts[1] }
-                    if (parts[2]) result.ref = parts[2]
+                    if (parts[2]) {
+                        // a 40-hex third segment is a commit, not a branch/tag
+                        if (/^[0-9a-f]{40}$/.test(parts[2])) { result.rev = parts[2] }
+                        else { result.ref = parts[2] }
+                    }
                     return result
                 }
 
-                // GitLab shorthand: gitlab:owner/repo[/ref]
+                // GitLab shorthand: gitlab:owner/repo[/ref-or-rev]
                 if (ref.startsWith("gitlab:")) {
                     const parts = ref.slice(7).split("/")
                     const result = { type: "gitlab", owner: parts[0], repo: parts[1] }
-                    if (parts[2]) result.ref = parts[2]
+                    if (parts[2]) {
+                        if (/^[0-9a-f]{40}$/.test(parts[2])) { result.rev = parts[2] }
+                        else { result.ref = parts[2] }
+                    }
                     return result
                 }
 
@@ -3532,9 +3660,14 @@ export const evalSettings = { pureEval: false }
                     return { type: "path", path: ref }
                 }
 
-                // Tarball URL
+                // Plain URL: archive extensions are tarballs, anything else is
+                // a single file (real Nix rule)
                 if (ref.startsWith("http://") || ref.startsWith("https://")) {
-                    return { type: "tarball", url: ref }
+                    const urlPath = ref.split(/[?#]/)[0]
+                    if (/\.(tar\.gz|tar\.bz2|tar\.xz|tar\.zst|tar\.lz|tgz|tar|zip)$/.test(urlPath)) {
+                        return { type: "tarball", url: ref }
+                    }
+                    return { type: "file", url: ref }
                 }
 
                 // Indirect reference (registry lookup)
@@ -3744,7 +3877,10 @@ export const evalSettings = { pureEval: false }
             if (typeof condition !== "boolean") {
                 throw new NixError(`error: expected a Boolean but found ${builtins.typeOf(condition)}: ${nixRepr(condition)}`)
             }
-            return condition ? thenFn() : elseFn()
+            // Branches are usually thunks, but the translator passes eager-safe
+            // literals (which are never JS functions) directly.
+            const branch = condition ? thenFn : elseFn
+            return typeof branch === "function" && !isFunctorSet(branch) ? branch() : branch
         },
         negative: (value)=>typeof value == "bigint"?-value:-toFloat(value),
         listConcat: (value, other)=>{
@@ -3756,7 +3892,7 @@ export const evalSettings = { pureEval: false }
             // Nix's `+` coerces attrsets that have outPath (derivations) or
             // __toString to strings, e.g. `"PATH=" + coreutils`.
             const coerceSet = (v)=>{
-                if (v && typeof v === "object" && !(v instanceof Interpolater) && !(v instanceof Array)) {
+                if (v && (typeof v === "object" || isFunctorSet(v)) && !(v instanceof Interpolater) && !(v instanceof Array)) {
                     if (v.type === "derivation") {
                         return flatString(force(v.outPath).toString(), [v], null)
                     }
@@ -3829,14 +3965,17 @@ export const evalSettings = { pureEval: false }
             // lazy getters survive. Spreading ({...value}) would evaluate every
             // field, which breaks `self = rattrs self // {…}` (it would force the
             // not-yet-defined fields mid-fixed-point). `other` wins on conflicts.
-            const result = {}
+            // A merge result containing __functor is itself callable.
+            // `in` checks key existence without triggering lazy getters.
+            const result = ("__functor" in value || "__functor" in other) ? makeFunctorTarget() : {}
             Object.defineProperties(result, Object.getOwnPropertyDescriptors(value))
             Object.defineProperties(result, Object.getOwnPropertyDescriptors(other))
             return result
         },
         equal: (value, other)=>{
             // Functions are never equal when compared directly in Nix
-            if (typeof value === "function" || typeof other === "function") return false
+            // (functor SETS compare as attrsets, though)
+            if ((typeof value === "function" && !isFunctorSet(value)) || (typeof other === "function" && !isFunctorSet(other))) return false
             if (value === other) return true
             // Nix strings come in several wrappers (InterpolatedString,
             // context-carrying NixString) — `==` compares their text.
@@ -3851,7 +3990,7 @@ export const evalSettings = { pureEval: false }
             if (value?.type === "derivation" && other?.type === "derivation") {
                 return force(value.outPath).toString() === force(other.outPath).toString()
             }
-            if (typeof value !== typeof other) return false
+            if (typeof value !== typeof other && !(builtins.isAttrs(value) && builtins.isAttrs(other))) return false
             if (value instanceof Array && other instanceof Array) {
                 if (value.length !== other.length) return false
                 for (let i = 0; i < value.length; i++) {
@@ -3897,7 +4036,7 @@ export const evalSettings = { pureEval: false }
             // e.g., hasAttrPath({a: {b: {c: 1}}}, "a", "b", "c") => true
             let current = attrset
             for (const attr of attrPath) {
-                if (typeof current !== "object" || current === null || Array.isArray(current)) {
+                if ((typeof current !== "object" && !isFunctorSet(current)) || current === null || Array.isArray(current)) {
                     return false
                 }
                 const attrStr = requireString(attr).toString()
@@ -3912,17 +4051,18 @@ export const evalSettings = { pureEval: false }
             // Select a nested attribute with a default value if it doesn't exist
             // e.g., selectOrDefault({a: {b: 1}}, ["a", "b"], "default") => 1
             // e.g., selectOrDefault({a: {}}, ["a", "b"], "default") => "default"
-            // The translator passes the default as a thunk so `x.y or (throw …)`
-            // only evaluates the default on a miss; force() is a no-op for plain
-            // values from older/eager call sites.
+            // The translator passes a non-eager-safe default as a lazy getter
+            // so `x.y or (throw …)` only evaluates the default on a miss.
+            // Older call sites pass a Thunk or plain value; force() handles both.
+            const useDefault = () => force(typeof defaultValue === "function" && !isFunctorSet(defaultValue) ? defaultValue() : defaultValue)
             let current = force(attrset)
             for (const attr of attrPath) {
-                if (typeof current !== "object" || current === null || Array.isArray(current)) {
-                    return force(defaultValue)
+                if ((typeof current !== "object" && !isFunctorSet(current)) || current === null || Array.isArray(current)) {
+                    return useDefault()
                 }
                 const attrStr = requireString(attr).toString()
                 if (!current.hasOwnProperty(attrStr)) {
-                    return force(defaultValue)
+                    return useDefault()
                 }
                 current = force(current[attrStr])
             }
@@ -3931,7 +4071,19 @@ export const evalSettings = { pureEval: false }
     }
     
     const resolveImportTarget = (runtime, path)=>{
-        const pathStr = path instanceof Path ? path.toString() : requireString(path).toString()
+        let target = force(path)
+        // Real Nix coerces importable sets to paths (__toString, then outPath),
+        // e.g. `import nixpkgs {}` where nixpkgs is a flake input attrset.
+        if (target !== null && !(target instanceof Path) && !Array.isArray(target) &&
+            (Object.getPrototypeOf({}) == Object.getPrototypeOf(target) || isFunctorSet(target))) {
+            const toStr = force(target.__toString)
+            if (typeof toStr === "function") {
+                target = apply(toStr, target)
+            } else if (target.outPath !== undefined) {
+                target = force(target.outPath)
+            }
+        }
+        const pathStr = target instanceof Path ? target.toString() : requireString(target).toString()
         if (isUrl(pathStr)) {
             return pathStr
         }
@@ -3980,7 +4132,7 @@ export const evalSettings = { pureEval: false }
         }
     }
 
-    export const createRuntime = ()=>{
+    export const createRuntime = (options = {})=>{
         // Create import cache for this runtime instance
         const importCache = new ImportCache()
 
@@ -3992,7 +4144,7 @@ export const evalSettings = { pureEval: false }
             Path,
             importCache,
             withScope: createWithScope,
-            currentFile: null, // Track current file for relative imports
+            currentFile: options.currentFile || null, // Track current file for relative imports
         }
 
         const rootScope = {
@@ -4040,6 +4192,197 @@ export const evalSettings = { pureEval: false }
         runtimeWithScope.createFunc = createCreateFunc(runtimeWithScope)
         runtimeWithScope.createScope = createCreateScope(runtimeWithScope)
         runtimeWithScope.defGetter = createDefGetter(runtimeWithScope)
+        // Everything a translated file could ever need lives on the runtime, so
+        // that the scope (the single user-facing handle) can forward all of it
+        // through `name$` members.
+        runtimeWithScope.builtins = builtins
+        runtimeWithScope.InterpolatedString = InterpolatedString
+        runtimeWithScope.Path = Path
+        runtimeWithScope.nixArg = nixArg
+        runtimeWithScope.apply = apply
+        runtimeWithScope.set = setAttrPath
+        runtimeWithScope.force = force
+        runtimeWithScope.mkThunk = mkThunk
+
+        //
+        // scope.* helper API — what the translator emits. Every scope object
+        // (rootScope and children created via Object.create) carries these as
+        // non-enumerable methods; `$`-suffixed names can never collide with Nix
+        // identifiers ($ is not legal in them).
+        //
+        // Convention used throughout: in a spec object, a FUNCTION value is a
+        // lazy getter (called with the relevant scope); any other value is an
+        // eager, already-safe literal. The translator guarantees eager values
+        // are never JS functions (a Nix lambda is always emitted as a getter).
+        //
+        const buildAttrsInto = (scope, target, spec) => {
+            for (const key of Object.keys(spec)) {
+                const value = spec[key]
+                if (typeof value === "function" && !isFunctorSet(value)) {
+                    runtimeWithScope.defGetter(target, key, () => value(scope))
+                } else {
+                    Object.defineProperty(target, key, { value, writable: true, enumerable: true, configurable: true })
+                }
+            }
+            for (const sym of Object.getOwnPropertySymbols(spec)) {
+                const entry = spec[sym]
+                if (entry instanceof DeepSetEntry) {
+                    const value = entry.value
+                    setAttrPath(target, entry.path, typeof value === "function" && !isFunctorSet(value) ? () => value(scope) : () => value)
+                }
+            }
+            return target
+        }
+        // if$/then$/elseIf$/else$ chain. Conditions and branches follow the
+        // raw-or-getter convention; nothing evaluates until else$() runs, so
+        // elseIf$ conditions stay lazy exactly like nested Nix `else if`s.
+        const evalIfCond = (c) => {
+            if (typeof c === "function" && !c.__nixLambda && !isFunctorSet(c)) { c = c() }
+            c = force(c)
+            if (typeof c !== "boolean") {
+                throw new NixError(`error: expected a Boolean but found ${builtins.typeOf(c)}: ${nixRepr(c)}`)
+            }
+            return c
+        }
+        const makeIfChain = (pairs) => ({
+            elseIf$(condition) {
+                return { then$: (v) => makeIfChain([...pairs, [condition, v]]) }
+            },
+            else$(elseValue) {
+                for (const [c, v] of pairs) {
+                    if (evalIfCond(c)) { return typeof v === "function" && !isFunctorSet(v) ? v() : v }
+                }
+                return typeof elseValue === "function" && !isFunctorSet(elseValue) ? elseValue() : elseValue
+            },
+        })
+        const scopeHelpers = {
+            // Child scope with no own bindings (mainly for hand-written code;
+            // the translator flattens these away when they add nothing).
+            newScope$(fn) {
+                const scope = Object.create(this)
+                runtimeWithScope.scopeStack.push(scope)
+                try { return fn(scope) } finally { runtimeWithScope.scopeStack.pop() }
+            },
+            // Non-recursive attrset. Getters resolve against the CALLING scope.
+            attrSet$(spec) {
+                return buildAttrsInto(this, ("__functor" in spec) ? makeFunctorTarget() : {}, spec)
+            },
+            // Recursive attrset: bindings live on a child scope so they can see
+            // one another; returns a clean result object proxying its own keys.
+            recAttrSet$(spec) {
+                const scope = Object.create(this)
+                buildAttrsInto(scope, scope, spec)
+                const result = ("__functor" in spec) ? makeFunctorTarget() : {}
+                for (const key of Object.keys(scope)) {
+                    Object.defineProperty(result, key, { enumerable: true, configurable: true, get() { return scope[key] } })
+                }
+                return result
+            },
+            // let ... in: scope.let$({bindings}).in$((scope)=>body)
+            let$(spec) {
+                const parent = this
+                return {
+                    in$: (fn) => {
+                        const scope = Object.create(parent)
+                        buildAttrsInto(scope, scope, spec)
+                        runtimeWithScope.scopeStack.push(scope)
+                        try { return fn(scope) } finally { runtimeWithScope.scopeStack.pop() }
+                    },
+                }
+            },
+            // Lambdas. Simple: func$("x", (scope)=>body). Formals:
+            // func$({ a: nixArg.NoDefault, b: (scope)=>default, c: eagerDefault,
+            //         args: nixArg.AllArgs, "...": nixArg.Ellipsis }, (scope)=>body)
+            func$(argSpec, fn) {
+                if (typeof argSpec === "string") {
+                    return runtimeWithScope.createFunc(argSpec, null, {}, this, fn)
+                }
+                let allArgsName = null
+                let ellipsis = false
+                const defaulters = {}
+                const args = {}
+                for (const key of Object.keys(argSpec)) {
+                    const value = argSpec[key]
+                    if (value === nixArg.AllArgs) { allArgsName = key; continue }
+                    if (value === nixArg.Ellipsis) { ellipsis = true; continue }
+                    if (value === nixArg.NoDefault) { args[key] = false; continue }
+                    args[key] = true
+                    defaulters[key] = value
+                }
+                const metadata = ellipsis ? { args, ellipsis: true } : { args }
+                return runtimeWithScope.createFunc(defaulters, allArgsName, metadata, this, fn)
+            },
+            // if cond then a else b:
+            //   scope.if$(cond).then$(a).elseIf$(cond2).then$(b).else$(c)
+            if$(condition) {
+                return { then$: (thenValue) => makeIfChain([[condition, thenValue]]) }
+            },
+            // with attrs; body — attrs stays lazy (see createWithScope).
+            with$(getAttrs, fn) {
+                const scope = createWithScope(this, getAttrs)
+                runtimeWithScope.scopeStack.push(scope)
+                try { return fn(scope) } finally { runtimeWithScope.scopeStack.pop() }
+            },
+            // Nested-path assignment marker: spread into attrSet$/let$ specs.
+            deepSet$(path, value) {
+                return { [Symbol("deepSet$")]: new DeepSetEntry(path, value) }
+            },
+            // Lazy interpolated string: str$(()=>["a ", scope.x, " b"]).
+            // Nothing in the parts array is evaluated until the string is
+            // forced; string parts are literal chunks, everything else is
+            // coerced like an interpolation (derivations, paths, context…).
+            str$(partsFn) {
+                const s = new InterpolatedString([], [])
+                let mat = null
+                const materialize = () => {
+                    if (!mat) {
+                        const strings = []
+                        const getters = []
+                        let current = ""
+                        for (const part of partsFn()) {
+                            if (typeof part === "string") {
+                                current += part
+                            } else {
+                                strings.push(current)
+                                current = ""
+                                getters.push(() => part)
+                            }
+                        }
+                        strings.push(current)
+                        mat = { strings, getters }
+                    }
+                    return mat
+                }
+                const lazyProp = (name) => Object.defineProperty(s, name, {
+                    configurable: true,
+                    get() { return materialize()[name] },
+                    set(v) { Object.defineProperty(s, name, { value: v, writable: true, enumerable: true, configurable: true }) },
+                })
+                lazyProp("strings")
+                lazyProp("getters")
+                return s
+            },
+        }
+        const attachScopeHelpers = (scopeObj) => {
+            for (const key of Object.keys(scopeHelpers)) {
+                Object.defineProperty(scopeObj, key, { value: scopeHelpers[key], enumerable: false, writable: true, configurable: true })
+            }
+            // The scope is the only handle translated code is given; every
+            // runtime attribute/method is reachable from it as `name$`
+            // (scope.apply$, scope.operators$, scope.Path$, …).
+            for (const key of Object.keys(runtimeWithScope)) {
+                Object.defineProperty(scopeObj, `${key}$`, {
+                    enumerable: false,
+                    configurable: true,
+                    get() { return runtimeWithScope[key] },
+                    set(value) { runtimeWithScope[key] = value },
+                })
+            }
+            return scopeObj
+        }
+        attachScopeHelpers(rootScope)
+        runtime.attachScopeHelpers = attachScopeHelpers
+        runtimeWithScope.attachScopeHelpers = attachScopeHelpers
         // The inner `runtime` object (the shared currentRuntime) is what
         // loadAndEvaluateSync receives from both `import` and `getFlake`. It
         // needs createFunc/createScope/defGetter so that imported/flake files
@@ -4065,6 +4408,39 @@ export const evalSettings = { pureEval: false }
             set: setAttrPath,
             force,
             mkThunk,
+            nixArg,
+            Path,
+            InterpolatedString,
+            builtins,
+            operators,
+            scope: rootScope,
             runtime: runtimeWithScope,
+            // Evaluate a Nix source string against this runtime and return the
+            // resulting JS value. Async because the translator (tree-sitter)
+            // is loaded lazily on first use.
+            evalNix: async (nixCode) => {
+                const { convertToJsSync } = await import("../translator.js")
+                // The translator emits a full module (runtime preamble +
+                // `export default <expr>`); we already have the runtime, so
+                // evaluate just the trailing expression.
+                const jsCode = convertToJsSync(nixCode)
+                const marker = "export default "
+                const markerIdx = jsCode.lastIndexOf(marker)
+                const cleanCode = (markerIdx >= 0 ? jsCode.slice(markerIdx + marker.length) : jsCode).trim()
+                const scope = runtimeWithScope.scopeStack[runtimeWithScope.scopeStack.length - 1]
+                const fn = new Function(
+                    "runtime", "operators", "builtins", "scope", "nixScope",
+                    "nixArg", "InterpolatedString", "Path",
+                    "createFunc", "createScope", "defGetter",
+                    "apply", "set", "force", "mkThunk",
+                    `return (${cleanCode}\n)`
+                )
+                return fn(
+                    runtimeWithScope, operators, builtins, scope, scope,
+                    nixArg, InterpolatedString, Path,
+                    runtimeWithScope.createFunc, runtimeWithScope.createScope, runtimeWithScope.defGetter,
+                    apply, setAttrPath, force, mkThunk,
+                )
+            },
         }
     }

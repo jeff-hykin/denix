@@ -76,27 +76,19 @@ async function evaluateWithNix(nixExpr) {
 async function evaluateWithDenix(nixExpr) {
     try {
         // Translate to JS
-        let jsCode = await convertToJs(nixExpr)
+        const jsCode = await convertToJs(nixExpr)
 
         // Create runtime
         const runtimeContext = createRuntime()
-        const runtime = runtimeContext.runtime
+        const withScope = runtimeContext.runtime
+        const inner = withScope.runtime
+        const nixScope = withScope.rootScope
 
-        // Create evaluation scope
-        const nixScope = {
-            builtins: runtime.builtins,
-            ...runtime.builtins,
-        }
-        runtimeContext.scopeStack.push(nixScope)
-
-        // Strip import, export, and runtime creation (we provide our own)
-        jsCode = jsCode
-            .replace(/^import\s+.*$/gm, '')  // Remove import lines
-            .replace(/^const\s+runtime\s+=\s+createRuntime\(\).*$/gm, '')  // Remove runtime creation
-            .replace(/^const\s+operators\s+=\s+.*$/gm, '')  // Remove operators extraction
-            .replace(/^const\s+builtins\s+=\s+.*$/gm, '')  // Remove builtins extraction
-            .replace(/^export\s+default\s+/m, '')  // Remove export default
-            .trim()
+        // The translator emits a full module: preamble + `export default <expr>`.
+        // We already have the runtime, so evaluate just the trailing expression.
+        const marker = "export default "
+        const idx = jsCode.lastIndexOf(marker)
+        const expr = (idx >= 0 ? jsCode.slice(idx + marker.length) : jsCode).trim()
 
         // Evaluate the generated JS
         const evalFunc = new Function(
@@ -104,18 +96,36 @@ async function evaluateWithDenix(nixExpr) {
             'operators',
             'builtins',
             'nixScope',
+            'scope',
+            'nixArg',
+            'createFunc',
+            'createScope',
+            'defGetter',
+            'apply',
+            'set',
+            'force',
+            'mkThunk',
             'InterpolatedString',
             'Path',
-            `"use strict"; return ${jsCode}`
+            `return (${expr})`
         )
 
         let result = evalFunc(
-            runtimeContext,
-            runtime.operators,
-            runtime.builtins,
+            withScope,
+            withScope.operators,
+            inner.builtins,
             nixScope,
-            runtime.InterpolatedString,
-            runtime.Path
+            nixScope,
+            runtimeContext.nixArg,
+            runtimeContext.createFunc,
+            runtimeContext.createScope,
+            runtimeContext.defGetter,
+            runtimeContext.apply,
+            runtimeContext.set,
+            runtimeContext.force,
+            runtimeContext.mkThunk,
+            inner.InterpolatedString,
+            inner.Path
         )
 
         // Await result if it's a promise
@@ -124,7 +134,7 @@ async function evaluateWithDenix(nixExpr) {
         }
 
         // Convert to JSON-serializable form
-        let jsonResult = runtime.builtins.toJSON(result)
+        let jsonResult = inner.builtins.toJSON(result)
 
         // Await toJSON if it's a promise
         if (jsonResult instanceof Promise) {

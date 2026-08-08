@@ -10,7 +10,7 @@
 
 import { canonicalizePath, getImportType, validateImportPath, isUrl } from "../tools/import_resolver.js"
 import { convertToJs, convertToJsSync } from "../translator.js"
-import { createWithScope } from "./runtime.js"
+import { createWithScope, nixArg } from "./runtime.js"
 
 /**
  * Load and evaluate a file
@@ -89,42 +89,27 @@ function loadJsonFile(content, runtime) {
  * @returns {any} - Result of evaluating the Nix expression
  */
 async function loadNixFile(content, runtime, filepath) {
-    // Translate Nix to JavaScript
-    let jsCode = await convertToJs(content, { sourceFile: filepath })
+    // Translate Nix to JavaScript. The translator emits a full module: a
+    // preamble that wires up the runtime, then `export default <expr>`. We
+    // already have the runtime here, so discard the preamble and evaluate the
+    // trailing expression (same marker approach as loadNixFileSync).
+    const jsCode = await convertToJs(content, { sourceFile: filepath })
+    const marker = "export default "
+    const markerIdx = jsCode.lastIndexOf(marker)
+    const cleanCode = (markerIdx >= 0 ? jsCode.slice(markerIdx + marker.length) : jsCode).trim()
 
-    // Strip import, export, and runtime creation (we already have runtime available)
-    jsCode = jsCode
-        .replace(/^import\s+.*$/gm, '')  // Remove import lines
-        .replace(/^const\s*\{[^}]*\}\s*=\s*createRuntime\(\).*$/gm, '')  // Remove destructured createRuntime()
-        .replace(/^const\s+runtime\s+=\s+createRuntime\(\).*$/gm, '')  // Remove runtime creation
-        .replace(/^const\s+operators\s+=\s+.*$/gm, '')  // Remove operators extraction
-        .replace(/^const\s+builtins\s+=\s+.*$/gm, '')  // Remove builtins extraction
-        .replace(/^const\s+nixScope\s+=\s+.*$/gm, '')  // Remove nixScope binding
-        .replace(/^runtime\.currentFile\s*=\s*.*$/gm, '')  // Remove currentFile assignment
-        .replace(/^export\s+default\s+/m, '')  // Remove export default
-        .trim()
-
-    // Create nixScope with builtins available
-    const nixScope = {
+    // Create nixScope with builtins available (plus the scope.* helper API the
+    // translator emits against)
+    const nixScope = runtime.attachScopeHelpers({
         builtins: runtime.builtins,
         ...runtime.builtins
-    }
+    })
 
     // Create a minimal runtime for evaluation
     const evalRuntime = {
         scopeStack: [nixScope],
         withScope: createWithScope,
     }
-
-    // Create isolated evaluation scope
-    // The generated code is a complete expression, just execute it directly
-    // Note: Filter out comment-only lines that break return statements
-    const lines = jsCode.split('\n')
-    const codeLines = lines.filter(line => {
-        const trimmed = line.trim()
-        return trimmed.length > 0 && !trimmed.startsWith('//')
-    })
-    const cleanCode = codeLines.join('\n')
 
     const evalFunc = new Function(
         'runtime',
@@ -140,6 +125,8 @@ async function loadNixFile(content, runtime, filepath) {
         'set',
         'force',
         'mkThunk',
+        'scope',
+        'nixArg',
         `return (${cleanCode}
 )
 //# sourceURL=denix-nix:${filepath}`
@@ -160,6 +147,8 @@ async function loadNixFile(content, runtime, filepath) {
         runtime.set,
         runtime.force,
         runtime.mkThunk,
+        nixScope,
+        nixArg,
     )
     return result
 }
@@ -185,11 +174,12 @@ function loadNixFileSync(content, runtime, filepath) {
     const markerIdx = jsCode.lastIndexOf(marker)
     const cleanCode = (markerIdx >= 0 ? jsCode.slice(markerIdx + marker.length) : jsCode).trim()
 
-    // Create nixScope with builtins available
-    const nixScope = {
+    // Create nixScope with builtins available (plus the scope.* helper API the
+    // translator emits against)
+    const nixScope = runtime.attachScopeHelpers({
         builtins: runtime.builtins,
         ...runtime.builtins
-    }
+    })
 
     // Create a minimal runtime for evaluation
     const evalRuntime = {
@@ -211,6 +201,8 @@ function loadNixFileSync(content, runtime, filepath) {
         'set',
         'force',
         'mkThunk',
+        'scope',
+        'nixArg',
         `return (${cleanCode}
 )
 //# sourceURL=denix-nix:${filepath}`
@@ -231,6 +223,8 @@ function loadNixFileSync(content, runtime, filepath) {
         runtime.set,
         runtime.force,
         runtime.mkThunk,
+        nixScope,
+        nixArg,
     )
     return result
 }

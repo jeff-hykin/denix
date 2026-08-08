@@ -27,6 +27,7 @@ const runtime = {
     force,
     mkThunk,
     scopeStack: _rt.runtime.scopeStack,
+    attachScopeHelpers: _rt.runtime.attachScopeHelpers,
 }
 
 function evalNix(source) {

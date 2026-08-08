@@ -22,12 +22,16 @@ export async function withSession(fn, opts = {}) {
     const { createInternalRepl } = await import(internalReplPath)
 
     const storeRoot = opts.storeRoot || await Deno.makeTempDir({ prefix: "denix-test-store-" })
+    // createInternalRepl sets DENIX_STORE_ROOT process-wide; restore it after
+    // so later test files don't inherit this (deleted) temp store.
+    const prevRoot = Deno.env.get("DENIX_STORE_ROOT")
     const sess = await createInternalRepl({ storeRoot })
 
     try {
         return await fn(sess)
     } finally {
         await sess.close()
+        prevRoot === undefined ? Deno.env.delete("DENIX_STORE_ROOT") : Deno.env.set("DENIX_STORE_ROOT", prevRoot)
         // Clean up temp store if we created it
         if (!opts.storeRoot) {
             try {

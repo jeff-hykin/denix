@@ -2,13 +2,38 @@ import { assertEquals, assertRejects } from "jsr:@std/assert";
 import { downloadFile, downloadWithRetry, extractNameFromUrl, validateSha256 } from "../fetcher.js";
 import { sha256Hex } from "../../tools/hashing.js";
 
-Deno.test("Fetcher - downloadFile from httpbin.org", async () => {
+// Local HTTP server standing in for httpbin.org (which is far too flaky to
+// depend on in tests). Supports /bytes/<n> and /status/<code>.
+function withServer(fn) {
+    return async () => {
+        const server = Deno.serve({ port: 0, onListen() {} }, (req) => {
+            const path = new URL(req.url).pathname;
+            const bytesMatch = path.match(/^\/bytes\/(\d+)$/);
+            if (bytesMatch) {
+                return new Response(new Uint8Array(Number(bytesMatch[1])));
+            }
+            const statusMatch = path.match(/^\/status\/(\d+)$/);
+            if (statusMatch) {
+                return new Response(null, { status: Number(statusMatch[1]) });
+            }
+            return new Response("not found", { status: 404 });
+        });
+        const base = `http://127.0.0.1:${server.addr.port}`;
+        try {
+            await fn(base);
+        } finally {
+            await server.shutdown();
+        }
+    };
+}
+
+Deno.test("Fetcher - downloadFile", withServer(async (base) => {
     const tempDir = await Deno.makeTempDir();
     const destPath = `${tempDir}/test.bin`;
 
     try {
-        // Download 1024 random bytes
-        const result = await downloadFile("https://httpbin.org/bytes/1024", destPath);
+        // Download 1024 bytes
+        const result = await downloadFile(`${base}/bytes/1024`, destPath);
 
         assertEquals(result, destPath);
 
@@ -18,37 +43,37 @@ Deno.test("Fetcher - downloadFile from httpbin.org", async () => {
     } finally {
         await Deno.remove(tempDir, { recursive: true });
     }
-});
+}));
 
-Deno.test("Fetcher - downloadFile handles 404", async () => {
+Deno.test("Fetcher - downloadFile handles 404", withServer(async (base) => {
     const tempDir = await Deno.makeTempDir();
     const destPath = `${tempDir}/test.bin`;
 
     try {
         await assertRejects(
-            async () => await downloadFile("https://httpbin.org/status/404", destPath),
+            async () => await downloadFile(`${base}/status/404`, destPath),
             Error,
             "HTTP 404"
         );
     } finally {
         await Deno.remove(tempDir, { recursive: true });
     }
-});
+}));
 
-Deno.test("Fetcher - downloadFile handles 500", async () => {
+Deno.test("Fetcher - downloadFile handles 500", withServer(async (base) => {
     const tempDir = await Deno.makeTempDir();
     const destPath = `${tempDir}/test.bin`;
 
     try {
         await assertRejects(
-            async () => await downloadFile("https://httpbin.org/status/500", destPath),
+            async () => await downloadFile(`${base}/status/500`, destPath),
             Error,
             "HTTP 500"
         );
     } finally {
         await Deno.remove(tempDir, { recursive: true });
     }
-});
+}));
 
 Deno.test("Fetcher - validateSha256 with correct hash", async () => {
     const tempDir = await Deno.makeTempDir();
@@ -118,12 +143,12 @@ Deno.test("Fetcher - extractNameFromUrl fallback for root URL", () => {
     assertEquals(name, "source");
 });
 
-Deno.test("Fetcher - downloadWithRetry succeeds on first attempt", async () => {
+Deno.test("Fetcher - downloadWithRetry succeeds on first attempt", withServer(async (base) => {
     const tempDir = await Deno.makeTempDir();
     const destPath = `${tempDir}/test.bin`;
 
     try {
-        const result = await downloadWithRetry("https://httpbin.org/bytes/512", destPath, 3);
+        const result = await downloadWithRetry(`${base}/bytes/512`, destPath, 3);
 
         assertEquals(result, destPath);
 
@@ -132,36 +157,36 @@ Deno.test("Fetcher - downloadWithRetry succeeds on first attempt", async () => {
     } finally {
         await Deno.remove(tempDir, { recursive: true });
     }
-});
+}));
 
-Deno.test("Fetcher - downloadWithRetry doesn't retry 404", async () => {
+Deno.test("Fetcher - downloadWithRetry doesn't retry 404", withServer(async (base) => {
     const tempDir = await Deno.makeTempDir();
     const destPath = `${tempDir}/test.bin`;
 
     try {
         // Should fail immediately without retries
         await assertRejects(
-            async () => await downloadWithRetry("https://httpbin.org/status/404", destPath, 3),
+            async () => await downloadWithRetry(`${base}/status/404`, destPath, 3),
             Error,
             "HTTP 404"
         );
     } finally {
         await Deno.remove(tempDir, { recursive: true });
     }
-});
+}));
 
-Deno.test("Fetcher - downloadWithRetry retries on 500", async () => {
+Deno.test("Fetcher - downloadWithRetry retries on 500", withServer(async (base) => {
     const tempDir = await Deno.makeTempDir();
     const destPath = `${tempDir}/test.bin`;
 
     try {
         // Should retry multiple times and eventually fail
         await assertRejects(
-            async () => await downloadWithRetry("https://httpbin.org/status/500", destPath, 2),
+            async () => await downloadWithRetry(`${base}/status/500`, destPath, 2),
             Error,
             "after 3 attempts"
         );
     } finally {
         await Deno.remove(tempDir, { recursive: true });
     }
-});
+}));

@@ -39,7 +39,7 @@ scope.let$({
     x: 1n,
     y: 2n,
 }).in$(scope=>
-    operators.add(scope.x, scope.y)
+    scope.operators$.add(scope.x, scope.y)
 )
 ```
 
@@ -69,7 +69,7 @@ denix translate default.nix -o default.js     # write JS to a file
 <td>
 
 ```javascript
-operators.add(1.0, 2n)
+scope.operators$.add(1.0, 2n)
 // BigInt === NixInt (js doesn't have ints)
 ```
 
@@ -89,7 +89,7 @@ if builtins.isInt 42
 <td>
 
 ```javascript
-scope.if$(builtins.isInt(42n))
+scope.if$(scope.apply$(scope.builtins["isInt"], 42n))
   .then$("yes")
   .else$("no")
 ```
@@ -114,7 +114,7 @@ in x + y
 scope.let$({
   x: 1n,
   y: 2n,
-}).in$((scope) => operators.add(scope.x, scope.y))
+}).in$((scope) => scope.operators$.add(scope.x, scope.y))
 ```
 
 </td>
@@ -149,6 +149,15 @@ scope.attrSet$({
 </td>
 </tr>
 </table>
+
+Translated files only ever get one variable: `scope`. Nix bindings are plain
+properties on it (`scope.x`), the language constructs are `$`-suffixed helpers
+(`scope.let$`, `scope.attrSet$`, `scope.func$`, `scope.if$`, `scope.with$`,
+`scope.str$`, `scope.deepSet$`), and everything else the runtime provides is
+forwarded through the same `$` convention (`scope.apply$`, `scope.operators$`,
+`scope.builtins$`, `scope.Path$`, `scope.nixArg$`, `scope.force$`, …). `$` is
+not a legal character in Nix identifiers, so none of these can ever collide
+with a name from the Nix source.
 
 ```bash
 # Install from the web ...

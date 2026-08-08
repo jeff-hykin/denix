@@ -18,7 +18,7 @@ import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts"
 // would have. (See translator_test.js for the rationale.)
 const evalTranslated = (nixCode) => {
     const jsCode = convertToJsSync(nixCode)
-    const { createFunc, createScope, defGetter, apply, set, force, mkThunk, runtime } = createFullRuntime()
+    const { createFunc, createScope, defGetter, apply, set, force, mkThunk, nixArg, runtime } = createFullRuntime()
 
     const marker = "export default "
     const idx = jsCode.lastIndexOf(marker)
@@ -28,12 +28,12 @@ const evalTranslated = (nixCode) => {
 
     const fn = new Function(
         "runtime", "operators", "builtins", "createFunc", "createScope",
-        "defGetter", "apply", "set", "force", "mkThunk", "nixScope", "Path", "InterpolatedString",
+        "defGetter", "apply", "set", "force", "mkThunk", "nixScope", "scope", "nixArg", "Path", "InterpolatedString",
         `return (${expr})`,
     )
     return fn(
         runtime, operators, builtins, createFunc, createScope,
-        defGetter, apply, set, force, mkThunk, nixScope, Path, InterpolatedString,
+        defGetter, apply, set, force, mkThunk, nixScope, nixScope, nixArg, Path, InterpolatedString,
     )
 }
 
