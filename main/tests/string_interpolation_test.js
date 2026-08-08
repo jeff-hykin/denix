@@ -141,4 +141,23 @@ Deno.test("String with only interpolation", () => {
     assertEquals(result.toString(), "content")
 })
 
+// str$ doubles as a template tag so hand-written JS can read like a normal
+// template literal without losing nix string context (a plain literal
+// stringifies the parts, silently dropping the store paths they depend on).
+Deno.test("str$ template tag keeps string context", () => {
+    const { scope } = createFullRuntime({ currentFile: import.meta.filename })
+    const drv = builtins.derivation({
+        name: "example",
+        system: "aarch64-darwin",
+        builder: "/bin/sh",
+        args: [],
+    })
+    const tagged = scope.str$`${drv}/bin/example`
+    const plain = `${drv}/bin/example`
+
+    assertEquals(tagged.toString(), plain)
+    assertEquals(builtins.attrNames(builtins.getContext(tagged)).length, 1)
+    assertEquals(builtins.attrNames(builtins.getContext(plain)).length, 0)
+})
+
 console.log("\n✅ All string interpolation tests passed!")

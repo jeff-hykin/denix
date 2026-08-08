@@ -159,6 +159,12 @@ forwarded through the same `$` convention (`scope.apply$`, `scope.operators$`,
 not a legal character in Nix identifiers, so none of these can ever collide
 with a name from the Nix source.
 
+When you write JavaScript by hand rather than translating it, `scope.str$` also
+works as a template tag: ``scope.str$`${pkgs.zsh}/bin/zsh` ``. Reach for it
+instead of a plain template literal whenever a store path is interpolated — a
+plain literal stringifies the derivation and silently drops the Nix string
+context, so the result no longer records that it depends on that path.
+
 ```bash
 # Install from the web ...
 deno install -g --allow-all --name denix "https://raw.esm.sh/gh/jeff-hykin/denix@claude3/main/cli/denix.js"

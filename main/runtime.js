@@ -4331,7 +4331,14 @@ export const evalSettings = { pureEval: false }
             // Nothing in the parts array is evaluated until the string is
             // forced; string parts are literal chunks, everything else is
             // coerced like an interpolation (derivations, paths, context…).
-            str$(partsFn) {
+            str$(partsFn, ...taggedValues) {
+                // Also usable as a template tag: str$`${pkgs.zsh}/bin/zsh`.
+                // A plain template literal would stringify the parts and drop
+                // their nix string context; tagging sees the values first.
+                if (Array.isArray(partsFn) && Array.isArray(partsFn.raw)) {
+                    const literals = partsFn
+                    partsFn = () => literals.flatMap((literal, index) => index < taggedValues.length ? [literal, taggedValues[index]] : [literal])
+                }
                 const s = new InterpolatedString([], [])
                 let mat = null
                 const materialize = () => {
