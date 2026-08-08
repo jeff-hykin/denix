@@ -167,6 +167,19 @@ instead of a plain template literal whenever a store path is interpolated — a
 plain literal stringifies the derivation and silently drops the Nix string
 context, so the result no longer records that it depends on that path.
 
+Shell scripts built out of store paths are common enough to get their own tag,
+`scope.shellStr$`. It joins like `str$` (so context survives) but quotes every
+interpolated value the way `lib.escapeShellArg` does — only when the string
+contains something a shell would treat specially. Pieces that are already
+script rather than data go through `scope.shellStr$.raw(...)`:
+
+```javascript
+const { shellStr$ } = scope
+const raw = shellStr$.raw
+
+shellStr$`HOME=${homePath} PATH=${str$`${pkgs.nix}/bin`} ${raw(someScript)}`
+```
+
 Every translated file is one module with nothing but a header and an expression:
 
 ```javascript

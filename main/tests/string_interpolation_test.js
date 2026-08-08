@@ -160,4 +160,34 @@ Deno.test("str$ template tag keeps string context", () => {
     assertEquals(builtins.attrNames(builtins.getContext(plain)).length, 0)
 })
 
+// shellStr$ is str$ plus lib.escapeShellArg-style quoting, for the very common
+// case of building a shell script out of store paths.
+Deno.test("shellStr$ quotes like lib.escapeShellArg", () => {
+    const { scope } = createFullRuntime({ currentFile: import.meta.filename })
+    // safe characters are left alone, exactly like modern nixpkgs
+    assertEquals(scope.shellStr$`cmd=${"git"}`.toString(), "cmd=git")
+    assertEquals(scope.shellStr$`p=${"/nix/store/abc-thing/bin"}`.toString(), "p=/nix/store/abc-thing/bin")
+    assertEquals(scope.shellStr$`msg=${"hello world"}`.toString(), "msg='hello world'")
+    assertEquals(scope.shellStr$`q=${"it's"}`.toString(), `q='it'\\''s'`)
+})
+
+Deno.test("shellStr$.raw splices script in unquoted", () => {
+    const { scope } = createFullRuntime({ currentFile: import.meta.filename })
+    const script = scope.shellStr$.raw(`if [ -n "$x" ]; then`)
+    assertEquals(scope.shellStr$`${script} y=${"a b"}`.toString(), `if [ -n "$x" ]; then y='a b'`)
+})
+
+Deno.test("shellStr$ keeps string context", () => {
+    const { scope } = createFullRuntime({ currentFile: import.meta.filename })
+    const drv = builtins.derivation({
+        name: "example",
+        system: "aarch64-darwin",
+        builder: "/bin/sh",
+        args: [],
+    })
+    const tagged = scope.shellStr$`PATH=${drv}/bin`
+    assertEquals(tagged.toString(), `PATH=${drv}/bin`)
+    assertEquals(builtins.attrNames(builtins.getContext(tagged)).length, 1)
+})
+
 console.log("\n✅ All string interpolation tests passed!")

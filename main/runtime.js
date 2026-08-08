@@ -426,6 +426,10 @@ export const evalSettings = { pureEval: false }
         return storePath
     }
 
+    // Marks a scope.shellStr$ interpolation as already-shell-script, so it is
+    // spliced in without quoting. Symbol.for so separately-loaded copies agree.
+    export const SHELL_RAW = Symbol.for("denix.shellStr.raw")
+
     // String-context plumbing: deps (derivation objects) and context (source
     // store paths) must survive every string-producing operation — `+`,
     // toString, concatStringsSep, replaceStrings — so derivations built from
@@ -4426,7 +4430,28 @@ export const evalSettings = { pureEval: false }
                 lazyProp("getters")
                 return s
             },
+            // Shell-quoting template tag, for the very common case of building a
+            // script out of store paths:
+            //     shellStr$`HOME=${homePath} PATH=${pkgs.nix}/bin ${shellStr$.raw(script)}`
+            // Joins exactly like str$ (so string context survives), but every
+            // interpolated value is quoted the way lib.escapeShellArg does it.
+            // shellStr$.raw(x) splices x in untouched, for pieces that are
+            // already script rather than data.
+            shellStr$(literals, ...values) {
+                return scopeHelpers.str$(literals, ...values.map((each) => {
+                    if (each && typeof each === "object" && SHELL_RAW in each) {
+                        return each[SHELL_RAW]
+                    }
+                    const text = builtins.toString(force(each))
+                    // only quote when the string holds something a shell would treat specially
+                    if (builtins.match("[[:alnum:],._+:@%/-]+")(text) != null) {
+                        return text
+                    }
+                    return scopeHelpers.str$(() => ["'", builtins.replaceStrings(["'"])(["'\\''"])(text), "'"])
+                }))
+            },
         }
+        scopeHelpers.shellStr$.raw = (value) => ({ [SHELL_RAW]: value })
         const attachScopeHelpers = (scopeObj) => {
             for (const key of Object.keys(scopeHelpers)) {
                 Object.defineProperty(scopeObj, key, { value: scopeHelpers[key], enumerable: false, writable: true, configurable: true })
