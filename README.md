@@ -315,6 +315,8 @@ const data = builtins.import("/path/to/data.json")
 // It's synchronous, so nix source can call it too (`let f = builtins.getFlake "…";`)
 const resolved = builtins.getFlake("path:/path/to/project")
 resolved.outputs                   // outputs called with resolved inputs
+resolved.lastModifiedDate          // shaped like real Nix: outputs // sourceInfo // { inputs, outputs, sourceInfo, _type }
+                                   // so there is no `description` — that stays inside flake.nix
 ```
 
 ## Using the Translator

@@ -9,8 +9,8 @@
   };
 
   outputs = { self, dep }: {
-    # Output that uses self
-    greeting = "Hello from ${self.description}!";
+    # Output that uses self (real Nix exposes sourceInfo attrs, not description)
+    greeting = "Hello from ${self.outPath}!";
 
     # Output that uses the resolved input flake's outputs
     depAnswer = dep.answer;

@@ -11,13 +11,15 @@ Deno.test("getFlake - load local flake with path reference", async () => {
 
     // Verify flake structure
     assertEquals(result._type, "flake");
-    assertEquals(result.description, "A test flake for builtins.getFlake");
+    // real Nix does NOT expose `description` on the flake result
+    assertEquals(result.description, undefined);
 
-    // Verify sourceInfo
+    // Verify sourceInfo (same attrs real Nix's fetchTree result has)
     assertExists(result.sourceInfo);
-    assertEquals(result.sourceInfo.type, "path");
-    assertEquals(result.sourceInfo.path, flakePath);
+    assertEquals(result.sourceInfo.outPath, flakePath);
     assertExists(result.sourceInfo.narHash);
+    assertExists(result.sourceInfo.lastModified);
+    assertExists(result.sourceInfo.lastModifiedDate);
 
     // Verify inputs (should have self)
     assertExists(result.inputs);
@@ -37,7 +39,7 @@ Deno.test("getFlake - load local flake with path reference", async () => {
 
     // Note: selfReference test skipped - requires lazy evaluation of recursive outputs
     // In real Nix, self can reference outputs, but that requires more complex lazy evaluation
-    // For now, self only contains flake metadata (description, sourceInfo, inputs)
+    // For now, self only contains flake metadata (sourceInfo, inputs)
 });
 
 Deno.test("getFlake - load flake with absolute path", async () => {
@@ -45,7 +47,6 @@ Deno.test("getFlake - load flake with absolute path", async () => {
     const result = await builtins.getFlake(flakePath);
 
     assertEquals(result._type, "flake");
-    assertEquals(result.description, "A test flake for builtins.getFlake");
     assertExists(result.outputs);
 });
 
@@ -59,7 +60,6 @@ Deno.test("getFlake - load flake with relative path", async () => {
         const result = await builtins.getFlake("./test-flake");
 
         assertEquals(result._type, "flake");
-        assertEquals(result.description, "A test flake for builtins.getFlake");
         assertExists(result.outputs);
     } finally {
         Deno.chdir(originalCwd);
@@ -72,7 +72,6 @@ Deno.test("getFlake - flake with inputs (recursively resolved)", async () => {
 
     // Verify basic structure
     assertEquals(result._type, "flake");
-    assertEquals(result.description, "A test flake with inputs");
 
     // The `dep` input is recursively resolved to a real flake (a local sibling
     // via a relative path input), NOT a stub.
@@ -82,7 +81,7 @@ Deno.test("getFlake - flake with inputs (recursively resolved)", async () => {
 
     // Outputs can reference self and the resolved input's outputs (values + fns).
     const greetingStr = result.outputs.greeting.toString();
-    assertEquals(greetingStr.includes("test flake with inputs"), true);
+    assertEquals(greetingStr.includes("test-flake-with-inputs"), true);
     assertEquals(result.outputs.depAnswer, 42n);
     assertEquals(result.outputs.depDoubled, 42n);
 
@@ -149,10 +148,9 @@ Deno.test("getFlake - indirect reference uses registry", async () => {
         assertExists(result.sourceInfo);
         assertExists(result.outputs);
 
-        // Should be resolved to github:NixOS/nixpkgs
-        assertEquals(result.sourceInfo.type, "github");
-        assertEquals(result.sourceInfo.owner, "NixOS");
-        assertEquals(result.sourceInfo.repo, "nixpkgs");
+        // Resolved to github:NixOS/nixpkgs, so the source is a git rev
+        assertExists(result.sourceInfo.rev);
+        assertExists(result.sourceInfo.shortRev);
     } catch (error) {
         // Network failures are acceptable
         if (error.message.includes("not found in registry") ||
@@ -170,8 +168,8 @@ Deno.test("getFlake - metadata in sourceInfo", async () => {
     const result = await builtins.getFlake(flakePath);
 
     // Verify sourceInfo has required fields
-    assertEquals(result.sourceInfo.type, "path");
-    assertExists(result.sourceInfo.path);
+    assertEquals(result.sourceInfo.outPath, flakePath);
+    assertExists(result.sourceInfo.lastModifiedDate);
     assertExists(result.sourceInfo.narHash);
     assertEquals(result.sourceInfo.narHash.startsWith("sha256"), true);
 });
@@ -242,6 +240,46 @@ Deno.test("getFlake - outputs function receives correct inputs", async () => {
         assertEquals(inputNames.length, 2);
         assertEquals(inputNames[0], "self");
         assertEquals(inputNames[1], "test");
+    } finally {
+        await Deno.remove(tempDir, { recursive: true });
+    }
+});
+
+// `github:o/r?ref=main` used to fall through to a `git clone` subprocess
+Deno.test("parseFlakeRef - reads flake-ref query params", async () => {
+    assertEquals(
+        builtins.parseFlakeRef("github:nixos/nixpkgs?ref=nixos-unstable"),
+        { type: "github", owner: "nixos", repo: "nixpkgs", ref: "nixos-unstable" }
+    );
+    assertEquals(
+        builtins.parseFlakeRef("github:NixOS/templates?dir=trivial"),
+        { type: "github", owner: "NixOS", repo: "templates", dir: "trivial" }
+    );
+    assertEquals(
+        builtins.parseFlakeRef("git+https://example.com/x.git?ref=main&rev=abc"),
+        { type: "git", url: "https://example.com/x.git", ref: "main", rev: "abc" }
+    );
+    assertEquals(
+        builtins.parseFlakeRef("path:/tmp/x?dir=sub"),
+        { type: "path", path: "/tmp/x", dir: "sub" }
+    );
+});
+
+// real Nix: sourceInfo.outPath stays at the fetched tree root, the flake's own
+// outPath points at the subdirectory
+Deno.test("getFlake - ?dir= evaluates the flake in a subdirectory", async () => {
+    const tempDir = await Deno.makeTempDir();
+    try {
+        await Deno.mkdir(`${tempDir}/sub`);
+        await Deno.writeTextFile(
+            `${tempDir}/sub/flake.nix`,
+            `{ outputs = { self }: { here = "sub"; }; }`
+        );
+
+        const result = await builtins.getFlake(`path:${tempDir}?dir=sub`);
+        assertEquals(result.outputs.here, "sub");
+        assertEquals(`${result.outPath}`, `${tempDir}/sub`);
+        assertEquals(`${result.sourceInfo.outPath}`, tempDir);
     } finally {
         await Deno.remove(tempDir, { recursive: true });
     }

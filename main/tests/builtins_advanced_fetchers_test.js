@@ -99,7 +99,7 @@ Deno.test("getFlake - returns the flake synchronously", async () => {
 
         const result = builtins.getFlake(tempDir);
         assertEquals(result instanceof Promise, false);
-        assertEquals(`${result.description}`, "test");
+        assertEquals(result._type, "flake");
     } finally {
         await Deno.remove(tempDir, { recursive: true });
     }
@@ -151,7 +151,8 @@ Deno.test("getFlake - result has _type: flake", async () => {
     }
 });
 
-Deno.test("getFlake - result has description field", async () => {
+// real Nix keeps `description` inside flake.nix; the getFlake result has no such attr
+Deno.test("getFlake - result does not expose description", async () => {
     const tempDir = await Deno.makeTempDir();
     try {
         await Deno.writeTextFile(
@@ -163,44 +164,38 @@ Deno.test("getFlake - result has description field", async () => {
         );
 
         const result = await builtins.getFlake(tempDir);
-        assertEquals(result.description, "My test flake");
+        assertEquals("description" in result, false);
     } finally {
         await Deno.remove(tempDir, { recursive: true });
     }
 });
 
-Deno.test("getFlake - description defaults to empty string when missing", async () => {
-    const tempDir = await Deno.makeTempDir();
-    try {
-        await Deno.writeTextFile(
-            `${tempDir}/flake.nix`,
-            `{
-              outputs = inputs: { value = 1; };
-            }`
-        );
-
-        const result = await builtins.getFlake(tempDir);
-        assertEquals(result.description, "");
-    } finally {
-        await Deno.remove(tempDir, { recursive: true });
-    }
-});
-
-Deno.test("getFlake - result has sourceInfo with type and path", async () => {
+Deno.test("getFlake - result attrs match real Nix", async () => {
     const tempDir = await Deno.makeTempDir();
     try {
         await Deno.writeTextFile(
             `${tempDir}/flake.nix`,
             `{
               description = "test";
-              outputs = inputs: { };
+              outputs = inputs: { hello = "world"; };
             }`
         );
 
         const result = await builtins.getFlake(tempDir);
-        assertExists(result.sourceInfo);
-        assertEquals(result.sourceInfo.type, "path");
-        assertExists(result.sourceInfo.path);
+        // real Nix: flake = outputs // sourceInfo // { inputs, outputs, sourceInfo, _type }
+        assertEquals(
+            Object.keys(result).sort().join(" "),
+            "_type hello inputs lastModified lastModifiedDate narHash outPath outputs sourceInfo"
+        );
+        assertEquals(
+            Object.keys(result.sourceInfo).sort().join(" "),
+            "lastModified lastModifiedDate narHash outPath"
+        );
+        // lastModifiedDate is lastModified rendered as UTC %Y%m%d%H%M%S
+        assertEquals(
+            result.lastModifiedDate,
+            new Date(Number(result.lastModified) * 1000).toISOString().replace(/[-:T]/g, "").slice(0, 14)
+        );
     } finally {
         await Deno.remove(tempDir, { recursive: true });
     }

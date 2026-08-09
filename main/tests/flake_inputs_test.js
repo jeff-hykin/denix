@@ -7,7 +7,7 @@
  */
 
 import { createRuntime, builtins, force } from "../runtime.js"
-import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts"
+import { assertEquals, assertExists } from "https://deno.land/std@0.224.0/assert/mod.ts"
 
 createRuntime()
 
@@ -81,7 +81,7 @@ Deno.test({
         }`)
         const f = await builtins.getFlake(`path:${root}`)
         assertEquals(f.inputs.systems._type, "flake")
-        assertEquals(f.inputs.systems.sourceInfo.type, "github")
+        assertExists(f.inputs.systems.sourceInfo.rev)
         await Deno.remove(root, { recursive: true })
     },
 })
@@ -147,12 +147,12 @@ Deno.test("getFlake is callable from inside nix source", async () => {
             in
                 {
                     inherit name;
-                    description = flake.description;
+                    greeting = flake.outputs.greeting;
                     outputNames = builtins.attrNames flake.outputs;
                 }
     `)
     const described = apply(describe, "hi")
-    assertEquals(force(described.description), "a tiny flake")
+    assertEquals(force(described.greeting), "hi")
     assertEquals(described.outputNames.map((each) => force(each)), ["greeting"])
 
     await Deno.remove(root, { recursive: true })

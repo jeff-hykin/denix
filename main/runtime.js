@@ -3334,6 +3334,12 @@ export const evalSettings = { pureEval: false }
                         throw new Error(`builtins.getFlake: unsupported flake reference type: ${parsedRef.type}`);
                 }
 
+                // `?dir=sub`: the flake lives in a subdirectory of the fetched
+                // tree. Real Nix keeps sourceInfo.outPath at the tree root and
+                // points the flake's own outPath at the subdirectory.
+                const treeRootPath = sourcePath;
+                if (parsedRef.dir) { sourcePath = `${sourcePath}/${parsedRef.dir}`; }
+
                 // Read flake.nix from the source
                 const flakePath = `${sourcePath}/flake.nix`;
                 let flakeNixExists = false;
@@ -3361,7 +3367,8 @@ export const evalSettings = { pureEval: false }
                 }
 
                 // Extract flake components
-                const description = flakeExpr.description ? requireString(flakeExpr.description).toString() : "";
+                // (`description` stays inside flake.nix — real Nix does not
+                // expose it on the getFlake result)
                 const inputsSpec = flakeExpr.inputs || {};
                 const outputsFn = flakeExpr.outputs;
 
@@ -3387,10 +3394,23 @@ export const evalSettings = { pureEval: false }
                 // Real Nix exposes the source store path as outPath on both the
                 // flake itself and its sourceInfo (this is what makes
                 // `import nixpkgs {}` work — import coerces via outPath).
-                sourceInfo.outPath = sourcePath;
+                sourceInfo.outPath = treeRootPath;
+                // Real Nix's sourceInfo IS the fetchTree result, so it carries
+                // only these attrs — not the flake ref's type/owner/repo/url.
+                if (sourceInfo.lastModified == null) {
+                    sourceInfo.lastModified = BigInt(Math.floor(Deno.statSync(flakePath).mtime.getTime() / 1000));
+                }
+                sourceInfo.lastModifiedDate = new Date(Number(sourceInfo.lastModified) * 1000)
+                    .toISOString().replace(/[-:T]/g, "").slice(0, 14);
+                sourceInfo = Object.fromEntries(
+                    ["lastModified", "lastModifiedDate", "narHash", "outPath", "rev", "shortRev", "revCount"]
+                        .filter((key)=>sourceInfo[key] != null)
+                        .map((key)=>[key, sourceInfo[key]])
+                );
+                // Real Nix: flake = outputs // sourceInfo // { inputs, outputs, sourceInfo, _type }
                 const flakeResult = {
                     _type: "flake",
-                    description: description,
+                    ...sourceInfo,
                     sourceInfo: sourceInfo,
                     outPath: sourcePath,
                     inputs: inputs,
@@ -3422,13 +3442,14 @@ export const evalSettings = { pureEval: false }
                     const refFromLocked = (locked) => {
                         if (!locked) { return null; }
                         const rev = locked.rev || locked.ref || "";
+                        const dir = locked.dir ? `?dir=${locked.dir}` : "";
                         switch (locked.type) {
-                            case "github": return `github:${locked.owner}/${locked.repo}${rev ? "/" + rev : ""}`;
-                            case "gitlab": return `gitlab:${locked.owner}/${locked.repo}${rev ? "/" + rev : ""}`;
+                            case "github": return `github:${locked.owner}/${locked.repo}${rev ? "/" + rev : ""}${dir}`;
+                            case "gitlab": return `gitlab:${locked.owner}/${locked.repo}${rev ? "/" + rev : ""}${dir}`;
                             case "git": return `git+${locked.url}${locked.rev ? `?rev=${locked.rev}` : ""}`;
                             case "tarball": return locked.url || null;
                             case "file": return locked.url ? `file+${locked.url}` : null;
-                            case "path": return `path:${locked.path}`;
+                            case "path": return `path:${locked.path}${dir}`;
                             case "indirect": return locked.id || null;
                             default: return locked.url || null;
                         }
@@ -3597,10 +3618,21 @@ export const evalSettings = { pureEval: false }
 
                 const ref = requireString(flakeRef).toString()
 
+                // Flake-ref attrs given as query params: github:o/r?ref=main&dir=sub
+                const splitOffParams = (text)=>{
+                    const questionIndex = text.indexOf("?")
+                    if (questionIndex === -1) { return [text, {}] }
+                    const params = {}
+                    for (const [key, value] of new URLSearchParams(text.slice(questionIndex + 1))) {
+                        if (["ref", "rev", "dir", "narHash", "host", "submodules"].includes(key)) { params[key] = value }
+                    }
+                    return [text.slice(0, questionIndex), params]
+                }
+
                 // Git URL with explicit git+ prefix
                 if (ref.startsWith("git+")) {
-                    const url = ref.slice(4)
-                    return { type: "git", url }
+                    const [url, params] = splitOffParams(ref.slice(4))
+                    return { type: "git", url, ...params }
                 }
 
                 // Plain file with explicit file+ prefix
@@ -3610,30 +3642,33 @@ export const evalSettings = { pureEval: false }
 
                 // GitHub shorthand: github:owner/repo[/ref-or-rev]
                 if (ref.startsWith("github:")) {
-                    const parts = ref.slice(7).split("/")
+                    const [body, params] = splitOffParams(ref.slice(7))
+                    const parts = body.split("/")
                     const result = { type: "github", owner: parts[0], repo: parts[1] }
                     if (parts[2]) {
                         // a 40-hex third segment is a commit, not a branch/tag
                         if (/^[0-9a-f]{40}$/.test(parts[2])) { result.rev = parts[2] }
                         else { result.ref = parts[2] }
                     }
-                    return result
+                    return { ...result, ...params }
                 }
 
                 // GitLab shorthand: gitlab:owner/repo[/ref-or-rev]
                 if (ref.startsWith("gitlab:")) {
-                    const parts = ref.slice(7).split("/")
+                    const [body, params] = splitOffParams(ref.slice(7))
+                    const parts = body.split("/")
                     const result = { type: "gitlab", owner: parts[0], repo: parts[1] }
                     if (parts[2]) {
                         if (/^[0-9a-f]{40}$/.test(parts[2])) { result.rev = parts[2] }
                         else { result.ref = parts[2] }
                     }
-                    return result
+                    return { ...result, ...params }
                 }
 
                 // Path reference: path:/absolute/path or /absolute/path
                 if (ref.startsWith("path:")) {
-                    return { type: "path", path: ref.slice(5) }
+                    const [path, params] = splitOffParams(ref.slice(5))
+                    return { type: "path", path, ...params }
                 }
                 if (ref.startsWith("/")) {
                     return { type: "path", path: ref }
