@@ -1,4 +1,8 @@
-
+// Real Nix ships these as builtin corepkgs (`<nix/fetchurl.nix>`, used by the
+// stdenv bootstrap). They live here as strings instead of files so they still
+// resolve when denix itself is imported over https.
+export const corepkgsSources = {
+    "fetchurl.nix": `
 {
   system ? "", # obsolete
   url,
@@ -71,3 +75,15 @@ derivation (
   }
   // (if impure then { __impure = true; } else { inherit outputHashAlgo outputHash; })
 )
+`,
+}
+
+export const corepkgsDir = `${Deno.env.get("HOME") || ""}/.cache/denix/corepkgs`
+
+export function materializeCorepkgs() {
+    Deno.mkdirSync(corepkgsDir, { recursive: true })
+    for (const [fileName, source] of Object.entries(corepkgsSources)) {
+        Deno.writeTextFileSync(`${corepkgsDir}/${fileName}`, source)
+    }
+    return corepkgsDir
+}

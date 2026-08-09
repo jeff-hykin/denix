@@ -22,6 +22,7 @@ Error.stackTraceLimit = 100000
 import { ImportCache } from "./import_cache.js"
 import { resolveImportPath, isUrl } from "../tools/import_resolver.js"
 import { loadAndEvaluateSync } from "./import_loader.js"
+import { materializeCorepkgs } from "./corepkgs.js"
 
 // fetcher system
 import { downloadWithRetry, extractNameFromUrl, runFetchWorkerSync } from "./fetcher.js"
@@ -2643,10 +2644,9 @@ export const evalSettings = { pureEval: false }
 
                 // Real Nix implicitly appends `nix=<corepkgs>` to the search
                 // path (e.g. `<nix/fetchurl.nix>` used by stdenv bootstrap).
-                // We bundle those files in main/corepkgs/.
                 if (lookupStr === "nix" || lookupStr.startsWith("nix/")) {
                     const suffix = lookupStr.slice(3).replace(/^\//, "")
-                    const corepkgsDir = new URL("./corepkgs", import.meta.url).pathname
+                    const corepkgsDir = materializeCorepkgs()
                     const fullPath = suffix ? FileSystem.join(corepkgsDir, suffix) : corepkgsDir
                     if (FileSystem.sync.info(fullPath).exists) {
                         return new Path([""], [()=>FileSystem.makeAbsolutePath(fullPath)])
