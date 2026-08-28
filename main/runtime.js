@@ -25,10 +25,9 @@ import { loadAndEvaluateSync } from "./import_loader.js"
 import { materializeCorepkgs } from "./corepkgs.js"
 
 // fetcher system
-import { downloadWithRetry, extractNameFromUrl, runFetchWorkerSync } from "./fetcher.js"
-import { extractTarball } from "./tar.js"
+import { downloadWithRetry, extractNameFromUrl, runFetchWorkerSync, fetchRemoteGitRefsSync } from "./fetcher.js"
 import { hashDirectory, hashDirectorySync, hashPathSync, narHashToSRI } from "./nar_hash.js"
-import { ensureStoreDirectory, ensureStoreDirectorySync, computeFetchStorePath, getCachedPath, getCachedPathSync, setCachedPath, setCachedPathSync, atomicMove, atomicMoveSync, exists, STORE_DIR } from "./store_manager.js"
+import { ensureStoreDirectory, ensureStoreDirectorySync, computeFetchStorePath, getCachedPath, getCachedPathSync, setCachedPath, setCachedPathSync, getCachedMetaSync, atomicMove, atomicMoveSync, exists, STORE_DIR } from "./store_manager.js"
 
 // registry system
 import { resolveIndirectReference } from "./registry.js"
@@ -1491,7 +1490,7 @@ export const evalSettings = { pureEval: false }
             // synchronous, so an async fetcher would leak a Promise into
             // translated code like `import (builtins.fetchTarball url)` where
             // nothing can await it. The actual (async) download/extract work
-            // happens in fetch_worker.js via a sync subprocess.
+            // happens in fetch_worker.js on a worker thread.
             "fetchurl": (args) => {
                 // Parse arguments: can be string URL or {url, sha256?, name?}
                 let url, sha256, name;
@@ -2091,43 +2090,71 @@ export const evalSettings = { pureEval: false }
 
                         return builtins.fetchurl(fileArgs);
 
-                    case "github":
-                        // Transform GitHub shorthand to git URL
+                    case "github": {
                         if (!attrs.owner || !attrs.repo) {
                             throw new Error("builtins.fetchTree: type 'github' requires 'owner' and 'repo' attributes");
                         }
 
                         const owner = requireString(attrs.owner);
                         const repo = requireString(attrs.repo);
-                        const rev = attrs.rev ? requireString(attrs.rev) : null;
-                        const ref = attrs.ref ? requireString(attrs.ref) : null;
+                        let rev = attrs.rev ? `${requireString(attrs.rev)}` : null;
+                        const ref = attrs.ref ? `${requireString(attrs.ref)}` : null;
+                        const name = attrs.name ? `${requireString(attrs.name)}` : `${repo}-source`;
 
-                        // Build GitHub git URL
-                        const githubUrl = `https://github.com/${owner}/${repo}.git`;
-
-                        const githubArgs = {
-                            url: githubUrl,
-                            name: attrs.name || `${repo}-source`,
-                        };
-
-                        if (rev) {
-                            githubArgs.rev = rev;
-                        } else if (ref) {
-                            githubArgs.ref = ref;
+                        // GitHub archive tarballs never contain submodules, so
+                        // that (rare) case still needs a real git fetch.
+                        if (attrs.submodules === true) {
+                            const githubArgs = { url: `https://github.com/${owner}/${repo}.git`, name, submodules: true };
+                            if (rev) { githubArgs.rev = rev } else if (ref) { githubArgs.ref = ref }
+                            const githubResult = builtins.fetchGit(githubArgs);
+                            if (!githubResult.shortRev && githubResult.rev) {
+                                githubResult.shortRev = githubResult.rev.slice(0, 7);
+                            }
+                            return githubResult;
                         }
 
-                        if (attrs.submodules !== undefined) githubArgs.submodules = attrs.submodules;
-                        if (attrs.shallow !== undefined) githubArgs.shallow = attrs.shallow;
-                        if (attrs.allRefs !== undefined) githubArgs.allRefs = attrs.allRefs;
-
-                        const githubResult = builtins.fetchGit(githubArgs);
-
-                        // Add shortRev if not already present
-                        if (!githubResult.shortRev && githubResult.rev) {
-                            githubResult.shortRev = githubResult.rev.slice(0, 7);
+                        // Like real Nix, download the archive tarball of the rev
+                        // instead of cloning the repo — for nixpkgs that is
+                        // ~40MB instead of a multi-GB full-history clone. A
+                        // branch/tag resolves to a rev via the remote's ref
+                        // advertisement (one round-trip, nothing cloned, no git
+                        // binary needed).
+                        if (!rev) {
+                            const refs = fetchRemoteGitRefsSync(`https://github.com/${owner}/${repo}.git`);
+                            // a tag's peeled entry (^{}) is the commit it points at
+                            rev = ref == null || ref === "HEAD"
+                                ? refs.get("HEAD")
+                                : refs.get(ref) || refs.get(`refs/heads/${ref}`) || refs.get(`refs/tags/${ref}^{}`) || refs.get(`refs/tags/${ref}`);
+                            if (!rev) {
+                                throw new Error(`builtins.fetchTree: failed to fetch rev of '${ref || "HEAD"}' from github:${owner}/${repo} (no matching branch or tag)`);
+                            }
                         }
 
-                        return githubResult;
+                        const tarballUrl = `https://github.com/${owner}/${repo}/archive/${rev}.tar.gz`;
+                        const cacheKey = `fetchTarball:${tarballUrl}::${name}`;
+                        let storePath = getCachedPathSync(cacheKey);
+                        let narHash, lastModified;
+                        if (storePath) {
+                            ({ narHash, lastModified } = getCachedMetaSync(cacheKey) || {});
+                        } else {
+                            ({ storePath, narHash, lastModified } = runFetchWorkerSync({ kind: "fetchTarball", url: tarballUrl, name, cacheKey }));
+                        }
+
+                        // No revCount: like real Nix, a github fetch never sees
+                        // the commit history
+                        const result = { outPath: storePath, rev, shortRev: rev.slice(0, 7), submodules: false };
+                        if (narHash) {
+                            result.narHash = narHashToSRI(narHash);
+                        }
+                        if (lastModified != null) {
+                            result.lastModified = BigInt(lastModified);
+                            const d = new Date(lastModified * 1000);
+                            const pad = (n) => String(n).padStart(2, "0");
+                            result.lastModifiedDate = `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}`;
+                        }
+                        Object.defineProperty(result, "toString", { value: () => storePath, enumerable: false });
+                        return result;
+                    }
 
                     case "gitlab":
                         // Transform GitLab shorthand to git URL
