@@ -3,30 +3,48 @@
  * Used by fetchTarball, fetchurl, and other network-based builtins
  */
 
+import { createSyncCaller } from "https://raw.esm.sh/gh/jeff-hykin/sync_fetch@v1.0.0/main.js"
 import { NixError } from "./errors.js"
 
-// Run fetch_worker.js (async downloads) as a SYNCHRONOUS subprocess so
-// fetchurl/fetchTarball/registry lookups can be sync: nix evaluation is
-// synchronous, so awaiting mid-expression isn't an option.
+// Nix evaluation is synchronous, so fetchurl/fetchTarball/registry lookups
+// can't await. fetch_worker.js does the async work on a worker thread while
+// this thread blocks (SharedArrayBuffer + Atomics.wait, via sync_fetch).
+const callFetchWorker = createSyncCaller(new URL("./fetch_worker.js", import.meta.url))
+
 export function runFetchWorkerSync(payload) {
-    const workerUrl = new URL("./fetch_worker.js", import.meta.url).href
-    const out = new Deno.Command(Deno.execPath(), {
-        args: ["run", "--quiet", "--no-lock", "--allow-all", workerUrl, JSON.stringify(payload)],
-        stdout: "piped",
-        stderr: "piped",
-    }).outputSync()
-    const stdout = new TextDecoder().decode(out.stdout).trim()
-    let result
     try {
-        result = JSON.parse(stdout.split("\n").pop())
-    } catch {
-        const stderr = new TextDecoder().decode(out.stderr).trim()
-        throw new NixError(`error: ${payload.kind} of '${payload.url}' failed:\n${stderr || stdout}`)
+        return callFetchWorker(payload)
+    } catch (error) {
+        throw new NixError(`error: ${error.message}`)
     }
-    if (result.error != null) {
-        throw new NixError(`error: ${result.error}`)
+}
+
+// Resolves branch/tag names to revs the way `git ls-remote` does, but over
+// git's smart-HTTP ref advertisement so no git binary is needed. The response
+// is pkt-line framed: 4 hex digits of line length, then that many bytes
+// ("003f<sha> refs/heads/master\n"); a "0000" flush-pkt separates sections and
+// the first ref line carries capabilities after a NUL.
+export function fetchRemoteGitRefsSync(repoUrl) {
+    const { text } = runFetchWorkerSync({ kind: "fetchText", url: `${repoUrl}/info/refs?service=git-upload-pack` })
+    const refs = new Map()
+    let position = 0
+    while (position + 4 <= text.length) {
+        const length = parseInt(text.slice(position, position + 4), 16)
+        if (Number.isNaN(length)) {
+            break
+        }
+        if (length === 0) {
+            position += 4
+            continue
+        }
+        const line = text.slice(position + 4, position + length).split("\0")[0].trim()
+        position += length
+        const match = line.match(/^([0-9a-f]{40})\s+(\S+)$/)
+        if (match) {
+            refs.set(match[2], match[1])
+        }
     }
-    return result
+    return refs
 }
 
 /**

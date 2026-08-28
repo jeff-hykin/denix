@@ -1,14 +1,14 @@
-// Subprocess worker for builtins.fetchurl / builtins.fetchTarball / registry
-// lookups. Nix evaluation is synchronous, so the runtime can't await downloads
-// mid-expression (e.g. `import (builtins.fetchTarball ...)`); instead it
-// spawns this script with outputSync. Payload comes in as JSON argv[0]:
+// Web Worker for builtins.fetchurl / builtins.fetchTarball / registry lookups.
+// Nix evaluation is synchronous, so the runtime can't await downloads
+// mid-expression (e.g. `import (builtins.fetchTarball ...)`); it blocks while
+// this worker thread does the async work (see sync_fetch). Payloads:
 //   { kind: "fetchurl"|"fetchTarball", url, sha256?, name, cacheKey }
 //   { kind: "fetchText", url }
-// and the result goes to stdout as JSON: { storePath } / { text } / { error }.
+import { serveSync } from "https://raw.esm.sh/gh/jeff-hykin/sync_fetch@v1.0.0/worker.js"
 import { downloadWithRetry } from "./fetcher.js"
 import { extractTarball } from "./tar.js"
 import { hashDirectory } from "./nar_hash.js"
-import { ensureStoreDirectory, computeFetchStorePath, setCachedPath, atomicMove } from "./store_manager.js"
+import { ensureStoreDirectory, computeFetchStorePath, setCachedPath, setCachedMeta, atomicMove } from "./store_manager.js"
 import { sha256Hex } from "../tools/hashing.js"
 
 const fetchurl = async ({ url, sha256, name, cacheKey }) => {
@@ -45,7 +45,7 @@ const fetchTarball = async ({ url, sha256, name, cacheKey }) => {
     await downloadWithRetry(url, tempTar)
 
     const tempExtract = `${await Deno.makeTempDir()}/extracted`
-    await extractTarball(tempTar, tempExtract)
+    const { lastModified } = await extractTarball(tempTar, tempExtract)
     try { await Deno.remove(tempTar) } catch {}
 
     // sha256 is validated against the NAR hash of the extracted tree, like
@@ -66,7 +66,8 @@ const fetchTarball = async ({ url, sha256, name, cacheKey }) => {
     const storePath = computeFetchStorePath(narHash, name)
     await atomicMove(tempExtract, storePath)
     await setCachedPath(cacheKey, storePath)
-    return storePath
+    await setCachedMeta(cacheKey, { narHash, lastModified })
+    return { storePath, narHash, lastModified }
 }
 
 const fetchText = async ({ url }) => {
@@ -77,15 +78,12 @@ const fetchText = async ({ url }) => {
     return await response.text()
 }
 
-try {
-    const payload = JSON.parse(Deno.args[0])
+serveSync(async (payload) => {
     if (payload.kind === "fetchText") {
-        console.log(JSON.stringify({ text: await fetchText(payload) }))
-    } else {
-        const storePath = payload.kind === "fetchurl" ? await fetchurl(payload) : await fetchTarball(payload)
-        console.log(JSON.stringify({ storePath }))
+        return { text: await fetchText(payload) }
     }
-} catch (error) {
-    console.log(JSON.stringify({ error: error?.message || String(error) }))
-    Deno.exit(1)
-}
+    if (payload.kind === "fetchurl") {
+        return { storePath: await fetchurl(payload) }
+    }
+    return await fetchTarball(payload)
+})
