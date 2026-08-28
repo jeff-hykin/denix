@@ -11,6 +11,7 @@
 import { canonicalizePath, getImportType, validateImportPath, isUrl } from "../tools/import_resolver.js"
 import { convertToJs, convertToJsSync } from "../translator.js"
 import { createWithScope, nixArg } from "./runtime.js"
+import { runFetchWorkerSync } from "./fetcher.js"
 
 /**
  * Load and evaluate a file
@@ -56,16 +57,12 @@ function fetchUrlTextSync(url) {
     if (urlTextCache.has(url)) {
         return urlTextCache.get(url)
     }
-    const output = new Deno.Command("curl", {
-        args: ["-fsSL", "--retry", "2", url],
-        stdout: "piped",
-        stderr: "piped",
-    }).outputSync()
-    if (!output.success) {
-        const stderr = new TextDecoder().decode(output.stderr).trim()
-        throw new Error(`import: failed to fetch ${url}${stderr ? `: ${stderr}` : ""}`)
+    let text
+    try {
+        text = runFetchWorkerSync({ kind: "fetchText", url }).text
+    } catch (error) {
+        throw new Error(`import: failed to fetch — ${error.message}`)
     }
-    const text = new TextDecoder().decode(output.stdout)
     urlTextCache.set(url, text)
     return text
 }
