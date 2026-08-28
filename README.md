@@ -1,4 +1,4 @@
-# Denix - Nix to JavaScript Translator
+# Denix - Nix to JavaScript Translator & Runtime
 
 A Nix → JavaScript translator/runner with 1-to-1 parity for Nix 2.18 builtins, implemented in Deno.
 
