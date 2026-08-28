@@ -28,7 +28,10 @@ export function detectFormat(filePath) {
  * Extract tarball to destination directory
  * @param {string} tarballPath - Path to tarball file
  * @param {string} destDir - Destination directory
- * @returns {Promise<string>} - Returns final extracted directory path (may strip top-level dir)
+ * @returns {Promise<{dir: string, lastModified: number|null}>} - Final extracted
+ *   directory (top-level dir may be stripped) and the newest entry mtime in
+ *   epoch seconds (GitHub archive tarballs stamp every entry with the commit
+ *   date, which is what fetchTree reports as lastModified)
  */
 export async function extractTarball(tarballPath, destDir) {
     // Ensure destination directory exists
@@ -36,6 +39,7 @@ export async function extractTarball(tarballPath, destDir) {
 
     const format = detectFormat(tarballPath);
     const file = await Deno.open(tarballPath, { read: true });
+    let lastModified = null;
 
     try {
         let stream = file.readable;
@@ -47,12 +51,12 @@ export async function extractTarball(tarballPath, destDir) {
             // Deno doesn't have built-in bzip2, need to shell out
             file.close();
             await extractWithTarCommand(tarballPath, destDir);
-            return await stripTopLevelDirectory(destDir);
+            return { dir: await stripTopLevelDirectory(destDir), lastModified };
         } else if (format === 'xz') {
             // Deno doesn't have built-in xz, need to shell out
             file.close();
             await extractWithTarCommand(tarballPath, destDir);
-            return await stripTopLevelDirectory(destDir);
+            return { dir: await stripTopLevelDirectory(destDir), lastModified };
         }
 
         // Extract tar entries
@@ -68,6 +72,10 @@ export async function extractTarball(tarballPath, destDir) {
             }
             const fullPath = `${destDir}/${entry.path}`;
             const typeflag = entry.header?.typeflag;
+            const mtime = entry.header?.mtime;
+            if (typeof mtime === "number" && (lastModified == null || mtime > lastModified)) {
+                lastModified = mtime;
+            }
 
             // typeflag values: "0" or "\0" = file, "5" = directory, "2" = symlink
             if (typeflag === "5") {
@@ -122,7 +130,7 @@ export async function extractTarball(tarballPath, destDir) {
         }
     }
 
-    return await stripTopLevelDirectory(destDir);
+    return { dir: await stripTopLevelDirectory(destDir), lastModified };
 }
 
 /**

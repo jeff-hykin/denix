@@ -70,7 +70,7 @@ Deno.test("Tar - extractTarball with top-level directory stripping", async () =>
         const tarPath = await createTestTarball(tempDir, true);
         const extractDir = `${tempDir}/extract`;
 
-        const finalDir = await extractTarball(tarPath, extractDir);
+        const { dir: finalDir } = await extractTarball(tarPath, extractDir);
 
         assertEquals(finalDir, extractDir);
 
@@ -96,7 +96,7 @@ Deno.test("Tar - extractTarball without top-level directory", async () => {
         const tarPath = await createTestTarball(tempDir, false);
         const extractDir = `${tempDir}/extract`;
 
-        const finalDir = await extractTarball(tarPath, extractDir);
+        const { dir: finalDir } = await extractTarball(tarPath, extractDir);
 
         assertEquals(finalDir, extractDir);
 
