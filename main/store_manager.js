@@ -177,6 +177,22 @@ export function setCachedPathSync(cacheKey, storePath) {
     Deno.writeTextFileSync(CACHE_FILE, JSON.stringify(cache, null, 2));
 }
 
+// Fetch metadata (narHash, lastModified, ...) that can't be recomputed cheaply
+// from a cached store path lives under a "meta:" sibling key.
+export async function setCachedMeta(cacheKey, meta) {
+    const cache = await loadCache();
+    cache[`meta:${cacheKey}`] = meta;
+    await saveCache(cache);
+}
+
+export function getCachedMetaSync(cacheKey) {
+    try {
+        return JSON.parse(Deno.readTextFileSync(CACHE_FILE))[`meta:${cacheKey}`] ?? null;
+    } catch {
+        return null;
+    }
+}
+
 /**
  * Acquire an exclusive lock and run a function
  * Prevents concurrent access to the same resource
