@@ -8,6 +8,7 @@
 
 import { normalizeHashToHex } from "../tools/store_path.js"
 import { sha256Hex } from "../tools/hashing.js"
+import { isMachO, resignMachO } from "./macho_sign.js"
 
 const DEFAULT_CACHE = "https://cache.nixos.org"
 
@@ -206,14 +207,6 @@ function findPattern(haystack, needle, from) {
     return -1
 }
 
-function isMachO(bytes) {
-    if (bytes.length < 4) { return false }
-    const magic = new DataView(bytes.buffer, bytes.byteOffset).getUint32(0, false)
-    return magic === 0xfeedface || magic === 0xcefaedfe ||
-        magic === 0xfeedfacf || magic === 0xcffaedfe ||
-        magic === 0xcafebabe || magic === 0xbebafeca
-}
-
 /** Rewrite /nix/store → RELOC_PREFIX in every file/symlink under path. */
 export function relocateTree(path) {
     const info = Deno.lstatSync(path)
@@ -239,20 +232,17 @@ export function relocateTree(path) {
         bytes.set(RELOC_PREFIX_BYTES, i)
         i = findPattern(bytes, NIX_PREFIX_BYTES, i + RELOC_PREFIX_BYTES.length)
     }
+    if (machO) {
+        // content changed → the embedded signature is stale; arm64 macOS SIGKILLs
+        try {
+            resignMachO(bytes)
+        } catch (error) {
+            throw new Error(`could not re-sign Mach-O ${path}: ${error.message}`)
+        }
+    }
     const mode = info.mode & 0o777
     Deno.writeFileSync(path, bytes)
     if (mode) { Deno.chmodSync(path, mode) }
-    if (machO && Deno.build.os === "darwin") {
-        // content changed → ad-hoc signature is stale; kernel would SIGKILL
-        const result = new Deno.Command("/usr/bin/codesign", {
-            args: ["--force", "--sign", "-", path],
-            stdout: "null",
-            stderr: "piped",
-        }).outputSync()
-        if (result.code !== 0) {
-            throw new Error(`codesign failed for ${path}: ${new TextDecoder().decode(result.stderr)}`)
-        }
-    }
 }
 
 /**
